@@ -39,19 +39,19 @@ http://www.eblong.com/zarf/glulx/inform63globref.patch
 Glulx 3.1.1 acceleration support
 http://www.eblong.com/zarf/glulx/inform63accel.patch
 
+Glulx memory map extension
+http://www.eblong.com/zarf/glulx/inform631n-memmap.patch
+
 Show veneer routines in assembly output
-http://freespace.virgin.net/davidk.kinder/inform6/asm_veneer.patch
+http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-January/001704.html
 
 Allow more than 255 verbs in Glulx. Note that this is only a compiler
 change, and requires the library to use both bytes of the verb number
 for it to work.
-http://freespace.virgin.net/davidk.kinder/inform6/verbnum.patch
+http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-April/001705.html
 
 Remove one argument form of Glulx print_to_array() veneer method
 http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-November/001709.html
-
-Glulx memory extension
-http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2010-April/001735.html
 
 Increased PATHLEN and set the HUGE memory model as the default for
 OSX, Linux, Unix and Unix64.
