@@ -30,7 +30,7 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "22nd April 2010"
+#define RELEASE_DATE "8th November 2010"
 #define RELEASE_NUMBER 1631
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
@@ -1133,6 +1133,35 @@ typedef struct operator_s
 #define mfree_gc 84
 #define accelfunc_gc 85
 #define accelparam_gc 86
+#define numtof_gc 87
+#define ftonumz_gc 88
+#define ftonumn_gc 89
+#define ceil_gc 90
+#define floor_gc 91
+#define fadd_gc 92
+#define fsub_gc 93
+#define fmul_gc 94
+#define fdiv_gc 95
+#define fmod_gc 96
+#define sqrt_gc 97
+#define exp_gc 98
+#define log_gc 99
+#define pow_gc 100
+#define sin_gc 101
+#define cos_gc 102
+#define tan_gc 103
+#define asin_gc 104
+#define acos_gc 105
+#define atan_gc 106
+#define atan2_gc 107
+#define jfeq_gc 108
+#define jfne_gc 109
+#define jflt_gc 110
+#define jfle_gc 111
+#define jfgt_gc 112
+#define jfge_gc 113
+#define jisnan_gc 114
+#define jisinf_gc 115
 
 /* ------------------------------------------------------------------------- */
 /*   Index numbers into the keyword group "opcode_macros_g" (see "lexer.c")  */
@@ -2020,7 +2049,7 @@ extern int32 zmachine_pc;
 extern int32 no_instructions;
 extern int   sequence_point_follows;
 extern int   uses_unicode_features, uses_memheap_features, 
-    uses_acceleration_features;
+    uses_acceleration_features, uses_float_features;
 extern dbgl  debug_line_ref;
 extern int   execution_never_reaches_here;
 extern int   *variable_usage;

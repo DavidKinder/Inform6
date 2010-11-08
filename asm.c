@@ -45,6 +45,8 @@ int uses_memheap_features;         /* Makes use of Glulx mem/heap (3.1)
                                       features?                              */
 int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
                                       features?                              */
+int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
+                                      features?                              */
 
 dbgl debug_line_ref;               /* Source code ref of current statement   */
 
@@ -306,6 +308,7 @@ typedef struct opcodeg
 #define GOP_Unicode      1   /* uses_unicode_features */
 #define GOP_MemHeap      2   /* uses_memheap_features */
 #define GOP_Acceleration 4   /* uses_acceleration_features */
+#define GOP_Float        8   /* uses_float_features */
 
     /* Codes for the number of operands */
 
@@ -574,6 +577,35 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "mfree",      0x179,  0, GOP_MemHeap, 1 },
   { (uchar *) "accelfunc",  0x180,  0, GOP_Acceleration, 2 },
   { (uchar *) "accelparam", 0x181,  0, GOP_Acceleration, 2 },
+  { (uchar *) "numtof",     0x190,  St, GOP_Float, 2 },
+  { (uchar *) "ftonumz",    0x191,  St, GOP_Float, 2 },
+  { (uchar *) "ftonumn",    0x192,  St, GOP_Float, 2 },
+  { (uchar *) "ceil",       0x198,  St, GOP_Float, 2 },
+  { (uchar *) "floor",      0x199,  St, GOP_Float, 2 },
+  { (uchar *) "fadd",       0x1A0,  St, GOP_Float, 3 },
+  { (uchar *) "fsub",       0x1A1,  St, GOP_Float, 3 },
+  { (uchar *) "fmul",       0x1A2,  St, GOP_Float, 3 },
+  { (uchar *) "fdiv",       0x1A3,  St, GOP_Float, 3 },
+  { (uchar *) "fmod",       0x1A4,  St|St2, GOP_Float, 4 },
+  { (uchar *) "sqrt",       0x1A8,  St, GOP_Float, 2 },
+  { (uchar *) "exp",        0x1A9,  St, GOP_Float, 2 },
+  { (uchar *) "log",        0x1AA,  St, GOP_Float, 2 },
+  { (uchar *) "pow",        0x1AB,  St, GOP_Float, 3 },
+  { (uchar *) "sin",        0x1B0,  St, GOP_Float, 2 },
+  { (uchar *) "cos",        0x1B1,  St, GOP_Float, 2 },
+  { (uchar *) "tan",        0x1B2,  St, GOP_Float, 2 },
+  { (uchar *) "asin",       0x1B3,  St, GOP_Float, 2 },
+  { (uchar *) "acos",       0x1B4,  St, GOP_Float, 2 },
+  { (uchar *) "atan",       0x1B5,  St, GOP_Float, 2 },
+  { (uchar *) "atan2",      0x1B6,  St, GOP_Float, 3 },
+  { (uchar *) "jfeq",       0x1C0,  Br, GOP_Float, 4 },
+  { (uchar *) "jfne",       0x1C1,  Br, GOP_Float, 4 },
+  { (uchar *) "jflt",       0x1C2,  Br, GOP_Float, 3 },
+  { (uchar *) "jfle",       0x1C3,  Br, GOP_Float, 3 },
+  { (uchar *) "jfgt",       0x1C4,  Br, GOP_Float, 3 },
+  { (uchar *) "jfge",       0x1C5,  Br, GOP_Float, 3 },
+  { (uchar *) "jisnan",     0x1C8,  Br, GOP_Float, 2 },
+  { (uchar *) "jisinf",     0x1C9,  Br, GOP_Float, 2 },
 };
 
 /* The opmacros table is used for fake opcodes. The opcode numbers are
@@ -1072,6 +1104,9 @@ extern void assembleg_instruction(assembly_instruction *AI)
     }
     if (opco.op_rules & GOP_Acceleration) {
         uses_acceleration_features = TRUE;
+    }
+    if (opco.op_rules & GOP_Float) {
+        uses_float_features = TRUE;
     }
 
     no_operands_given = AI->operand_count;
@@ -3000,6 +3035,7 @@ extern void init_asm_vars(void)
     uses_unicode_features = FALSE;
     uses_memheap_features = FALSE;
     uses_acceleration_features = FALSE;
+    uses_float_features = FALSE;
 
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;

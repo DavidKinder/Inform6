@@ -516,6 +516,9 @@ static void output_file_g(void)
     if (uses_acceleration_features) {
       VersionNum = 0x00030101;
     }
+    if (uses_float_features) {
+      VersionNum = 0x00030102;
+    }
 
     /* And check if the user has requested a specific version. */
     if (requested_glulx_version) {

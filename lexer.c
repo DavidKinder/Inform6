@@ -267,6 +267,11 @@ static char *opcode_list_g[] = {
     "streamunichar",
     "mzero", "mcopy", "malloc", "mfree",
     "accelfunc", "accelparam",
+    "numtof", "ftonumz", "ftonumn", "ceil", "floor",
+    "fadd", "fsub", "fmul", "fdiv", "fmod",
+    "sqrt", "exp", "log", "pow",
+    "sin", "cos", "tan", "asin", "acos", "atan", "atan2",
+    "jfeq", "jfne", "jflt", "jfle", "jfgt", "jfge", "jisnan", "jisinf",
     ""
 };
 

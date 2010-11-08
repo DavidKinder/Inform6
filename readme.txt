@@ -49,6 +49,9 @@ Support for compiling the game dictionary with Unicode characters
 http://eblong.com/zarf/glulx/inform631n-unidict.patch
 http://eblong.com/zarf/glulx/inform631n-unidict2.patch
 
+Glulx 3.1.2 floating-point support
+http://eblong.com/zarf/glulx/inform631n-float.patch
+
 Show veneer routines in assembly output
 http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-January/001704.html
 
