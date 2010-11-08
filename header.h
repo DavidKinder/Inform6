@@ -420,7 +420,9 @@ static int32 unique_task_id(void)
 /* ------------------------------------------------------------------------- */
 #ifdef UNIX64
 /* 1 */
+#ifndef MACHINE_STRING
 #define MACHINE_STRING   "Unix"
+#endif
 /* 2 */
 #define USE_TEMPORARY_FILES
 /* 3 */
