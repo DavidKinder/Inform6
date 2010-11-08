@@ -689,6 +689,7 @@ static int32 unique_task_id(void)
 #define  MAX_IDENTIFIER_LENGTH  32
 #define  MAX_ABBREV_LENGTH      64
 #define  MAX_DICT_WORD_SIZE     40
+#define  MAX_DICT_WORD_BYTES    (40*4)
 #define  MAX_NUM_ATTR_BYTES     39
 
 #define  VENEER_CONSTRAINT_ON_CLASSES_Z       256
@@ -2289,7 +2290,8 @@ extern int endofpass_flag;
 extern int version_number,  instruction_set_number, extend_memory_map;
 extern int32 scale_factor,  length_scale_factor;
 
-extern int WORDSIZE, INDIV_PROP_START, OBJECT_BYTE_LENGTH;
+extern int WORDSIZE, INDIV_PROP_START, 
+    OBJECT_BYTE_LENGTH, DICT_ENTRY_BYTE_LENGTH, DICT_ENTRY_FLAG_POS;
 extern int32 MAXINTWORD;
 
 extern int asm_trace_level, line_trace_level,     expr_trace_level,
@@ -2415,7 +2417,7 @@ extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
 
 extern int32 MAX_OBJ_PROP_COUNT, MAX_OBJ_PROP_TABLE_SIZE;
 extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
-extern int DICT_WORD_SIZE, NUM_ATTR_BYTES;
+extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES, NUM_ATTR_BYTES;
 
 extern void *my_malloc(int32 size, char *whatfor);
 extern void *my_calloc(int32 size, int32 howmany, char *whatfor);

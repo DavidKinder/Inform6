@@ -816,20 +816,24 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = CONSTANT_OT;
                  switch(t.value)
                  {
+                 /* The three dict_par flags point at the lower byte
+                    of the flag field, because the library is written
+                    to expect one-byte fields, even though the compiler
+                    generates a dictionary with room for two. */
                  case dict_par1_SC:
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
-                     v = DICT_WORD_SIZE+2;
+                     v = DICT_ENTRY_FLAG_POS+1;
                      break;
                  case dict_par2_SC:
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
-                     v = DICT_WORD_SIZE+4;
+                     v = DICT_ENTRY_FLAG_POS+3;
                      break;
                  case dict_par3_SC:
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
-                     v = DICT_WORD_SIZE+6;
+                     v = DICT_ENTRY_FLAG_POS+5;
                      break;
 
                  /* ###fix: need to fill more of these in! */

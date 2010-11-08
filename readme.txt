@@ -42,6 +42,13 @@ http://www.eblong.com/zarf/glulx/inform63accel.patch
 Glulx memory map extension
 http://www.eblong.com/zarf/glulx/inform631n-memmap.patch
 
+Support for printing Unicode characters with "print (char)"
+http://eblong.com/zarf/glulx/inform631n-unichar.patch
+
+Support for compiling the game dictionary with Unicode characters
+http://eblong.com/zarf/glulx/inform631n-unidict.patch
+http://eblong.com/zarf/glulx/inform631n-unidict2.patch
+
 Show veneer routines in assembly output
 http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-January/001704.html
 

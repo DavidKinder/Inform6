@@ -522,7 +522,7 @@ static void output_file_g(void)
       if (requested_glulx_version < VersionNum) {
         static char error_message_buff[256];
         sprintf(error_message_buff, "Version 0x%08lx requested, but \
-game features require version 0x%08lx", requested_glulx_version, VersionNum);
+game features require version 0x%08lx", (long)requested_glulx_version, (long)VersionNum);
         warning(error_message_buff);
       }
       else {

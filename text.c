@@ -1065,7 +1065,7 @@ static void compress_dumptable(int entnum, int depth)
     break;
   case 4:
     ix = ent->u.val;
-    printf("'U+%lX'\n", unicode_usage_entries[ix].ch);
+    printf("'U+%lX'\n", (long)unicode_usage_entries[ix].ch);
     break;
   case 9:
     printf("print-var @%02d\n", ent->u.val);
@@ -1470,24 +1470,31 @@ int dict_entries;                     /* Total number of records entered     */
 /*   as before. In Glulx, it can be any value up to MAX_DICT_WORD_SIZE.      */
 /*   (That limit is defined as 40 in the header; it exists only for a few    */
 /*   static buffers, and can be increased without using significant memory.) */
+/*                                                                           */
+/*   ###- Well, that certainly bit me on the butt, didn't it. In further     */
+/*   modifying the compiler to generate a Unicode dictionary, I have to      */
+/*   store four-byte values in the uchar array. This is handled by making    */
+/*   the array size DICT_WORD_BYTES (which is DICT_WORD_SIZE*DICT_CHAR_SIZE).*/
+/*   Then we store the 32-bit character value big-endian. This lets us       */
+/*   continue to compare arrays bytewise, which is a nice simplification.    */
 /* ------------------------------------------------------------------------- */
 
 extern int compare_sorts(uchar *d1, uchar *d2)
 {   int i;
-    for (i=0; i<DICT_WORD_SIZE; i++) 
+    for (i=0; i<DICT_WORD_BYTES; i++) 
         if (d1[i]!=d2[i]) return((int)(d1[i]) - (int)(d2[i]));
-    /* (since memcmp(d1, d2, DICT_WORD_SIZE); runs into a bug on some Unix 
+    /* (since memcmp(d1, d2, DICT_WORD_BYTES); runs into a bug on some Unix 
        libraries) */
     return(0);
 }
 
 extern void copy_sorts(uchar *d1, uchar *d2)
 {   int i;
-    for (i=0; i<DICT_WORD_SIZE; i++) 
+    for (i=0; i<DICT_WORD_BYTES; i++) 
         d1[i] = d2[i];
 }
 
-static uchar prepared_sort[MAX_DICT_WORD_SIZE];      /* Holds the sort code
+static uchar prepared_sort[MAX_DICT_WORD_BYTES];     /* Holds the sort code
                                                         of current word */
 
 static int number_and_case;
@@ -1588,6 +1595,7 @@ apostrophe in", dword);
 static void dictionary_prepare_g(char *dword, uchar *optresult)
 { 
   int i, j, k;
+  int32 unicode;
 
   number_and_case = 0;
 
@@ -1608,7 +1616,7 @@ to give gender or number of dictionary word", dword);
     }
     if (i>=DICT_WORD_SIZE) break;
 
-    k= (int)dword[j];
+    k= ((unsigned char *)dword)[j];
     if (k=='\'') 
       warning_named("Obsolete usage: use the ^ character for the \
 apostrophe in", dword);
@@ -1618,25 +1626,48 @@ apostrophe in", dword);
       k='\"';
 
     if (k=='@') {
-      int32 unicode = text_to_unicode(dword+j);
+      unicode = text_to_unicode(dword+j);
       j += textual_form_length - 1;
-      if (unicode >= 0 && unicode < 256) {
-        k = unicode;
-      }
-      else {
-        error("Unicode characters beyond Latin-1 are not yet supported in Glulx");
-        k = '?';
-      }
+    }
+    else {
+      unicode = iso_to_unicode_grid[k];
+    }
+
+    if (DICT_CHAR_SIZE != 1 || (unicode >= 0 && unicode < 256)) {
+      k = unicode;
+    }
+    else {
+      error("The dictionary cannot contain Unicode characters beyond Latin-1. \
+Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
+      k = '?';
     }
     
-    if (k >= 'A' && k <= 'Z')
+    if (k >= (unsigned)'A' && k <= (unsigned)'Z')
       k += ('a' - 'A');
 
-    prepared_sort[i] = k;
+    if (DICT_CHAR_SIZE == 1) {
+      prepared_sort[i] = k;
+    }
+    else {
+      prepared_sort[4*i]   = (k >> 24) & 0xFF;
+      prepared_sort[4*i+1] = (k >> 16) & 0xFF;
+      prepared_sort[4*i+2] = (k >>  8) & 0xFF;
+      prepared_sort[4*i+3] = (k)       & 0xFF;
+    }
   }
 
-  for (; i<DICT_WORD_SIZE; i++)
-    prepared_sort[i] = 0;
+  if (DICT_CHAR_SIZE == 1) {
+    for (; i<DICT_WORD_SIZE; i++)
+      prepared_sort[i] = 0;
+  }
+  else {
+    for (; i<DICT_WORD_SIZE; i++) {
+      prepared_sort[4*i]   = 0;
+      prepared_sort[4*i+1] = 0;
+      prepared_sort[4*i+2] = 0;
+      prepared_sort[4*i+3] = 0;
+    }
+  }
 
   if (optresult) copy_sorts(optresult, prepared_sort);
 }
@@ -1734,7 +1765,7 @@ static int dictionary_find(char *dword)
     dictionary_prepare(dword, NULL);
 
     while (at != VACANT)
-    {   n = compare_sorts(prepared_sort, dict_sort_codes+at*DICT_WORD_SIZE);
+    {   n = compare_sorts(prepared_sort, dict_sort_codes+at*DICT_WORD_BYTES);
         if (n==0) return at + 1;
         if (n>0) at = dtree[at].branch[1]; else at = dtree[at].branch[0];
     }
@@ -1762,7 +1793,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     }
     while (TRUE)
     {
-        n = compare_sorts(prepared_sort, dict_sort_codes+at*DICT_WORD_SIZE);
+        n = compare_sorts(prepared_sort, dict_sort_codes+at*DICT_WORD_BYTES);
         if (n==0)
         {
             if (!glulx_mode) {
@@ -1771,7 +1802,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
                 if (x & 128) p[0] = (p[0])|number_and_case;
             }
             else {
-                p = dictionary+4 + at*(7+DICT_WORD_SIZE) + 1+DICT_WORD_SIZE;
+                p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
                 p[1]=(p[1])|x; p[2]=(p[2])|(y/256); p[3]=(p[3])|(y%256); p[5]=(p[5])|z;
                 if (x & 128) p[1] = (p[1]) | number_and_case;
             }
@@ -1888,23 +1919,25 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     }
     else {
         int i;
-        p = dictionary + 4 + (7+DICT_WORD_SIZE)*dict_entries;
+        p = dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*dict_entries;
         p[0] = 0x60; /* type byte -- dict word */
 
-        for (i=0; i<DICT_WORD_SIZE; i++)
-          p[1+i] = prepared_sort[i];
+        p += DICT_CHAR_SIZE;
+        for (i=0; i<DICT_WORD_BYTES; i++)
+          p[i] = prepared_sort[i];
         
-        p[1+DICT_WORD_SIZE+0] = 0; p[1+DICT_WORD_SIZE+1] = x;
-        p[1+DICT_WORD_SIZE+2] = y/256; p[1+DICT_WORD_SIZE+3] = y%256;
-        p[1+DICT_WORD_SIZE+4] = 0; p[1+DICT_WORD_SIZE+5] = z;
+        p += DICT_WORD_BYTES;
+        p[0] = 0; p[1] = x;
+        p[2] = y/256; p[3] = y%256;
+        p[4] = 0; p[5] = z;
         if (x & 128) 
-          p[1+DICT_WORD_SIZE+1] |= number_and_case;
+          p[1] |= number_and_case;
         
-        dictionary_top += (7+DICT_WORD_SIZE);
+        dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
     }
 
-    copy_sorts(dict_sort_codes+dict_entries*DICT_WORD_SIZE, prepared_sort);
+    copy_sorts(dict_sort_codes+dict_entries*DICT_WORD_BYTES, prepared_sort);
 
     return dict_entries++;
 }
@@ -1926,7 +1959,7 @@ extern void dictionary_set_verb_number(char *dword, int to)
             p[1]=to;
         }
         else {
-            p=dictionary+4 + (i-1)*(7+DICT_WORD_SIZE) + 1+DICT_WORD_SIZE; 
+            p=dictionary+4 + (i-1)*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
             p[2]=to/256; p[3]=to%256;
         }
     }
@@ -2148,14 +2181,14 @@ extern void text_allocate_arrays(void)
                                  "red-black tree for dictionary");
     final_dict_order = my_calloc(sizeof(int),  MAX_DICT_ENTRIES,
                                  "final dictionary ordering table");
-    dict_sort_codes  = my_calloc(DICT_WORD_SIZE,   MAX_DICT_ENTRIES,
+    dict_sort_codes  = my_calloc(DICT_WORD_BYTES, MAX_DICT_ENTRIES,
                                  "dictionary sort codes");
 
     if (!glulx_mode)
         dictionary = my_malloc(9*MAX_DICT_ENTRIES+7,
             "dictionary");
     else
-        dictionary = my_malloc((7+DICT_WORD_SIZE)*MAX_DICT_ENTRIES+4,
+        dictionary = my_malloc(DICT_ENTRY_BYTE_LENGTH*MAX_DICT_ENTRIES+4,
             "dictionary");
 
     strings_holding_area

@@ -834,8 +834,8 @@ the first constant definition");
     case ZCHARACTER_CODE:
 
         if (glulx_mode) {
-            error("Glulx Inform does not handle Unicode yet.");
-            break;
+            error("The Zcharacter directive has no meaning in Glulx.");
+            return TRUE;
         }
 
         directive_keywords.enabled = TRUE;

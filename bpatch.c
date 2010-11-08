@@ -200,7 +200,7 @@ static int32 backpatch_value_g(int32 value)
             value = value_of_system_constant(value); break;
         case DWORD_MV:
             value = dictionary_offset + 4 
-              + final_dict_order[value]*(7+DICT_WORD_SIZE);
+              + final_dict_order[value]*DICT_ENTRY_BYTE_LENGTH;
             break;
         case ACTION_MV:
             break;

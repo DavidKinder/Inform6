@@ -171,7 +171,9 @@ int32 MAX_OBJ_PROP_TABLE_SIZE;
 int MAX_OBJ_PROP_COUNT;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
-int DICT_WORD_SIZE;
+int DICT_WORD_SIZE; /* number of characters in a dict word */
+int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
+int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
 int NUM_ATTR_BYTES;
 int32 MAX_NUM_STATIC_STRINGS;
 int32 MAX_UNICODE_CHARS;
@@ -208,6 +210,8 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_CLASS_TABLE_SIZE",MAX_CLASS_TABLE_SIZE);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
+    if (glulx_mode)
+      printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
     printf("|  %25s = %-7d |\n","MAX_EXPRESSION_NODES",MAX_EXPRESSION_NODES);
     printf("|  %25s = %-7d |\n","MAX_GLOBAL_VARIABLES",MAX_GLOBAL_VARIABLES);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
@@ -417,6 +421,7 @@ extern void set_memory_sizes(int size_flag)
     MAX_INCLUSION_DEPTH = 5;
     MAX_LOCAL_VARIABLES_z = 16;
     MAX_LOCAL_VARIABLES_g = 32;
+    DICT_CHAR_SIZE = 1;
     DICT_WORD_SIZE_z = 6;
     DICT_WORD_SIZE_g = 9;
     NUM_ATTR_BYTES_z = 6;
@@ -514,10 +519,18 @@ static void explain_parameter(char *command)
   can be any number.\n");
         return;
     }
+    if (strcmp(command,"DICT_CHAR_SIZE")==0)
+    {   printf(
+"  DICT_CHAR_SIZE is the byte size of one character in the dictionary. \n\
+  (This is only meaningful in Glulx, since Z-code has compressed dictionary \n\
+  words.) It can be either 1 (the default) or 4 (to enable full Unicode \n\
+  input.)\n");
+        return;
+    }
     if (strcmp(command,"NUM_ATTR_BYTES")==0)
     {   printf(
 "  NUM_ATTR_BYTES is the space used to store attribute flags. Each byte \n\
-  stores eight attribytes. In Z-code this is always 6 (only 4 are used in \n\
+  stores eight attributes. In Z-code this is always 6 (only 4 are used in \n\
   v3 games). In Glulx it can be any number which is a multiple of four, \n\
   plus three.\n");
         return;
@@ -768,6 +781,8 @@ extern void memory_command(char *command)
             {   DICT_WORD_SIZE=j, flag=1;
                 DICT_WORD_SIZE_g=DICT_WORD_SIZE_z=j;
             }
+            if (strcmp(command,"DICT_CHAR_SIZE")==0)
+                DICT_CHAR_SIZE=j, flag=1;
             if (strcmp(command,"NUM_ATTR_BYTES")==0) 
             {   NUM_ATTR_BYTES=j, flag=1;
                 NUM_ATTR_BYTES_g=NUM_ATTR_BYTES_z=j;

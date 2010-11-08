@@ -235,7 +235,7 @@ static int make_adjective(char *English_word)
         table is left empty in GV2.                                          */
 
     int i; 
-    uchar new_sort_code[MAX_DICT_WORD_SIZE];
+    uchar new_sort_code[MAX_DICT_WORD_BYTES];
 
     if (no_adjectives >= MAX_ADJECTIVES)
         memoryerror("MAX_ADJECTIVES", MAX_ADJECTIVES);
@@ -243,11 +243,11 @@ static int make_adjective(char *English_word)
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
         if (compare_sorts(new_sort_code,
-          adjective_sort_code+i*DICT_WORD_SIZE) == 0)
+          adjective_sort_code+i*DICT_WORD_BYTES) == 0)
             return(0xff-i);
     adjectives[no_adjectives]
         = dictionary_add(English_word,8,0,0xff-no_adjectives);
-    copy_sorts(adjective_sort_code+no_adjectives*DICT_WORD_SIZE,
+    copy_sorts(adjective_sort_code+no_adjectives*DICT_WORD_BYTES,
         new_sort_code);
     return(0xff-no_adjectives++);
 }
@@ -848,7 +848,7 @@ extern void verbs_allocate_arrays(void)
                                 "grammar token routines");
     adjectives            = my_calloc(sizeof(int32),   MAX_ADJECTIVES,
                                 "adjectives");
-    adjective_sort_code   = my_calloc(DICT_WORD_SIZE,  MAX_ADJECTIVES,
+    adjective_sort_code   = my_calloc(DICT_WORD_BYTES, MAX_ADJECTIVES,
                                 "adjective sort codes");
 
     English_verb_list     = my_malloc(MAX_VERBSPACE, "register of verbs");

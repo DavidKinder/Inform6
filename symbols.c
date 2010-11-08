@@ -560,12 +560,16 @@ static void stockup_symbols(void)
     }
 
     create_symbol("WORDSIZE",        WORDSIZE, CONSTANT_T);
+    create_symbol("DICT_ENTRY_BYTES", DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
     if (!glulx_mode) {
         create_symbol("DICT_WORD_SIZE", ((version_number==3)?4:6), CONSTANT_T);
         create_symbol("NUM_ATTR_BYTES", ((version_number==3)?4:6), CONSTANT_T);
     }
     else {
         create_symbol("DICT_WORD_SIZE",     DICT_WORD_SIZE, CONSTANT_T);
+        create_symbol("DICT_CHAR_SIZE",     DICT_CHAR_SIZE, CONSTANT_T);
+        if (DICT_CHAR_SIZE != 1)
+            create_symbol("DICT_IS_UNICODE", 1, CONSTANT_T);
         create_symbol("NUM_ATTR_BYTES",     NUM_ATTR_BYTES, CONSTANT_T);
         create_symbol("INDIV_PROP_START",   INDIV_PROP_START, CONSTANT_T);
     }    

@@ -473,6 +473,7 @@ static void parse_print_g(int finally_return)
                   get_next_token();
                   if ((token_type == SEP_TT) && (token_value == CLOSEB_SEP))
                   {   assembly_operand AO1;
+                      int ln, ln2;
 
                       put_token_back(); put_token_back();
                       local_variables.enabled = FALSE;
@@ -499,7 +500,19 @@ static void parse_print_g(int finally_return)
                                   AO1 = code_generate(
                                       parse_expression(QUANTITY_CONTEXT),
                                       QUANTITY_CONTEXT, -1);
+                                  if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0))
+                                  {   assembleg_2(stkpeek_gc, zero_operand, 
+                                      stack_pointer);
+                                  }
+                                  AO2.type = HALFCONSTANT_OT; AO2.value = 0x100; AO2.marker = 0;
+                                  assembleg_2_branch(jgeu_gc, AO1, AO2, 
+                                      ln = next_label++);
+                                  ln2 = next_label++;
                                   assembleg_1(streamchar_gc, AO1);
+                                  assembleg_jump(ln2);
+                                  assemble_label_no(ln);
+                                  assembleg_1(streamunichar_gc, AO1);
+                                  assemble_label_no(ln2);
                                   goto PrintTermDone;
                               case ADDRESS_MK:
                                   if (runtime_error_checking_switch)
