@@ -510,7 +510,7 @@ extern void assign_marked_symbol(int index, int marker, int32 value, int type)
 }
 
 
-static void create_symbol(char *p, int value, int type)
+static void create_symbol(char *p, int32 value, int type)
 {   int i = symbol_index(p, -1);
     svals[i] = value; stypes[i] = type; slines[i] = 0;
     sflags[i] = USED_SFLAG + SYSTEM_SFLAG;
@@ -644,6 +644,14 @@ static void stockup_symbols(void)
           INDIVIDUAL_PROPERTY_T);
         create_symbol("print_to_array",INDIV_PROP_START+7, 
           INDIVIDUAL_PROPERTY_T);
+
+        /* Floating-point constants. Note that FLOAT_NINFINITY is not
+           -FLOAT_INFINITY, because float negation doesn't work that
+           way. Also note that FLOAT_NAN is just one of many possible
+           "not-a-number" values. */
+        create_symbol("FLOAT_INFINITY",  0x7F800000, CONSTANT_T);
+        create_symbol("FLOAT_NINFINITY", 0xFF800000, CONSTANT_T);
+        create_symbol("FLOAT_NAN",       0x7FC00000, CONSTANT_T);
     }
 }
 

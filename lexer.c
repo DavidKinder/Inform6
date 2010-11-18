@@ -870,6 +870,120 @@ static void new_syntax_line(void)
     report_errors_at_current_line();
 }
 
+/* Return 10 raised to the expo power.
+ *
+ * I'm avoiding the standard pow() function for a rather lame reason:
+ * it's in the libmath (-lm) library, and I don't want to change the
+ * build model for the compiler. So, this is implemented with a stupid
+ * lookup table. It's faster than pow() for small values of expo.
+ * Probably not as fast if expo is 200, but "$+1e200" is an overflow
+ * anyway, so I don't expect that to be a problem.
+ *
+ * (For some reason, frexp() and ldexp(), which are used later on, do
+ * not require libmath to be linked in.)
+ */
+static double pow10_cheap(int expo)
+{
+    #define POW10_RANGE (8)
+    static double powers[POW10_RANGE*2+1] = {
+        0.00000001, 0.0000001, 0.000001, 0.00001, 0.0001, 0.001, 0.01, 0.1,
+        1.0,
+        10.0, 100.0, 1000.0, 10000.0, 100000.0, 1000000.0, 10000000.0, 100000000.0
+    };
+
+    double res = 1.0;
+
+    if (expo < 0) {
+        for (; expo < -POW10_RANGE; expo += POW10_RANGE) {
+            res *= powers[0];
+        }
+        return res * powers[POW10_RANGE+expo];
+    }
+    else {
+        for (; expo > POW10_RANGE; expo -= POW10_RANGE) {
+            res *= powers[POW10_RANGE*2];
+        }
+        return res * powers[POW10_RANGE+expo];
+    }
+}
+
+/* Return the IEEE-754 single-precision encoding of a floating-point
+ * number. See http://www.psc.edu/general/software/packages/ieee/ieee.php
+ * for an explanation.
+ *
+ * The number is provided in the pieces it was parsed in:
+ *    [+|-] intv "." fracv "e" [+|-]expo
+ *
+ * If the magnitude is too large (beyond about 3.4e+38), this returns
+ * an infinite value (0x7f800000 or 0xff800000). If the magnitude is too
+ * small (below about 1e-45), this returns a zero value (0x00000000 or 
+ * 0x80000000). If any of the inputs are NaN, this returns NaN (but the
+ * lexer should never do that).
+ *
+ * Note that using a float constant does *not* set the uses_float_features
+ * flag (which would cause the game file to be labelled 3.1.2). There's
+ * no VM feature here, just an integer. Of course, any use of the float
+ * *opcodes* will set the flag.
+ *
+ * The math functions in this routine require #including <math.h>, but
+ * they should not require linking the math library (-lm). At least,
+ * they do not on OSX and Linux.
+ */
+static int32 construct_float(int signbit, double intv, double fracv, int expo)
+{
+    double absval = (intv + fracv) * pow10_cheap(expo);
+    int32 sign = (signbit ? 0x80000000 : 0x0);
+    double mant;
+    int32 fbits;
+ 
+    if (isinf(absval)) {
+        return sign | 0x7f800000; /* infinity */
+    }
+    if (isnan(absval)) {
+        return sign | 0x7fc00000;
+    }
+
+    mant = frexp(absval, &expo);
+
+    /* Normalize mantissa to be in the range [1.0, 2.0) */
+    if (0.5 <= mant && mant < 1.0) {
+        mant *= 2.0;
+        expo--;
+    }
+    else if (mant == 0.0) {
+        expo = 0;
+    }
+    else {
+        return sign | 0x7f800000; /* infinity */
+    }
+
+    if (expo >= 128) {
+        return sign | 0x7f800000; /* infinity */
+    }
+    else if (expo < -126) {
+        /* Denormalized (very small) number */
+        mant = ldexp(mant, 126 + expo);
+        expo = 0;
+    }
+    else if (!(expo == 0 && mant == 0.0)) {
+        expo += 127;
+        mant -= 1.0; /* Get rid of leading 1 */
+    }
+
+    mant *= 8388608.0; /* 2^23 */
+    fbits = (int32)(mant + 0.5); /* round mant to nearest int */
+    if (fbits >> 23) {
+        /* The carry propagated out of a string of 23 1 bits. */
+        fbits = 0;
+        expo++;
+        if (expo >= 255) {
+            return sign | 0x7f800000; /* infinity */
+        }
+    }
+
+    return (sign) | ((int32)(expo << 23)) | (fbits);
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Characters are read via a "pipeline" of variables, allowing us to look  */
 /*       up to three characters ahead of the current position.               */
@@ -1151,8 +1265,61 @@ extern void get_next_token(void)
             circle[circle_position].value = n;
             break;
 
+            FloatNumber:
+            {   int expo=0; double intv=0, fracv=0;
+                int expocount=0, intcount=0, fraccount=0;
+                int signbit = (d == '-');
+                *lex_p++ = d;
+                while (character_digit_value[lookahead] < 10) {
+                    intv = 10.0*intv + character_digit_value[lookahead];
+                    intcount++;
+                    *lex_p++ = lookahead;
+                    (*get_next_char)();
+                }
+                if (lookahead == '.') {
+                    double fracpow = 1.0;
+                    *lex_p++ = lookahead;
+                    (*get_next_char)();
+                    while (character_digit_value[lookahead] < 10) {
+                        fracpow *= 0.1;
+                        fracv = fracv + fracpow*character_digit_value[lookahead];
+                        fraccount++;
+                        *lex_p++ = lookahead;
+                        (*get_next_char)();
+                    }
+                }
+                if (lookahead == 'e' || lookahead == 'E') {
+                    int exposign = 0;
+                    *lex_p++ = lookahead;
+                    (*get_next_char)();
+                    if (lookahead == '+' || lookahead == '-') {
+                        exposign = (lookahead == '-');
+                        *lex_p++ = lookahead;
+                        (*get_next_char)();
+                    }
+                    while (character_digit_value[lookahead] < 10) {
+                        expo = 10*expo + character_digit_value[lookahead];
+                        expocount++;
+                        *lex_p++ = lookahead;
+                        (*get_next_char)();
+                    }
+                    if (expocount == 0)
+                        error("Floating-point literal must have digits after the 'e'");
+                    if (exposign) { expo = -expo; }
+                }
+                if (intcount + fraccount == 0)
+                    error("Floating-point literal must have digits");
+                n = construct_float(signbit, intv, fracv, expo);
+            }
+            *lex_p++ = 0;
+            circle[circle_position].type = NUMBER_TT;
+            circle[circle_position].value = n;
+            if (!glulx_mode) error("Floating-point literals are not available in Z-code");
+            break;
+
         case RADIX_CODE:
             radix = 16; d = (*get_next_char)();
+            if (d == '-' || d == '+') { goto FloatNumber; }
             if (d == '$') { d = (*get_next_char)(); radix = 2; }
             if (character_digit_value[d] >= radix)
             {   if (radix == 2)

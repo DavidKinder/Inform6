@@ -52,6 +52,9 @@ http://eblong.com/zarf/glulx/inform631n-unidict2.patch
 Glulx 3.1.2 floating-point support
 http://eblong.com/zarf/glulx/inform631n-float.patch
 
+Support for floating-point literals of the form "$+1.0e+1"
+http://eblong.com/zarf/glulx/inform631n-floatconst.patch
+
 Show veneer routines in assembly output
 http://mailman-new.greennet.org.uk/pipermail/inform-maintenance/2009-January/001704.html
 
