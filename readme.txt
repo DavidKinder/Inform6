@@ -9,6 +9,9 @@ http://www.ifarchive.org/indexes/if-archiveXinfocomXcompilersXinform6.html
 This is a minor update to Inform 6.31. The only changes between 6.31N and
 6.31 are the application of the following patches:
 
+C63007: Strict mode not available in V3/4 games
+http://www.inform-fiction.org/patches/C63007.html
+
 C63102: Support $ALLOC_CHUNK_SIZE memory setting
 http://www.inform-fiction.org/patches/C63102.html
 

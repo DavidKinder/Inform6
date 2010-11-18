@@ -1335,6 +1335,8 @@ extern void switches(char *p, int cmode)
                                 version_set_switch=0; s=1;
                                 break;
                   }
+                  if ((version_number < 5) && (r_e_c_s_set == FALSE))
+                      runtime_error_checking_switch = FALSE;
                   break;
         case 'w': nowarnings_switch = state; break;
         case 'x': hash_switch = state; break;
