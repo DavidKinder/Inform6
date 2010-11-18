@@ -1,4 +1,4 @@
-This is version 6.31N of the Inform compiler,
+This is version 6.32 of the Inform compiler,
 copyright (c) Graham Nelson 1993 - 2010
 Full release notes and instructions are available at
 http://www.inform-fiction.org/
@@ -6,7 +6,7 @@ and
 http://www.ifarchive.org/indexes/if-archiveXinfocomXcompilersXinform6.html
 
 
-This is a minor update to Inform 6.31. The only changes between 6.31N and
+This is a minor update to Inform 6.31. The only changes between 6.32 and
 6.31 are the application of the following patches:
 
 C63007: Strict mode not available in V3/4 games

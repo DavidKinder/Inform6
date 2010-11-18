@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "chars" : Character set mappings and the Z-machine alphabet table       */
 /*                                                                           */
-/*   Part of Inform 6.31                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2006                                 */
+/*   Part of Inform 6.32                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2010                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 /*  Inform uses six different character representations:                     */
