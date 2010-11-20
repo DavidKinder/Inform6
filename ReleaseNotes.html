@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Inform Release Notes</h1>
-<h3>Inform Compiler 6.31, 6.30<br>Inform Library 6/11</h3>
+<h3>Inform Compiler 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
 
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
@@ -48,6 +48,104 @@ There are, naturally, sure to be imperfections in the release, and these should 
 way: bug reports to the Patch List, enhancement ideas to the Suggestions List. Any really serious 
 issues should perhaps be raised on the rec.arts.int-fiction Usenet newsgroup, with a Subject line 
 beginning &ldquo;<tt>[Inform6] ...</tt>&rdquo;.
+
+<h2>Compiler 6.32</h2>
+These are the changes delivered in version 6.32 of the Inform compiler.
+<h3>Features added</h3>
+Items of the form [C63104] quote the feature’s reference number in the ‘Compiler’ section of the Inform 
+Patch List. 
+<ul>
+<li><p>The Z-machine opcodes for pushing and pulling values from the stack are <tt>@push</tt> and <tt>@pull</tt>, used like this:
+<pre>
+  @push x;
+  @pull x;
+</pre>
+However for Glulx the opcode syntax is different: instead the <tt>@copy</tt> opcode is used:
+<pre>
+  @copy x sp;
+  @copy sp x;
+</pre>
+The compiler now supports the <tt>@push</tt> and <tt>@pull</tt> syntax under Glulx as an alias for <tt>@copy</tt>, allowing
+the same code to be used for both the Z-machine and Glulx. [C63104]
+<li><p>Custom Glulx opcodes (such as opcodes that post-date the compiler) can now be specified with the custom opcode syntax.
+The format of this syntax is
+<pre>  @"FlagsCount:Code"
+</pre>
+<tt><i>Flags</i></tt> (which are optional) can include "S" for store, "SS" for two stores, "B" for branch format,
+or "R" if execution never continues after the opcode. <tt><i>Count</i></tt> is the number of arguments (currently limited to 0-9),
+and <tt><i>Code</i></tt> is a decimal integer representing the opcode number.<p>
+For example, <tt>@"S3:123"</tt> is the syntax for a three-argument opcode (load, load, store) whose opcode number in decimal
+is 123, and <tt>@"2:234"</tt> is the syntax for a two-argument opcode (load, load) whose number is 234. [C63107]
+<li><p>When compiling to Glulx, the Glulx format version number of the resulting story file is usually determined by which Glulx opcodes
+are used in the source code. This version number can now be over-ridden by providing a <tt><b>-v</b></tt> command line argument after the
+<tt><b>-G</b></tt> switch to select Glulx mode. For example, the arguments
+<tt><b>-G -v3.1.0</b></tt> set the Glulx version number to &ldquo;3.1.0&rdquo;. [C63108]
+<li><p>The Unicode related opcode added to the Glulx 3.0.0 specification, <tt>@streamunichar</tt>, is now supported.
+<li><p>When compiling to Glulx, characters outside of the ISO 8859-1 range can now be used in strings. The maximum number of such
+characters allowed is determined by a new memory setting, <tt>$MAX_UNICODE_CHARS</tt>.
+<li><p>When compiling to Glulx, the syntax
+<pre>  print (char) <i>value</i>;</pre>
+now works for values greater than 255, printing the appropriate Unicode character. (For such values <tt>@streamunichar</tt> is used;
+for those less than or equal to 255, <tt>@streamchar</tt> is used as before.
+<li><p>The memory heap related opcodes added to the Glulx 3.1.0 specification (that is,
+<tt>@mzero</tt>, <tt>@mcopy</tt>, <tt>@malloc</tt> and <tt>@mfree</tt>) are now supported.
+<li><p>The acceleration related opcodes added to the Glulx 3.1.1 specification (that is,
+<tt>@accelfunc</tt> and <tt>@accelparam</tt>) are now supported. There is also a new syntax to get the address of a global variable
+<tt><i>var</i></tt>, with the expression &ldquo;<tt>#g$<i>var</i></tt>&rdquo;: this is provided so that such addresses can be provided
+to the <tt>@accelparam</tt> opcode.
+<li><p>The floating point related opcodes added to the Glulx 3.1.2 specification (that is,
+<tt>@numtof</tt>, <tt>@ftonumz</tt>, <tt>@ftonumn</tt>, <tt>@ceil</tt>, <tt>@floor</tt>, <tt>@fadd</tt>, <tt>@fsub</tt>, <tt>@fmul</tt>, 
+<tt>@fdiv</tt>, <tt>@fmod</tt>, <tt>@sqrt</tt>, <tt>@exp</tt>, <tt>@log</tt>, <tt>@pow</tt>, <tt>@sin</tt>, <tt>@cos</tt>, <tt>@tan</tt>, 
+<tt>@asin</tt>, <tt>@acos</tt>, <tt>@atan</tt>, <tt>@atan2</tt>, <tt>@jfeq</tt>, <tt>@jfne</tt>, <tt>@jflt</tt>, <tt>@jfle</tt>, 
+<tt>@jfgt</tt>, <tt>@jfge</tt>, <tt>@jisnan</tt> and <tt>@jisinf</tt>) are now supported.
+<li><p>Floating point constants can be used in the Inform source code. Thes constants are expressed in the form &ldquo;$+1.0e+1&rdquo;:
+that is, a dollar sign, followed by a plus or minus sign, followed by a floating point number, and then optionally a positive or negative
+integer exponent. Inform does not attempt anything other than converting these constants to their 32-bit integer representation: there is
+no constant folding as there is with integers, so the expression &ldquo;<tt>$+1.0 + $+1.0</tt>&rdquo; is not meaningful, and does not
+produce the floating point value &ldquo;2.0&rdquo;.<p>
+As an example of the use of these constants, the following adds together 100 and 123.45:
+<pre>  @fadd $+100 $+1.2345e+2 result;</pre>
+The compiler also defines the constants &ldquo;<tt>FLOAT_INFINITY</tt>&rdquo;, &ldquo;<tt>FLOAT_NINFINITY</tt>&rdquo;
+and &ldquo;<tt>FLOAT_NAN</tt>&rdquo; for positive infinity, negative infinity and &ldquo;not a number&rdquo;, respectively.
+<li><p>Glulx has a simple memory extension feature, where the game's header declares the memory space to be larger than the game file.
+The extra space is filled out with zeroes when the game starts. This is now supported by a new option <tt>$MEMORY_MAP_EXTENSION</tt>.
+This defaults to 0: if it is redefined to a larger value then the size of the game's memory space is extended by that amount.
+<li><p>The number of verbs allowed by the compiler when compiling to Glulx is no longer limited to fewer than 256. As part of producing
+the game file, the compiler creates a dictionary table that contains verb numbers. However, despite in Glulx there being space for a verb
+number between 0 and 65535 in this table, only one byte of it (that is, values between 0 and 255) was used. This has been fixed.<p>
+However, this also requires library changes to be useful, as the library makes use of this dictionary table. The library used by Inform 7
+has been adjusted to take advantage of this, but the Inform 6/11 library has not.
+<li><p>The dictionary of Glulx games can now contain characters outside of ISO 8859-1. There is a new
+memory setting, <tt>$DICT_CHAR_SIZE</tt>: by default this is 1, but setting it to 4 causes the compiler to create a dictionary containing
+32-bit Unicode characters.<p>
+However, this also requires library changes to be useful, as the library makes use of this dictionary table.
+</ul>
+<h3>Bugs fixed</h3>
+Items of the form [C63102] quote the bug’s reference number in the ‘Compiler’ section of the Inform 
+Patch List. 
+<ul>
+<li><p>Strict mode is no longer enabled by default when generating V3 and V4 Z-code files, as strict mode
+makes use of opcodes that are V5+ only. [C63007] 
+<li><p>The base unit of Inform's internal memory allocation for various structures (for example the buffer used
+to hold the generated code) is no longer fixed: it is now controlled by a setting <tt>$ALLOC_CHUNK_SIZE</tt>.
+This allows, for example, the maximum Glulx code size to be greater than 640Kb. [C63102] 
+<li><p>When compiling to Glulx, the stack size of the resulting story file is no longer fixed at 4096: it can be changed
+by the setting <tt>$MAX_STACK_SIZE</tt>. [C63108]
+<li><p>The compiler could crash if the size of the grammar table exceeded the size of the Z-machine readable memory: this
+is now fixed. [C63110]
+<li><p>Creating a Z-code game file with precisely 64Kb of readable memory produced an invalid file. This is now prevented,
+so that the largest readable memory size is 64Kb minus 2 bytes. [C63112]
+<li><p>Previously, under Glulx the <tt>print_to_array()</tt> function could be called with either two arguments, specifying both
+the array to print to and its length, or just one argument, the later matching what is allowed when compiling to Z-code. This
+one argument form has now been withdrawn under Glulx as a security hole, and a source to problems with writing beyond the end
+of the array: now the array length must be specified. (See also <a href="#FeaturesGlulx">Features available only in Glulx</a>.)
+<li><p>Veneer routines are no longer excluded from Inform's assembly output (which is accessed with the <tt><b>-a</b></tt>
+command line switch).
+<li><p>For Linux and other Unix variants the default memory settings have been increased, which should remove the need
+to change the compiler settings when building large projects on these platforms.
+<li><p>For Mac OS X, the maximum length of a file path is now 8192 characters, which should prevent any further problems with
+long paths on this platform.
+</ul>
 
 <h2>Compiler 6.31</h2>
 These are the changes delivered in version 6.31 of the Inform compiler.
@@ -668,14 +766,12 @@ Again, you can make the code safe for both VMs if you change &ldquo;<tt>2</tt>&r
   for (i=0 : i&lt;len : i++)
    print (char) mybuf->(i+WORDSIZE);
 </pre>
-See also <a href="#FeaturesGlulx">Features available only in Glulx</a> for an extended form of <tt>print_to_array</tt>.
+See also <a href="#FeaturesGlulx">Features available only in Glulx</a> for details of <tt>print_to_array</tt> under Glulx.
 <h4>Directives</h4>
 Glulx handles the majority of Inform directives, with two exceptions:
 <ul>
-<li><p>The <tt>Zcharacter</tt> directive causes the compilation error &ldquo;Glulx Inform does not handle Unicode 
-yet&rdquo;. The message, though true, is misleading; the real issue is that Glulx does not use the ZSCII 
-character set, which can in part be configured by various forms of <tt>Zcharacter</tt>. Your best approach 
-is to bypass the directive when compiling for Glulx:
+<li><p>The <tt>Zcharacter</tt> directive causes a compilation error, since Glulx does not use the ZSCII character set.
+Your best approach is to bypass the directive when compiling for Glulx:
 <pre>
   #Ifdef TARGET_ZCODE; 
   Zcharacter ... ; 
@@ -726,26 +822,25 @@ at run-time. Therefore, you should use styles with caution, and if necessary ale
 settings which your game expects. 
 <h4>Character handling</h4>
 Unlike the Z-machine, which internally uses the ZSCII character set (see the <i>Inform Designer’s 
-Manual</i> Table 2 on p. 519), Glulx sticks to the ISO 8859-1 (Latin-1) encoding. This eight-bit scheme 
-is the same as ZSCII for character values 0-127, but different for character values 128-255. Note that 
-Glulx is built on the Glk I/O library, which currently does not handle Unicode characters (except 
-insofar as code points $0000 through $00FF are identical to ISO 8859). The impact is as follows:
+Manual</i> Table 2 on p. 519), Glulx uses strings consisting of either 8-bit characters in the ISO
+8859-1 (Latin-1) encoding (which is the same as ZSCII for character values 0-127, but different for
+character values 128-255), or 32-bit Unicode characters. In general you don't need to worry about
+which string representation is used: the compiler will figure it out for you. The impact is as follows:
 <ul>
 <li><p><tt>@<i>escape_sequence</i></tt>: Escape sequences such as <tt>@:a</tt> and <tt>@LL</tt>
-(for &ldquo;ä&rdquo; and &ldquo;£&rdquo; respectively) are 
-accepted identically by both VMs (except that Glulx does not handle <tt>@oe</tt> and <tt>@OE</tt>, because the 
-&ldquo;&oelig;&rdquo; and &ldquo;&OElig;&rdquo; ligatures are outside the range of ISO 8859-1).
+(for &ldquo;ä&rdquo; and &ldquo;£&rdquo; respectively) are accepted identically by both VMs.
 <li><p><tt>@@<i>decnum</i></tt>: The number is the character’s internal decimal value, so <tt>@@65</tt>
 is &ldquo;A&rdquo; in both VMs, but <tt>@@165</tt> is &ldquo;ï&rdquo; in the Z-machine and &ldquo;¥&rdquo; in Glulx.
 <li><p><tt>@{<i>hexnum</i>}</tt>: The number is the character’s Unicode value, so <tt>@{41}</tt> is &ldquo;A&rdquo;
 and <tt>@{EF}</tt> is &ldquo;ï&rdquo; in both VMs. However, <tt>@{A5}</tt> is &ldquo;¥&rdquo; in Glulx,
-but causes a Z-machine compilation error because &ldquo;¥&rdquo; isn’t a ZSCII character, and <tt>@{152}</tt> is
-&ldquo;&OElig;&rdquo; in the Z-machine but causes a Glulx compilation error because that ligature is outside the range of ISO 8859-1.
+but causes a Z-machine compilation error because &ldquo;¥&rdquo; isn’t a ZSCII character.
 <li><p><tt>-C<i>n</i></tt>: The compiler switches <tt><b>-C1</b></tt> through <tt><b>-C9</b></tt>
 specify that the source file uses the character set 
 defined by ISO 8859-1 through 8859-9 respectively. In the Z-machine, the switch also initialises 
 the higher ZSCII character set to appropriate values; this later feature is irrelevant when compiling for 
 Glulx.
+<li><p>Dictionaries in Glulx Inform 6 games have to consist of only ISO 8859-1 characters at present. This is
+being worked on, and the necessary compiler changes have been made, but further library work is still needed.
 </ul>
 <h4>Compiler switches</h4>
 We’ve already mentioned the <tt><b>-G</b></tt> command line switch, which causes the compiler to output code 
@@ -765,7 +860,8 @@ Designer’s Manual</i> Table 3 on p. 521).
 Glulx offers some additional capabilities above those of the Z-machine:
 <h4><a name="FeaturesGlulx">Features available only in Glulx</a></h4>
 <ul>
-<li><p>There is an extended form of <tt>print_to_array</tt>:
+<li><p>For Glulx, <tt>print_to_array</tt> function requires two arguments, the first being the array to print to,
+and the second the length of that array:
 <pre>  <i>len</i> = <i>mystr</i>.print_to_array(<i>mybuf</i>, 80);</pre>
 This example writes no more than 76 characters into the array. If <tt><i>mybuf</i></tt> is an 80-byte array, you 
 can be sure it will not be overrun. (Do not try this with the second argument less than 4.)<p>
@@ -991,17 +1087,17 @@ information may be useful to you.
 This is the &ldquo;language definition file&rdquo;, and in translation is replaced by <tt>French.h</tt>, <tt>German.h</tt>, etc. The 
 following changes have been made:
 <ul>
-<li>Class <tt>CompassDirection</tt> and its objects have been extensively revised.
-<li>Routine <tt>LanguageVerb()</tt> has been reworked.
-<li>Routines <tt>LanguageVerbIsDebugging()</tt>, <tt>LanguageVerbLikesAdverb()</tt> and <tt>LanguageVerbMayBeName()</tt> 
+<li><p>Class <tt>CompassDirection</tt> and its objects have been extensively revised.
+<li><p>Routine <tt>LanguageVerb()</tt> has been reworked.
+<li><p>Routines <tt>LanguageVerbIsDebugging()</tt>, <tt>LanguageVerbLikesAdverb()</tt> and <tt>LanguageVerbMayBeName()</tt> 
 have been added to isolate language-specific tests previously embedded in <tt>parserm.h</tt>.
-<li>Constants <tt>YOU__TX</tt> and <tt>COMMA__TX</tt> have been added.
-<li>Routine <tt>LanguageLM()</tt> has been sorted alphabetically.
-<li>In that routine, <tt>CommandsOff</tt>, <tt>CommandsOn</tt> and <tt>CommandsRead</tt> have been added.
-<li>Also in that routine, <tt>Exit</tt>, <tt>Inv</tt>, <tt>Look</tt>, <tt>Miscellany</tt>, <tt>Places</tt>,
+<li><p>Constants <tt>YOU__TX</tt> and <tt>COMMA__TX</tt> have been added.
+<li><p>Routine <tt>LanguageLM()</tt> has been sorted alphabetically.
+<li><p>In that routine, <tt>CommandsOff</tt>, <tt>CommandsOn</tt> and <tt>CommandsRead</tt> have been added.
+<li><p>Also in that routine, <tt>Exit</tt>, <tt>Inv</tt>, <tt>Look</tt>, <tt>Miscellany</tt>, <tt>Places</tt>,
 <tt>Pronouns</tt> and <tt>Score</tt> have been extended, 
 and <tt>Go</tt> has been modified.
-<li>Constant <tt>LIBRARY_ENGLISH</tt> has been added. We suggest that translated versions instead define <tt>
+<li><p>Constant <tt>LIBRARY_ENGLISH</tt> has been added. We suggest that translated versions instead define <tt>
 LIBRARY_DUTCH</tt>, <tt>LIBRARY_FRENCH</tt>, <tt>LIBRARY_GERMAN</tt>, <tt>LIBRARY_ITALIAN</tt>, <tt>LIBRARY_SPANISH</tt>, <tt>
 LIBRARY_SWEDISH</tt> etc, in case it becomes useful at some time to determine which language is in 
 force.
@@ -1010,19 +1106,12 @@ force.
 This file contains grammars for English verbs like TAKE and DROP, and in translation is replaced 
 by <tt>FrenchG.h</tt>, <tt>GermanG.h</tt>, etc. The following changes have been made:
 <ul>
-<li>The grammars have been sorted alphabetically.
-<li>Verb definitions <tt>'recording'</tt> and <tt>'replay'</tt> are no longer conditional on DEBUG.
-<li>Verb definitions <tt>'showobj'</tt>, <tt>'ask'</tt>, <tt>'exit'</tt>, <tt>'look'</tt> and <tt>'tell'</tt> have been extended.
-<li>Verb definition <tt>'pry'</tt> <tt>'prise'</tt> etc has been added.
-<li>Constant <tt>LIBRARY_GRAMMAR</tt> has been added.
+<li><p>The grammars have been sorted alphabetically.
+<li><p>Verb definitions <tt>'recording'</tt> and <tt>'replay'</tt> are no longer conditional on DEBUG.
+<li><p>Verb definitions <tt>'showobj'</tt>, <tt>'ask'</tt>, <tt>'exit'</tt>, <tt>'look'</tt> and <tt>'tell'</tt> have been extended.
+<li><p>Verb definition <tt>'pry'</tt> <tt>'prise'</tt> etc has been added.
+<li><p>Constant <tt>LIBRARY_GRAMMAR</tt> has been added.
 </ul>
 </body>
 </html>
-
-<!-- To do for Inform 6.32:
-       Go through all patches and update notes
-       Glulx print_to_array() now requires an array length
-       Glulx ZCharacter directive error message has changed
-       Revise Glulx character handling to mention Unicode
--->
 
