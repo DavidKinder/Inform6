@@ -1614,16 +1614,13 @@ static void banner(void)
 {
     sprintf(banner_line, "Inform %d.%d%d",
         (VNUMBER/100)%10, (VNUMBER/10)%10, VNUMBER%10);
-    if (0) {
-        sprintf(banner_line+strlen(banner_line), " (biplatform, G%d.%d%d)",
-            (GLULX_RELEASE_NUMBER/100)%10, (GLULX_RELEASE_NUMBER/10)%10, 
-            GLULX_RELEASE_NUMBER%10);
-    }
+#ifdef RELEASE_SUFFIX
+    strcat(banner_line, RELEASE_SUFFIX);
+#endif
 #ifdef MACHINE_STRING
     sprintf(banner_line+strlen(banner_line), " for %s", MACHINE_STRING);
 #endif
-    sprintf(banner_line+strlen(banner_line), " (%s)",
-        RELEASE_DATE);
+    sprintf(banner_line+strlen(banner_line), " (%s)", RELEASE_DATE);
     printf("%s\n", banner_line);
 }
 

@@ -36,6 +36,9 @@
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
 
+/* N indicates an intermediate release for Inform 7 */
+#define RELEASE_SUFFIX "N"
+
 /* ------------------------------------------------------------------------- */
 /*   Our host machine or OS for today is...                                  */
 /*                                                                           */
