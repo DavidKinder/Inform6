@@ -71,8 +71,8 @@ the same code to be used for both the Z-machine and Glulx. [C63104]
 The format of this syntax is
 <pre>  @"FlagsCount:Code"
 </pre>
-<tt><i>Flags</i></tt> (which are optional) can include "S" for store, "SS" for two stores, "B" for branch format,
-or "R" if execution never continues after the opcode. <tt><i>Count</i></tt> is the number of arguments (currently limited to 0-9),
+<tt><i>Flags</i></tt> (which are optional) can include &ldquo;S&rdquo; for store, &ldquo;SS&rdquo; for two stores, &ldquo;B&rdquo; for branch format,
+or &ldquo;R&rdquo; if execution never continues after the opcode. <tt><i>Count</i></tt> is the number of arguments (currently limited to 0-9),
 and <tt><i>Code</i></tt> is a decimal integer representing the opcode number.<p>
 For example, <tt>@"S3:123"</tt> is the syntax for a three-argument opcode (load, load, store) whose opcode number in decimal
 is 123, and <tt>@"2:234"</tt> is the syntax for a two-argument opcode (load, load) whose number is 234. [C63107]
@@ -86,7 +86,7 @@ characters allowed is determined by a new memory setting, <tt>$MAX_UNICODE_CHARS
 <li><p>When compiling to Glulx, the syntax
 <pre>  print (char) <i>value</i>;</pre>
 now works for values greater than 255, printing the appropriate Unicode character. (For such values <tt>@streamunichar</tt> is used;
-for those less than or equal to 255, <tt>@streamchar</tt> is used as before.
+for those less than or equal to 255, <tt>@streamchar</tt> is used as before.)
 <li><p>The memory heap related opcodes added to the Glulx 3.1.0 specification (that is,
 <tt>@mzero</tt>, <tt>@mcopy</tt>, <tt>@malloc</tt> and <tt>@mfree</tt>) are now supported.
 <li><p>The acceleration related opcodes added to the Glulx 3.1.1 specification (that is,
