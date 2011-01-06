@@ -2,7 +2,7 @@
 /*   "expressc" :  The expression code generator                             */
 /*                                                                           */
 /*   Part of Inform 6.32                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2010                                 */
+/*   copyright (c) Graham Nelson 1993 - 2011                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 

@@ -1,5 +1,5 @@
 This is version 6.32 of the Inform compiler,
-copyright (c) Graham Nelson 1993 - 2010
+copyright (c) Graham Nelson 1993 - 2011
 Full release notes and instructions are available at
 http://www.inform-fiction.org/
 and
