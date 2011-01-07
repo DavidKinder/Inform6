@@ -1466,13 +1466,14 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
     {   /*  Unsigned__Compare:  returns 1 if x>y, 0 if x=y, -1 if x<y        */
 
         "Unsigned__Compare",
-        "x y u v;\
-         if (x==y) return 0;\
-         if (x<0 && y>=0) return 1;\
-         if (x>=0 && y<0) return -1;\
-         u = x&$7fffffff; v= y&$7fffffff;\
-         if (u>v) return 1;\
+        "x y;\
+         @jleu x y ?lesseq;\
+         return 1;\
+         .lesseq;\
+         @jeq x y ?equal;\
          return -1;\
+         .equal;\
+         return 0;\
          ]", "", "", "", "", ""
     },
     {   /*  Meta__class:  returns the metaclass of an object                 */
