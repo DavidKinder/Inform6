@@ -890,7 +890,7 @@ or less.");
 
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
-%6d textual lines                %6ld characters ",
+%6d textual lines              %8ld characters ",
             input_file, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_setting == 0) printf("(plain ASCII)\n");
@@ -900,7 +900,7 @@ or less.");
             }
 
             printf("Allocated:\n\
-%6d symbols (maximum %4d)       %6ld bytes of memory\n\
+%6d symbols (maximum %4d)    %8ld bytes of memory\n\
 Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  no_symbols, MAX_SYMBOLS,
                  (long int) malloced_bytes,
@@ -911,7 +911,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  (long int) k_long, k_str);
 
             printf("\
-%6d classes (maximum %2d)         %6d objects (maximum %3d)\n\
+%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
 %6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
                  no_classes, MAX_CLASSES,
                  no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
@@ -1555,7 +1555,7 @@ table format requested (producing number 2 format instead)");
 
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
-%6d textual lines                %6ld characters ",
+%6d textual lines              %8ld characters ",
             input_file, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_setting == 0) printf("(plain ASCII)\n");
@@ -1567,11 +1567,10 @@ table format requested (producing number 2 format instead)");
             {char serialnum[8];
             write_serial_number(serialnum);
             printf("Allocated:\n\
-%6d symbols (maximum %4d)       %6ld bytes of memory\n\
-Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
+%6d symbols (maximum %4d)    %8ld bytes of memory\n\
+Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  no_symbols, MAX_SYMBOLS,
                  (long int) malloced_bytes,
-                 version_number,
                  version_name(version_number),
                  output_called,
                  release_number,
@@ -1581,7 +1580,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
             } 
 
             printf("\
-%6d classes (maximum %2d)         %6d objects (maximum %3d)\n\
+%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
 %6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
                  no_classes, MAX_CLASSES,
                  no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
@@ -1607,7 +1606,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 %6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
 %6ld instructions of code         %6d sequence points\n\
 %6ld bytes readable memory used (maximum 65536)\n\
-%6ld bytes used in machine        %6ld bytes free in machine\n",
+%6ld bytes used in machine    %10ld bytes free in machine\n",
                  (long int) total_chars_trans,
                  (long int) total_bytes_trans,
                  (total_chars_trans>total_bytes_trans)?0:1,

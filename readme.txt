@@ -10,7 +10,8 @@ This is a minor update to Inform 6.32. The only changes between 6.32N and
 6.32 are the application of the following patches:
 
 Change the Glulx Unsigned__Compare() veneer routine to a much more efficient
-implementation
-https://github.com/erkyrath/inform6/commit/59d1e2568aaf81945f3b0c3dab750a0effea1d8f
+implementation (Andrew Plotkin)
 
+Tidy the output printed when the statistics (-s) switch is used
+(David Kinder)
 
