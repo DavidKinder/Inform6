@@ -55,6 +55,12 @@ These are the changes delivered in version 6.33 of the Inform compiler.
 <ul>
 <li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
 much more efficient implementation, using Glulx's unsigned comparison opcodes.
+<li><p>The bounds checking related to internal arrays that are are sized from the <tt>$MAX_PROP_TABLE_SIZE</tt>,
+<tt>$MAX_INDIV_PROP_TABLE_SIZE</tt>, <tt>$MAX_OBJ_PROP_TABLE_SIZE</tt>, <tt>$SYMBOLS_CHUNK_SIZE</tt>,
+<tt>$MAX_ZCODE_SIZE</tt>, <tt>$MAX_QTEXT_SIZE</tt> and <tt>$MAX_STATIC_DATA</tt> settings has been
+improved, so that it should not be possible to crash the compiler if these settings are too small.
+<li><p>The error message shown when too many global variables are declared now tells the user to
+increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting.
 </ul>
 
 <h2>Compiler 6.32</h2>

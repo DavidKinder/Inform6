@@ -12,6 +12,14 @@ This is a minor update to Inform 6.32. The only changes between 6.32N and
 Change the Glulx Unsigned__Compare() veneer routine to a much more efficient
 implementation (Andrew Plotkin)
 
+Improve the array bounds checking for the $MAX_PROP_TABLE_SIZE,
+$MAX_INDIV_PROP_TABLE_SIZE, $MAX_OBJ_PROP_TABLE_SIZE, $SYMBOLS_CHUNK_SIZE,
+$MAX_ZCODE_SIZE, $MAX_QTEXT_SIZE and $MAX_STATIC_DATA settings
+(Andrew Plotkin)
+
+Fix the error message when too many global variables are declared
+(Andrew Plotkin)
+
 Tidy the output printed when the statistics (-s) switch is used
 (David Kinder)
 
