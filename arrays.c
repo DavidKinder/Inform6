@@ -246,8 +246,7 @@ extern void make_global(int array_flag, int name_only)
             return;
         }
         if (glulx_mode && no_globals==MAX_GLOBAL_VARIABLES)
-        {   error_numbered("All global variables already declared; max is",
-                MAX_GLOBAL_VARIABLES);
+        {   memoryerror("MAX_GLOBAL_VARIABLES", MAX_GLOBAL_VARIABLES);
             panic_mode_error_recovery();
             return;
         }
