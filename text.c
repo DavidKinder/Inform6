@@ -118,6 +118,13 @@ static unsigned char *text_out_pc;     /* The "program counter" during text
                                           translation: the next address to
                                           write Z-coded text output to       */
 
+static unsigned char *text_out_limit;  /* The upper limit of text_out_pc
+                                          during text translation            */
+
+static int text_out_overflow;          /* During text translation, becomes
+                                          true if text_out_pc tries to pass
+                                          text_out_limit                     */
+
 /* ------------------------------------------------------------------------- */
 /*   For variables/arrays used by the dictionary manager, see below          */
 /* ------------------------------------------------------------------------- */
@@ -220,22 +227,21 @@ extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        low_strings_top=translate_text(low_strings_top,b);
-        i= subtract_pointers(low_strings_top,low_strings);
-        is_abbreviation = FALSE;
-        if (i>MAX_LOW_STRINGS)
+        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b);
+        if (!low_strings_top)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
+        is_abbreviation = FALSE;
         return(0x21+(j/2));
     }
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    c = translate_text(strings_holding_area, b);
-    i = subtract_pointers(c, strings_holding_area);
-
-    if (i>MAX_STATIC_STRINGS)
+    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b);
+    if (!c)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
+
+    i = subtract_pointers(c, strings_holding_area);
 
     /* Insert null bytes as needed to ensure that the next static string */
     /* also occurs at an address expressible as a packed address         */
@@ -288,6 +294,10 @@ static void write_z_char_z(int i)
     zob_index=0;
     j= zchars_out_buffer[0]*0x0400 + zchars_out_buffer[1]*0x0020
        + zchars_out_buffer[2];
+    if (text_out_pc+2 > text_out_limit) {
+        text_out_overflow = TRUE;
+        return;
+    }
     text_out_pc[0] = j/256; text_out_pc[1] = j%256; text_out_pc+=2;
     total_bytes_trans+=2;
 }
@@ -335,6 +345,10 @@ static void end_z_chars(void)
 static void write_z_char_g(int i)
 {
   ASSERT_GLULX();
+  if (text_out_pc+1 > text_out_limit) {
+      text_out_overflow = TRUE;
+      return;
+  }
   total_zchars_trans++;
   text_out_pc[0] = i;
   text_out_pc++;
@@ -345,10 +359,13 @@ static void write_z_char_g(int i)
 /*   The main routine "text.c" provides to the rest of Inform: the text      */
 /*   translator. p is the address to write output to, s_text the source text */
 /*   and the return value is the next free address to write output to.       */
+/*   The return value will not exceed p_limit. If the translation tries to   */
+/*   overflow this boundary, the return value will be NULL (and you should   */
+/*   display an error).                                                      */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *translate_text(uchar *p, char *s_text)
+extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
     unsigned char *text_in;
@@ -358,6 +375,8 @@ extern uchar *translate_text(uchar *p, char *s_text)
 
     text_in     = (unsigned char *) s_text;
     text_out_pc = (unsigned char *) p;
+    text_out_limit = (unsigned char *) p_limit;
+    text_out_overflow = FALSE;
 
     /*  Remember the Z-chars total so that later we can subtract to find the
         number of Z-chars translated on this string                          */
@@ -682,7 +701,10 @@ string; substituting '?'.");
 
   }
 
-    return((uchar *) text_out_pc);
+  if (text_out_overflow)
+      return NULL;
+  else
+      return((uchar *) text_out_pc);
 }
 
 static int unicode_entity_index(int32 unicode)

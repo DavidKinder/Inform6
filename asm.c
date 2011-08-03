@@ -837,9 +837,10 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        j = subtract_pointers(
-                (translate_text(zcode_holding_area + zcode_ha_size, AI->text)),
-                (zcode_holding_area + zcode_ha_size));
+        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text);
+        if (!tmp)
+            memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
+        j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));
         for (i=0; i<j; i++) zcode_markers[zcode_ha_size++] = 0;
         zmachine_pc += j;
         goto Instruction_Done;

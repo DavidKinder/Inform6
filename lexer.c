@@ -1357,8 +1357,7 @@ extern void get_next_token(void)
             do
             {   d = (*get_next_char)(); *lex_p++ = d;
                 if (quoted_size++==MAX_QTEXT_SIZE)
-                {   error(
-                  "Too much text for one pair of quotations \"...\" to hold");
+                {   memoryerror("MAX_QTEXT_SIZE", MAX_QTEXT_SIZE);
                     break;
                 }
                 if (d == '\n')

@@ -733,9 +733,12 @@ static int write_property_block_z(char *shortname)
     /* printf("Object at %04x\n", mark); */
 
     if (shortname != NULL)
-    {   uchar *tmp = translate_text(p+mark+1,shortname);
+    {   uchar *tmp;
+        if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
+            memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+        tmp = translate_text(p+mark+1,p+mark+1+510,shortname);
+        if (!tmp) error ("Short name of object exceeded 765 Z-characters");
         i = subtract_pointers(tmp,(p+mark+1));
-        if (i>510) error ("Short name of object exceeded 765 Z-characters");
         p[mark] = i/2;
         mark += i+1;
     }
