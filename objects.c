@@ -434,10 +434,6 @@ so many values that the list has overflowed the maximum 32 entries");
                             own table but must inherit some more from the
                             class  */
 
-                        if (individuals_length+64 > MAX_INDIV_PROP_TABLE_SIZE)
-                            memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                                        MAX_INDIV_PROP_TABLE_SIZE);
-
                         class_block_offset = class_prop_block[j-2]*256
                                              + class_prop_block[j-1];
 
@@ -455,6 +451,9 @@ so many values that the list has overflowed the maximum 32 entries");
                             {   if (module_switch)
                                     backpatch_zmachine(IDENT_MV,
                                         INDIVIDUAL_PROP_ZA, i_m);
+                                if (i_m+3+p[2] > MAX_INDIV_PROP_TABLE_SIZE)
+                                    memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
+                                        MAX_INDIV_PROP_TABLE_SIZE);
                                 individuals_table[i_m++] = p[0];
                                 individuals_table[i_m++] = p[1];
                                 individuals_table[i_m++] = p[2];
@@ -502,10 +501,6 @@ so many values that the list has overflowed the maximum 32 entries");
                         the object had no instance variables of its own
                         but must inherit some more from the class  */
 
-                    if (individuals_length+64 > MAX_INDIV_PROP_TABLE_SIZE)
-                        memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                                    MAX_INDIV_PROP_TABLE_SIZE);
-
                     if (individual_prop_table_size++ == 0)
                     {   full_object.pp[k].num = 3;
                         full_object.pp[k].l = 1;
@@ -523,6 +518,9 @@ so many values that the list has overflowed the maximum 32 entries");
                     while ((p[0]!=0)||(p[1]!=0))
                     {   if (module_switch)
                         backpatch_zmachine(IDENT_MV, INDIVIDUAL_PROP_ZA, i_m);
+                        if (i_m+3+p[2] > MAX_INDIV_PROP_TABLE_SIZE)
+                            memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
+                                MAX_INDIV_PROP_TABLE_SIZE);
                         individuals_table[i_m++] = p[0];
                         individuals_table[i_m++] = p[1];
                         individuals_table[i_m++] = p[2];
@@ -542,7 +540,12 @@ so many values that the list has overflowed the maximum 32 entries");
     }
 
     if (individual_prop_table_size > 0)
-    {   individuals_table[i_m++] = 0;
+    {
+        if (i_m+2 > MAX_INDIV_PROP_TABLE_SIZE)
+            memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
+                MAX_INDIV_PROP_TABLE_SIZE);
+
+        individuals_table[i_m++] = 0;
         individuals_table[i_m++] = 0;
         individuals_length += 2;
     }
@@ -625,9 +628,7 @@ static void property_inheritance_g(void)
           full_object_g.props[k].datalen = prop_length;
           if (full_object_g.propdatasize + prop_length 
             > MAX_OBJ_PROP_TABLE_SIZE) {
-            error_numbered("Limit of property data exceeded for this object; \
-MAX_OBJ_PROP_TABLE_SIZE is", MAX_OBJ_PROP_TABLE_SIZE);
-            break;
+            memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
           }
 
           for (i=0; i<prop_length; i++) {
@@ -655,9 +656,7 @@ MAX_OBJ_PROP_TABLE_SIZE is", MAX_OBJ_PROP_TABLE_SIZE);
             full_object_g.props[k].datalen = prop_length;
             if (full_object_g.propdatasize + prop_length 
               > MAX_OBJ_PROP_TABLE_SIZE) {
-              error_numbered("Limit of property data exceeded for this object; \
-MAX_OBJ_PROP_TABLE_SIZE is", MAX_OBJ_PROP_TABLE_SIZE);
-              break;
+              memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
             }
 
             for (i=0; i<prop_length; i++) {
@@ -669,9 +668,7 @@ MAX_OBJ_PROP_TABLE_SIZE is", MAX_OBJ_PROP_TABLE_SIZE);
           }
 
           if (full_object_g.numprops == MAX_OBJ_PROP_COUNT) {
-            error_numbered("Limit of property entries exceeded for this \
-object; MAX_OBJ_PROP_COUNT is", MAX_OBJ_PROP_COUNT);
-            break;
+            memoryerror("MAX_OBJ_PROP_COUNT",MAX_OBJ_PROP_COUNT);
           }
     }
   }
@@ -684,11 +681,14 @@ object; MAX_OBJ_PROP_COUNT is", MAX_OBJ_PROP_COUNT);
 
 static int write_properties_between(uchar *p, int mark, int from, int to)
 {   int j, k, prop_number, prop_length;
+    /* Note that p is properties_table. */
     for (prop_number=to; prop_number>=from; prop_number--)
     {   for (j=0; j<full_object.l; j++)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
             {   prop_length = 2*full_object.pp[j].l;
+                if (mark+2+prop_length >= MAX_PROP_TABLE_SIZE)
+                    memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
                 if (version_number == 3)
                     p[mark++] = prop_number + (prop_length - 1)*32;
                 else
@@ -809,6 +809,8 @@ static int32 write_property_block_g(void)
   }
 
   /* Write out the number of properties in this table. */
+  if (mark+4 >= MAX_PROP_TABLE_SIZE)
+      memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
   WriteInt32(p+mark, totalprops);
   mark += 4;
 
@@ -824,6 +826,8 @@ static int32 write_property_block_g(void)
     for (jx=ix; 
         jx<full_object_g.numprops && full_object_g.props[jx].num == propnum;
         jx++) {
+      if (datamark+4*full_object_g.props[jx].datalen >= MAX_PROP_TABLE_SIZE)
+        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
       int32 datastart = full_object_g.props[jx].datastart;
       for (kx=0; kx<full_object_g.props[jx].datalen; kx++) {
         int32 val = full_object_g.propdata[datastart+kx].value;
@@ -835,6 +839,8 @@ static int32 write_property_block_g(void)
         datamark += 4;
       }
     }
+    if (mark+10 >= MAX_PROP_TABLE_SIZE)
+        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
     WriteInt16(p+mark, propnum);
     mark += 2;
     WriteInt16(p+mark, totallen);
@@ -1188,12 +1194,13 @@ the names '%s' and '%s' actually refer to the same property",
         }
 
         if (individual_property)
-        {   individuals_table[i_m + 2] = length;
-            individuals_length += length+3;
-            i_m = individuals_length;
-            if (individuals_length+64 > MAX_INDIV_PROP_TABLE_SIZE)
+        {
+            if (individuals_length+length+3 > MAX_INDIV_PROP_TABLE_SIZE)
                 memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
                     MAX_INDIV_PROP_TABLE_SIZE);
+            individuals_table[i_m + 2] = length;
+            individuals_length += length+3;
+            i_m = individuals_length;
         }
         else
             full_object.pp[next_prop].l = length/2;
@@ -1304,9 +1311,7 @@ the names '%s' and '%s' actually refer to the same property",
             }
 
         if (full_object_g.numprops == MAX_OBJ_PROP_COUNT) {
-          error_numbered("Limit of property entries exceeded for this \
-object; MAX_OBJ_PROP_COUNT is", MAX_OBJ_PROP_COUNT);
-          break;
+          memoryerror("MAX_OBJ_PROP_COUNT",MAX_OBJ_PROP_COUNT);
         }
 
         property_name_symbol = token_value;
@@ -1397,9 +1402,7 @@ object; MAX_OBJ_PROP_COUNT is", MAX_OBJ_PROP_COUNT);
             }
 
             if (full_object_g.propdatasize >= MAX_OBJ_PROP_TABLE_SIZE) {
-              error_numbered("Limit of property data exceeded for this \
-object; MAX_OBJ_PROP_TABLE_SIZE is", MAX_OBJ_PROP_TABLE_SIZE);
-              break;
+              memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
             }
 
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
