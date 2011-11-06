@@ -829,9 +829,9 @@ static int32 write_property_block_g(void)
     for (jx=ix; 
         jx<full_object_g.numprops && full_object_g.props[jx].num == propnum;
         jx++) {
+      int32 datastart = full_object_g.props[jx].datastart;
       if (datamark+4*full_object_g.props[jx].datalen >= MAX_PROP_TABLE_SIZE)
         memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-      int32 datastart = full_object_g.props[jx].datastart;
       for (kx=0; kx<full_object_g.props[jx].datalen; kx++) {
         int32 val = full_object_g.propdata[datastart+kx].value;
         WriteInt32(p+datamark, val);
