@@ -948,8 +948,6 @@ void compress_game_text()
     compression_table_size = 12;
     
     compress_makebits(huff_entity_root, 0, -1, &bits);
-    /* compress_dumptable(huff_entity_root, 0); */
-    
   }
 
   /* Now, sadly, we have to compute the size of the string section,

@@ -1054,11 +1054,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
                      if (runtime_error_checking_switch)
-                     {   /* ln2 = next_label++;
-                         check_nonzero_at_runtime(AO, ln2, GIVE_RTE);
-                         assemblez_2(ln, AO, AO2);
-                         assemble_label_no(ln2); */
-                         ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
+                     {   ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
                          if (version_number >= 5)
                              assemblez_3(call_vn_zc, veneer_routine(ln2),
                              AO, AO2);
@@ -2224,11 +2220,6 @@ static void parse_statement_g(int break_label, int continue_label)
                      panic_mode_error_recovery(); 
                      break;
                  }
-                 /*if ((module_switch) 
-                     && (AO.value >= MAX_LOCAL_VARIABLES)
-                     && (AO.value < LOWEST_SYSTEM_VAR_NUMBER))
-                     AO.marker = VARIABLE_MV;
-                 else AO.marker = 0;*/
                  misc_keywords.enabled = TRUE;
                  get_next_token(); flag = TRUE;
                  misc_keywords.enabled = FALSE;

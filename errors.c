@@ -32,7 +32,7 @@ static void print_preamble(void)
     if (j <= 0) p = ErrorReport.source;
     else p = InputFiles[j-1].filename;
 
-    if (!p) p = ""; /* ###-call me paranoid */
+    if (!p) p = "";
     
     switch(error_format)
     {

@@ -1385,7 +1385,7 @@ extern void switches(char *p, int cmode)
         case 'G': if (cmode == 0)
                       error("The switch '-G' can't be set with 'Switches'");
                   else
-                  {   glulx_mode = state; /* ###- */
+                  {   glulx_mode = state;
                       adjust_memory_sizes();
                   }
                   break;
