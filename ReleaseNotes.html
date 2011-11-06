@@ -52,15 +52,17 @@ beginning &ldquo;<tt>[Inform6] ...</tt>&rdquo;.
 <h2>Compiler 6.33</h2>
 These are the changes delivered in version 6.33 of the Inform compiler.
 <h3>Bugs fixed</h3>
+Items of the form [Mantis 612] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
 <li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
-much more efficient implementation, using Glulx's unsigned comparison opcodes.
+much more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 <li><p>The bounds checking related to internal arrays that are are sized from the <tt>$MAX_PROP_TABLE_SIZE</tt>,
 <tt>$MAX_INDIV_PROP_TABLE_SIZE</tt>, <tt>$MAX_OBJ_PROP_TABLE_SIZE</tt>, <tt>$SYMBOLS_CHUNK_SIZE</tt>,
 <tt>$MAX_ZCODE_SIZE</tt>, <tt>$MAX_QTEXT_SIZE</tt> and <tt>$MAX_STATIC_DATA</tt> settings has been
 improved, so that it should not be possible to crash the compiler if these settings are too small.
 <li><p>The error message shown when too many global variables are declared now tells the user to
 increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting.
+<li><p>The setting <tt>$MAX_CLASS_TABLE_SIZE</tt>, which was not used anywhere, has been removed. [Mantis 612]
 </ul>
 
 <h2>Compiler 6.32</h2>
@@ -121,9 +123,9 @@ As an example of the use of these constants, the following adds together 100 and
 <pre>  @fadd $+100 $+1.2345e+2 result;</pre>
 The compiler also defines the constants &ldquo;<tt>FLOAT_INFINITY</tt>&rdquo;, &ldquo;<tt>FLOAT_NINFINITY</tt>&rdquo;
 and &ldquo;<tt>FLOAT_NAN</tt>&rdquo; for positive infinity, negative infinity and &ldquo;not a number&rdquo;, respectively.
-<li><p>Glulx has a simple memory extension feature, where the game's header declares the memory space to be larger than the game file.
+<li><p>Glulx has a simple memory extension feature, where the game&rsquo;s header declares the memory space to be larger than the game file.
 The extra space is filled out with zeroes when the game starts. This is now supported by a new option <tt>$MEMORY_MAP_EXTENSION</tt>.
-This defaults to 0: if it is redefined to a larger value then the size of the game's memory space is extended by that amount.
+This defaults to 0: if it is redefined to a larger value then the size of the game&rsquo;s memory space is extended by that amount.
 <li><p>The number of verbs allowed by the compiler when compiling to Glulx is no longer limited to fewer than 256. As part of producing
 the game file, the compiler creates a dictionary table that contains verb numbers. However, despite in Glulx there being space for a verb
 number between 0 and 65535 in this table, only one byte of it (that is, values between 0 and 255) was used. This has been fixed.<p>
@@ -140,7 +142,7 @@ Patch List.
 <ul>
 <li><p>Strict mode is no longer enabled by default when generating V3 and V4 Z-code files, as strict mode
 makes use of opcodes that are V5+ only. [C63007] 
-<li><p>The base unit of Inform's internal memory allocation for various structures (for example the buffer used
+<li><p>The base unit of Inform&rsquo;s internal memory allocation for various structures (for example the buffer used
 to hold the generated code) is no longer fixed: it is now controlled by a setting <tt>$ALLOC_CHUNK_SIZE</tt>.
 This allows, for example, the maximum Glulx code size to be greater than 640Kb. [C63102] 
 <li><p>When compiling to Glulx, the stack size of the resulting story file is no longer fixed at 4096: it can be changed
@@ -153,7 +155,7 @@ so that the largest readable memory size is 64Kb minus 2 bytes. [C63112]
 the array to print to and its length, or just one argument, the later matching what is allowed when compiling to Z-code. This
 one argument form has now been withdrawn under Glulx as a security hole, and a source to problems with writing beyond the end
 of the array: now the array length must be specified. (See also <a href="#FeaturesGlulx">Features available only in Glulx</a>.)
-<li><p>Veneer routines are no longer excluded from Inform's assembly output (which is accessed with the <tt><b>-a</b></tt>
+<li><p>Veneer routines are no longer excluded from Inform&rsquo;s assembly output (which is accessed with the <tt><b>-a</b></tt>
 command line switch).
 <li><p>For Linux and other Unix variants the default memory settings have been increased, which should remove the need
 to change the compiler settings when building large projects on these platforms.

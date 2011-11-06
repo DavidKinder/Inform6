@@ -20,6 +20,9 @@ $MAX_ZCODE_SIZE, $MAX_QTEXT_SIZE and $MAX_STATIC_DATA settings
 Fix the error message when too many global variables are declared
 (Andrew Plotkin)
 
+The setting $MAX_CLASS_TABLE_SIZE, which was not used, has been removed
+(David Kinder)
+
 Tidy the output printed when the statistics (-s) switch is used
 (David Kinder)
 

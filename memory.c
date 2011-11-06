@@ -162,7 +162,6 @@ int32 MAX_ZCODE_SIZE;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
 int MAX_CLASSES;
-int MAX_CLASS_TABLE_SIZE;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
 int MAX_SOURCE_FILES;
@@ -207,7 +206,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","ALLOC_CHUNK_SIZE",ALLOC_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_CLASSES",MAX_CLASSES);
-    printf("|  %25s = %-7d |\n","MAX_CLASS_TABLE_SIZE",MAX_CLASS_TABLE_SIZE);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
@@ -299,7 +297,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_CLASSES = 64;
-        MAX_CLASS_TABLE_SIZE = 1000;
 
         MAX_OBJ_PROP_COUNT = 128;
         MAX_OBJ_PROP_TABLE_SIZE = 4096;
@@ -350,7 +347,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_CLASSES = 64;
-        MAX_CLASS_TABLE_SIZE = 1000;
 
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 2048;
@@ -401,7 +397,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_NUM_STATIC_STRINGS = 10000;
 
         MAX_CLASSES = 32;
-        MAX_CLASS_TABLE_SIZE = 800;
 
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 1024;
@@ -642,12 +637,6 @@ static void explain_parameter(char *command)
   is cheap to increase.\n");
         return;
     }
-    if (strcmp(command,"MAX_CLASS_TABLE_SIZE")==0)
-    {   printf(
-"  MAX_CLASS_TABLE_SIZE is the number of bytes allocated to hold the table \n\
-  of properties to inherit from each class.\n");
-        return;
-    }
     if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
     {   printf(
 "  MAX_INCLUSION_DEPTH is the number of nested includes permitted.\n");
@@ -840,8 +829,6 @@ extern void memory_command(char *command)
                 MAX_TRANSCRIPT_SIZE=j, flag=1;
             if (strcmp(command,"MAX_CLASSES")==0)
                 MAX_CLASSES=j, flag=1;
-            if (strcmp(command,"MAX_CLASS_TABLE_SIZE")==0)
-                MAX_CLASS_TABLE_SIZE=j, flag=1;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
                 MAX_INCLUSION_DEPTH=j, flag=1;
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
