@@ -921,7 +921,7 @@ static void emit_token(token_data t)
         next_marker=0;
 
         if (emitter_sp == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES1", MAX_EXPRESSION_NODES);
+            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
         if (!evaluate_term(t, &(emitter_stack[emitter_sp++])))
             compiler_error_named("Emit token error:", t.text);
         return;
@@ -969,7 +969,7 @@ static void emit_token(token_data t)
         {   error_named("Missing operand for", t.text);
             while (arity > stack_size)
             {   if (emitter_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES2", MAX_EXPRESSION_NODES);
+                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
                 emitter_markers[emitter_sp] = 0;
                 emitter_stack[emitter_sp] = zero_operand;
                 emitter_sp++;
@@ -1101,7 +1101,7 @@ static void emit_token(token_data t)
 
     op_node_number = ET_used++;
     if (op_node_number == MAX_EXPRESSION_NODES)
-        memoryerror("MAX_EXPRESSION_NODES3", MAX_EXPRESSION_NODES);
+        memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
 
     ET[op_node_number].operator_number = t.value;
     ET[op_node_number].up = -1;
@@ -1122,7 +1122,7 @@ static void emit_token(token_data t)
         else
         {   operand_node_number = ET_used++;
             if (operand_node_number == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES4", MAX_EXPRESSION_NODES);
+                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
             ET[operand_node_number].down = -1;
             ET[operand_node_number].value = emitter_stack[i];
         }
@@ -1451,7 +1451,7 @@ static void insert_exp_to_cond(int n, int context)
     {   if (context==CONDITION_CONTEXT)
         {   new = ET_used++;
             if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES5", MAX_EXPRESSION_NODES);
+                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1474,7 +1474,7 @@ static void insert_exp_to_cond(int n, int context)
 
             new = ET_used++;
             if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES6", MAX_EXPRESSION_NODES);
+                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1533,7 +1533,7 @@ static void func_args_on_stack(int n, int context)
         if (etoken_num_children(pn) > (unsigned int)(opnum == FCALL_OP ? 4:3)) {
           new = ET_used++;
           if (new == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES9", MAX_EXPRESSION_NODES);
+            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
           ET[new] = ET[n];
           ET[n].down = new; 
           ET[n].operator_number = PUSH_OP;
@@ -1556,7 +1556,7 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
     {   if (context != CONDITION_CONTEXT) return AO;
         n = ET_used++;
         if (n == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES7", MAX_EXPRESSION_NODES);
+            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
         ET[n].down = -1;
         ET[n].up = -1;
         ET[n].right = -1;
@@ -1738,7 +1738,7 @@ extern assembly_operand parse_expression(int context)
             case LOWER_P:
             case EQUAL_P:
                 if (sr_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES8", MAX_EXPRESSION_NODES);
+                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
                 sr_stack[sr_sp++] = b;
                 if ((b.type == OP_TT) && (b.value == OR_OP))
                 {
