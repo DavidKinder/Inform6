@@ -1462,12 +1462,38 @@ extern void optimise_abbreviations(void)
 /*   construct_storyfile() stage in "tables.c") and then a sequence of       */
 /*   records, one per word, in the form                                      */
 /*                                                                           */
-/*        <Z-coded text>    <flags>  <adjectivenumber>  <verbnumber>         */
-/*        4 or 6 bytes       byte          byte             byte             */
+/*        <Z-coded text>    <flags>   <verbnumber>     <adjectivenumber>     */
+/*        4 or 6 bytes       byte        byte             byte               */
+/*                                                                           */
+/*   For Glulx, the form is instead: (But see below about Unicode-valued     */
+/*   dictionaries and my heinie.)                                            */
+/*                                                                           */
+/*        <plain text>      <flags>   <verbnumber>     <adjectivenumber>     */
+/*        DICT_WORD_SIZE     short       short            short              */
 /*                                                                           */
 /*   These records are stored in "accession order" (i.e. in order of their   */
 /*   first being received by these routines) and only alphabetically sorted  */
 /*   by construct_storyfile() (using the array below).                       */
+/* ------------------------------------------------------------------------- */
+/*                                                                           */
+/*   Further notes about the data fields...                                  */
+/*   The flags are currently:                                                */
+/*     bit 0: word is used as a verb (in verb grammar)                       */
+/*     bit 1: word is used as a meta verb                                    */
+/*     bit 2: word is plural (set by '//p')                                  */
+/*     bit 3: word is used as a preposition (in verb grammar)                */
+/*     bit 6: set for all verbs, but not used by the parser?                 */
+/*     bit 7: word is used as a noun (set for every word that appears in     */
+/*       code or in an object property)                                      */
+/*                                                                           */
+/*   In grammar version 2, the third field (adjectivenumber) is unused (and  */
+/*   zero).                                                                  */
+/*                                                                           */
+/*   The compiler generates special constants #dict_par1, #dict_par2,        */
+/*   #dict_par3 to refer to the byte offsets of the three fields. In         */
+/*   Z-code v3, these are 4/5/6; in v4+, they are 6/7/8. In Glulx, they      */
+/*   are $DICT_WORD_SIZE+2/4/6, referring to the *low* bytes of the three    */
+/*   fields. (The high bytes are $DICT_WORD_SIZE+1/3/5.)                     */
 /* ------------------------------------------------------------------------- */
 
 uchar *dictionary,                    /* (These two pointers are externally
@@ -1793,8 +1819,10 @@ static int dictionary_find(char *dword)
 }
 
 /* ------------------------------------------------------------------------- */
-/*  Add "dword" to the dictionary with (x,y,z) as its data bytes; unless     */
+/*  Add "dword" to the dictionary with (x,y,z) as its data fields; unless    */
 /*  it already exists, in which case OR the data with (x,y,z)                */
+/*                                                                           */
+/*  These fields are one byte each in Z-code, two bytes each in Glulx.       */
 /*                                                                           */
 /*  Returns: the accession number.                                           */
 /* ------------------------------------------------------------------------- */
@@ -1823,7 +1851,9 @@ extern int dictionary_add(char *dword, int x, int y, int z)
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
-                p[1]=(p[1])|x; p[2]=(p[2])|(y/256); p[3]=(p[3])|(y%256); p[5]=(p[5])|z;
+                p[0]=(p[0])|(x/256); p[1]=(p[1])|(x%256); 
+                p[2]=(p[2])|(y/256); p[3]=(p[3])|(y%256); 
+                p[4]=(p[4])|(z/256); p[5]=(p[5])|(z%256);
                 if (x & 128) p[1] = (p[1]) | number_and_case;
             }
             return at;

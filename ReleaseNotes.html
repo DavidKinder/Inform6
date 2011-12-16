@@ -51,6 +51,22 @@ beginning &ldquo;<tt>[Inform6] ...</tt>&rdquo;.
 
 <h2>Compiler 6.33</h2>
 These are the changes delivered in version 6.33 of the Inform compiler.
+<h3>Features added</h3>
+<ul>
+<li><p>
+The previously deprecated <tt>Dictionary</tt> directive can now have the following forms:
+<pre>
+  Dictionary 'word';
+  Dictionary 'word' val1;
+  Dictionary 'word' val1 val3;
+</pre>
+The first of these forms just adds the word to the dictionary, with all flags set to zero, if it is not
+already in the dictionary. The second form also sets the <tt>dict_par1</tt> flag to the given value, or
+bitwise-or&rsquo;s the value in if the word already exists. The third form also sets the <tt>dict_par3</tt>
+in the same way as for <tt>dict_par1</tt>.
+<p>
+The values can be numeric literals or constants. They can be 0-255 for Z-code, or 0-65535 for Glulx.
+</ul>
 <h3>Bugs fixed</h3>
 Items of the form [Mantis 612] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
@@ -190,7 +206,7 @@ word, and we recommend that you use it in the small number of circumstances wher
 significant. The compiler also defines a constant <tt>TARGET_GLULX</tt> if you supply the <tt><b>-G</b></tt> switch, or 
 <tt>TARGET_ZCODE</tt> otherwise; in both cases the constant value is 0. For more information on the use of 
 these constants, see <a href="#Glulx">Support for Glulx</a>.
-<li><p>The Switches directive, which enables certain compiler switches to be set from within the source 
+<li><p>The <tt>Switches</tt> directive, which enables certain compiler switches to be set from within the source 
 file rather than on the compiler command line, has been superseded by a more powerful 
 mechanism. The special comment characters &ldquo;!%&rdquo;, occurring on the very first line or lines of the 
 source file, enable you to specify Inform Command Language (ICL) commands to control the 

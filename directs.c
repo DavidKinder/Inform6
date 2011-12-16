@@ -183,12 +183,76 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         break;
 
     /* --------------------------------------------------------------------- */
-    /*   Dictionary constantname "word"                                      */
+    /*   Dictionary 'word'                                                   */
+    /*   Dictionary 'word' val1                                              */
+    /*   Dictionary 'word' val1 val3                                         */
     /* --------------------------------------------------------------------- */
 
     case DICTIONARY_CODE:
-        obsolete_warning("use 'word' as a constant dictionary address");
-        goto ParseConstantSpec;
+        /* In Inform 5, this directive had the form
+             Dictionary SYMBOL "word";
+           This was deprecated as of I6 (if not earlier), and is no longer
+           supported at all. The current form just creates a dictionary word,
+           with the given values for dict_par1 and dict_par3. If the word
+           already exists, the values are bit-or'd in with the existing
+           values.
+           (We don't offer a way to set dict_par2, because that is entirely
+           reserved for the verb number. Or'ing values into it would create
+           garbage.)
+         */
+        get_next_token();
+        if (token_type != SQ_TT && token_type != DQ_TT) {
+            ebf_error("dictionary word", token_text);
+            break;
+        }
+
+        {
+            char *wd = token_text;
+            int val1 = 0;
+            int val3 = 0;
+
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
+                put_token_back();
+            }
+            else {
+                put_token_back();
+                assembly_operand AO;
+                AO = parse_expression(CONSTANT_CONTEXT);
+                if (module_switch && (AO.marker != 0))
+                    error("A definite value must be given as a Dictionary flag");
+                else
+                    val1 = AO.value;
+
+                get_next_token();
+                if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
+                    put_token_back();
+                }
+                else {
+                    put_token_back();
+                    assembly_operand AO;
+                    AO = parse_expression(CONSTANT_CONTEXT);
+                    if (module_switch && (AO.marker != 0))
+                        error("A definite value must be given as a Dictionary flag");
+                    else
+                        val3 = AO.value;
+                }
+            }
+
+            if (!glulx_mode) {
+                if ((val1 & ~0xFF) || (val3 & ~0xFF)) {
+                    warning("Dictionary flag values cannot exceed $FF in Z-code");
+                }
+            }
+            else {
+                if ((val1 & ~0xFFFF) || (val3 & ~0xFFFF)) {
+                    warning("Dictionary flag values cannot exceed $FFFF in Glulx");
+                }
+            }
+
+            dictionary_add(wd, val1, 0, val3);
+        }
+        break;
 
     /* --------------------------------------------------------------------- */
     /*   End                                                                 */
