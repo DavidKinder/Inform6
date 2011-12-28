@@ -234,7 +234,9 @@ extern void char_error(char *s, int ch)
 
     uni = iso_to_unicode(ch);
 
-    if (uni >= 0x100)
+    if (character_set_unicode)
+        sprintf(error_message_buff, "%s (unicode) $%04x", s, uni);
+    else if (uni >= 0x100)
     {   sprintf(error_message_buff,
             "%s (unicode) $%04x = (ISO %s) $%02x", s, uni,
             name_of_iso_set(character_set_setting), ch);
@@ -242,8 +244,14 @@ extern void char_error(char *s, int ch)
     else
         sprintf(error_message_buff, "%s (ISO Latin1) $%02x", s, uni);
 
+    /* If the character set is set to Latin-1, and the char in question
+       is a printable Latin-1 character, we print it in the error message.
+       This conflates the source-text charset with the terminal charset,
+       really, but it's not a big deal. */
+
     if (((uni>=32) && (uni<127))
-        || (((uni >= 0xa1) && (uni <= 0xff)) && (character_set_setting==1)))
+        || (((uni >= 0xa1) && (uni <= 0xff))
+        && (character_set_setting==1) && (!character_set_unicode)))
         sprintf(error_message_buff+strlen(error_message_buff),
             ", i.e., '%c'", uni);
 
@@ -257,8 +265,11 @@ extern void unicode_char_error(char *s, int32 uni)
     else
         sprintf(error_message_buff, "%s (ISO Latin1) $%02x", s, uni);
 
+    /* See comment above. */
+
     if (((uni>=32) && (uni<127))
-        || (((uni >= 0xa1) && (uni <= 0xff)) && (character_set_setting==1)))
+        || (((uni >= 0xa1) && (uni <= 0xff))
+        && (character_set_setting==1) && (!character_set_unicode)))
         sprintf(error_message_buff+strlen(error_message_buff),
             ", i.e., '%c'", uni);
 

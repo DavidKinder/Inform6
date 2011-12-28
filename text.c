@@ -448,6 +448,20 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
             }
         }
 
+        /* If Unicode switch set, use text_to_unicode to perform UTF-8
+           decoding */
+        if (character_set_unicode && (text_in[i] & 0x80))
+        {   unicode = text_to_unicode((char *) (text_in+i));
+            zscii = unicode_to_zscii(unicode);
+            if (zscii != 5) write_zscii(zscii);
+            else
+            {   unicode_char_error(
+                    "Character can only be used if declared in \
+advance as part of 'Zcharacter table':", unicode);
+            }
+            i += textual_form_length - 1;
+        }
+
         /*  '@' is the escape character in Inform string notation: the various
             possibilities are:
 
@@ -674,6 +688,34 @@ string; substituting '?'.");
         write_z_char_g(0x0A);
       else if (text_in[i] == '~')
         write_z_char_g('"');
+      else if (character_set_unicode) {
+        if (text_in[i] & 0x80) {
+          unicode = text_to_unicode((char *) (text_in+i));
+          i += textual_form_length - 1;
+          if (unicode >= 0 && unicode < 256) {
+            write_z_char_g(unicode);
+          }
+          else {
+            if (!compression_switch) {
+              warning("Unicode characters will not work in non-compressed \
+string; substituting '?'.");
+              write_z_char_g('?');
+            }
+            else {
+              j = unicode_entity_index(unicode);
+              write_z_char_g('@');
+              write_z_char_g('U');
+              write_z_char_g('A' + ((j >>12) & 0x0F));
+              write_z_char_g('A' + ((j >> 8) & 0x0F));
+              write_z_char_g('A' + ((j >> 4) & 0x0F));
+              write_z_char_g('A' + ((j     ) & 0x0F));
+            }
+          }
+        }
+        else {
+          write_z_char_g(text_in[i]);
+        }
+      }
       else {
         unicode = iso_to_unicode_grid[text_in[i]];
         if (unicode >= 0 && unicode < 256) {
@@ -1577,7 +1619,7 @@ apostrophe in", dword);
         if (k==(int) '^') k=(int) '\'';
         if (k=='\"') k='~';
 
-        if (k==(int) '@')
+        if (k==(int) '@' || (character_set_unicode && (k & 0x80)))
         {   int unicode = text_to_unicode(dword+j);
             if ((unicode < 128) && isupper(unicode)) unicode = tolower(unicode);
             k = unicode_to_zscii(unicode);
@@ -1671,7 +1713,7 @@ apostrophe in", dword);
     if (k=='~') /* as in iso_to_alphabet_grid */
       k='\"';
 
-    if (k=='@') {
+    if (k=='@' || (character_set_unicode && (k & 0x80))) {
       unicode = text_to_unicode(dword+j);
       j += textual_form_length - 1;
     }

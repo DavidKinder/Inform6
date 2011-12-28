@@ -248,7 +248,8 @@ int throwback_switch;               /* -T */
 int riscos_file_type_format;        /* set by -R */
 #endif
 int compression_switch;             /* set by -H */
-int character_set_setting,          /* set by -C */
+int character_set_setting,          /* set by -C0 through -C9 */
+    character_set_unicode,          /* set by -Cu */
     error_format,                   /* set by -E */
     asm_trace_setting,              /* set by -a and -t: value of
                                        asm_trace_level to use when tracing */
@@ -311,7 +312,8 @@ static void reset_switch_settings(void)
 #endif
     error_format=DEFAULT_ERROR_FORMAT;
 
-    character_set_setting = 1;                     /* Default is ISO Latin-1 */
+    character_set_setting = 1;         /* Default is ISO Latin-1 */
+    character_set_unicode = FALSE;
     header_ext_setting = 0;
 
     compression_switch = TRUE;
@@ -1221,6 +1223,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 printf("\
   B   use big memory model (for large V6/V7 files)\n\
   C0  text character set is plain ASCII only\n\
+  Cu  text character set is UTF-8\n\
   Cn  text character set is ISO 8859-n (n = 1 to 9)\n\
       (1 to 4, Latin1 to Latin4; 5, Cyrillic; 6, Arabic;\n\
        7, Greek; 8, Hebrew; 9, Latin5.  Default is -C1.)\n");
@@ -1343,11 +1346,21 @@ extern void switches(char *p, int cmode)
         case 'y': s=2; linker_trace_setting=p[i+1]-'0'; break;
         case 'z': memory_map_switch = state; break;
         case 'B': oddeven_packing_switch = state; break;
-        case 'C': s=2; character_set_setting=p[i+1]-'0';
-                  if ((character_set_setting < 0)
-                      || (character_set_setting > 9))
-                  {   printf("-C must be followed by 0 to 9\n");
+        case 'C': s=2;
+                  if (p[i+1] == 'u') {
+                      character_set_unicode = TRUE;
+                      /* Leave the set_setting on Latin-1, because that 
+                         matches the first block of Unicode. */
                       character_set_setting = 1;
+                  }
+                  else 
+                  {   character_set_setting=p[i+1]-'0';
+                      if ((character_set_setting < 0)
+                          || (character_set_setting > 9))
+                      {   printf("-C must be followed by 'u' or 0 to 9. Defaulting to ISO-8859-1.\n");
+                          character_set_unicode = FALSE;
+                          character_set_setting = 1;
+                      }
                   }
                   if (cmode == 0) change_character_set();
                   break;

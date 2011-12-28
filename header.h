@@ -30,7 +30,7 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "16th December 2011"
+#define RELEASE_DATE "28th December 2011"
 #define RELEASE_NUMBER 1632
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
@@ -2349,7 +2349,7 @@ extern int32 requested_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
-    header_ext_setting;
+    character_set_unicode,  header_ext_setting;
 
 extern char Debugging_Name[];
 extern char Transcript_Name[];

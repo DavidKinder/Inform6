@@ -9,15 +9,19 @@
 /*                                                                           */
 /*      ASCII      plain ASCII characters in range $20 to $7e                */
 /*                     (unsigned 7-bit number)                               */
+/*      Source     raw bytes from source code                                */
+/*                     (unsigned 8-bit number)                               */
 /*      ISO        plain ASCII or ISO 8859-1 to -9, according to value       */
 /*                     character_set_setting == 0 or 1 to 9                  */
-/*                     (unsigned 8-bit number)                               */
-/*      Source     raw bytes from source code                                */
+/*                 in Unicode mode (character_set_unicode), individual       */
+/*                     UTF-8 bytes                                           */
 /*                     (unsigned 8-bit number)                               */
 /*      ZSCII      the Z-machine's character set                             */
 /*                     (unsigned 10-bit number)                              */
 /*      textual    such as the text @'e to mean e-acute                      */
 /*                     or @$03a3 to mean capital Greek sigma                 */
+/*                 in Unicode mode, the operations manipulating multibyte    */
+/*                     UCS representations are included in text routines     */
 /*                     (sequence of ASCII characters)                        */
 /*      Unicode    a unifying character set holding all possible characters  */
 /*                     Inform can ever deal with                             */
@@ -326,6 +330,7 @@ static void read_source_to_iso_file(uchar *uccg)
 /*      a0         (ISO "non-breaking space") becomes SPACE                  */
 /*      ad         (ISO "soft hyphen") becomes '-'                           */
 /*      any character undefined in ISO is mapped to '?'                      */
+/*      In Unicode mode, characters 80 and upwards are preserved.            */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -344,6 +349,9 @@ static void make_source_to_iso_grid(void)
         source_to_iso_grid[13] = '\n';
         source_to_iso_grid[127] = '?';
         source_to_iso_grid[TAB_CHARACTER] = ' ';
+
+        if (character_set_unicode) /* No need to meddle with 8-bit for UTF-8 */
+            return;
 
         for (n=0x80; n<0xa0; n++) source_to_iso_grid[n] = '?';
         source_to_iso_grid[0xa0] = ' ';
@@ -1062,6 +1070,10 @@ extern int32 zscii_to_unicode(int z)
 /*                                                                           */
 /*  If either syntax is malformed, an error is generated                     */
 /*  and the Unicode (= ISO = ASCII) character value of '?' is returned       */
+/*                                                                           */
+/*  In Unicode mode (character_set_unicode is true), this handles UTF-8      */
+/*  decoding as well as @-expansion. (So it's called when an '@' appears     */
+/*  *and* when a high-bit character appears.)                                */
 /* ------------------------------------------------------------------------- */
 
 int textual_form_length;
@@ -1070,8 +1082,51 @@ extern int32 text_to_unicode(char *text)
 {   int i;
 
     if (text[0] != '@')
-    {   textual_form_length = 1;
-        return iso_to_unicode((uchar) text[0]);
+    {   if (character_set_unicode)
+        {   if (text[0] & 0x80) /* 8-bit */
+            {   switch (text[0] & 0xF0)
+                {   case 0xf0:
+                        error_named("Inform does not currently support Unicode characters beyond $FFFF:", text);
+                        textual_form_length = 1;
+                        return '?';
+                        break;
+                    case 0xe0: /* 3-byte UTF-8 string */
+                        textual_form_length = 3;
+                        if ((text[1] & 0xc0) != 0x80 || (text[2] & 0xc0) != 0x80)
+                        {   error("Invalid 3-byte UTF-8 string.");
+                            return '?';
+                        }
+                        return (text[0] & 0x0f) << 12
+                            | (text[1] & 0x3f) << 6
+                            | (text[2] & 0x3f);
+                        break;
+                    case 0xc0: /* 2-byte UTF-8 string */ 
+                    case 0xd0:
+                        textual_form_length = 2;
+                        if ((text[1] & 0xc0) != 0x80)
+                        {   error("Invalid 2-byte UTF-8 string.");
+                            return '?';
+                        }
+                        return (text[0] & 0x1f) << 6
+                            | (text[1] & 0x3f);
+                        break;
+                    default: /* broken */
+                        error("Invalid UTF-8 string.");
+                        textual_form_length = 1;
+                        return '?';
+                        break;
+                }
+            }
+            else /* nice 7-bit */
+            {   textual_form_length = 1;
+                return (uchar) text[0];
+            }
+        }
+        else
+        {
+            textual_form_length = 1;
+            return iso_to_unicode((uchar) text[0]);
+        }
     }
 
     if ((isdigit(text[1])) || (text[1] == '@'))

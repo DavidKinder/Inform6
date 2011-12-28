@@ -9,6 +9,9 @@ http://www.ifarchive.org/indexes/if-archiveXinfocomXcompilersXinform6.html
 This is a minor update to Inform 6.32. The only changes between 6.32N and
 6.32 are the application of the following patches:
 
+Add a new command line switch -Cu, which specifies that the source file
+character set is UTF-8.
+
 Change the Glulx Unsigned__Compare() veneer routine to a much more
 efficient implementation. (Andrew Plotkin)
 

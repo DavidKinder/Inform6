@@ -468,7 +468,7 @@ extern void make_global(int array_flag, int name_only)
                     {
                         if (unicode < 0 || unicode >= 256)
                         {
-                            error("Unicode characters beyond Latin-1 are not yet supported in Glulx");
+                            error("Unicode characters beyond Latin-1 are not yet supported in Glulx array literals");
                         }
                         else
                         {
