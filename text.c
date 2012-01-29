@@ -247,14 +247,17 @@ extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
     /* also occurs at an address expressible as a packed address         */
 
     if (!glulx_mode) {
-        if (oddeven_packing_switch)
-            while ((i%(scale_factor*2))!=0)
-            {   i+=2; *c++ = 0; *c++ = 0;
-            }
+        int textalign;
+        if (oddeven_packing_switch) 
+            textalign = scale_factor*2;
         else
-            while ((i%scale_factor)!=0)
-            {   i+=2; *c++ = 0; *c++ = 0;
-            }
+            textalign = scale_factor;
+        while ((i%textalign)!=0)
+        {
+            if (i+2 > MAX_STATIC_STRINGS)
+                memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
+            i+=2; *c++ = 0; *c++ = 0;
+        }
     }
 
     j = static_strings_extent;
