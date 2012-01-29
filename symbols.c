@@ -195,6 +195,8 @@ extern int symbol_index(char *p, int hashcode)
             memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
         symbol_name_space_chunks[no_symbol_name_space_chunks++]
             = (char *) symbols_free_space;
+        if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
+            memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
     }
 
     strcpy((char *) symbols_free_space, p);
