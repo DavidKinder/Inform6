@@ -2167,6 +2167,11 @@ static void compile_symbol_table_routine(void)
     assembly_operand AO, AO2, AO3; dbgl null_dbgl;
     null_dbgl.b1 = 0; null_dbgl.b2 = 0; null_dbgl.b3 = 0; null_dbgl.cc = 0;
 
+    /* Assign local var names for the benefit of the debugging information 
+       file. */
+    local_variable_texts[0] = "dummy1";
+    local_variable_texts[1] = "dummy2";
+
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,
         assemble_routine_header(2, FALSE, "Symb__Tab", &null_dbgl, FALSE, j),
