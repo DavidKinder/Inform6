@@ -69,19 +69,21 @@ bitwise-or&rsquo;s the value in if the word already exists. The third form also 
 in the same way as for <tt>dict_par1</tt>.
 <p>
 The values can be numeric literals or constants. They can be 0-255 for Z-code, or 0-65535 for Glulx.
+<li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
+more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis 612] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+Items of the form [Mantis 601] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
-<li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
-much more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
-<li><p>The bounds checking related to internal arrays that are are sized from the <tt>$MAX_PROP_TABLE_SIZE</tt>,
-<tt>$MAX_INDIV_PROP_TABLE_SIZE</tt>, <tt>$MAX_OBJ_PROP_TABLE_SIZE</tt>, <tt>$SYMBOLS_CHUNK_SIZE</tt>,
-<tt>$MAX_ZCODE_SIZE</tt>, <tt>$MAX_QTEXT_SIZE</tt> and <tt>$MAX_STATIC_DATA</tt> settings has been
-improved, so that it should not be possible to crash the compiler if these settings are too small.
+<li><p>The bounds checking related to internal arrays that are are sized from various compiler settings
+has been improved, so that it should not be possible to crash the compiler if these settings are too small.
+In addition, a start has been made on allowing the compiler to grow its internal buffers, rather than relying
+on these settings to specify sufficient buffer sizes. [Mantis 601,603,610,614,758,842,844]
 <li><p>The error message shown when too many global variables are declared now tells the user to
-increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting.
+increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting. [Mantis 611]
 <li><p>The setting <tt>$MAX_CLASS_TABLE_SIZE</tt>, which was not used anywhere, has been removed. [Mantis 612]
+<li><p>The compiler no longer crashes if run with the <tt><b>-k</b></tt> switch and passed a source file
+containing no routines at all. [Mantis 843]
 </ul>
 
 <h2>Compiler 6.32</h2>

@@ -12,12 +12,10 @@ This is a minor update to Inform 6.32. The only changes between 6.32N and
 Add a new command line switch -Cu, which specifies that the source file
 character set is UTF-8.
 
-Change the Glulx Unsigned__Compare() veneer routine to a much more
-efficient implementation. (Andrew Plotkin)
+Change the Glulx Unsigned__Compare() veneer routine to a more efficient
+implementation. (Andrew Plotkin)
 
-Improve the array bounds checking for the $MAX_PROP_TABLE_SIZE,
-$MAX_INDIV_PROP_TABLE_SIZE, $MAX_OBJ_PROP_TABLE_SIZE, $SYMBOLS_CHUNK_SIZE,
-$MAX_ZCODE_SIZE, $MAX_QTEXT_SIZE and $MAX_STATIC_DATA settings.
+Improve the array bounds checking for many of the compiler settings.
 (Andrew Plotkin)
 
 Fix the error message when too many global variables are declared.
@@ -25,6 +23,14 @@ Fix the error message when too many global variables are declared.
 
 Add new forms of the previously obsolete 'Dictionary' directive, to allow
 the associated flags in the dictionary to be set to user specified values.
+(Andrew Plotkin)
+
+Prevent the compiler from crashing if run with the -k switch and passed a
+source file containing no routines at all.
+(Andrew Plotkin)
+
+Make a start on allowing the compiler to grow its internal buffers, rather
+than rely on compiler settings to specify sufficient buffer sizes.
 (Andrew Plotkin)
 
 The setting $MAX_CLASS_TABLE_SIZE, which was not used, has been removed.
