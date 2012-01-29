@@ -2453,7 +2453,11 @@ extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES, NUM_ATTR_BYTES;
 
 extern void *my_malloc(int32 size, char *whatfor);
+extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+    char *whatfor);
 extern void *my_calloc(int32 size, int32 howmany, char *whatfor);
+extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
+    int32 howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
 extern void set_memory_sizes(int size_flag);

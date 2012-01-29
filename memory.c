@@ -12,6 +12,7 @@
 int32 malloced_bytes=0;                /* Total amount of memory allocated   */
 
 #ifdef PC_QUICKC
+
 extern void *my_malloc(int32 size, char *whatfor)
 {   char _huge *c;
     if (memout_switch)
@@ -21,6 +22,26 @@ extern void *my_malloc(int32 size, char *whatfor)
     if (c==0) memory_out_error(size, 1, whatfor);
     return(c);
 }
+
+extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+    char *whatfor)
+{   char _huge *c;
+    if (size==0) {
+        my_free(pointer, whatfor);
+        return;
+    }
+    c=halloc(size,1); malloced_bytes+=size;
+    if (c==0) memory_out_error(size, 1, whatfor);
+    if (memout_switch)
+        printf("Increasing allocation to %ld bytes for %s was (%08lx) \
+now (%08lx)\n",
+            (long int) size,whatfor,(long int) (*(int **)pointer), 
+            (long int) c);
+    memcpy(c, *(int **)pointer, MIN(oldsize, size));
+    hfree(*(int **)pointer);
+    *(int **)pointer = c;
+}
+
 extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
 {   void _huge *c;
     if (memout_switch)
@@ -31,7 +52,29 @@ extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
     if (c==0) memory_out_error(size, howmany, whatfor);
     return(c);
 }
+
+extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
+    int32 howmany, char *whatfor)
+{   void _huge *c;
+    if (size*howmany==0) {
+        my_free(pointer, whatfor);
+        return;
+    }
+    c=(void _huge *)halloc(size*howmany,1); malloced_bytes+=size*howmany;
+    if (c==0) memory_out_error(size, howmany, whatfor);
+    if (memout_switch)
+        printf("Increasing allocation to %ld bytes: array (%ld entries size %ld) \
+for %s was (%08lx) now (%08lx)\n",
+            ((long int)size) * ((long int)howmany),
+            (long int)howmany,(long int)size,whatfor,
+            (long int) *(int **)pointer, (long int) c);
+    memcpy(c, *(int **)pointer, MIN(size*oldhowmany, size*howmany));
+    hfree(*(int **)pointer);
+    *(int **)pointer = c;
+}
+
 #else
+
 extern void *my_malloc(int32 size, char *whatfor)
 {   char *c;
     if (size==0) return(NULL);
@@ -42,6 +85,24 @@ extern void *my_malloc(int32 size, char *whatfor)
             (long int) size,whatfor,(long int) c);
     return(c);
 }
+
+extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+    char *whatfor)
+{   void *c;
+    if (size==0) {
+        my_free(pointer, whatfor);
+        return;
+    }
+    c=realloc(*(int **)pointer, (size_t) size); malloced_bytes+=size;
+    if (c==0) memory_out_error(size, 1, whatfor);
+    if (memout_switch)
+        printf("Increasing allocation to %ld bytes for %s was (%08lx) \
+now (%08lx)\n",
+            (long int) size,whatfor,(long int) (*(int **)pointer), 
+            (long int) c);
+    *(int **)pointer = c;
+}
+
 extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
 {   void *c;
     if (size*howmany==0) return(NULL);
@@ -55,6 +116,26 @@ for %s at (%08lx)\n",
             (long int) c);
     return(c);
 }
+
+extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
+    int32 howmany, char *whatfor)
+{   void *c;
+    if (size*howmany==0) {
+        my_free(pointer, whatfor);
+        return;
+    }
+    c=realloc(*(int **)pointer, (size_t)size*(size_t)howmany); 
+    malloced_bytes+=size*howmany;
+    if (c==0) memory_out_error(size, howmany, whatfor);
+    if (memout_switch)
+        printf("Increasing allocation to %ld bytes: array (%ld entries size %ld) \
+for %s was (%08lx) now (%08lx)\n",
+            ((long int)size) * ((long int)howmany),
+            (long int)howmany,(long int)size,whatfor,
+            (long int) *(int **)pointer, (long int) c);
+    *(int **)pointer = c;
+}
+
 #endif
 
 extern void my_free(void *pointer, char *whatitwas)
