@@ -961,7 +961,17 @@ static void manufacture_object_g(void)
 /*   Properties ("with" or "private") segment.                               */
 /* ------------------------------------------------------------------------- */
 
-static int defined_this_segment[128], def_t_s;
+static int *defined_this_segment;
+static long defined_this_segment_size; /* calloc size */
+static int def_t_s;
+
+static void ensure_defined_this_segment(int newsize)
+{
+    int oldsize = defined_this_segment_size;
+    defined_this_segment_size = newsize;
+    my_recalloc(&defined_this_segment, sizeof(int), oldsize,
+        defined_this_segment_size, "defined this segment table");
+}
 
 static void properties_segment_z(int this_segment)
 {
@@ -1011,6 +1021,8 @@ and may not be used as a property name too",
                 }
             }
 
+            if (def_t_s >= defined_this_segment_size)
+                ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
 
             if (individual_prop_table_size++ == 0)
@@ -1040,6 +1052,8 @@ and may not be used as a property name too",
             if (this_segment == PRIVATE_SEGMENT)
                 error_named("Property should be declared in 'with', \
 not 'private':", token_text);
+            if (def_t_s >= defined_this_segment_size)
+                ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
             property_number = svals[token_value];
 
@@ -1266,6 +1280,8 @@ and may not be used as a property name too",
                 }
             }
 
+            if (def_t_s >= defined_this_segment_size)
+                ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
             property_number = svals[token_value];
 
@@ -1286,6 +1302,8 @@ and may not be used as a property name too",
                 error_named("Property should be declared in 'with', \
 not 'private':", token_text);
 
+            if (def_t_s >= defined_this_segment_size)
+                ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
             property_number = svals[token_value];
 
@@ -2086,6 +2104,10 @@ extern void objects_allocate_arrays(void)
     individuals_table     = my_malloc(MAX_INDIV_PROP_TABLE_SIZE,
                                 "individual properties table");
 
+    defined_this_segment_size = 128;
+    defined_this_segment  = my_calloc(sizeof(int), defined_this_segment_size,
+                                "defined this segment table");
+
     if (!glulx_mode) {
       objectsz            = my_calloc(sizeof(objecttz), MAX_OBJECTS, 
                                 "z-objects");
@@ -2118,6 +2140,8 @@ extern void objects_free_arrays(void)
 
     my_free(&properties_table, "properties table");
     my_free(&individuals_table,"individual properties table");
+
+    my_free(&defined_this_segment,"defined this segment table");
 
     if (!glulx_mode) {
         my_free(&full_object_g.props, "object property list");
