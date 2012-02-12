@@ -624,11 +624,7 @@ static int32 unique_task_id(void)
     void hfree(void *);
 #define subtract_pointers(p1,p2) (long)((char _huge *)p1-(char _huge *)p2)
 #else
-#ifdef UNIX64
 #define subtract_pointers(p1,p2) (((char *) p1)-((char *) p2))
-#else
-#define subtract_pointers(p1,p2) (((int32) p1)-((int32) p2))
-#endif
 #endif
 
 /* ------------------------------------------------------------------------- */
