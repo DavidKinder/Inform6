@@ -158,7 +158,7 @@ static void make_abbrevs_lookup(void)
 
     for (j=no_abbreviations-1; j>=0; j--)
     {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
-        abbrevs_lookup[p1[0]]=j;
+        abbrevs_lookup[(uchar)p1[0]]=j;
         abbrev_freqs[j]=0;
     }
     abbrevs_lookup_table_made = TRUE;

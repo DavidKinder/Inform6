@@ -119,7 +119,7 @@ static void make_case_conversion_grid(void)
 
 extern int hash_code_from_string(char *p)
 {   uint32 hashcode=0;
-    for (; *p; p++) hashcode=hashcode*30011 + case_conversion_grid[*p];
+    for (; *p; p++) hashcode=hashcode*30011 + case_conversion_grid[(uchar)*p];
     return (int) (hashcode % HASH_TAB_SIZE);
 }
 

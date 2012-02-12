@@ -504,7 +504,7 @@ extern void construct_local_variable_tables(void)
     for (i=0; i<no_locals; i++)
     {   char *q = local_variables.keywords[i];
         if (q[1] == 0)
-        {   one_letter_locals[q[0]] = i;
+        {   one_letter_locals[(uchar)q[0]] = i;
             if (isupper(q[0])) one_letter_locals[tolower(q[0])] = i;
             if (islower(q[0])) one_letter_locals[toupper(q[0])] = i;
         }
@@ -541,7 +541,7 @@ static void interpret_identifier(int pos, int dirs_only_flag)
 
     if (local_variables.enabled)
     {   if (p[1]==0)
-        {   index = one_letter_locals[p[0]];
+        {   index = one_letter_locals[(uchar)p[0]];
             if (index<MAX_LOCAL_VARIABLES)
             {   circle[pos].type = LOCAL_VARIABLE_TT;
                 circle[pos].value = index+1;

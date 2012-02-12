@@ -1159,7 +1159,7 @@ extern int32 text_to_unicode(char *text)
             {   error("At most four hexadecimal digits allowed in '@{...}'");
                 total = '?'; break;
             }
-            d = character_digit_value[text[i]];
+            d = character_digit_value[(uchar)text[i]];
             if (d == 127)
             {   error("'@{...}' may only contain hexadecimal digits");
                 total = '?'; break;

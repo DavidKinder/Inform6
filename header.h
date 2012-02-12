@@ -740,7 +740,7 @@ typedef struct prop {
 /* Only one of this object. */
 typedef struct fpropt {
     uchar atts[6];
-    char l;
+    int l;
     prop pp[64];
 } fpropt;
 
