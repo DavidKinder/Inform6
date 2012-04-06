@@ -3,7 +3,7 @@
 /*              Verb and Extend.                                             */
 /*                                                                           */
 /*   Part of Inform 6.32                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2011                                 */
+/*   copyright (c) Graham Nelson 1993 - 2012                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
