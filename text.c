@@ -790,7 +790,6 @@ static int unicode_entity_index(int32 unicode)
 
 static void compress_makebits(int entnum, int depth, int prevbit,
   huffbitlist_t *bits);
-static void compress_dumptable(int entnum, int depth);
 
 /*   The compressor. This uses the usual Huffman compression algorithm. */
 void compress_game_text()
@@ -1092,50 +1091,6 @@ should be impossible.");
   }
 
   done_compression = TRUE;
-}
-
-static void compress_dumptable(int entnum, int depth)
-{
-  huffentity_t *ent = &(huff_entities[entnum]);
-  int ix;
-  char *cx;
-
-  if (ent->type) {
-    printf("%6d: ", ent->count);
-    for (ix=0; ix<depth; ix++) {
-      int bt = ent->bits.b[ix / 8] & (1 << (ix % 8));
-      printf("%d", (bt != 0));
-    }
-    printf(": ");
-  }
-
-  switch (ent->type) {
-  case 0:
-    compress_dumptable(ent->u.branch[0], depth+1);
-    compress_dumptable(ent->u.branch[1], depth+1);
-    break;
-  case 1:
-    printf("<EOS>\n");
-    break;
-  case 2:
-    printf("0x%02X ", ent->u.ch);
-    if (ent->u.ch >= ' ')
-      printf("'%c'\n", ent->u.ch);
-    else
-      printf("'ctrl-%c'\n", ent->u.ch + '@');
-    break;
-  case 3:
-    cx = (char *)abbreviations_at + ent->u.val*MAX_ABBREV_LENGTH;
-    printf("abbrev %d, \"%s\"\n", ent->u.val, cx);
-    break;
-  case 4:
-    ix = ent->u.val;
-    printf("'U+%lX'\n", (long)unicode_usage_entries[ix].ch);
-    break;
-  case 9:
-    printf("print-var @%02d\n", ent->u.val);
-    break;
-  }
 }
 
 static void compress_makebits(int entnum, int depth, int prevbit,
