@@ -30,7 +30,7 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "6th April 2012"
+#define RELEASE_DATE "21st April 2012"
 #define RELEASE_NUMBER 1632
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
@@ -1524,6 +1524,8 @@ typedef struct operator_s
 
 
 /*  Index numbers into the keyword group "system_functions" (see "lexer.c")  */
+
+#define NUMBER_SYSTEM_FUNCTIONS 12
 
 #define CHILD_SYSF       0
 #define CHILDREN_SYSF    1

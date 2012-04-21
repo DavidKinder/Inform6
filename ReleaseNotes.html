@@ -73,8 +73,11 @@ The values can be numeric literals or constants. They can be 0-255 for Z-code, o
 more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis 601] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+Items of the form [Mantis 510] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
+<li><p>Function calls of the form <tt>f(g)(h)</tt> (that is, where <tt>f()</tt> returns the address of a
+function that is called with <tt>h</tt> as its argument) are now compiled correctly: previously, such calls were
+compiled as if the code was <tt>f(g(h))</tt>. [Mantis 510]
 <li><p>The bounds checking related to internal arrays that are are sized from various compiler settings
 has been improved, so that it should not be possible to crash the compiler if these settings are too small.
 In addition, a start has been made on allowing the compiler to grow its internal buffers, rather than relying

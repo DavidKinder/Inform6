@@ -430,8 +430,12 @@ static void value_in_void_context_z(assembly_operand AO)
             if (AO.marker == SYMBOL_MV)
                 t = (char *) (symbs[AO.value]);
             break;
+        case VARIABLE_OT:
+            t = variable_name(AO.value);
+            break;
         default:
-            t = (char *) (symbs[variable_tokens[AO.value]]);
+            compiler_error("Unable to print value in void context");
+            t = "<expression>";
             break;
     }
     vivc_flag = TRUE;
@@ -445,7 +449,7 @@ static void value_in_void_context_z(assembly_operand AO)
     if (strcmp(t, "print_char") == 0)
     obsolete_warning("ignoring 'print_char': use 'print (char)' instead");
     else
-    ebf_error("assignment or statement", t);
+    ebf_error("expression with side-effects", t);
 }
 
 static void write_result_z(assembly_operand to, assembly_operand from)
@@ -796,13 +800,18 @@ static void value_in_void_context_g(assembly_operand AO)
             if (AO.marker == SYMBOL_MV)
                 t = (char *) (symbs[AO.value]);
             break;
+        case GLOBALVAR_OT:
+        case LOCALVAR_OT:
+            t = variable_name(AO.value);
+            break;
         default:
-            t = (char *) (symbs[variable_tokens[AO.value]]);
+            compiler_error("Unable to print value in void context");
+            t = "<expression>";
             break;
     }
     vivc_flag = TRUE;
 
-    ebf_error("assignment or statement", t);
+    ebf_error("expression with side-effects", t);
 }
 
 static void write_result_g(assembly_operand to, assembly_operand from)

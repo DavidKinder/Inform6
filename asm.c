@@ -177,6 +177,10 @@ extern char *variable_name(int32 i)
       if (i==251) return("self");
       if (i==250) return("sender");
       if (i==249) return("sw__var");
+      if (i >= 256 && i < 286)
+      {   if (i - 256 < NUMBER_SYSTEM_FUNCTIONS) return system_functions.keywords[i - 256];
+          return "<unnamed system function>";
+      }
     }
     else {
       switch (i - MAX_LOCAL_VARIABLES) {
@@ -228,7 +232,12 @@ static void print_operand_g(assembly_operand o)
     else
       printf("%s (local_%d)", variable_name(o.value), o.value-1); 
     return;
-  case SYSFUN_OT: printf("sysfun_"); break;
+  case SYSFUN_OT:
+    if (o.value >= 0 && o.value < NUMBER_SYSTEM_FUNCTIONS)
+      printf("%s", system_functions.keywords[o.value]);
+    else
+      printf("<unnamed system function>");
+    return;
   case OMITTED_OT: printf("<no value>"); return;
   default: printf("???_"); break; 
   }

@@ -47,12 +47,9 @@ static void make_lexical_interface_tables(void)
 
 static token_data current_token, previous_token, heldback_token;
 
-static void function_call_triggered(void);
-
 static int comma_allowed, arrow_allowed, superclass_allowed,
            bare_prop_allowed,
            array_init_ambiguity, action_ambiguity,
-
            etoken_count, inserting_token, bracket_level;
 
 extern int *variable_usage;
@@ -248,7 +245,6 @@ but not used as a value:", unicode);
                         heldback_token = current_token;
                         current_token.text = "<call>";
                         bracket_level--;
-                        function_call_triggered();
                     }
                     break;
 
@@ -862,63 +858,127 @@ extern void clear_expression_space(void)
 
 static assembly_operand *emitter_stack;
 static int *emitter_markers;
+static int *emitter_bracket_counts;
 
-#define FVALUE_MARKER 1
-#define ORVALUE_MARKER 2
+#define FUNCTION_VALUE_MARKER 1
+#define ARGUMENT_VALUE_MARKER 2
+#define OR_VALUE_MARKER 3
 
-static int emitter_sp, next_marker = 0;
-
-static void function_call_triggered(void)
-{   next_marker = FVALUE_MARKER;
-    if (expr_trace_level >= 3) printf("Function call triggered\n");
-}
+static int emitter_sp;
 
 static int is_property_t(int symbol_type)
 {   return ((symbol_type == PROPERTY_T) || (symbol_type == INDIVIDUAL_PROPERTY_T));
 }
 
+static void mark_top_of_emitter_stack(int marker, token_data t)
+{   if (emitter_sp < 1)
+    {   compiler_error("SR error: Attempt to add a marker to the top of an empty emitter stack");
+        return;
+    }
+    if (expr_trace_level >= 2)
+    {   printf("Marking top of emitter stack (which is ");
+        print_operand(emitter_stack[emitter_sp-1]);
+        printf(") as ");
+        switch(marker)
+        {
+            case FUNCTION_VALUE_MARKER:
+                printf("FUNCTION");
+                break;
+            case ARGUMENT_VALUE_MARKER:
+                printf("ARGUMENT");
+                break;
+            case OR_VALUE_MARKER:
+                printf("OR_VALUE");
+                break;
+            default:
+                printf("UNKNOWN");
+                break;
+        }
+        printf("\n");
+    }
+    if (emitter_markers[emitter_sp-1])
+    {   if (marker == ARGUMENT_VALUE_MARKER)
+        {
+            warning("Ignoring spurious leading comma");
+            return;
+        }
+        error_named("Missing operand for", t.text);
+        if (emitter_sp == MAX_EXPRESSION_NODES)
+            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        emitter_markers[emitter_sp] = 0;
+        emitter_bracket_counts[emitter_sp] = 0;
+        emitter_stack[emitter_sp] = zero_operand;
+        emitter_sp++;
+    }
+    emitter_markers[emitter_sp-1] = marker;
+}
+
+static void add_bracket_layer_to_emitter_stack(int depth)
+{   /* There's no point in tracking bracket layers that don't fence off any values. */
+    if (emitter_sp < depth + 1) return;
+    if (expr_trace_level >= 2)
+        printf("Adding bracket layer\n");
+    ++emitter_bracket_counts[emitter_sp-depth-1];
+}
+
+static void remove_bracket_layer_from_emitter_stack()
+{   /* Bracket layers that don't fence off any values will not have been tracked. */
+    if (emitter_sp < 2) return;
+    if (expr_trace_level >= 2)
+        printf("Removing bracket layer\n");
+    if (emitter_bracket_counts[emitter_sp-2] <= 0)
+    {   compiler_error("SR error: Attempt to remove a nonexistent bracket layer from the emitter stack");
+        return;
+    }
+    --emitter_bracket_counts[emitter_sp-2];
+}
+
 static void emit_token(token_data t)
-{   assembly_operand o1, o2; int arity, stack_size, i, mark_result = 0;
+{   assembly_operand o1, o2; int arity, stack_size, i;
     int op_node_number, operand_node_number, previous_node_number;
     int32 x;
 
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
         for (i=0; i<emitter_sp; i++)
-        {   if (emitter_markers[i] == FVALUE_MARKER) printf(" FVALUE:");
-            if (emitter_markers[i] == ORVALUE_MARKER) printf(" ORVALUE:");
-            print_operand(emitter_stack[i]); printf(" ");
+        {   print_operand(emitter_stack[i]); printf(" ");
+            if (emitter_markers[i] == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
+            if (emitter_markers[i] == ARGUMENT_VALUE_MARKER) printf(":ARGUMENT ");
+            if (emitter_markers[i] == OR_VALUE_MARKER) printf(":OR ");
+            if (emitter_bracket_counts[i]) printf(":BRACKETS(%d) ", emitter_bracket_counts[i]);
         }
         printf("\n");
     }
 
     if (t.type == SUBOPEN_TT) return;
 
+    stack_size = 0;
+    while ((stack_size < emitter_sp) &&
+           !emitter_markers[emitter_sp-stack_size-1] &&
+           !emitter_bracket_counts[emitter_sp-stack_size-1])
+        stack_size++;
+
     if (t.type == SUBCLOSE_TT)
-    {   if (emitter_sp == 0)
-        {   error("No expression between brackets '(' and ')'");
-            emitter_markers[0] = 0;
-            emitter_stack[0] = zero_operand;
-            emitter_sp = 1;
-        }
-        if (next_marker == FVALUE_MARKER)
-        {   emitter_markers[emitter_sp-1] = next_marker; next_marker=0;
+    {   if (stack_size < emitter_sp && emitter_bracket_counts[emitter_sp-stack_size-1])
+        {   if (stack_size == 0)
+            {   error("No expression between brackets '(' and ')'");
+                emitter_stack[emitter_sp] = zero_operand;
+                emitter_markers[emitter_sp] = 0;
+                emitter_bracket_counts[emitter_sp] = 0;
+                ++emitter_sp;
+            }
+            else if (stack_size < 1)
+                compiler_error("SR error: emitter stack empty in subexpression");
+            else if (stack_size > 1)
+                compiler_error("SR error: emitter stack overfull in subexpression");
+            remove_bracket_layer_from_emitter_stack();
         }
         return;
     }
 
     if (t.type != OP_TT)
-    {   emitter_markers[emitter_sp] = next_marker;
-
-        if (t.type == SYSFUN_TT)
-        {   if (next_marker != FVALUE_MARKER)
-            {   error_named("System function name used as a value:", t.text);
-                t.type = LARGE_NUMBER_TT;
-                t.value = 0;
-                t.marker = 0;
-            }
-        }
-        next_marker=0;
+    {   emitter_markers[emitter_sp] = 0;
+        emitter_bracket_counts[emitter_sp] = 0;
 
         if (emitter_sp == MAX_EXPRESSION_NODES)
             memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
@@ -927,23 +987,22 @@ static void emit_token(token_data t)
         return;
     }
 
-    stack_size = 0;
-    while ((emitter_sp > stack_size)
-           && (emitter_markers[emitter_sp-stack_size-1] != FVALUE_MARKER))
-        stack_size++;
-
-    if ((emitter_sp > 1)&&(stack_size == 0)
-        &&(operators[t.value].precedence >= 12))
-    {   emitter_markers[emitter_sp - 1] = 0;
-        stack_size = 2;
-        mark_result = FVALUE_MARKER;
-    }
-
-    if ((t.value == COMMA_OP) && (emitter_sp != stack_size)) return;
-    if (t.value == OR_OP)
-    {   emitter_markers[emitter_sp-1] = ORVALUE_MARKER;
+    /* A comma is argument-separating if it follows an argument (or a function
+       call, since we ignore spurious leading commas in function argument lists)
+       with no intervening brackets.  Function calls are variadic, so we don't
+       apply argument-separating commas. */
+    if (t.value == COMMA_OP &&
+        stack_size < emitter_sp &&
+        (emitter_markers[emitter_sp-stack_size-1] == ARGUMENT_VALUE_MARKER ||
+         emitter_markers[emitter_sp-stack_size-1] == FUNCTION_VALUE_MARKER) &&
+        !emitter_bracket_counts[emitter_sp-stack_size-1])
+    {   if (expr_trace_level >= 2)
+            printf("Treating comma as argument-separating\n");
         return;
     }
+
+    if (t.value == OR_OP)
+        return;
 
     arity = 1;
     if (t.value == FCALL_OP)
@@ -952,8 +1011,27 @@ static void emit_token(token_data t)
             for (x=0; x<emitter_sp; x++) printf("%d ", emitter_markers[x]);
             printf("\n");
         }
-        while (emitter_markers[emitter_sp-arity] != FVALUE_MARKER)
-            arity++;
+        if (emitter_markers[emitter_sp-1] == ARGUMENT_VALUE_MARKER)
+            warning("Ignoring spurious trailing comma");
+        while (emitter_markers[emitter_sp-arity] != FUNCTION_VALUE_MARKER)
+        {
+            if ((glulx_mode &&
+                 emitter_stack[emitter_sp-arity].type == SYSFUN_OT) ||
+                (!glulx_mode &&
+                 emitter_stack[emitter_sp-arity].type == VARIABLE_OT &&
+                 emitter_stack[emitter_sp-arity].value >= 256 &&
+                 emitter_stack[emitter_sp-arity].value < 288))
+            {   int index = emitter_stack[emitter_sp-arity].value;
+                if(!glulx_mode)
+                    index -= 256;
+                if(index > 0 && index < NUMBER_SYSTEM_FUNCTIONS)
+                    error_named("System function name used as a value:", system_functions.keywords[index]);
+                else
+                    compiler_error("Found unnamed system function used as a value");
+                emitter_stack[emitter_sp-arity] = zero_operand;
+            }
+            ++arity;
+        }
     }
     else
     {   arity = 1;
@@ -961,8 +1039,15 @@ static void emit_token(token_data t)
 
         if (operators[t.value].precedence == 3)
         {   arity = 2;
-            for (x = emitter_sp-1; emitter_markers[x]==ORVALUE_MARKER; x--)
-                arity++;
+            x = emitter_sp-1;
+            if(!emitter_markers[x] && !emitter_bracket_counts[x])
+            {   for (--x; emitter_markers[x] == OR_VALUE_MARKER && !emitter_bracket_counts[x]; --x)
+                {   ++arity;
+                    ++stack_size;
+                }
+                for (;x >= 0 && !emitter_markers[x] && !emitter_bracket_counts[x]; --x)
+                    ++stack_size;
+            }
         }
 
         if (arity > stack_size)
@@ -971,6 +1056,7 @@ static void emit_token(token_data t)
             {   if (emitter_sp == MAX_EXPRESSION_NODES)
                     memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
                 emitter_markers[emitter_sp] = 0;
+                emitter_bracket_counts[emitter_sp] = 0;
                 emitter_stack[emitter_sp] = zero_operand;
                 emitter_sp++;
                 stack_size++;
@@ -1142,7 +1228,10 @@ static void emit_token(token_data t)
     emitter_stack[emitter_sp - 1].type = EXPRESSION_OT;
     emitter_stack[emitter_sp - 1].value = op_node_number;
     emitter_stack[emitter_sp - 1].marker = 0;
-    emitter_markers[emitter_sp - 1] = mark_result;
+    emitter_markers[emitter_sp - 1] = 0;
+    emitter_bracket_counts[emitter_sp - 1] = 0;
+    /* Remove the marker for the brackets implied by operator precedence */
+    remove_bracket_layer_from_emitter_stack();
 
     return;
 
@@ -1202,12 +1291,16 @@ the range -32768 to +32767:", folding_error);
     emitter_stack[emitter_sp - 1].value = x;
     emitter_stack[emitter_sp - 1].marker = 0;
     emitter_markers[emitter_sp - 1] = 0;
+    emitter_bracket_counts[emitter_sp - 1] = 0;
 
     if (expr_trace_level >= 2)
     {   printf("Folding constant to: ");
         print_operand(emitter_stack[emitter_sp - 1]);
         printf("\n");
     }
+
+    /* Remove the marker for the brackets implied by operator precedence */
+    remove_bracket_layer_from_emitter_stack();
     return;
 }
 
@@ -1740,19 +1833,48 @@ extern assembly_operand parse_expression(int context)
                 if (sr_sp == MAX_EXPRESSION_NODES)
                     memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
                 sr_stack[sr_sp++] = b;
-                if ((b.type == OP_TT) && (b.value == OR_OP))
+                switch(b.type)
                 {
-                    if (!((sr_stack[sr_sp-2].type == OP_TT) &&
-                          (sr_stack[sr_sp-2].value >= ZERO_OP) &&
-                          (sr_stack[sr_sp-2].value <= NOTPROVIDES_OP)))
-                    {
-                error("'or' not between values to the right of a condition");
-
-                        /* Convert to + for error recovery purposes */
-                        sr_stack[sr_sp-1].value = PLUS_OP;
-                    }
+                    case SUBOPEN_TT:
+                        if (sr_sp >= 2 && sr_stack[sr_sp-2].type == OP_TT && sr_stack[sr_sp-2].value == FCALL_OP)
+                            mark_top_of_emitter_stack(FUNCTION_VALUE_MARKER, b);
+                        else
+                            add_bracket_layer_to_emitter_stack(0);
+                        break;
+                    case OP_TT:
+                        switch(b.value){
+                            case OR_OP:
+                                if (sr_stack[sr_sp-2].type == OP_TT &&
+                                    operators[sr_stack[sr_sp-2].value].precedence == 3)
+                                    mark_top_of_emitter_stack(OR_VALUE_MARKER, b);
+                                else
+                                {   error("'or' not between values to the right of a condition");
+                                    /* Convert to + for error recovery purposes */
+                                    sr_stack[sr_sp-1].value = PLUS_OP;
+                                }
+                                break;
+                            case COMMA_OP:
+                                {
+                                    /* A comma separates arguments only if the shallowest open bracket belongs to a function call. */
+                                    int shallowest_open_bracket_index = sr_sp - 2;
+                                    while (shallowest_open_bracket_index > 0 && sr_stack[shallowest_open_bracket_index].type != SUBOPEN_TT)
+                                        --shallowest_open_bracket_index;
+                                    if (shallowest_open_bracket_index > 0 &&
+                                        sr_stack[shallowest_open_bracket_index-1].type == OP_TT &&
+                                        sr_stack[shallowest_open_bracket_index-1].value == FCALL_OP)
+                                    {   mark_top_of_emitter_stack(ARGUMENT_VALUE_MARKER, b);
+                                        break;
+                                    }
+                                    /* Non-argument-separating commas get treated like any other operator; we fall through to the default case. */
+                                }
+                            default:
+                                {
+                                    /* Add a marker for the brackets implied by operator precedence */
+                                    int operands_on_left = (operators[b.value].usage == PRE_U) ? 0 : 1;
+                                    add_bracket_layer_to_emitter_stack(operands_on_left);
+                                }
+                        }
                 }
-
                 get_next_etoken();
                 break;
             case GREATER_P:
@@ -1834,6 +1956,8 @@ extern void expressp_allocate_arrays(void)
         "expression parse trees");
     emitter_markers = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
         "emitter markers");
+    emitter_bracket_counts = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
+        "emitter bracket layer counts");
     emitter_stack = my_calloc(sizeof(assembly_operand), MAX_EXPRESSION_NODES,
         "emitter stack");
     sr_stack = my_calloc(sizeof(token_data), MAX_EXPRESSION_NODES,
@@ -1843,6 +1967,7 @@ extern void expressp_allocate_arrays(void)
 extern void expressp_free_arrays(void)
 {   my_free(&ET, "expression parse trees");
     my_free(&emitter_markers, "emitter markers");
+    my_free(&emitter_bracket_counts, "emitter bracket layer counts");
     my_free(&emitter_stack, "emitter stack");
     my_free(&sr_stack, "shift-reduce parser stack");
 }
