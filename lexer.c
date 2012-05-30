@@ -1314,7 +1314,7 @@ extern void get_next_token(void)
             *lex_p++ = 0;
             circle[circle_position].type = NUMBER_TT;
             circle[circle_position].value = n;
-            if (!glulx_mode) error("Floating-point literals are not available in Z-code");
+            if (!glulx_mode && dont_enter_into_symbol_table != -2) error("Floating-point literals are not available in Z-code");
             break;
 
         case RADIX_CODE:
