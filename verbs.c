@@ -198,20 +198,28 @@ extern assembly_operand action_of_name(char *name)
 
 extern void find_the_actions(void)
 {   int i; int32 j;
+    char action_name[MAX_IDENTIFIER_LENGTH];
     char action_sub[MAX_IDENTIFIER_LENGTH+4];
 
     if (module_switch)
         for (i=0; i<no_actions; i++) action_byte_offset[i] = 0;
     else
     for (i=0; i<no_actions; i++)
-    {   strcpy(action_sub, (char *) symbs[action_symbol[i]]);
-        strcpy(action_sub + strlen(action_sub) - 3, "Sub");
+    {   strcpy(action_name, (char *) symbs[action_symbol[i]]);
+        action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */
+        strcpy(action_sub, action_name);
+        strcat(action_sub, "Sub");
         j = symbol_index(action_sub, -1);
         if (sflags[j] & UNKNOWN_SFLAG)
-            error_named("There is no action routine called", action_sub);
+        {
+            error_named_at("No ...Sub action routine found for action:", action_name, slines[action_symbol[i]]);
+        }
         else
         if (stypes[j] != ROUTINE_T)
-            error_named("Not an action routine:", action_sub);
+        {
+            error_named_at("No ...Sub action routine found for action:", action_name, slines[action_symbol[i]]);
+            error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, slines[j]);
+        }
         else
         {   action_byte_offset[i] = svals[j];
             sflags[j] |= USED_SFLAG;
