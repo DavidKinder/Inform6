@@ -710,6 +710,20 @@ static int32 unique_task_id(void)
 #define  GPAGESIZE 256
 /* All Glulx memory boundaries must be multiples of GPAGESIZE. */
 
+/* In many places the compiler encodes a source-code location (file and
+   line number) into an int32 value. The encoded value looks like
+   line_number + FILE_LINE_SCALE_FACTOR*file_number. This will go
+   badly if a source file has more than FILE_LINE_SCALE_FACTOR lines,
+   of course. But this value is roughly eight million, which is a lot
+   of lines. 
+
+   There is also potential trouble if we have more than 512 source files;
+   perhaps 256, depending on signedness issues. However, there are other
+   spots in the compiler that assume no more than 255 source files, so
+   we'll stick with this for now.
+*/
+#define  FILE_LINE_SCALE_FACTOR  (0x800000L)
+
 /* ------------------------------------------------------------------------- */
 /*   Structure definitions (there are a few others local to files)           */
 /* ------------------------------------------------------------------------- */

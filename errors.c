@@ -29,7 +29,7 @@ static void print_preamble(void)
     int j, with_extension_flag = FALSE; char *p;
 
     j = ErrorReport.file_number;
-    if (j <= 0) p = ErrorReport.source;
+    if (j <= 0 || j > input_file) p = ErrorReport.source;
     else p = InputFiles[j-1].filename;
 
     if (!p) p = "";
@@ -206,8 +206,8 @@ extern void error_named_at(char *s1, char *s2, int32 report_line)
 
     ErrorPosition E = ErrorReport;
     if (report_line != -1)
-    {   ErrorReport.file_number = report_line/0x10000;
-        ErrorReport.line_number = report_line%0x10000;
+    {   ErrorReport.file_number = report_line/FILE_LINE_SCALE_FACTOR;
+        ErrorReport.line_number = report_line%FILE_LINE_SCALE_FACTOR;
         ErrorReport.main_flag = (ErrorReport.file_number == 1);
     }
 
@@ -304,8 +304,8 @@ extern void dbnu_warning(char *type, char *name, int32 report_line)
     ErrorPosition E = ErrorReport;
     if (nowarnings_switch) { no_suppressed_warnings++; return; }
     if (report_line != -1)
-    {   ErrorReport.file_number = report_line/0x10000;
-        ErrorReport.line_number = report_line%0x10000;
+    {   ErrorReport.file_number = report_line/FILE_LINE_SCALE_FACTOR;
+        ErrorReport.line_number = report_line%FILE_LINE_SCALE_FACTOR;
         ErrorReport.main_flag = (ErrorReport.file_number == 1);
     }
     sprintf(error_message_buff, "%s \"%s\" declared but not used", type, name);

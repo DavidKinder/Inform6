@@ -1398,7 +1398,7 @@ extern int32 assemble_routine_header(int no_locals,
 
     if (veneer_mode) routine_starts_line = -1;
     else routine_starts_line = ErrorReport.line_number
-             + 0x10000*ErrorReport.file_number;
+             + FILE_LINE_SCALE_FACTOR*ErrorReport.file_number;
 
     if (asm_trace_level > 0)
     {   printf("\n%5d  +%05lx  [ %s ", ErrorReport.line_number,

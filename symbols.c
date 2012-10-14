@@ -216,7 +216,7 @@ extern int symbol_index(char *p, int hashcode)
     sflags[no_symbols]  =  UNKNOWN_SFLAG;
     stypes[no_symbols]  =  CONSTANT_T;
     slines[no_symbols]  =  ErrorReport.line_number
-                           + 0x10000*ErrorReport.file_number;
+                           + FILE_LINE_SCALE_FACTOR*ErrorReport.file_number;
 
     return(no_symbols++);
 }
@@ -292,7 +292,9 @@ static void describe_flags(int flags)
 
 extern void describe_symbol(int k)
 {   printf("%4d  %-16s  %2d:%04d  %04x  %s  ",
-        k, (char *) (symbs[k]), slines[k]/0x10000, slines[k]%0x10000,
+        k, (char *) (symbs[k]), 
+        (int)(slines[k]/FILE_LINE_SCALE_FACTOR),
+        (int)(slines[k]%FILE_LINE_SCALE_FACTOR),
         svals[k], typename(stypes[k]));
     describe_flags(sflags[k]);
 }
@@ -524,7 +526,7 @@ static void assign_symbol_base(int index, int32 value, int type)
     {   sflags[index] &= (~UNKNOWN_SFLAG);
         if (is_systemfile()) sflags[index] |= INSF_SFLAG;
         slines[index] = ErrorReport.line_number
-                        + 0x10000*ErrorReport.file_number;
+                        + FILE_LINE_SCALE_FACTOR*ErrorReport.file_number;
     }
 }
 
