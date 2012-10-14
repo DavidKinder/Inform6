@@ -71,8 +71,8 @@ bitwise-or&rsquo;s the value in if the word already exists. The third form also 
 in the same way as for <tt>dict_par1</tt>.
 <p>
 The values can be numeric literals or constants. They can be 0-255 for Z-code, or 0-65535 for Glulx.
-<li><p>The <tt>font on</tt> and  <tt>font off</tt> commands now call the <tt>@set_font</tt> opcode for Z-code
-V5 and higher.
+<li><p>The &ldquo;<tt>font on</tt>&rdquo; and &ldquo;<tt>font off</tt>&rdquo; statements now call the
+<tt>@set_font</tt> opcode for Z-code V5 and higher.
 <li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
 more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 </ul>
@@ -95,6 +95,8 @@ containing no routines at all. [Mantis 843]
 when compiling to Z-code. [Mantis 927]
 <li><p>The error message produced if an action routine is not found for an action name has been improved to include
 the action name, and a sensible line number. [Mantis 1014]
+<li><p>The compiler is now better at not producing spurious additional errors after it has encountered a directive
+that contains an error. [Mantis 1018]
 
 </ul>
 

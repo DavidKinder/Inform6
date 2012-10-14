@@ -53,6 +53,10 @@ static void begin_syntax_line(int statement_mode)
 
 extern void panic_mode_error_recovery(void)
 {
+    /* Consume tokens until the next semicolon (or end of file).
+       This is typically called after a syntax error, in hopes of
+       getting parsing back on track. */
+
     while ((token_type != EOF_TT)
            && ((token_type != SEP_TT)||(token_value != SEMICOLON_SEP)))
 
