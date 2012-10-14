@@ -2201,6 +2201,21 @@ void assemblez_4_to(int internal_number,
     assemblez_instruction(&AI);
 }
 
+void assemblez_5_to(int internal_number,
+    assembly_operand o1, assembly_operand o2, assembly_operand o3,
+    assembly_operand o4, assembly_operand o5, assembly_operand st)
+{   AI.internal_number = internal_number;
+    AI.operand_count = 5;
+    AI.operand[0] = o1;
+    AI.operand[1] = o2;
+    AI.operand[2] = o3;
+    AI.operand[3] = o4;
+    AI.operand[4] = o5;
+    AI.store_variable_number = st.value;
+    AI.branch_label_number = -1;
+    assemblez_instruction(&AI);
+}
+
 void assemblez_2_to(int internal_number,
     assembly_operand o1, assembly_operand o2, assembly_operand st)
 {   AI.internal_number = internal_number;

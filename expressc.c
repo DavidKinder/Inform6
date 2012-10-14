@@ -16,11 +16,11 @@ int vivc_flag;                      /*  TRUE if the last code-generated
                                         treated as yet-to-be-defined constants
                                         and thus as values in void context  */
 
-/* ###- I'm making these global, because they're too useful to be
+/* These data structures are global, because they're too useful to be
    static. */
 assembly_operand stack_pointer, temp_var1, temp_var2, temp_var3,
   temp_var4, zero_operand, one_operand, two_operand, three_operand,
-  valueless_operand;
+  four_operand, valueless_operand;
 
 static void make_operands(void)
 {
@@ -52,6 +52,9 @@ static void make_operands(void)
     three_operand.type = SHORT_CONSTANT_OT;
     three_operand.value = 3;
     three_operand.marker = 0;
+    four_operand.type = SHORT_CONSTANT_OT;
+    four_operand.value = 4;
+    four_operand.marker = 0;
     valueless_operand.type = OMITTED_OT;
     valueless_operand.value = 0;
     valueless_operand.marker = 0;
@@ -84,6 +87,9 @@ static void make_operands(void)
     three_operand.type = BYTECONSTANT_OT;
     three_operand.value = 3;
     three_operand.marker = 0;
+    four_operand.type = BYTECONSTANT_OT;
+    four_operand.value = 4;
+    four_operand.marker = 0;
     valueless_operand.type = OMITTED_OT;
     valueless_operand.value = 0;
     valueless_operand.marker = 0;

@@ -45,7 +45,31 @@ extern void match_close_bracket(void)
 
 static void parse_action(void)
 {   int level = 1, args = 0, codegen_action;
-    assembly_operand AO, AO2, AO3, AO4;
+    assembly_operand AO, AO2, AO3, AO4, AO5;
+
+    /* An action statement has the form <ACTION NOUN SECOND, ACTOR>
+       or <<ACTION NOUN SECOND, ACTOR>>. It simply compiles into a call
+       to R_Process() with those four arguments. (The latter form,
+       with double brackets, means "return true afterwards".)
+
+       The R_Process() function should be supplied by the library, 
+       although a stub is defined in the veneer.
+
+       The NOUN, SECOND, and ACTOR arguments are optional. If not
+       supplied, R_Process() will be called with fewer arguments. 
+       (But if you supply ACTOR, it must be preceded by a comma.
+       <ACTION, ACTOR> is equivalent to <ACTION 0 0, ACTOR>.)
+
+       To complicate life, the ACTION argument may be a bare action
+       name or a parenthesized expression. (So <Take> is equivalent
+       to <(##Take)>.) We have to peek at the first token, checking
+       whether it's an open-paren, to distinguish these cases.
+
+       You may ask why the ACTOR argument is last; the "natural"
+       Inform ordering would be "<floyd, take ball>". True! Sadly,
+       Inform's lexer isn't smart enough to parse this consistently,
+       so we can't do it.
+    */
 
     dont_enter_into_symbol_table = TRUE;
     get_next_token();
@@ -54,6 +78,7 @@ static void parse_action(void)
     }
     dont_enter_into_symbol_table = FALSE;
 
+    /* Peek at the next token; see if it's an open-paren. */
     if ((token_type==SEP_TT) && (token_value==OPENB_SEP))
     {   put_token_back();
         AO2 = parse_expression(ACTION_Q_CONTEXT);
@@ -65,19 +90,42 @@ static void parse_action(void)
     }
 
     get_next_token();
-    if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
+    AO3 = zero_operand;
+    AO4 = zero_operand;
+    AO5 = zero_operand;
+    if (!((token_type == SEP_TT) && (token_value == GREATER_SEP || token_value == COMMA_SEP)))
     {   put_token_back();
         args = 1;
         AO3 = parse_expression(ACTION_Q_CONTEXT);
 
         get_next_token();
+    }
+    if (!((token_type == SEP_TT) && (token_value == GREATER_SEP || token_value == COMMA_SEP)))
+    {   put_token_back();
+        args = 2;
+        AO4 = parse_expression(QUANTITY_CONTEXT);
+        get_next_token();
+    }
+    if (!((token_type == SEP_TT) && (token_value == GREATER_SEP || token_value == COMMA_SEP)))
+    {
+        ebf_error("',' or '>'", token_text);
+    }
+
+    if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
+    {
+        if (!glulx_mode && (version_number < 4))
+        {
+            error("<x, y> syntax is not available in Z-code V3 or earlier");
+        }
+        args = 3;
+        AO5 = parse_expression(QUANTITY_CONTEXT);
+        get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
-        {   put_token_back();
-            args = 2;
-            AO4 = parse_expression(QUANTITY_CONTEXT);
-            get_next_token();
+        {
+            ebf_error("'>'", token_text);
         }
     }
+
     if (level == 2)
     {   get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
@@ -124,6 +172,19 @@ static void parse_action(void)
             else
                 assemblez_4(call_zc, AO, AO2, AO3, AO4);
             break;
+          case 3:
+            AO5 = code_generate(AO5, QUANTITY_CONTEXT, -1);
+            AO4 = code_generate(AO4, QUANTITY_CONTEXT, -1);
+            AO3 = code_generate(AO3, QUANTITY_CONTEXT, -1);
+            if (codegen_action) AO2 = code_generate(AO2, QUANTITY_CONTEXT, -1);
+            if (version_number>=5)
+                assemblez_5(call_vn2_zc, AO, AO2, AO3, AO4, AO5);
+            else
+            if (version_number==4)
+                assemblez_5_to(call_vs2_zc, AO, AO2, AO3, AO4, AO5, temp_var1);
+            /* if V3 or earlier, we've already displayed an error */
+            break;
+            break;
       }
 
       if (level == 2) assemblez_0(rtrue_zc);
@@ -154,6 +215,23 @@ static void parse_action(void)
         if (codegen_action) 
           AO2 = code_generate(AO2, QUANTITY_CONTEXT, -1);
         assembleg_call_3(AO, AO2, AO3, AO4, zero_operand);
+        break;
+
+      case 3:
+        AO5 = code_generate(AO5, QUANTITY_CONTEXT, -1);
+        if (!((AO5.type == LOCALVAR_OT) && (AO5.value == 0)))
+            assembleg_store(stack_pointer, AO5);
+        AO4 = code_generate(AO4, QUANTITY_CONTEXT, -1);
+        if (!((AO4.type == LOCALVAR_OT) && (AO4.value == 0)))
+            assembleg_store(stack_pointer, AO4);
+        AO3 = code_generate(AO3, QUANTITY_CONTEXT, -1);
+        if (!((AO3.type == LOCALVAR_OT) && (AO3.value == 0)))
+            assembleg_store(stack_pointer, AO3);
+        if (codegen_action) 
+          AO2 = code_generate(AO2, QUANTITY_CONTEXT, -1);
+        if (!((AO2.type == LOCALVAR_OT) && (AO2.value == 0)))
+          assembleg_store(stack_pointer, AO2);
+        assembleg_3(call_gc, AO, four_operand, zero_operand);
         break;
       }
 

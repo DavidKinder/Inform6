@@ -11,12 +11,10 @@
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
 issues that have arisen since the 6.21 compiler and 6/10 library files were released in 1999, and 
-subsequently since the 6.30 compiler was released in 2004. The focus is primarily on fixing the 
-problems which are identified in the Inform Patch List:
-<pre>  <a href="http://www.inform-fiction.org/patches/index.html">http://www.inform-fiction.org/patches/index.html</a></pre>
-In addition, a small number of enhancements are included, based on the ideas collected in the Inform 
-Suggestions List:
-<pre>  <a href="http://www.inform-fiction.org/suggestions/index.html">http://www.inform-fiction.org/suggestions/index.html</a></pre>
+subsequently since the 6.30 compiler was released in 2004. The focus is primarily on fixing problems,
+but a small number of enhancements are included. Problems in Inform 6 are now reported and tracked
+through the <a href="http://inform7.com/mantis/">Inform 7 bug tracker</a>.
+<p>
 Although just about all known bugs are fixed, the approach to enhancing Inform is more conservative. 
 The selection of suggestions to implement has been governed by three factors:
 <ul>
@@ -56,8 +54,14 @@ These are the changes delivered in version 6.33 of the Inform compiler.
 <li><p>A new command line switch <tt><b>-Cu</b></tt> can be used to specify that the source file
 character set is UTF-8, allowing source files to contain Unicode characters beyond those defined in
 ISO 8859-1 to 8859-9.
-<li><p>
-The previously deprecated <tt>Dictionary</tt> directive can now have the following forms:
+<li><p>Action statements can have an optional extra &lsquo;actor&rsquo; argument, allowing action
+statements of the form
+<pre>
+  &lt;Take pie, orc&gt;; ! simple form
+  &lt;&lt;Look, floyd&gt;&gt;; ! auto-returning form
+</pre>
+Note that this also requires a library change to be useful.
+<li><p>The previously deprecated <tt>Dictionary</tt> directive can now have the following forms:
 <pre>
   Dictionary 'word';
   Dictionary 'word' val1;
@@ -943,8 +947,9 @@ accomplish this is:
 <pre>  glk($0086, 2);</pre>
 The hex value $0086 means <tt>glk_set_style</tt>; the value &ldquo;2&rdquo; means <tt>Preformatted</tt>.<p>
 The table of Glk calls, and the integers that refer to them, is in the Glk specification (remember 
-that the values given there are hexadecimal). See:
-<pre>  <a href="http://www.eblong.com/zarf/glk/glk-spec-070_11.html#s.1.6">http://www.eblong.com/zarf/glk/glk-spec-070_11.html#s.1.6</a></pre>
+that the values given there are hexadecimal), in
+<a href="http://www.eblong.com/zarf/glk/glk-spec-074_12.html#s.1.6">Section 12.1.6</a>.
+<p>
 Since calls based on numeric codes are not very easy to read, we recommend that you download 
 John Cater&rsquo;s <tt>infglk.h</tt> library header, which defines wrapper functions and constants. For 
 example, you could achieve the same effect with this call:

@@ -2121,6 +2121,10 @@ extern void assemblez_4_to(int internal_number,
                        assembly_operand o1, assembly_operand o2,
                        assembly_operand o3, assembly_operand o4,
                        assembly_operand st);
+extern void assemblez_5_to(int internal_number,
+                       assembly_operand o1, assembly_operand o2,
+                       assembly_operand o3, assembly_operand o4,
+                       assembly_operand o5, assembly_operand st);
 
 extern void assemblez_inc(assembly_operand o1);
 extern void assemblez_dec(assembly_operand o1);
@@ -2257,7 +2261,7 @@ extern operator operators[];
 
 extern assembly_operand stack_pointer, temp_var1, temp_var2, temp_var3, 
     temp_var4, zero_operand, one_operand, two_operand, three_operand,
-    valueless_operand;
+    four_operand, valueless_operand;
 
 assembly_operand code_generate(assembly_operand AO, int context, int label);
 assembly_operand check_nonzero_at_runtime(assembly_operand AO1, int label,
