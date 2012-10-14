@@ -65,6 +65,14 @@ static char** symbol_name_space_chunks; /* For chunks of memory used to hold
                                            the name strings of symbols       */
 static int no_symbol_name_space_chunks;
 
+typedef struct value_pair_struct {
+    int original_symbol;
+    int renamed_symbol;
+} value_pair_t;
+static value_pair_t *symbol_replacements;
+static int symbol_replacements_count;
+static int symbol_replacements_size; /* calloced size */
+
 /* ------------------------------------------------------------------------- */
 /*   The symbols table is "hash-coded" into a disjoint union of linked       */
 /*   lists, so that for any symbol i, next_entry[i] is either -1 (meaning    */
@@ -689,6 +697,46 @@ static void stockup_symbols(void)
     }
 }
 
+/* ------------------------------------------------------------------------- */
+/*   The symbol replacement table. This is needed only for the               */
+/*   "Replace X Y" directive.                                                */
+/* ------------------------------------------------------------------------- */
+
+extern void add_symbol_replacement_mapping(int original, int renamed)
+{
+    if (symbol_replacements_count == symbol_replacements_size) {
+        int oldsize = symbol_replacements_size;
+        if (symbol_replacements_size == 0) 
+            symbol_replacements_size = 4;
+        else
+            symbol_replacements_size *= 2;
+        my_recalloc(&symbol_replacements, sizeof(value_pair_t), oldsize,
+            symbol_replacements_size, "symbol replacement table");
+    }
+
+    symbol_replacements[symbol_replacements_count].original_symbol = original;
+    symbol_replacements[symbol_replacements_count].renamed_symbol = renamed;
+    symbol_replacements_count++;
+}
+
+extern int find_symbol_replacement(int *value)
+{
+    int changed = FALSE;
+    int ix;
+
+    if (!symbol_replacements)
+        return FALSE;
+
+    for (ix=0; ix<symbol_replacements_count; ix++) {
+        if (*value == symbol_replacements[ix].original_symbol) {
+            *value = symbol_replacements[ix].renamed_symbol;
+            changed = TRUE;
+        }
+    }
+
+    return changed;
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -709,6 +757,10 @@ extern void init_symbols_vars(void)
     symbols_ceiling=symbols_free_space;
 
     no_symbols = 0;
+
+    symbol_replacements = NULL;
+    symbol_replacements_count = 0;
+    symbol_replacements_size = 0;
 
     make_case_conversion_grid();
 }
@@ -735,6 +787,9 @@ extern void symbols_allocate_arrays(void)
     init_symbol_banks();
     stockup_symbols();
 
+    /*  Allocated as needed  */
+    symbol_replacements = NULL;
+
     /*  Allocated during story file construction, not now  */
     individual_name_strings = NULL;
     attribute_name_strings = NULL;
@@ -759,6 +814,9 @@ extern void symbols_free_arrays(void)
     my_free(&sflags, "symbol flags");
     my_free(&next_entry, "symbol linked-list forward links");
     my_free(&start_of_list, "hash code list beginnings");
+
+    if (symbol_replacements)
+        my_free(&symbol_replacements, "symbol replacement table");
 
     if (individual_name_strings != NULL)
         my_free(&individual_name_strings, "property name strings");

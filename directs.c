@@ -609,7 +609,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         break;
 
     /* --------------------------------------------------------------------- */
-    /*   Replace routine                                                     */
+    /*   Replace routine [routinename]                                       */
     /* --------------------------------------------------------------------- */
 
     case REPLACE_CODE:
@@ -625,7 +625,13 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {   if (system_function_usage[token_value] == 1)
                 error("You can't 'Replace' a system function already used");
             else system_function_usage[token_value] = 2;
-            break;
+            get_next_token();
+            if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
+            {
+                error("You can't give a 'Replace'd system function a new name");
+                panic_mode_error_recovery(); return FALSE;
+            }
+            return FALSE;
         }
 
         if (token_type != SYMBOL_TT)
@@ -634,6 +640,25 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             return ebf_error_recover("name of routine not yet defined", token_text);
 
         sflags[token_value] |= REPLACE_SFLAG;
+
+        /* If a second symbol is provided, it will refer to the
+           original (replaced) definition of the routine. */
+        i = token_value;
+
+        system_functions.enabled = FALSE;
+        get_next_token();
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
+        {   return FALSE;
+        }
+
+        if (token_type != SYMBOL_TT || !(sflags[token_value] & UNKNOWN_SFLAG))
+            return ebf_error_recover("semicolon ';' or new routine name", token_text);
+
+        /* Define the original-form symbol as a zero constant. Its
+           value will be overwritten later, when we define the
+           replacement. */
+        assign_symbol(token_value, 0, CONSTANT_T);
+        add_symbol_replacement_mapping(i, token_value);
 
         break;
 

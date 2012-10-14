@@ -59,6 +59,19 @@ statements of the form
   &lt;&lt;Look, floyd&gt;&gt;; ! auto-returning form
 </pre>
 Note that this also requires a library change to be useful.
+<li><p>A previously declared routine can be renamed with a new form of the <tt>Replace</tt> directive.
+For example, if a source file contained
+<pre>
+  Replace Banner OriginalBanner;
+</pre>
+It could then (after including the library) contain this definion of a function:
+<pre>
+  [ Banner;
+    OriginalBanner();
+    print "Extra version info!^";
+  ];
+</pre>
+The library's banner code would then be in <tt>OriginalBanner()</tt>.
 <li><p>The previously deprecated <tt>Dictionary</tt> directive can now have the following forms:
 <pre>
   Dictionary 'word';
