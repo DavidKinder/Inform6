@@ -164,8 +164,8 @@ static int32 rough_size_of_paged_memory_z(void)
     for (i=0; i<no_Inform_verbs; i++)
         total += 2 + 1 +                        /* address of grammar table, */
                                                   /* number of grammar lines */
-                 (grammar_version_number == 1)?
-                 (8*Inform_verbs[i].lines):0;               /* grammar lines */
+                 ((grammar_version_number == 1)?
+                  (8*Inform_verbs[i].lines):0);             /* grammar lines */
 
     if (grammar_version_number != 1)
         total += grammar_lines_top;            /* size of grammar lines area */
