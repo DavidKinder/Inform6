@@ -295,7 +295,7 @@ keyword_group directives =
     "iffalse", "import", "include", "link", "lowstring", "message",
     "nearby", "object", "property", "release", "replace",
     "serial", "switches", "statusline", "stub", "system_file", "trace",
-    "verb", "version", "zcharacter",
+    "undef", "verb", "version", "zcharacter",
     "" },
     DIRECTIVE_TT, FALSE, FALSE
 };

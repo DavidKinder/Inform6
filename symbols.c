@@ -139,7 +139,7 @@ extern int strcmpcis(char *p, char *q)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Symbol finding/creating.                                                */
+/*   Symbol finding, creating, and removing.                                 */
 /* ------------------------------------------------------------------------- */
 
 extern int symbol_index(char *p, int hashcode)
@@ -211,6 +211,30 @@ extern int symbol_index(char *p, int hashcode)
                            + 0x10000*ErrorReport.file_number;
 
     return(no_symbols++);
+}
+
+extern void end_symbol_scope(int k)
+{
+    /* Remove the given symbol from the hash table, making it
+       invisible to symbol_index. This is used by the Undef directive.
+       If the symbol is not found, this silently does nothing.
+    */
+
+    int j;
+    j = hash_code_from_string((char *) symbs[k]);
+    if (start_of_list[j] == k)
+    {   start_of_list[j] = next_entry[k];
+        return;
+    }
+    j = start_of_list[j];
+    while (j != -1)
+    {
+        if (next_entry[j] == k)
+        {   next_entry[j] = next_entry[k];
+            return;
+        }
+        j = next_entry[j];
+    }
 }
 
 /* ------------------------------------------------------------------------- */

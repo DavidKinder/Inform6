@@ -852,6 +852,30 @@ the first constant definition");
         break;
 
     /* --------------------------------------------------------------------- */
+    /*   Undef symbol                                                        */
+    /* --------------------------------------------------------------------- */
+
+    case UNDEF_CODE:
+        get_next_token();
+        if (token_type != SYMBOL_TT)
+        {   ebf_error("symbol name", token_text);
+            break;
+        }
+
+        if (sflags[token_value] & UNKNOWN_SFLAG)
+        {   break; /* undef'ing an undefined constant is okay */
+        }
+
+        if (stypes[token_value] != CONSTANT_T)
+        {   error_named("Cannot Undef a symbol which is not a defined constant:", (char *)symbs[token_value]);
+            break;
+        }
+
+        end_symbol_scope(token_value);
+        sflags[token_value] |= USED_SFLAG;
+        break;
+
+    /* --------------------------------------------------------------------- */
     /*   Verb ...                                                            */
     /* --------------------------------------------------------------------- */
 
