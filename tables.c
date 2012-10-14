@@ -1551,8 +1551,8 @@ table format requested (producing number 2 format instead)");
         k_long=(Out_Size/1024);
         if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }
         else if ((Out_Size-1024*k_long) > 0) { k_str=".5"; }
-        if (total_bytes_trans == 0) rate = 0;
-        else rate=total_bytes_trans*1000/total_chars_trans;
+        if (strings_length == 0) rate = 0;
+        else rate=strings_length*1000/total_chars_trans;
 
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
@@ -1610,8 +1610,8 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 %6ld bytes readable memory used (maximum 65536)\n\
 %6ld bytes used in machine    %10ld bytes free in machine\n",
                  (long int) total_chars_trans,
-                 (long int) total_bytes_trans,
-                 (total_chars_trans>total_bytes_trans)?0:1,
+                 (long int) strings_length,
+                 (total_chars_trans>strings_length)?0:1,
                  (long int) rate,
                  no_abbreviations, MAX_ABBREVS,
                  no_routines,
@@ -1779,7 +1779,7 @@ printf("        +---------------------+   %06lx\n", (long int) Out_Size);
         percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
         percentage("Header and synonyms", prop_defaults_at,Out_Size);
         percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      total_bytes_trans,Out_Size);
+        percentage("Total of text",      strings_length,Out_Size);
     }
     if (frequencies_switch)
     {
