@@ -918,6 +918,19 @@ static void parse_statement_z(int break_label, int continue_label)
                      break;
                  }
 
+                 if (version_number >= 5)
+                 {   /* Use the V5 @set_font opcode, setting font 4
+                        (for font off) or 1 (for font on). */
+                     AO.type = SHORT_CONSTANT_OT; AO.marker = 0;
+                     if (token_value == ON_MK)
+                         AO.value = 1;
+                     else
+                         AO.value = 4;
+                     assemblez_1_to(set_font_zc, AO, temp_var1);
+                     break;
+                 }
+
+                 /* Set the fixed-pitch header bit. */
                  AO.type = SHORT_CONSTANT_OT;
                  AO.value = 0;
                  AO.marker = 0;

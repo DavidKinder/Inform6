@@ -12,8 +12,7 @@
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
 issues that have arisen since the 6.21 compiler and 6/10 library files were released in 1999, and 
 subsequently since the 6.30 compiler was released in 2004. The focus is primarily on fixing problems,
-but a small number of enhancements are included. Problems in Inform 6 are now reported and tracked
-through the <a href="http://inform7.com/mantis/">Inform 7 bug tracker</a>.
+but a small number of enhancements are included.
 <p>
 Although just about all known bugs are fixed, the approach to enhancing Inform is more conservative. 
 The selection of suggestions to implement has been governed by three factors:
@@ -42,10 +41,8 @@ suggestions, providing support and facilities, testing, and so on &mdash; for th
 listed. So instead, this is a general thank-you to everybody who has made this release happen, and 
 specific ones to Graham for permitting it in the first place, and to Andrew for his pioneering work on 
 Glulx.
-There are, naturally, sure to be imperfections in the release, and these should be reported in the usual 
-way: bug reports to the Patch List, enhancement ideas to the Suggestions List. Any really serious 
-issues should perhaps be raised on the rec.arts.int-fiction Usenet newsgroup, with a Subject line 
-beginning &ldquo;<tt>[Inform6] ...</tt>&rdquo;.
+There are, naturally, sure to be imperfections in the release, and these should be reported through the
+<a href="http://inform7.com/mantis/">Inform bug tracker</a>.
 
 <h2>Compiler 6.33</h2>
 These are the changes delivered in version 6.33 of the Inform compiler.
@@ -73,6 +70,8 @@ bitwise-or&rsquo;s the value in if the word already exists. The third form also 
 in the same way as for <tt>dict_par1</tt>.
 <p>
 The values can be numeric literals or constants. They can be 0-255 for Z-code, or 0-65535 for Glulx.
+<li><p>The <tt>font on</tt> and  <tt>font off</tt> commands now call the <tt>@set_font</tt> opcode for Z-code
+V5 and higher.
 <li><p>The Glulx version of the <tt>Unsigned__Compare()</tt> veneer routine has been changed to a
 more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 </ul>
