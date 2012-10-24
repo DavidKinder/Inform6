@@ -423,11 +423,8 @@ individual rooms by providing a compass_look property:
          ], 
          e_to hallway; 
 </pre>
-This enhancement uses the mechanism described at:
-<pre>
-  <a href="http://www.firthworks.com/roger/informfaq/ww.html#1">http://www.firthworks.com/roger/informfaq/ww.html#1</a>
-  <a href="http://www.onyxring.com/InformGuide.aspx?article=23">http://www.onyxring.com/InformGuide.aspx?article=23</a>
-</pre>
+This enhancement uses the mechanism described in
+<a href="http://www.firthworks.com/roger/informfaq/ww.html#1">this topic in the Inform 6 FAQ</a>
 (except that the <tt>compass_look</tt> property was previously named <tt>compasslook</tt>), and means that you 
 no longer need to make the library changes described there.
 <li><p>The verbs <tt>ASK <i>npc</i> TO <i>command</i></tt> and <tt>TELL <i>npc</i> TO <i>command</i></tt>
@@ -517,8 +514,8 @@ during an inventory. Here&rsquo;s an example:
               ], 
     has   container open; 
 </pre>
-This enhancement uses the mechanism described at:
-<pre>  <a href="http://www.firthworks.com/roger/informfaq/ww.html#4">http://www.firthworks.com/roger/informfaq/ww.html#4</a></pre>
+This enhancement uses the mechanism described in
+<a href="http://www.firthworks.com/roger/informfaq/ww.html#4">this topic in the Inform 6 FAQ</a>
 and means that you no longer need to <tt>Include WriteList</tt>.
 <li><p>The <tt>turns</tt> counter is now initialised to 0, not 1. You can change this if you define a constant 
 <tt>START_MOVE</tt> near the start of your game. 
@@ -966,9 +963,8 @@ Say, for example, that you want to set the text style to &ldquo;preformatted&rdq
 accomplish this is: 
 <pre>  glk($0086, 2);</pre>
 The hex value $0086 means <tt>glk_set_style</tt>; the value &ldquo;2&rdquo; means <tt>Preformatted</tt>.<p>
-The table of Glk calls, and the integers that refer to them, is in the Glk specification (remember 
-that the values given there are hexadecimal), in
-<a href="http://www.eblong.com/zarf/glk/glk-spec-074_12.html#s.1.6">Section 12.1.6</a>.
+The table of Glk calls, and the integers that refer to them, is given in Section 12.1.6 of the Glk specification
+(remember that the values given there are hexadecimal).
 <p>
 Since calls based on numeric codes are not very easy to read, we recommend that you download 
 John Cater&rsquo;s <tt>infglk.h</tt> library header, which defines wrapper functions and constants. For 
