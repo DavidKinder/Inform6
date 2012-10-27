@@ -1629,6 +1629,8 @@ static void parse_body_of_definition(void)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
         {   if (commas_in_row > 0)
                 error("Object/class definition finishes with ','");
+            if (token_type == EOF_TT)
+                error("Object/class definition incomplete (no ';') at end of file");
             break;
         }
 
