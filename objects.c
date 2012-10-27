@@ -98,7 +98,9 @@ extern void make_attribute(void)
 game to get an extra 16)");
         else
             error("All 48 attributes already declared");
-        panic_mode_error_recovery(); return;
+        panic_mode_error_recovery();
+        put_token_back();
+        return;
     }
  }
  else {
@@ -108,6 +110,7 @@ game to get an extra 16)");
 more than", 
         NUM_ATTR_BYTES*8);
       panic_mode_error_recovery(); 
+      put_token_back();
       return;
     }
  }
@@ -116,7 +119,9 @@ more than",
     i = token_value; name = token_text;
     if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
     {   ebf_error("new attribute name", token_text);
-        panic_mode_error_recovery(); return;
+        panic_mode_error_recovery(); 
+        put_token_back();
+        return;
     }
 
     directive_keywords.enabled = TRUE;
@@ -128,7 +133,10 @@ more than",
         if (!((token_type == SYMBOL_TT)
               && (stypes[token_value] == ATTRIBUTE_T)))
         {   ebf_error("an existing attribute name after 'alias'",
-                token_text); panic_mode_error_recovery(); return;
+                token_text);
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
         }
         assign_symbol(i, svals[token_value], ATTRIBUTE_T);
         sflags[token_value] |= ALIASED_SFLAG;
@@ -155,7 +163,9 @@ extern void make_property(void)
 Advanced game to get an extra 62)");
             else
                 error("All 62 properties already declared");
-            panic_mode_error_recovery(); return;
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
         }
     }
     else {
@@ -164,6 +174,7 @@ Advanced game to get an extra 62)");
             error_numbered("All properties already declared -- max is",
                 INDIV_PROP_START);
             panic_mode_error_recovery(); 
+            put_token_back();
             return;
         }
     }
@@ -186,7 +197,9 @@ Advanced game to get an extra 62)");
     i = token_value; name = token_text;
     if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
     {   ebf_error("new property name", token_text);
-        panic_mode_error_recovery(); return;
+        panic_mode_error_recovery();
+        put_token_back();
+        return;
     }
 
     directive_keywords.enabled = TRUE;
@@ -199,13 +212,17 @@ Advanced game to get an extra 62)");
     {   if (additive_flag)
         {   error("'alias' incompatible with 'additive'");
             panic_mode_error_recovery();
+            put_token_back();
             return;
         }
         get_next_token();
         if (!((token_type == SYMBOL_TT)
             && (stypes[token_value] == PROPERTY_T)))
         {   ebf_error("an existing property name after 'alias'",
-                token_text); panic_mode_error_recovery(); return;
+                token_text);
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
         }
 
         assign_symbol(i, svals[token_value], PROPERTY_T);
@@ -1680,7 +1697,7 @@ extern void make_class(char * metaclass_name)
     if (no_classes==VENEER_CONSTRAINT_ON_CLASSES)
         fatalerror("Inform's maximum possible number of classes (whatever \
 amount of memory is allocated) has been reached. If this causes serious \
-inconvenience, please contact the author.");
+inconvenience, please contact the maintainers.");
 
     directives.enabled = FALSE;
 
