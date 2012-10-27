@@ -263,7 +263,9 @@ static void output_compression(int entnum, int32 *size)
 
 static void output_file_z(void)
 {   FILE *fin; char new_name[PATHLEN];
-    int32 length, blanks=0, size, i, j;
+    int32 length, blanks=0, size, i, j, offset;
+    uint32 code_length, size_before_code, next_cons_check;
+    int use_function;
 
     ASSERT_ZCODE();
 
@@ -321,11 +323,36 @@ static void output_file_z(void)
             fatalerror("I/O failure: couldn't reopen temporary file 2");
     }
 
+    if (!OMIT_UNUSED_ROUTINES) {
+        /* This is the old-fashioned case, which is easy. All of zcode_area
+           (zmachine_pc bytes) will be output. next_cons_check will be
+           ignored, because j will never reach it. */
+        code_length = zmachine_pc;
+        use_function = TRUE;
+        next_cons_check = code_length+1;
+    }
+    else {
+        /* With dead function stripping, life is more complicated. 
+           j will run from 0 to zmachine_pc, but only code_length of
+           those should be output. next_cons_check is the location of
+           the next function break; that's where we check whether
+           we're in a live function or a dead one.
+           (This logic is simplified by the assumption that a backpatch
+           marker will never straddle a function break.) */
+        if (zmachine_pc != df_total_size_before_stripping)
+            compiler_error("Code size does not match (zmachine_pc and df_total_size).");
+        code_length = df_total_size_after_stripping;
+        use_function = TRUE;
+        next_cons_check = 0;
+        df_prepare_function_iterate();
+    }
+    size_before_code = size;
+
     j=0;
     if (!module_switch)
     for (i=0; i<zcode_backpatch_size; i=i+3)
     {   int long_flag = TRUE;
-        int32 offset
+        offset
             = 256*read_byte_from_memory_block(&zcode_backpatch_table, i+1)
               + read_byte_from_memory_block(&zcode_backpatch_table, i+2);
         backpatch_error_flag = FALSE;
@@ -339,11 +366,28 @@ static void output_file_z(void)
             long_flag = !long_flag;
         }
         backpatch_marker &= 0x1f;
-        while (j<offset)
-        {   size++;
-            sf_put((temporary_files_switch)?fgetc(fin):
-                  read_byte_from_memory_block(&zcode_area, j));
-            j++;
+
+        /* All code up until the next backpatch marker gets flushed out
+           as-is. (Unless we're in a stripped-out function.) */
+        while (j<offset) {
+            if (!use_function) {
+                while (j<offset && j<next_cons_check) {
+                    /* get dummy value */
+                    ((temporary_files_switch)?fgetc(fin):
+                        read_byte_from_memory_block(&zcode_area, j));
+                    j++;
+                }
+            }
+            else {
+                while (j<offset && j<next_cons_check) {
+                    size++;
+                    sf_put((temporary_files_switch)?fgetc(fin):
+                        read_byte_from_memory_block(&zcode_area, j));
+                    j++;
+                }
+            }
+            if (j == next_cons_check)
+                next_cons_check = df_next_function_iterate(&use_function);
         }
 
         if (long_flag)
@@ -351,17 +395,26 @@ static void output_file_z(void)
                 read_byte_from_memory_block(&zcode_area, j);
             v = 256*v + ((temporary_files_switch)?fgetc(fin):
                 read_byte_from_memory_block(&zcode_area, j+1));
-            v = backpatch_value(v);
-            sf_put(v/256); sf_put(v%256);
-            size += 2; j += 2;
+            j += 2;
+            if (use_function) {
+                v = backpatch_value(v);
+                sf_put(v/256); sf_put(v%256);
+                size += 2;
+            }
         }
         else
         {   int32 v = (temporary_files_switch)?fgetc(fin):
                 read_byte_from_memory_block(&zcode_area, j);
-            v = backpatch_value(v);
-            sf_put(v);
-            size++; j++;
+            j++;
+            if (use_function) {
+                v = backpatch_value(v);
+                sf_put(v);
+                size++;
+            }
         }
+
+        if (j > next_cons_check)
+            compiler_error("Backpatch appears to straddle function break");
 
         if (backpatch_error_flag)
         {   printf("*** %s  zcode offset=%08lx  backpatch offset=%08lx ***\n",
@@ -369,11 +422,28 @@ static void output_file_z(void)
         }
     }
 
-    while (j<zmachine_pc)
-    {   size++;
-        sf_put((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
-        j++;
+    /* Flush out the last bit of zcode_area, after the last backpatch
+       marker. */
+    offset = zmachine_pc;
+    while (j<offset) {
+        if (!use_function) {
+            while (j<offset && j<next_cons_check) {
+                /* get dummy value */
+                ((temporary_files_switch)?fgetc(fin):
+                    read_byte_from_memory_block(&zcode_area, j));
+                j++;
+            }
+        }
+        else {
+            while (j<offset && j<next_cons_check) {
+                size++;
+                sf_put((temporary_files_switch)?fgetc(fin):
+                    read_byte_from_memory_block(&zcode_area, j));
+                j++;
+            }
+        }
+        if (j == next_cons_check)
+            next_cons_check = df_next_function_iterate(&use_function);
     }
 
     if (temporary_files_switch)
@@ -381,6 +451,9 @@ static void output_file_z(void)
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
     }
+
+    if (size_before_code + code_length != size)
+        compiler_error("Code output length did not match");
 
     /*  (3)  Output any null bytes (required to reach a packed address)
              before the strings area.                                        */
@@ -479,8 +552,10 @@ static void output_file_z(void)
 
 static void output_file_g(void)
 {   FILE *fin; char new_name[PATHLEN];
-    int32 size, i, j;
+    int32 size, i, j, offset;
     int32 VersionNum;
+    uint32 code_length, size_before_code, next_cons_check;
+    int use_function;
 
     ASSERT_GLULX();
 
@@ -624,11 +699,36 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             fatalerror("I/O failure: couldn't reopen temporary file 2");
     }
 
+    if (!OMIT_UNUSED_ROUTINES) {
+        /* This is the old-fashioned case, which is easy. All of zcode_area
+           (zmachine_pc bytes) will be output. next_cons_check will be
+           ignored, because j will never reach it. */
+        code_length = zmachine_pc;
+        use_function = TRUE;
+        next_cons_check = code_length+1;
+    }
+    else {
+        /* With dead function stripping, life is more complicated. 
+           j will run from 0 to zmachine_pc, but only code_length of
+           those should be output. next_cons_check is the location of
+           the next function break; that's where we check whether
+           we're in a live function or a dead one.
+           (This logic is simplified by the assumption that a backpatch
+           marker will never straddle a function break.) */
+        if (zmachine_pc != df_total_size_before_stripping)
+            compiler_error("Code size does not match (zmachine_pc and df_total_size).");
+        code_length = df_total_size_after_stripping;
+        use_function = TRUE;
+        next_cons_check = 0;
+        df_prepare_function_iterate();
+    }
+    size_before_code = size;
+
     j=0;
     if (!module_switch)
       for (i=0; i<zcode_backpatch_size; i=i+6) {
         int data_len;
-        int32 offset, v;
+        int32 v;
         offset = 
           (read_byte_from_memory_block(&zcode_backpatch_table, i+2) << 24)
           | (read_byte_from_memory_block(&zcode_backpatch_table, i+3) << 16)
@@ -640,13 +740,31 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         data_len =
           read_byte_from_memory_block(&zcode_backpatch_table, i+1);
 
+        /* All code up until the next backpatch marker gets flushed out
+           as-is. (Unless we're in a stripped-out function.) */
         while (j<offset) {
-          size++;
-          sf_put((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
-          j++;
+            if (!use_function) {
+                while (j<offset && j<next_cons_check) {
+                    /* get dummy value */
+                    ((temporary_files_switch)?fgetc(fin):
+                        read_byte_from_memory_block(&zcode_area, j));
+                    j++;
+                }
+            }
+            else {
+                while (j<offset && j<next_cons_check) {
+                    size++;
+                    sf_put((temporary_files_switch)?fgetc(fin):
+                        read_byte_from_memory_block(&zcode_area, j));
+                    j++;
+                }
+            }
+            if (j == next_cons_check)
+                next_cons_check = df_next_function_iterate(&use_function);
         }
 
+        /* Write out the converted value of the backpatch marker.
+           (Unless we're in a stripped-out function.) */
         switch (data_len) {
 
         case 4:
@@ -658,13 +776,15 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             read_byte_from_memory_block(&zcode_area, j+2));
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
             read_byte_from_memory_block(&zcode_area, j+3));
+          j += 4;
+          if (!use_function)
+              break;
           v = backpatch_value(v);
           sf_put((v >> 24) & 0xFF);
           sf_put((v >> 16) & 0xFF);
           sf_put((v >> 8) & 0xFF);
           sf_put((v) & 0xFF);
           size += 4;
-          j += 4;
           break;
 
         case 2:
@@ -672,6 +792,9 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             read_byte_from_memory_block(&zcode_area, j));
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
             read_byte_from_memory_block(&zcode_area, j+1));
+          j += 2;
+          if (!use_function)
+              break;
           v = backpatch_value(v);
           if (v >= 0x10000) {
             printf("*** backpatch value does not fit ***\n");
@@ -680,12 +803,14 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           sf_put((v >> 8) & 0xFF);
           sf_put((v) & 0xFF);
           size += 2;
-          j += 2;
           break;
 
         case 1:
           v = ((temporary_files_switch)?fgetc(fin):
             read_byte_from_memory_block(&zcode_area, j));
+          j += 1;
+          if (!use_function)
+              break;
           v = backpatch_value(v);
           if (v >= 0x100) {
             printf("*** backpatch value does not fit ***\n");
@@ -693,7 +818,6 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           }
           sf_put((v) & 0xFF);
           size += 1;
-          j += 1;
           break;
 
         default:
@@ -702,17 +826,37 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           backpatch_error_flag = TRUE;
         }
 
+        if (j > next_cons_check)
+          compiler_error("Backpatch appears to straddle function break");
+
         if (backpatch_error_flag) {
           printf("*** %d bytes  zcode offset=%08lx  backpatch offset=%08lx ***\n",
             data_len, (long int) j, (long int) i);
         }
     }
 
-    while (j<zmachine_pc)
-    {   size++;
-        sf_put((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
-        j++;
+    /* Flush out the last bit of zcode_area, after the last backpatch
+       marker. */
+    offset = zmachine_pc;
+    while (j<offset) {
+        if (!use_function) {
+            while (j<offset && j<next_cons_check) {
+                /* get dummy value */
+                ((temporary_files_switch)?fgetc(fin):
+                    read_byte_from_memory_block(&zcode_area, j));
+                j++;
+            }
+        }
+        else {
+            while (j<offset && j<next_cons_check) {
+                size++;
+                sf_put((temporary_files_switch)?fgetc(fin):
+                    read_byte_from_memory_block(&zcode_area, j));
+                j++;
+            }
+        }
+        if (j == next_cons_check)
+            next_cons_check = df_next_function_iterate(&use_function);
     }
 
     if (temporary_files_switch)
@@ -720,6 +864,9 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
     }
+
+    if (size_before_code + code_length != size)
+        compiler_error("Code output length did not match");
 
     /*  (4)  Output the static strings area.                                 */
 

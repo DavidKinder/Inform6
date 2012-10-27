@@ -33,7 +33,10 @@ static int32 backpatch_value_z(int32 value)
         case ARRAY_MV:
             value += variables_offset; break;
         case IROUTINE_MV:
-            value += code_offset/scale_factor; break;
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset/scale_factor;
+            break;
         case VROUTINE_MV:
             if ((value<0) || (value>=VENEER_ROUTINES))
             {   if (no_link_errors > 0) break;
@@ -45,7 +48,10 @@ static int32 backpatch_value_z(int32 value)
                 value = 0;
                 break;
             }
-            value = veneer_routine_address[value] + code_offset/scale_factor;
+            value = veneer_routine_address[value]; 
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset/scale_factor;
             break;
         case NO_OBJS_MV:
             value = no_objects; break;
@@ -85,7 +91,10 @@ static int32 backpatch_value_z(int32 value)
             if (stypes[value] != ROUTINE_T)
                 error("No 'Main' routine has been defined");
             sflags[value] |= USED_SFLAG;
-            value = svals[value] + code_offset/scale_factor;
+            value = svals[value];
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset/scale_factor;
             break;
         case SYMBOL_MV:
             if ((value<0) || (value>=no_symbols))
@@ -126,7 +135,11 @@ static int32 backpatch_value_z(int32 value)
             {   int t = stypes[value];
                 value = svals[value];
                 switch(t)
-                {   case ROUTINE_T: value += code_offset/scale_factor; break;
+                {   case ROUTINE_T: 
+                        if (OMIT_UNUSED_ROUTINES)
+                            value = df_stripped_address_for_address(value);
+                        value += code_offset/scale_factor; 
+                        break;
                     case ARRAY_T: value += variables_offset; break;
                 }
             }
@@ -163,7 +176,10 @@ static int32 backpatch_value_g(int32 value)
               compiler_error("Illegal string marker.");
             value = strings_offset + compressed_offsets[value-1]; break;
         case IROUTINE_MV:
-            value += code_offset; break;
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset;
+            break;
         case ARRAY_MV:
             value += arrays_offset; break;
         case VARIABLE_MV:
@@ -182,7 +198,10 @@ static int32 backpatch_value_g(int32 value)
                 value = 0;
                 break;
             }
-            value = veneer_routine_address[value] + code_offset;
+            value = veneer_routine_address[value];
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset;
             break;
         case NO_OBJS_MV:
             value = no_objects; break;
@@ -219,7 +238,10 @@ static int32 backpatch_value_g(int32 value)
             if (stypes[value] != ROUTINE_T)
                 error("No 'Main' routine has been defined");
             sflags[value] |= USED_SFLAG;
-            value = svals[value] + code_offset;
+            value = svals[value];
+            if (OMIT_UNUSED_ROUTINES)
+                value = df_stripped_address_for_address(value);
+            value += code_offset;
             break;
         case SYMBOL_MV:
             if ((value<0) || (value>=no_symbols))
@@ -261,7 +283,11 @@ static int32 backpatch_value_g(int32 value)
                 value = svals[value];
                 switch(t)
                 {
-                    case ROUTINE_T: value += code_offset; break;
+                    case ROUTINE_T:
+                        if (OMIT_UNUSED_ROUTINES)
+                            value = df_stripped_address_for_address(value);
+                        value += code_offset;
+                        break;
                     case ARRAY_T: value += arrays_offset; break;
                     case OBJECT_T:
                     case CLASS_T:
@@ -444,7 +470,7 @@ extern void backpatch_zmachine_image_g(void)
                 | (zmachine_paged_memory[addr+1] << 16)
                 | (zmachine_paged_memory[addr+2] << 8)
                 | (zmachine_paged_memory[addr+3]);
-        value = backpatch_value(value);
+        value = backpatch_value_g(value);
         zmachine_paged_memory[addr] = (value >> 24) & 0xFF;
         zmachine_paged_memory[addr+1] = (value >> 16) & 0xFF;
         zmachine_paged_memory[addr+2] = (value >> 8) & 0xFF;

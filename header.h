@@ -2252,6 +2252,7 @@ extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
 extern void dbnu_warning(char *type, char *name, int32 report_line);
+extern void uncalled_routine_warning(char *type, char *name, int32 report_line);
 extern void obsolete_warning(char *s1);
 extern void link_error(char *s);
 extern void link_error_named(char *s1, char *s2);
@@ -2468,6 +2469,7 @@ extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
 extern int32 MAX_OBJ_PROP_COUNT, MAX_OBJ_PROP_TABLE_SIZE;
 extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES, NUM_ATTR_BYTES;
+extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 
 extern void *my_malloc(int32 size, char *whatfor);
 extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
@@ -2539,6 +2541,10 @@ extern int32 *individual_name_strings;
 extern int32 *attribute_name_strings;
 extern int32 *action_name_strings;
 extern int32 *array_name_strings;
+extern int track_unused_routines;
+extern int df_dont_note_global_symbols;
+extern uint32 df_total_size_before_stripping;
+extern uint32 df_total_size_after_stripping;
 
 extern char *typename(int type);
 extern int hash_code_from_string(char *p);
@@ -2552,6 +2558,14 @@ extern void assign_symbol(int index, int32 value, int type);
 extern void issue_unused_warnings(void);
 extern void add_symbol_replacement_mapping(int original, int renamed);
 extern int find_symbol_replacement(int *value);
+extern void df_note_function_start(char *name, uint32 address, 
+    int embedded_flag, int32 source_line);
+extern void df_note_function_end(uint32 endaddress);
+extern void df_note_function_symbol(int symbol);
+extern void locate_dead_functions(void);
+extern uint32 df_stripped_address_for_address(uint32);
+extern void df_prepare_function_iterate(void);
+extern uint32 df_next_function_iterate(int *);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "syntax"                                         */

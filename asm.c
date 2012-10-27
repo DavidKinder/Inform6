@@ -1422,6 +1422,18 @@ extern int32 assemble_routine_header(int no_locals,
         routine_start_pc = zmachine_pc;
     }
 
+    if (track_unused_routines) {
+        /* The name of an embedded function is in a temporary buffer,
+           so we shouldn't keep a reference to it. (It is sad that we
+           have to know this here.) */
+        char *funcname = name;
+        if (embedded_flag)
+            funcname = "<embedded>";
+
+        df_note_function_start(funcname, zmachine_pc, embedded_flag,
+                               routine_starts_line);
+    }
+
     /*  Update the routine counter                                           */
 
     no_routines++;
@@ -1575,6 +1587,9 @@ void assemble_routine_end(int embedded_flag, dbgl *line_ref)
       transfer_routine_z();
     else
       transfer_routine_g();
+
+    if (track_unused_routines)
+        df_note_function_end(zmachine_pc);
 
     /* Tell the debugging file about the routine just ended.                 */
 

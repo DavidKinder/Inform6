@@ -1003,6 +1003,8 @@ static void run_pass(void)
         check_temp_files();
     }
     sort_dictionary();
+    if (track_unused_routines)
+        locate_dead_functions();
     construct_storyfile();
 }
 

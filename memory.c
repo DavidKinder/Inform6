@@ -260,6 +260,8 @@ int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
 int ALLOC_CHUNK_SIZE;
+int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
+int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
 
 /* The way memory sizes are set causes great nuisance for those parameters
    which have different defaults under Z-code and Glulx. We have to get
@@ -332,6 +334,8 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7ld |\n","MAX_UNICODE_CHARS",
            (long int) MAX_UNICODE_CHARS);
+    printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
+    printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","MAX_VERBS",MAX_VERBS);
     printf("|  %25s = %-7d |\n","MAX_VERBSPACE",MAX_VERBSPACE);
     printf("|  %25s = %-7ld |\n","MAX_ZCODE_SIZE",
@@ -510,6 +514,8 @@ extern void set_memory_sizes(int size_flag)
        size. Note that Inform 7 wants more stack, so if you're
        compiling an I7 game, crank this up. */
     MAX_STACK_SIZE = 4096;
+    OMIT_UNUSED_ROUTINES = 0;
+    WARN_UNUSED_ROUTINES = 0;
 
     adjust_memory_sizes();
 }
@@ -795,6 +801,22 @@ static void explain_parameter(char *command)
   memory after the game file. (Glulx only)\n");
         return;
     }
+    if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
+    {
+        printf(
+"  WARN_UNUSED_ROUTINES, if set to 2, will display a warning for each \n\
+  routine in the game file which is never called. (This includes \n\
+  routines called only from uncalled routines, etc.) If set to 1, will warn \n\
+  only about functions in game code, not in the system library.\n");
+        return;
+    }
+    if (strcmp(command,"OMIT_UNUSED_ROUTINES")==0)
+    {
+        printf(
+"  OMIT_UNUSED_ROUTINES, if set to 1, will avoid compiling unused routines \n\
+  into the game file.\n");
+        return;
+    }
 
     printf("No such memory setting as \"%s\"\n",command);
 
@@ -945,6 +967,18 @@ extern void memory_command(char *command)
                 MEMORY_MAP_EXTENSION=j, flag=1;
                 /* Adjust up to a 256-byte boundary. */
                 MEMORY_MAP_EXTENSION = (MEMORY_MAP_EXTENSION + 0xFF) & (~0xFF);
+            }
+            if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
+            {
+                WARN_UNUSED_ROUTINES=j, flag=1;
+                if (WARN_UNUSED_ROUTINES > 2 || WARN_UNUSED_ROUTINES < 0)
+                    WARN_UNUSED_ROUTINES = 2;
+            }
+            if (strcmp(command,"OMIT_UNUSED_ROUTINES")==0)
+            {
+                OMIT_UNUSED_ROUTINES=j, flag=1;
+                if (OMIT_UNUSED_ROUTINES > 1 || OMIT_UNUSED_ROUTINES < 0)
+                    OMIT_UNUSED_ROUTINES = 1;
             }
 
             if (flag==0)

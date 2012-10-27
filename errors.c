@@ -324,6 +324,30 @@ extern void dbnu_warning(char *type, char *name, int32 report_line)
     ErrorReport = E;
 }
 
+extern void uncalled_routine_warning(char *type, char *name, int32 report_line)
+{   int i;
+    /* This is called for functions which have been detected by the
+       track-unused-routines module. These will often (but not always)
+       be also caught by dbnu_warning(), which tracks symbols rather
+       than routine addresses. */
+    ErrorPosition E = ErrorReport;
+    if (nowarnings_switch) { no_suppressed_warnings++; return; }
+    if (report_line != -1)
+    {   ErrorReport.file_number = report_line/FILE_LINE_SCALE_FACTOR;
+        ErrorReport.line_number = report_line%FILE_LINE_SCALE_FACTOR;
+        ErrorReport.main_flag = (ErrorReport.file_number == 1);
+    }
+    if (OMIT_UNUSED_ROUTINES)
+        snprintf(error_message_buff, ERROR_BUFLEN, "%s \"%s\" unused and omitted", type, name);
+    else
+        snprintf(error_message_buff, ERROR_BUFLEN, "%s \"%s\" unused (not omitted)", type, name);
+    ellipsize_error_message_buff();
+    i = concise_switch; concise_switch = TRUE;
+    message(2,error_message_buff);
+    concise_switch = i;
+    ErrorReport = E;
+}
+
 extern void obsolete_warning(char *s1)
 {   if (is_systemfile()==1) return;
     if (obsolete_switch || nowarnings_switch)

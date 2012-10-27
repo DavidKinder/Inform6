@@ -155,9 +155,8 @@ extern int symbol_index(char *p, int hashcode)
     /*  Return the index in the symbs/svals/sflags/stypes arrays of symbol
         "p", creating a new symbol with that name if it isn't already there.
 
-        New symbols are created with fundamental type UNKNOWN_CONSTANT_FT,
-        value 0x100 (a 2-byte quantity in Z-machine terms) and type
-        CONSTANT_T.
+        New symbols are created with flag UNKNOWN_SFLAG, value 0x100
+        (a 2-byte quantity in Z-machine terms) and type CONSTANT_T.
 
         The string "p" is undamaged.                                         */
 
@@ -172,7 +171,12 @@ extern int symbol_index(char *p, int hashcode)
 
         r = (char *)symbs[this];
         new_entry = strcmpcis(r, p);
-        if (new_entry == 0) return this;
+        if (new_entry == 0) 
+        {
+            if (track_unused_routines)
+                df_note_function_symbol(this);
+            return this;
+        }
         if (new_entry > 0) break;
 
         last = this;
@@ -218,6 +222,8 @@ extern int symbol_index(char *p, int hashcode)
     slines[no_symbols]  =  ErrorReport.line_number
                            + FILE_LINE_SCALE_FACTOR*ErrorReport.file_number;
 
+    if (track_unused_routines)
+        df_note_function_symbol(no_symbols);
     return(no_symbols++);
 }
 
@@ -739,6 +745,422 @@ extern int find_symbol_replacement(int *value)
     return changed;
 }
 
+/* ------------------------------------------------------------------------- */
+/*   The dead-function removal optimization.                                 */
+/* ------------------------------------------------------------------------- */
+
+int track_unused_routines; /* set if either WARN_UNUSED_ROUTINES or
+                              OMIT_UNUSED_ROUTINES is nonzero */
+int df_dont_note_global_symbols; /* temporarily set at times in parsing */
+static int df_tables_closed; /* set at end of compiler pass */
+
+typedef struct df_function_struct df_function_t;
+typedef struct df_reference_struct df_reference_t;
+
+struct df_function_struct {
+    char *name; /* borrowed reference, generally to the symbs[] table */
+    int32 source_line; /* copied from routine_starts_line */
+    int sysfile; /* does this occur in a system file? */
+    uint32 address; /* function offset in zcode_area (not the final address) */
+    uint32 newaddress; /* function offset after stripping */
+    uint32 length;
+    int usage;
+    df_reference_t *refs; /* chain of references made *from* this function */
+    int processed;
+
+    df_function_t *funcnext; /* in forward functions order */
+    df_function_t *todonext; /* in the todo chain */
+    df_function_t *next; /* in the hash table */
+};
+
+struct df_reference_struct {
+    uint32 address; /* function offset in zcode_area (not the final address) */
+    int symbol; /* index in symbols array */
+
+    df_reference_t *refsnext; /* in the function's refs chain */
+    df_reference_t *next; /* in the hash table */
+};
+
+/* Bitmask flags for how functions are used: */
+#define DF_USAGE_GLOBAL   (1<<0) /* In a global variable, array, etc */
+#define DF_USAGE_EMBEDDED (1<<1) /* An anonymous function in a property */
+#define DF_USAGE_MAIN     (1<<2) /* Main() or Main__() */
+#define DF_USAGE_FUNCTION (1<<3) /* Used from another used function */
+
+#define DF_FUNCTION_HASH_BUCKETS (1023)
+
+/* Table of all compiled functions. (Only created if track_unused_routines
+   is set.) */
+static df_function_t **df_functions;
+/* List of all compiled functions, in address order. The first entry
+   has address DF_NOT_IN_FUNCTION, and stands in for the global namespace. */
+static df_function_t *df_functions_head;
+static df_function_t *df_functions_tail;
+/* Used during output_file(), to track how far the code-area output has
+   gotten. */
+static df_function_t *df_iterator;
+
+#define DF_NOT_IN_FUNCTION ((uint32)0xFFFFFFFF)
+#define DF_SYMBOL_HASH_BUCKETS (4095)
+
+/* Map of what functions reference what other functions. (Only created if
+   track_unused_routines is set.) */
+static df_reference_t **df_symbol_map;
+
+/* Globals used while a function is being compiled. When a function
+  *isn't* being compiled, df_current_function_addr will be DF_NOT_IN_FUNCTION
+  and df_current_function will refer to the global namespace record. */
+static df_function_t *df_current_function;
+static char *df_current_function_name;
+static uint32 df_current_function_addr;
+
+/* Size totals for compiled code. These are only meaningful if
+   track_unused_routines is true. (If we're only doing WARN_UNUSED_ROUTINES,
+   these values will be set, but the "after" value will not affect the
+   final game file.) */
+uint32 df_total_size_before_stripping;
+uint32 df_total_size_after_stripping;
+
+/* When we begin compiling a function, call this to note that fact.
+   Any symbol referenced from now on will be associated with the function.
+*/
+extern void df_note_function_start(char *name, uint32 address, 
+    int embedded_flag, int32 source_line)
+{
+    df_function_t *func;
+    int bucket;
+
+    if (df_tables_closed)
+        error("Internal error in stripping: Tried to start a new function after tables were closed.");
+
+    /* We retain the name only for debugging output. Note that embedded
+       functions all show up as "<embedded>" -- their "obj.prop" name
+       never gets stored in permanent memory. */
+    df_current_function_name = name;
+    df_current_function_addr = address;
+
+    func = my_malloc(sizeof(df_function_t), "df function entry");
+    bzero(func, sizeof(df_function_t));
+    func->name = name;
+    func->address = address;
+    func->source_line = source_line;
+    func->sysfile = (address == DF_NOT_IN_FUNCTION || is_systemfile());
+    /* An embedded function is stored in an object property, so we
+       consider it to be used a priori. */
+    if (embedded_flag)
+        func->usage |= DF_USAGE_EMBEDDED;
+
+    if (!df_functions_head) {
+        df_functions_head = func;
+        df_functions_tail = func;
+    }
+    else {
+        df_functions_tail->funcnext = func;
+        df_functions_tail = func;
+    }
+
+    bucket = address % DF_FUNCTION_HASH_BUCKETS;
+    func->next = df_functions[bucket];
+    df_functions[bucket] = func;
+
+    df_current_function = func;
+}
+
+/* When we're done compiling a function, call this. Any symbol referenced
+   from now on will be associated with the global namespace.
+*/
+extern void df_note_function_end(uint32 endaddress)
+{
+    df_current_function->length = endaddress - df_current_function->address;
+
+    df_current_function_name = NULL;
+    df_current_function_addr = DF_NOT_IN_FUNCTION;
+    df_current_function = df_functions_head; /* the global namespace */
+}
+
+/* Find the function record for a given address. (Addresses are offsets
+   in zcode_area.)
+*/
+static df_function_t *df_function_for_address(uint32 address)
+{
+    int bucket = address % DF_FUNCTION_HASH_BUCKETS;
+    df_function_t *func;
+    for (func = df_functions[bucket]; func; func = func->next) {
+        if (func->address == address)
+            return func;
+    }
+    return NULL;
+}
+
+/* Whenever a function is referenced, we call this to note who called it.
+*/
+extern void df_note_function_symbol(int symbol)
+{
+    int bucket;
+    df_reference_t *ent;
+
+    /* If the compiler pass is over, looking up symbols does not create
+       a global reference. */
+    if (df_tables_closed)
+        return;
+    /* In certain cases during parsing, looking up symbols does not
+       create a global reference. (For example, when reading the name
+       of a function being defined.) */
+    if (df_dont_note_global_symbols)
+        return;
+
+    /* We are only interested in functions, or forward-declared symbols
+       that might turn out to be functions. */
+    int symtype = stypes[symbol];
+    if (symtype != ROUTINE_T && symtype != CONSTANT_T)
+        return;
+    if (symtype == CONSTANT_T && !(sflags[symbol] & UNKNOWN_SFLAG))
+        return;
+
+    bucket = (df_current_function_addr ^ (uint32)symbol) % DF_SYMBOL_HASH_BUCKETS;
+    for (ent = df_symbol_map[bucket]; ent; ent = ent->next) {
+        if (ent->address == df_current_function_addr && ent->symbol == symbol)
+            return;
+    }
+
+    /* Create a new reference entry in df_symbol_map. */
+    ent = my_malloc(sizeof(df_reference_t), "df symbol map entry");
+    ent->address = df_current_function_addr;
+    ent->symbol = symbol;
+    ent->next = df_symbol_map[bucket];
+    df_symbol_map[bucket] = ent;
+
+    /* Add the reference to the function's entry as well. */
+    /* The current function is the most recently added, so it will be
+       at the top of its bucket. That makes this call fast. Unless
+       we're in global scope, in which case it might be slower.
+       (I suppose we could cache the df_function_t pointer of the
+       current function, to speed things up.) */
+    if (!df_current_function || df_current_function_addr != df_current_function->address)
+        compiler_error("DF: df_current_function does not match current address.");
+    ent->refsnext = df_current_function->refs;
+    df_current_function->refs = ent;
+}
+
+/* This does the hard work of figuring out what functions are truly dead.
+   It's called near the end of run_pass() in inform.c.
+*/
+extern void locate_dead_functions(void)
+{
+    df_function_t *func, *tofunc;
+    df_reference_t *ent;
+    int ix;
+
+    if (!track_unused_routines)
+        compiler_error("DF: locate_dead_functions called, but function references have not been mapped");
+
+    df_tables_closed = TRUE;
+    df_current_function = NULL;
+
+    /* Note that Main__ was tagged as global implicitly during
+       compile_initial_routine(). Main was tagged during
+       issue_unused_warnings(). But for the sake of thoroughness,
+       we'll mark them specially. */
+
+    ix = symbol_index("Main__", -1);
+    if (stypes[ix] == ROUTINE_T) {
+        uint32 addr = svals[ix] * (glulx_mode ? 1 : scale_factor);
+        tofunc = df_function_for_address(addr);
+        if (tofunc)
+            tofunc->usage |= DF_USAGE_MAIN;
+    }
+    ix = symbol_index("Main", -1);
+    if (stypes[ix] == ROUTINE_T) {
+        uint32 addr = svals[ix] * (glulx_mode ? 1 : scale_factor);
+        tofunc = df_function_for_address(addr);
+        if (tofunc)
+            tofunc->usage |= DF_USAGE_MAIN;
+    }
+
+    /* Go through all the functions referenced at the global level;
+       mark them as used. */
+
+    func = df_functions_head;
+    if (!func || func->address != DF_NOT_IN_FUNCTION)
+        compiler_error("DF: Global namespace entry is not at the head of the chain.");
+
+    for (ent = func->refs; ent; ent=ent->refsnext) {
+        uint32 addr;
+        int symbol = ent->symbol;
+        if (stypes[symbol] != ROUTINE_T)
+            continue;
+        addr = svals[symbol] * (glulx_mode ? 1 : scale_factor);
+        tofunc = df_function_for_address(addr);
+        if (!tofunc) {
+            error_named("Internal error in stripping: global ROUTINE_T symbol is not found in df_function map:", (char *)symbs[symbol]);
+            continue;
+        }
+        /* A function may be marked here more than once. That's fine. */
+        tofunc->usage |= DF_USAGE_GLOBAL;
+    }
+
+    /* Perform a breadth-first search through functions, starting with
+       the ones that are known to be used at the top level. */
+    {
+        df_function_t *todo, *todotail;
+        df_function_t *func;
+        todo = NULL;
+        todotail = NULL;
+
+        for (func = df_functions_head; func; func = func->funcnext) {
+            if (func->address == DF_NOT_IN_FUNCTION)
+                continue;
+            if (func->usage == 0)
+                continue;
+            if (!todo) {
+                todo = func;
+                todotail = func;
+            }
+            else {
+                todotail->todonext = func;
+                todotail = func;
+            }
+        }
+        
+        /* todo is a linked list of functions which are known to be
+           used. If a function's usage field is nonzero, it must be
+           either be on the todo list or have come off already (in
+           which case processed will be set). */
+
+        while (todo) {
+            /* Pop the next function. */
+            func = todo;
+            todo = todo->todonext;
+            if (!todo)
+                todotail = NULL;
+
+            if (func->processed)
+                error_named("Internal error in stripping: function has been processed twice:", func->name);
+
+            /* Go through the function's symbol references. Any
+               reference to a routine, push it into the todo list (if
+               it isn't there already). */
+
+            for (ent = func->refs; ent; ent=ent->refsnext) {
+                uint32 addr;
+                int symbol = ent->symbol;
+                if (stypes[symbol] != ROUTINE_T)
+                    continue;
+                addr = svals[symbol] * (glulx_mode ? 1 : scale_factor);
+                tofunc = df_function_for_address(addr);
+                if (!tofunc) {
+                    error_named("Internal error in stripping: function ROUTINE_T symbol is not found in df_function map:", (char *)symbs[symbol]);
+                    continue;
+                }
+                if (tofunc->usage)
+                    continue;
+
+                /* Not yet known to be used. Add it to the todo list. */
+                tofunc->usage |= DF_USAGE_FUNCTION;
+                if (!todo) {
+                    todo = tofunc;
+                    todotail = tofunc;
+                }
+                else {
+                    todotail->todonext = tofunc;
+                    todotail = tofunc;
+                }
+            }
+
+            func->processed = TRUE;
+        }
+    }
+
+    /* Go through all functions; figure out how much space is consumed,
+       with and without useless functions. */
+
+    {
+        df_total_size_before_stripping = 0;
+        df_total_size_after_stripping = 0;
+
+        df_function_t *func;
+        for (func = df_functions_head; func; func = func->funcnext) {
+            if (func->address == DF_NOT_IN_FUNCTION)
+                continue;
+
+            if (func->address != df_total_size_before_stripping)
+                compiler_error("DF: Address gap in function list");
+
+            df_total_size_before_stripping += func->length;
+            if (func->usage) {
+                func->newaddress = df_total_size_after_stripping;
+                df_total_size_after_stripping += func->length;
+            }
+
+            if (!glulx_mode && (df_total_size_after_stripping % scale_factor != 0))
+                compiler_error("DF: New function address is not aligned");
+
+            if (WARN_UNUSED_ROUTINES && !func->usage) {
+                if (!func->sysfile || WARN_UNUSED_ROUTINES >= 2)
+                    uncalled_routine_warning("Routine", func->name, func->source_line);
+            }
+        }
+    }
+
+    /* df_measure_hash_table_usage(); */
+}
+
+extern uint32 df_stripped_address_for_address(uint32 addr)
+{
+    df_function_t *func;
+
+    if (!track_unused_routines)
+        compiler_error("DF: df_stripped_address_for_address called, but function references have not been mapped");
+
+    if (!glulx_mode)
+        func = df_function_for_address(addr*scale_factor);
+    else
+        func = df_function_for_address(addr);
+
+    if (!func) {
+        compiler_error("DF: Unable to find function while backpatching");
+        return 0;
+    }
+    if (!func->usage)
+        compiler_error("DF: Tried to backpatch a function address which should be stripped");
+
+    if (!glulx_mode)
+        return func->newaddress / scale_factor;
+    else
+        return func->newaddress;
+}
+
+/* The output_file() routines in files.c have to run down the list of
+   functions, deciding who is in and who is out. But I don't want to
+   export the df_function_t list structure. Instead, I provide this
+   silly iterator pair. Set it up with df_prepare_function_iterate();
+   then repeatedly call df_next_function_iterate().
+*/
+
+extern void df_prepare_function_iterate(void)
+{
+    df_iterator = df_functions_head;
+    if (!df_iterator || df_iterator->address != DF_NOT_IN_FUNCTION)
+        compiler_error("DF: Global namespace entry is not at the head of the chain.");
+    if (!df_iterator->funcnext || df_iterator->funcnext->address != 0)
+        compiler_error("DF: First function entry is not second in the chain.");
+}
+
+/* This returns the end of the next function, and whether the next function
+   is used (live).
+*/
+extern uint32 df_next_function_iterate(int *funcused)
+{
+    if (df_iterator)
+        df_iterator = df_iterator->funcnext;
+    if (!df_iterator) {
+        *funcused = TRUE;
+        return df_total_size_before_stripping+1;
+    }
+    *funcused = (df_iterator->usage != 0);
+    return df_iterator->address + df_iterator->length;
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -765,9 +1187,23 @@ extern void init_symbols_vars(void)
     symbol_replacements_size = 0;
 
     make_case_conversion_grid();
+
+    track_unused_routines = (WARN_UNUSED_ROUTINES || OMIT_UNUSED_ROUTINES);
+    df_tables_closed = FALSE;
+    df_symbol_map = NULL;
+    df_functions = NULL;
+    df_functions_head = NULL;
+    df_functions_tail = NULL;
+    df_current_function = NULL;
 }
 
-extern void symbols_begin_pass(void) { }
+extern void symbols_begin_pass(void) 
+{
+    df_total_size_before_stripping = 0;
+    df_total_size_after_stripping = 0;
+    df_dont_note_global_symbols = FALSE;
+    df_iterator = NULL;
+}
 
 extern void symbols_allocate_arrays(void)
 {
@@ -785,6 +1221,22 @@ extern void symbols_allocate_arrays(void)
 
     symbol_name_space_chunks
         = my_calloc(sizeof(char *), MAX_SYMBOL_CHUNKS, "symbol names chunk addresses");
+
+    if (track_unused_routines) {
+        df_tables_closed = FALSE;
+
+        df_symbol_map = my_calloc(sizeof(df_reference_t *), DF_SYMBOL_HASH_BUCKETS, "df symbol-map hash table");
+        bzero(df_symbol_map, sizeof(df_reference_t *) * DF_SYMBOL_HASH_BUCKETS);
+
+        df_functions = my_calloc(sizeof(df_function_t *), DF_FUNCTION_HASH_BUCKETS, "df function hash table");
+        bzero(df_functions, sizeof(df_function_t *) * DF_FUNCTION_HASH_BUCKETS);
+        df_functions_head = NULL;
+        df_functions_tail = NULL;
+
+        df_note_function_start("<global namespace>", DF_NOT_IN_FUNCTION, FALSE, -1);
+        df_note_function_end(DF_NOT_IN_FUNCTION);
+        /* Now df_current_function is df_functions_head. */
+    }
 
     init_symbol_banks();
     stockup_symbols();
@@ -819,6 +1271,31 @@ extern void symbols_free_arrays(void)
 
     if (symbol_replacements)
         my_free(&symbol_replacements, "symbol replacement table");
+
+    if (df_symbol_map) {
+        for (i=0; i<DF_SYMBOL_HASH_BUCKETS; i++) {
+            df_reference_t *ent = df_symbol_map[i];
+            while (ent) {
+                df_reference_t *next = ent->next;
+                my_free(&ent, "df symbol map entry");
+                ent = next;
+            }
+        }
+        my_free(&df_symbol_map, "df symbol-map hash table");
+    }
+    if (df_functions) {
+        for (i=0; i<DF_FUNCTION_HASH_BUCKETS; i++) {
+            df_function_t *func = df_functions[i];
+            while (func) {
+                df_function_t *next = func->next;
+                my_free(&func, "df function entry");
+                func = next;
+            }
+        }
+        my_free(&df_functions, "df function hash table");
+        df_functions_head = NULL;
+        df_functions_tail = NULL;
+    }
 
     if (individual_name_strings != NULL)
         my_free(&individual_name_strings, "property name strings");

@@ -620,7 +620,11 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         directives.enabled = FALSE;
         directive_keywords.enabled = FALSE;
 
+        /* Don't count the upcoming symbol as a top-level reference
+           *to* the function. */
+        df_dont_note_global_symbols = TRUE;
         get_next_token();
+        df_dont_note_global_symbols = FALSE;
         if (token_type == SYSFUN_TT)
         {   if (system_function_usage[token_value] == 1)
                 error("You can't 'Replace' a system function already used");
@@ -646,7 +650,9 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         i = token_value;
 
         system_functions.enabled = FALSE;
+        df_dont_note_global_symbols = TRUE;
         get_next_token();
+        df_dont_note_global_symbols = FALSE;
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
         {   return FALSE;
         }
@@ -704,7 +710,11 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     case STUB_CODE:
 
+        /* The upcoming symbol is a definition; don't count it as a
+           top-level reference *to* the stub function. */
+        df_dont_note_global_symbols = TRUE;
         get_next_token();
+        df_dont_note_global_symbols = FALSE;
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("routine name to stub", token_text);
 

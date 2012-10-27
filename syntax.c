@@ -97,7 +97,11 @@ extern int parse_directive(int internal_flag)
         directive_keywords.enabled = FALSE;
         segment_markers.enabled = FALSE;
 
+        /* The upcoming symbol is a definition; don't count it as a
+           top-level reference *to* the function. */
+        df_dont_note_global_symbols = TRUE;
         get_next_token();
+        df_dont_note_global_symbols = FALSE;
         if ((token_type != SYMBOL_TT)
             || ((!(sflags[token_value] & UNKNOWN_SFLAG))
                 && (!(sflags[token_value] & REPLACE_SFLAG))))
