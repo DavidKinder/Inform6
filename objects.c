@@ -987,7 +987,7 @@ static void properties_segment_z(int this_segment)
           individual_property, this_identifier_number;
 
     do
-    {   get_next_token();
+    {   get_next_token_with_directives();
         if ((token_type == SEGMENT_MARKER_TT)
             || (token_type == EOF_TT)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
@@ -1083,7 +1083,7 @@ the names '%s' and '%s' actually refer to the same property",
         length=0;
         do
         {   assembly_operand AO;
-            get_next_token();
+            get_next_token_with_directives();
             if ((token_type == EOF_TT)
                 || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                 || ((token_type == SEP_TT) && (token_value == COMMA_SEP)))
@@ -1246,7 +1246,7 @@ static void properties_segment_g(int this_segment)
     int32 property_name_symbol, property_number, length;
 
     do
-    {   get_next_token();
+    {   get_next_token_with_directives();
         if ((token_type == SEGMENT_MARKER_TT)
             || (token_type == EOF_TT)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
@@ -1341,7 +1341,7 @@ the names '%s' and '%s' actually refer to the same property",
         length=0;
         do
         {   assembly_operand AO;
-            get_next_token();
+            get_next_token_with_directives();
             if ((token_type == EOF_TT)
                 || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                 || ((token_type == SEP_TT) && (token_value == COMMA_SEP)))
@@ -1484,7 +1484,7 @@ static void attributes_segment(void)
 
         ParseAttrN:
 
-        get_next_token();
+        get_next_token_with_directives();
         if ((token_type == SEGMENT_MARKER_TT)
             || (token_type == EOF_TT)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
@@ -1571,7 +1571,7 @@ static void classes_segment(void)
         <class-1> ... <class-n>                                              */
 
     do
-    {   get_next_token();
+    {   get_next_token_with_directives();
         if ((token_type == SEGMENT_MARKER_TT)
             || (token_type == EOF_TT)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
@@ -1602,7 +1602,7 @@ static void parse_body_of_definition(void)
     do
     {   commas_in_row = -1;
         do
-        {   get_next_token(); commas_in_row++;
+        {   get_next_token_with_directives(); commas_in_row++;
         } while ((token_type == SEP_TT) && (token_value == COMMA_SEP));
 
         if (commas_in_row>1)
@@ -1895,7 +1895,7 @@ extern void make_object(int nearby_flag,
     /*  The next word is either a parent object, or
         a textual short name, or the end of the header part                  */
 
-    get_next_token();
+    get_next_token_with_directives();
     if (end_of_header()) goto HeaderPassed;
 
     if (token_type == DQ_TT)
@@ -1935,7 +1935,7 @@ extern void make_object(int nearby_flag,
 
     /*  Now it really has to be the body of the definition.                  */
 
-    get_next_token();
+    get_next_token_with_directives();
     if (end_of_header()) goto HeaderPassed;
 
     ebf_error("body of object definition", token_text);

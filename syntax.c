@@ -63,6 +63,74 @@ extern void panic_mode_error_recovery(void)
         get_next_token();
 }
 
+extern void get_next_token_with_directives(void)
+{
+    /* A higher-level version of get_next_token(), which detects and
+       obeys directives such as #ifdef/#ifnot/#endif. (The # sign is
+       required in this case.)
+
+       This is called while parsing a long construct, such as Class or
+       Object, where we want to support internal #ifdefs. (Although
+       function-parsing predates this and doesn't make use of it.)
+
+       (Technically this permits *any* #-directive, which means you
+       can define global variables or properties or what-have-you in
+       the middle of an object. You can do that in the middle of an
+       object, too. Don't. It's about as well-supported as Wile E.
+       Coyote one beat before the plummet-lines kick in.) */
+
+    int directives_save, segment_markers_save, statements_save;
+
+    while (TRUE)
+    {
+        get_next_token();
+
+        /* If the first token is not a '#', return it directly. */
+        if ((token_type != SEP_TT) || (token_value != HASH_SEP))
+            return;
+
+        /* Save the lexer flags, and set up for directive parsing. */
+        directives_save = directives.enabled;
+        segment_markers_save = segment_markers.enabled;
+        statements_save = statements.enabled;
+
+        directives.enabled = TRUE;
+        segment_markers.enabled = FALSE;
+        statements.enabled = FALSE;
+        conditions.enabled = FALSE;
+        local_variables.enabled = FALSE;
+        misc_keywords.enabled = FALSE;
+        system_functions.enabled = FALSE;
+
+        get_next_token();
+
+        if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
+        {   error("It is illegal to nest a routine inside an object using '#['");
+            return;
+        }
+
+        if (token_type == DIRECTIVE_TT)
+            parse_given_directive(TRUE);
+        else
+        {   ebf_error("directive", token_text);
+            return;
+        }
+
+        /* Restore all the lexer flags. (We are squashing several of them
+           into a single save variable, which I think is safe because that's
+           what CKnight did.)
+        */
+        directive_keywords.enabled = FALSE;
+        directives.enabled = directives_save;
+        segment_markers.enabled = segment_markers_save;
+        statements.enabled =
+            conditions.enabled =
+            local_variables.enabled =
+            misc_keywords.enabled = 
+            system_functions.enabled = statements_save;
+    }
+}
+
 extern void parse_program(char *source)
 {
     lexical_source = source;
@@ -72,7 +140,8 @@ extern void parse_program(char *source)
 extern int parse_directive(int internal_flag)
 {
     /*  Internal_flag is FALSE if the directive is encountered normally,
-        TRUE if encountered with a # prefix inside a routine.
+        TRUE if encountered with a # prefix inside a routine or object
+        definition.
 
         Returns: TRUE if program continues, FALSE if end of file reached.    */
 
@@ -157,18 +226,27 @@ extern int parse_directive(int internal_flag)
     }
 
     if ((token_type == SYMBOL_TT) && (stypes[token_value] == CLASS_T))
-    {   sflags[token_value] |= USED_SFLAG;
+    {   if (internal_flag)
+        {   error("It is illegal to nest an object in a routine using '#classname'");
+            return(TRUE);
+        }
+        sflags[token_value] |= USED_SFLAG;
         make_object(FALSE, NULL, -1, -1, svals[token_value]);
         return TRUE;
     }
 
     if (token_type != DIRECTIVE_TT)
-    {   ebf_error("directive, '[' or class name", token_text);
+    {   /* If we're internal, we expect only a directive here. If
+           we're top-level, the possibilities are broader. */
+        if (internal_flag)
+            ebf_error("directive", token_text);
+        else
+            ebf_error("directive, '[' or class name", token_text);
         panic_mode_error_recovery();
         return TRUE;
     }
 
-    return !(parse_given_directive());
+    return !(parse_given_directive(internal_flag));
 }
 
 static int switch_sign(void)

@@ -2223,7 +2223,7 @@ extern int32 routine_starts_line;
 extern int  no_routines, no_named_routines, no_locals, no_termcs;
 extern int  terminating_characters[];
 
-extern int  parse_given_directive(void);
+extern int  parse_given_directive(int internal_flag);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "errors"                                         */
@@ -2574,6 +2574,7 @@ extern uint32 df_next_function_iterate(int *);
 extern int   no_syntax_lines;
 
 extern void  panic_mode_error_recovery(void);
+extern void  get_next_token_with_directives(void);
 extern int   parse_directive(int internal_flag);
 extern void  parse_program(char *source);
 extern int32 parse_routine(char *source, int embedded_flag, char *name,

@@ -40,8 +40,14 @@ static int ebf_error_recover(char *s1, char *s2)
 
 /* ------------------------------------------------------------------------- */
 
-extern int parse_given_directive(void)
-{   int *trace_level; int32 i, j, k, n, flag;
+extern int parse_given_directive(int internal_flag)
+{   /*  Internal_flag is FALSE if the directive is encountered normally,
+        TRUE if encountered with a # prefix inside a routine or object
+        definition.
+
+        Returns: FALSE if program continues, TRUE if end of file reached.    */
+
+    int *trace_level; int32 i, j, k, n, flag;
 
     switch(token_value)
     {
@@ -95,7 +101,13 @@ extern int parse_given_directive(void)
     /*   Class classname ...                                                 */
     /* --------------------------------------------------------------------- */
 
-    case CLASS_CODE: make_class(NULL); return FALSE;       /* See "tables.c" */
+    case CLASS_CODE: 
+        if (internal_flag)
+        {   error("Cannot nest #Class inside a routine or object");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        make_class(NULL);                                 /* See "objects.c" */
+        return FALSE;
 
     /* --------------------------------------------------------------------- */
     /*   Constant newname [[=] value] [, ...]                                */
@@ -282,7 +294,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case FAKE_ACTION_CODE:
-        make_fake_action(); break;                         /* see "tables.c" */
+        make_fake_action(); break;                          /* see "verbs.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Global variable [= value / array...]                                */
@@ -578,14 +590,24 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /*   Nearby objname "short name" ...                                     */
     /* --------------------------------------------------------------------- */
 
-    case NEARBY_CODE: make_object(TRUE, NULL, -1, -1, -1);
+    case NEARBY_CODE:
+        if (internal_flag)
+        {   error("Cannot nest #Nearby inside a routine or object");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        make_object(TRUE, NULL, -1, -1, -1);
         return FALSE;                                     /* See "objects.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Object objname "short name" ...                                     */
     /* --------------------------------------------------------------------- */
 
-    case OBJECT_CODE: make_object(FALSE, NULL, -1, -1, -1);
+    case OBJECT_CODE:
+        if (internal_flag)
+        {   error("Cannot nest #Object inside a routine or object");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        make_object(FALSE, NULL, -1, -1, -1);
         return FALSE;                                     /* See "objects.c" */
 
     /* --------------------------------------------------------------------- */
@@ -709,6 +731,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case STUB_CODE:
+        if (internal_flag)
+        {   error("Cannot nest #Stub inside a routine or object");
+            panic_mode_error_recovery(); return FALSE;
+        }
 
         /* The upcoming symbol is a definition; don't count it as a
            top-level reference *to* the stub function. */
