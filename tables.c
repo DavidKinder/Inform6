@@ -1795,22 +1795,25 @@ printf("        | class numbers table |\n");
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+identifier_names_offset));
 printf("        |   id names table    |\n");
-printf("        +=====================+   %06lx\n",
-                                          
+printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+grammar_table_at));
-printf("Readable|    grammar table    |\n");
-printf("memory  + - - - - - - - - - - +   %06lx\n", 
+printf("        |    grammar table    |\n");
+printf("        + - - - - - - - - - - +   %06lx\n", 
   (long int) (Write_RAM_At+actions_at));
 printf("        |       actions       |\n");
-printf("        + - - - - - - - - - - +   %06lx\n", (long int) preactions_at);
-printf("        |   parsing routines  |\n");
-printf("        + - - - - - - - - - - +   %06lx\n",
-                                          (long int) adjectives_offset);
-printf("        |     adjectives      |\n");
 printf("        +---------------------+   %06lx\n", 
   (long int) dictionary_offset);
 printf("        |     dictionary      |\n");
+            if (MEMORY_MAP_EXTENSION == 0)
+            {
 printf("        +---------------------+   %06lx\n", (long int) Out_Size);
+            }
+            else
+            {
+printf("        +=====================+   %06lx\n", (long int) Out_Size);
+printf("Runtime |       (empty)       |\n");
+printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_MAP_EXTENSION);
+            }
 
         }
 
