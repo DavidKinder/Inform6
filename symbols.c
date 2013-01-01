@@ -840,7 +840,7 @@ extern void df_note_function_start(char *name, uint32 address,
     df_current_function_addr = address;
 
     func = my_malloc(sizeof(df_function_t), "df function entry");
-    bzero(func, sizeof(df_function_t));
+    memset(func, 0, sizeof(df_function_t));
     func->name = name;
     func->address = address;
     func->source_line = source_line;
@@ -1226,10 +1226,10 @@ extern void symbols_allocate_arrays(void)
         df_tables_closed = FALSE;
 
         df_symbol_map = my_calloc(sizeof(df_reference_t *), DF_SYMBOL_HASH_BUCKETS, "df symbol-map hash table");
-        bzero(df_symbol_map, sizeof(df_reference_t *) * DF_SYMBOL_HASH_BUCKETS);
+        memset(df_symbol_map, 0, sizeof(df_reference_t *) * DF_SYMBOL_HASH_BUCKETS);
 
         df_functions = my_calloc(sizeof(df_function_t *), DF_FUNCTION_HASH_BUCKETS, "df function hash table");
-        bzero(df_functions, sizeof(df_function_t *) * DF_FUNCTION_HASH_BUCKETS);
+        memset(df_functions, 0, sizeof(df_function_t *) * DF_FUNCTION_HASH_BUCKETS);
         df_functions_head = NULL;
         df_functions_tail = NULL;
 
