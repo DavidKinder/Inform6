@@ -1,0 +1,358 @@
+Format of Inform 6 Debugging Information Files
+
+Version 1.0, Second Rough Draft (2012 October 26)
+
+0: Introduction
+
+This is a specification of the Version 1 format for the debugging information
+files emitted by the Inform 6 compiler.  It replaces Version 0, which is
+documented in Section 12.5 of the Inform Technical Manual.
+
+1: Overview
+
+Debugging information files are written in XML and encoded in UTF-8.  They
+therefore begin with the following declaration:
+
+	<?xml version="1.0" encoding="UTF-8"?>
+
+Beyond the usual requirements for well-formed XML, the file adheres to the
+conventions that all numbers are written in decimal, all strings are
+case-sensitive, and all excerpts from binary files are Base64-encoded.
+
+2: The Top Level
+
+The root element is given by the tag <inform-story-file> with three attributes,
+the version of the debug file format being used, the name of the program that
+produced the file, and that program's version.  For instance,
+
+	<inform-story-file version="1.0" content-creator="Inform"
+			   content-creator-version="6.33">
+	  ...
+	</inform-story-file>
+
+The elements from Sections 3--8 may appear in the ellipses.
+
+3: Story File Prefix
+
+The story file prefix contains a Base64 encoding of the story file's first bytes
+so that a debugging tool can easily check whether the story and the debug
+information file are mismatched.  For example, the prefix for a Glulx story
+might appear as
+
+	<story-file-prefix>
+	  R2x1bAADAQEACqEAAAwsAAAMLAAAAQAAAAAAPAAIo2Jc
+	  6B2XSW5mbwABAAA2LjMyMC4zOAABMTIxMDE1wQAAMA==
+	</story-file-prefix>
+
+The story file prefix is mandatory, but its length is unspecified.  Version 6.33
+of the Inform compiler records 64 bytes, which seems sufficient.
+
+4: Story File Sections
+
+Story file sections partition the story file according to how the data will be
+used.  For the Inform 6 compiler, this partitioning is the same as the one that
+the `z' flag prints.
+
+A record for a story file section gives a name for that section, its beginning
+address, and its end address:
+
+	<story-file-section>
+	  <type>abbreviations table</type>
+	  <address>64</address>
+	  <end-address>128</end-address>
+	</story-file-section>
+
+The names currently in use include those from Section 12.5 of the Inform
+Technical Manual:
+
+	abbreviations table
+	header extension
+	alphabets table
+	Unicode table
+	property defaults
+	object tree
+	common properties
+	class numbers
+	individual properties
+	global variables
+	array space
+	grammar table
+	actions table
+	parsing routines
+	adjectives table
+	dictionary
+	code area
+	strings area
+
+plus three additions for Z-code:
+
+	module address table
+	module linking data
+	zero padding
+
+one addition for Glulx:
+
+	string decoding table
+
+and one addition for both targets:
+
+	symbol names table
+
+A compiler that does not wish to subdivide the story file should emit one
+section for the entirety and give it the name
+
+	story
+
+5: Source Files
+
+Source files are encoded as in the example below.  Each file has a unique index,
+which is used by other elements when referring to source code locations; these
+indices count from zero.  The file's path is recorded in two forms, first as it
+was given to the compiler via a command-line argument or include directive (the
+form suitable for presentation to a human) and second after resolution to an
+absolute path (the form suitable for loading the file contents).  All paths are
+written according to the conventions of the host OS.  The language is, at
+present, either "Inform 6" or "Inform 7".  More languages may added in the
+future.
+
+	<source index="0">
+	  <given-path>example.inf</given-path>
+	  <resolved-path>/home/user/directory/example.inf</resolved-path>
+	  <language>Inform 6</language>
+	</source>
+
+If the source file is known to appear in the story's Blorb, its chunk number
+will also be recorded:
+
+	<source index="0">
+	  <given-path>example.inf</given-path>
+	  <resolved-path>/home/user/directory/example.inf</resolved-path>
+	  <blorb-chunk-number>18</blorb-chunk-number>
+	</source>
+
+6: Table Entries; Grammar Lines
+
+Table entries are data defined by particular parts of the source code, but
+without any corresponding identifiers.  The <table-entry> element notes the
+entry's type, the address where it begins (inclusive), the address where it ends
+(exclusive), and the defining source code location(s):
+
+	<table-entry>
+	  <type>grammar line</type>
+	  <address>1004</address>
+	  <end-address>1030</end-address>
+	  <source-code-location>...</source-code-location>
+	</table-entry>
+
+Version 6.33 of the Inform compiler only emits <table-entry> tags for grammar
+lines; these data are all located in the grammar table section.
+
+7: Named Values; Constants, Attributes, Properties, Actions, Fake Actions,
+   Objects, Classes, Arrays, and Routines
+
+Records for named values store their identifier, their value, and the source
+code location(s) of their definition.  For instance,
+
+	<constant>
+	  <identifier>MAX_SCORE</identifier>
+	  <value>40</value>
+	  <source-code-location>...</source-code-location>
+	</constant>
+
+would represent a named constant.  Attributes, properties, actions, fake
+actions, objects, arrays, and routines are also names for numbers, and differ
+only in their use; they are represented in the same format under the tags
+<attribute>, <property>, <action>, <fake-action>, <object>, <array>, and
+<routine>.
+
+The records for constants include some extra entries for the system constants
+tabulated in Section 12.2 of the Inform Technical Manual, even though these are
+not created by Constant directives.  They omit entries for #undefed constants.
+
+Some records for objects will represent class objects.  In that case, they will
+be given with the tag <class> rather than <object> and include an additional
+child to indicate their class number:
+
+	<class>
+	  <identifier>lamp</identifier>
+	  <class-number>5</class-number>
+	  <value>1560</value>
+	  <source-code-location>...</source-code-location>
+	</class>
+
+Records for arrays also have extra children, which record their size, their
+element size, and the intended semantics for their zeroth element:
+
+	<array>
+	  <identifier>route</identifier>
+	  <value>1500</value>
+	  <byte-count>20</byte-count>
+	  <bytes-per-element>4</bytes-per-element>
+	  <zeroth-element-holds-length>true</zeroth-element-holds-length>
+	  <source-code-location>...</source-code-location>
+	</array>
+
+And finally, <routine> records contain a <byte-count> element, along with any
+number of the <local-variable> and <sequence-point> elements.  These last two
+are described in Sections 9 and 10.
+
+8: Global Variables
+
+Globals are similar to named values, except that they are not interpreted as a
+fixed value, but rather have an address where their value can be found.  Their
+records therefore contain an <address> tag in place of the <value> tag, as in:
+
+	<global-variable>
+	  <identifier>darkness_witnessed</identifier>
+	  <address>1520</address>
+	  <source-code-location>...</source-code-location>
+	</global-variable>
+
+9: Local Variables
+
+The format for local variables mimics the format for global variables, except
+that no source code location is included, and their memory locations are not
+given by address.  For Z-code, locals are specified by index:
+
+	<local-variable>
+	  <identifier>parameter</identifier>
+	  <index>1</index>
+	</local-variable>
+
+whereas for Glulx they are specified by frame offset:
+
+	<local-variable>
+	  <identifier>parameter</identifier>
+	  <frame-offset>4</frame-offset>
+	</local-variable>
+
+If a local variable identifier is only in scope for part of a routine, it's
+scope will be encoded as a beginning instruction address (inclusive) and an
+ending instruction address (exclusive):
+
+	<local-variable>
+	  <identifier>rulebook</identifier>
+	  <index>0</index>
+	  <scope-address>1628</scope-address>
+	  <end-scope-address>1678</end-scope-address>
+	</local-variable>
+
+Identifiers with noncontiguous scopes are recorded as one <local-variable>
+element per contiguous region.  It is possible for the same identifier to map to
+different variables, so long as the corresponding scopes are disjoint.
+
+10: Sequence Points
+
+Sequence points are stored as an instruction address and the corresponding
+single location in the source code:
+
+	<sequence-point>
+	  <address>1628</address>
+	  <source-code-location>...</source-code-location>
+	</sequence-point>
+
+The source code location will always be a single position, not a range.
+
+Sequence points are defined as in Section 12.4 of the Inform Technical Manual,
+but with the further stipulation that labels do not influence their source code
+locations, as they did in Version 0 of the debug information format.  For
+instance, in code like
+
+	say__p = 1; ParaContent(); .L_Say59; .LSayX59;
+	t_0 = 0;
+
+the sequence points are to be placed like this:
+
+	<*> say__p = 1; <*> ParaContent(); .L_Say59; .LSayX59;
+	<*> t_0 = 0;
+
+rather than like this:
+
+	<*> say__p = 1; <*> ParaContent(); <*> .L_Say59; .LSayX59;
+	t_0 = 0;
+
+11: Source Code Locations
+
+Most source code locations take the following format, which describes their
+file, the line and character number where they begin (inclusive), the line and
+character number where they end (exclusive), and the file positions (in bytes)
+corresponding to those endpoints:
+
+	<source-code-location>
+	  <file-index>0</file-index>
+	  <line>1024</line>
+	  <character>4</character>
+	  <file-position>44153</file-position>
+	  <end-line>1025</end-line>
+	  <end-character>1</end-character>
+	  <end-file-position>44186</end-file-position>
+	</source-code-location>
+
+Line numbers begin at one, but character numbers and file positions count from
+zero.  This is consistent with the majority of text editors.
+
+If the compiler doesn't track file positions, they will be omitted.  If it
+doesn't track character numbers either, only line numbers will appear.
+
+Furthermore, in the special case where the endpoints coincide, as happens with
+sequence points, the end elements may be elided:
+
+	<source-code-location>
+	  <file-index>0</file-index>
+	  <line>1024</line>
+	  <character>4</character>
+	  <file-position>44153</file-position>
+	</source-code-location>
+
+At the other extreme, sometimes definitions span several source files or appear
+in two different languages.  The former case is dealt with by including multiple
+code location elements and indexing them to indicate order:
+
+	<!-- First Part of Inform 6 Definition -->
+	<source-code-location index="0">
+	  <!-- Assuming file 0 was given with the language "Inform 6" -->
+	  <file-index>0</file-index>
+	  <line>1024</line>
+	  <character>4</character>
+	  <file-position>44153</file-position>
+	  <end-line>1025</end-line>
+	  <end-character>1</end-character>
+	  <end-file-position>44186</end-file-position>
+	</source-code-location>
+	<!-- Second Part of Inform 6 Definition -->
+	<source-code-location index="1">
+	  <!-- Assuming file 1 was given with the language "Inform 6" -->
+	  <file-index>1</file-index>
+	  <line>1</line>
+	  <character>0</character>
+	  <file-position>0</file-position>
+	  <end-line>3</end-line>
+	  <end-character>1</end-character>
+	  <end-file-position>59</end-file-position>
+	</source-code-location>
+
+The latter case is also handled with multiple elements, though indexing is not
+necessary unless two elements' source files are in the same language:
+
+	<!-- Inform 7 Definition -->
+	<source-code-location>
+	  <!-- Assuming file 2 was given with the language "Inform 7" -->
+	  <file-index>2</file-index>
+	  <line>12</line>
+	  <character>0</character>
+	  <file-position>308</file-position>
+	  <end-line>12</end-line>
+	  <end-character>112</end-character>
+	  <end-file-position>420</end-file-position>
+	</source-code-location>
+	<!-- Inform 6 Definition -->
+	<source-code-location>
+	  <!-- Assuming file 0 was given with the language "Inform 6" -->
+	  <file-index>0</file-index>
+	  <line>1024</line>
+	  <character>4</character>
+	  <file-position>44153</file-position>
+	  <end-line>1025</end-line>
+	  <end-character>1</end-character>
+	  <end-file-position>44186</end-file-position>
+	</source-code-location>
