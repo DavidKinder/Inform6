@@ -712,7 +712,7 @@ static int32 unique_task_id(void)
 
 /* In many places the compiler encodes a source-code location (file and
    line number) into an int32 value. The encoded value looks like
-   line_number + FILE_LINE_SCALE_FACTOR*file_number. This will go
+   file_number + FILE_LINE_SCALE_FACTOR*line_number. This will go
    badly if a source file has more than FILE_LINE_SCALE_FACTOR lines,
    of course. But this value is roughly eight million, which is a lot
    of lines. 
