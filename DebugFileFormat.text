@@ -1,6 +1,6 @@
 Format of Inform 6 Debugging Information Files
 
-Version 1.0, Second Rough Draft (2012 October 26)
+Version 1.0
 
 0: Introduction
 
@@ -331,8 +331,8 @@ code location elements and indexing them to indicate order:
 	  <end-file-position>59</end-file-position>
 	</source-code-location>
 
-The latter case is also handled with multiple elements, though indexing is not
-necessary unless two elements' source files are in the same language:
+The latter case is also handled with multiple elements.  Note that indexing is
+only used to indicated order among locations in the same language.
 
 	<!-- Inform 7 Definition -->
 	<source-code-location>
