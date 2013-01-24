@@ -54,7 +54,7 @@ used.  For the Inform 6 compiler, this partitioning is the same as the one that
 the `z' flag prints.
 
 A record for a story file section gives a name for that section, its beginning
-address, and its end address:
+address (inclusive), and its end address (exclusive):
 
 	<story-file-section>
 	  <type>abbreviations table</type>
@@ -66,37 +66,41 @@ The names currently in use include those from Section 12.5 of the Inform
 Technical Manual:
 
 	abbreviations table
-	header extension
-	alphabets table
-	Unicode table
+	header extension (Z-code only)
+	alphabets table (Z-code only)
+	Unicode table (Z-code only)
 	property defaults
 	object tree
 	common properties
 	class numbers
-	individual properties
+	individual properties (Z-code only)
 	global variables
 	array space
 	grammar table
 	actions table
-	parsing routines
-	adjectives table
+	parsing routines (Z-code only)
+	adjectives table (Z-code only)
 	dictionary
 	code area
 	strings area
 
-plus three additions for Z-code:
+plus one addition for Z-code:
 
-	module address table
-	module linking data
-	zero padding
+	abbreviations
 
-one addition for Glulx:
+two additions for Glulx:
 
+	memory layout id
 	string decoding table
 
-and one addition for both targets:
+and three additions for both targets:
 
-	symbol names table
+	header
+	identifier names
+	zero padding
+
+Names may repeat; Glulx story files, for example, sometimes have two zero
+padding sections.
 
 A compiler that does not wish to subdivide the story file should emit one
 section for the entirety and give it the name
@@ -108,12 +112,12 @@ section for the entirety and give it the name
 Source files are encoded as in the example below.  Each file has a unique index,
 which is used by other elements when referring to source code locations; these
 indices count from zero.  The file's path is recorded in two forms, first as it
-was given to the compiler via a command-line argument or include directive (the
-form suitable for presentation to a human) and second after resolution to an
-absolute path (the form suitable for loading the file contents).  All paths are
-written according to the conventions of the host OS.  The language is, at
-present, either "Inform 6" or "Inform 7".  More languages may added in the
-future.
+was given to the compiler via a command-line argument or include directive but
+without any path abbreviations like `>' (the form suitable for presentation to a
+human) and second after resolution to an absolute path (the form suitable for
+loading the file contents).  All paths are written according to the conventions
+of the host OS.  The language is, at present, either "Inform 6" or "Inform 7".
+More languages may added in the future.
 
 	<source index="0">
 	  <given-path>example.inf</given-path>
@@ -135,7 +139,7 @@ will also be recorded:
 Table entries are data defined by particular parts of the source code, but
 without any corresponding identifiers.  The <table-entry> element notes the
 entry's type, the address where it begins (inclusive), the address where it ends
-(exclusive), and the defining source code location(s):
+(exclusive), and the defining source code location(s), if any:
 
 	<table-entry>
 	  <type>grammar line</type>
@@ -151,7 +155,7 @@ lines; these data are all located in the grammar table section.
    Objects, Classes, Arrays, and Routines
 
 Records for named values store their identifier, their value, and the source
-code location(s) of their definition.  For instance,
+code location(s) of their definition, if any.  For instance,
 
 	<constant>
 	  <identifier>MAX_SCORE</identifier>
@@ -163,11 +167,13 @@ would represent a named constant.  Attributes, properties, actions, fake
 actions, objects, arrays, and routines are also names for numbers, and differ
 only in their use; they are represented in the same format under the tags
 <attribute>, <property>, <action>, <fake-action>, <object>, <array>, and
-<routine>.
+<routine>.  (Moreover, unlike Version 0 of the debug information format, fake
+actions are not recorded as both fake actions and actions.)
 
 The records for constants include some extra entries for the system constants
 tabulated in Section 12.2 of the Inform Technical Manual, even though these are
-not created by Constant directives.  They omit entries for #undefed constants.
+not created by Constant directives.  Entries for #undefed constants are also
+included, but necessarily without values.
 
 Some records for objects will represent class objects.  In that case, they will
 be given with the tag <class> rather than <object> and include an additional
@@ -193,8 +199,26 @@ element size, and the intended semantics for their zeroth element:
 	</array>
 
 And finally, <routine> records contain a <byte-count> element, along with any
-number of the <local-variable> and <sequence-point> elements.  These last two
-are described in Sections 9 and 10.
+number of the <local-variable> and <sequence-point> elements, which are
+described in Sections 9 and 10.
+
+Sometimes what would otherwise be a named value is in fact anonymous; unnamed
+objects, embedded routines, some replaced routines, veneer properties, and the
+Infix attribute are all examples.  In such a case, the <identifier> subelement
+will carry the XML attribute
+
+	artificial
+
+to indicate that the compiler is providing a sensible name of its own, which
+could be presented to a human, but is not actually an identifier.  For instance:
+
+	<routine>
+	  <identifier artificial="true">lantern.time_left</identifier>
+	  <value>1820</value>
+	  <byte-count>80</byte-count>
+	  <source-code-location>...</source-code-location>
+	  ...
+	</routine>
 
 8: Global Variables
 
@@ -211,8 +235,8 @@ records therefore contain an <address> tag in place of the <value> tag, as in:
 9: Local Variables
 
 The format for local variables mimics the format for global variables, except
-that no source code location is included, and their memory locations are not
-given by address.  For Z-code, locals are specified by index:
+that a source code location is never included, and their memory locations are
+not given by address.  For Z-code, locals are specified by index:
 
 	<local-variable>
 	  <identifier>parameter</identifier>
@@ -251,7 +275,8 @@ single location in the source code:
 	  <source-code-location>...</source-code-location>
 	</sequence-point>
 
-The source code location will always be a single position, not a range.
+The source code location will always be exactly one position with overlapping
+endpoints.
 
 Sequence points are defined as in Section 12.4 of the Inform Technical Manual,
 but with the further stipulation that labels do not influence their source code
@@ -288,8 +313,8 @@ corresponding to those endpoints:
 	  <end-file-position>44186</end-file-position>
 	</source-code-location>
 
-Line numbers begin at one, but character numbers and file positions count from
-zero.  This is consistent with the majority of text editors.
+Line numbers and character numbers begin at one, but file positions count from
+zero.
 
 If the compiler doesn't track file positions, they will be omitted.  If it
 doesn't track character numbers either, only line numbers will appear.
