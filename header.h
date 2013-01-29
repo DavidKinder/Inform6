@@ -786,10 +786,28 @@ typedef struct objecttg {
     int32 propsize;
 } objecttg;
 
-typedef struct dbgl_s
-{   int b1, b2, b3;
-    uchar cc;
-} dbgl;
+typedef struct debug_location_s
+{   int32 file_index;
+    int32 beginning_byte_index;
+    int32 end_byte_index;
+    int32 beginning_line_number;
+    int32 end_line_number;
+    int32 beginning_character_number;
+    int32 end_character_number;
+} debug_location;
+
+typedef struct debug_locations_s
+{   debug_location location;
+    struct debug_locations_s *next;
+    int reference_count;
+} debug_locations;
+
+typedef struct debug_location_beginning_s
+{   debug_locations *head;
+    int32 beginning_byte_index;
+    int32 beginning_line_number;
+    int32 beginning_character_number;
+} debug_location_beginning;
 
 typedef struct keyword_group_s
 {   char *keywords[120];
@@ -805,7 +823,7 @@ typedef struct token_data_s
     int symtype;  /* 6.30 */
     int symflags;   /* 6.30 */
     int marker;
-    dbgl line_ref;
+    debug_location location;
 } token_data;
 
 typedef struct FileId_s                 /*  Source code file identifier:     */
@@ -1815,26 +1833,6 @@ typedef struct operator_s
 /* 36 = print (object) out of range */
 
 /* ------------------------------------------------------------------------- */
-/*   Debugging information file record types                                 */
-/* ------------------------------------------------------------------------- */
-
-#define EOF_DBR            0
-#define FILE_DBR           1
-#define CLASS_DBR          2
-#define OBJECT_DBR         3
-#define GLOBAL_DBR         4
-#define ATTR_DBR           5
-#define PROP_DBR           6
-#define FAKE_ACTION_DBR    7
-#define ACTION_DBR         8
-#define HEADER_DBR         9
-#define LINEREF_DBR       10
-#define ROUTINE_DBR       11
-#define ARRAY_DBR         12
-#define MAP_DBR           13
-#define ROUTINE_END_DBR   14
-
-/* ------------------------------------------------------------------------- */
 /*   Z-region areas (used to refer to module positions in markers)           */
 /* ------------------------------------------------------------------------- */
 
@@ -2067,7 +2065,7 @@ extern int32 no_instructions;
 extern int   sequence_point_follows;
 extern int   uses_unicode_features, uses_memheap_features, 
     uses_acceleration_features, uses_float_features;
-extern dbgl  debug_line_ref;
+extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
 extern int   *variable_usage;
 extern int   next_label, no_sequence_points;
@@ -2086,8 +2084,8 @@ extern void assemble_label_no(int n);
 extern void assemble_jump(int n);
 extern void define_symbol_label(int symbol);
 extern int32 assemble_routine_header(int no_locals, int debug_flag,
-    char *name, dbgl *line_ref, int embedded_flag, int the_symbol);
-extern void assemble_routine_end(int embedded_flag, dbgl *line_ref);
+    char *name, int embedded_flag, int the_symbol);
+extern void assemble_routine_end(int embedded_flag, debug_locations locations);
 
 extern void assemblez_0(int internal_number);
 extern void assemblez_0_to(int internal_number, assembly_operand o1);
@@ -2290,6 +2288,9 @@ assembly_operand check_nonzero_at_runtime(assembly_operand AO1, int label,
 extern int system_function_usage[];
 extern expression_tree_node *ET;
 
+extern int z_system_constant_list[];
+extern int glulx_system_constant_list[];
+
 extern int32 value_of_system_constant(int t);
 extern void clear_expression_space(void);
 extern void show_tree(assembly_operand AO, int annotate);
@@ -2316,13 +2317,42 @@ extern void write_to_transcript_file(char *text);
 extern void close_transcript_file(void);
 extern void abort_transcript_file(void);
 
-extern void open_debug_file(void);
+extern void nullify_debug_file_position(fpos_t *position);
+
 extern void begin_debug_file(void);
-extern void write_debug_byte(int i);
-extern void write_debug_address(int32 i);
-extern void write_dbgl(dbgl x);
-extern void write_debug_string(char *s);
-extern void close_debug_file(void);
+
+extern void debug_file_printf(const char*format, ...);
+extern void debug_file_print_with_entities(const char*string);
+extern void debug_file_print_base_64_triple
+    (uchar first, uchar second, uchar third);
+extern void debug_file_print_base_64_pair(uchar first, uchar second);
+extern void debug_file_print_base_64_single(uchar first);
+
+extern void write_debug_location(debug_location location);
+extern void write_debug_locations(debug_locations locations);
+extern void write_debug_optional_identifier(int32 symbol_index);
+extern void write_debug_symbol_backpatch(int32 symbol_index);
+extern void write_debug_symbol_optional_backpatch(int32 symbol_index);
+extern void write_debug_packed_code_backpatch(int32 offset);
+extern void write_debug_code_backpatch(int32 offset);
+extern void write_debug_object_backpatch(int32 object_number);
+extern void write_debug_global_backpatch(int32 symbol_index);
+extern void write_debug_array_backpatch(int32 symbol_index);
+extern void write_debug_grammar_backpatch(int32 offset);
+
+extern void begin_writing_debug_sections();
+extern void write_debug_section(const char*name, int32 beginning_address);
+extern void end_writing_debug_sections(int32 end_address);
+
+extern void write_debug_undef(int32 symbol_index);
+
+extern void end_debug_file
+    (int32 code_base_address,
+     int32 object_base_address,
+     int32 global_base_address,
+     int32 array_base_address,
+     int32 grammar_base_address);
+
 extern void add_to_checksum(void *address);
 
 extern void load_sourcefile(char *story_name, int style);
@@ -2409,7 +2439,12 @@ extern char **local_variable_texts;
 extern int32 token_value;
 extern int   token_type;
 extern char *token_text;
-extern dbgl  token_line_ref;
+
+extern debug_location get_token_location(void);
+extern debug_locations get_token_locations(void);
+extern debug_location_beginning get_token_location_beginning(void);
+extern void discard_token_location(debug_location_beginning beginning);
+extern debug_locations get_token_location_end(debug_location_beginning beginning);
 
 extern void describe_token(token_data t);
 
@@ -2417,8 +2452,8 @@ extern void construct_local_variable_tables(void);
 extern void declare_systemfile(void);
 extern int  is_systemfile(void);
 extern void report_errors_at_current_line(void);
-extern dbgl get_current_dbgl(void);
-extern dbgl get_error_report_dbgl(void);
+extern debug_location get_current_debug_location(void);
+extern debug_location get_error_report_debug_location(void);
 extern int32 get_current_line_start(void);
 
 extern void put_token_back(void);
@@ -2537,6 +2572,8 @@ extern int   *sflags;
 #else
   extern signed char *stypes;
 #endif
+extern fpos_t *symbol_debug_backpatch_positions;
+extern fpos_t *replacement_debug_backpatch_positions;
 extern int32 *individual_name_strings;
 extern int32 *attribute_name_strings;
 extern int32 *action_name_strings;

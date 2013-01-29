@@ -536,6 +536,52 @@ static int find_prec(token_data a, token_data b)
 
 /* --- Converting token to operand ----------------------------------------- */
 
+/* Must match the switch statement below */
+int z_system_constant_list[] =
+    { adjectives_table_SC,
+      actions_table_SC,
+      classes_table_SC,
+      identifiers_table_SC,
+      preactions_table_SC,
+      largest_object_SC,
+      strings_offset_SC,
+      code_offset_SC,
+      actual_largest_object_SC,
+      static_memory_offset_SC,
+      array_names_offset_SC,
+      readable_memory_offset_SC,
+      cpv__start_SC,
+      cpv__end_SC,
+      ipv__start_SC,
+      ipv__end_SC,
+      array__start_SC,
+      array__end_SC,
+      highest_attribute_number_SC,
+      attribute_names_array_SC,
+      highest_property_number_SC,
+      property_names_array_SC,
+      highest_action_number_SC,
+      action_names_array_SC,
+      highest_fake_action_number_SC,
+      fake_action_names_array_SC,
+      highest_routine_number_SC,
+      routine_names_array_SC,
+      routines_array_SC,
+      routine_flags_array_SC,
+      highest_global_number_SC,
+      global_names_array_SC,
+      globals_array_SC,
+      global_flags_array_SC,
+      highest_array_number_SC,
+      array_names_array_SC,
+      array_flags_array_SC,
+      highest_constant_number_SC,
+      constant_names_array_SC,
+      highest_class_number_SC,
+      class_objects_array_SC,
+      highest_object_number_SC,
+      -1 };
+
 static int32 value_of_system_constant_z(int t)
 {   switch(t)
     {   case adjectives_table_SC:
@@ -634,6 +680,20 @@ static int32 value_of_system_constant_z(int t)
 
     return(0);
 }
+
+/* Must match the switch statement below */
+int glulx_system_constant_list[] =
+    { classes_table_SC,
+      identifiers_table_SC,
+      array_names_offset_SC,
+      cpv__start_SC,
+      cpv__end_SC,
+      dictionary_table_SC,
+      dynam_string_table_SC,
+      grammar_table_SC,
+      actions_table_SC,
+      globals_array_SC,
+      -1 };
 
 static int32 value_of_system_constant_g(int t)
 { 

@@ -131,6 +131,7 @@ will also be recorded:
 	<source index="0">
 	  <given-path>example.inf</given-path>
 	  <resolved-path>/home/user/directory/example.inf</resolved-path>
+	  <language>Inform 6</language>
 	  <blorb-chunk-number>18</blorb-chunk-number>
 	</source>
 
@@ -198,9 +199,10 @@ element size, and the intended semantics for their zeroth element:
 	  <source-code-location>...</source-code-location>
 	</array>
 
-And finally, <routine> records contain a <byte-count> element, along with any
-number of the <local-variable> and <sequence-point> elements, which are
-described in Sections 9 and 10.
+And finally, <routine> records contain an <address> and a <byte-count> element,
+along with any number of the <local-variable> and <sequence-point> elements,
+which are described in Sections 9 and 10.  The address is provided because the
+identifier's value may be packed.
 
 Sometimes what would otherwise be a named value is in fact anonymous; unnamed
 objects, embedded routines, some replaced routines, veneer properties, and the
@@ -219,6 +221,9 @@ could be presented to a human, but is not actually an identifier.  For instance:
 	  <source-code-location>...</source-code-location>
 	  ...
 	</routine>
+
+Artificial identifiers may contain characters, like the full stop in
+``lantern.time_left'', that would not be legal in the source language.
 
 8: Global Variables
 

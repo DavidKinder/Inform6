@@ -728,7 +728,7 @@ static void parse_print_g(int finally_return)
 static void parse_statement_z(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag;
     assembly_operand AO, AO2, AO3, AO4;
-    dbgl spare_dbgl1, spare_dbgl2;
+    debug_location spare_debug_location1, spare_debug_location2;
 
     ASSERT_ZCODE();
 
@@ -769,6 +769,7 @@ static void parse_statement_z(int break_label, int continue_label)
             if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
             {   put_token_back(); return;
             }
+            statement_debug_location = get_token_location();
             parse_statement(break_label, continue_label);
             return;
         }
@@ -979,7 +980,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  {   put_token_back();
                      if (!((token_type==SEP_TT)&&(token_value==SUPERCLASS_SEP)))
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = token_line_ref;
+                         statement_debug_location = get_token_location();
                          code_generate(parse_expression(FORINIT_CONTEXT),
                              VOID_CONTEXT, -1);
                      }
@@ -1007,7 +1008,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
-                     spare_dbgl1 = token_line_ref;
+                     spare_debug_location1 = get_token_location();
                      AO = parse_expression(CONDITION_CONTEXT);
                      if (!match_colon()) break;
                  }
@@ -1017,7 +1018,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
-                     spare_dbgl2 = token_line_ref;
+                     spare_debug_location2 = get_token_location();
                      AO2 = parse_expression(VOID_CONTEXT);
                      match_close_bracket();
                      flag = test_for_incdec(AO2);
@@ -1036,7 +1037,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
                      if (AO.type != OMITTED_OT)
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = spare_dbgl1;
+                         statement_debug_location = spare_debug_location1;
                          code_generate(AO, CONDITION_CONTEXT, ln3);
                      }
 
@@ -1053,7 +1054,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
                      assemble_label_no(ln);
                      sequence_point_follows = TRUE;
-                     debug_line_ref = spare_dbgl2;
+                     statement_debug_location = spare_debug_location2;
                      code_generate(AO2, VOID_CONTEXT, -1);
 
                      assemble_label_no(ln2);
@@ -1062,7 +1063,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
                      if (AO.type != OMITTED_OT)
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = spare_dbgl1;
+                         statement_debug_location = spare_debug_location1;
                          code_generate(AO, CONDITION_CONTEXT, ln3);
                      }
                  }
@@ -1076,7 +1077,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      assemble_label_no(ln2);
 
                      sequence_point_follows = TRUE;
-                     debug_line_ref = spare_dbgl2;
+                     statement_debug_location = spare_debug_location2;
                      if (flag > 0)
                      {   AO3.type = SHORT_CONSTANT_OT;
                          AO3.value = flag;
@@ -1706,7 +1707,7 @@ static void parse_statement_z(int break_label, int continue_label)
 static void parse_statement_g(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag, onstack;
     assembly_operand AO, AO2, AO3, AO4;
-    dbgl spare_dbgl1, spare_dbgl2;
+    debug_location spare_debug_location1, spare_debug_location2;
 
     ASSERT_GLULX();
 
@@ -1747,6 +1748,9 @@ static void parse_statement_g(int break_label, int continue_label)
             if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
             {   put_token_back(); return;
             }
+            /* The following line prevents labels from influencing the positions
+               of sequence points. */
+            statement_debug_location = get_token_location();
             parse_statement(break_label, continue_label);
             return;
         }
@@ -1925,7 +1929,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  {   put_token_back();
                      if (!((token_type==SEP_TT)&&(token_value==SUPERCLASS_SEP)))
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = token_line_ref;
+                         statement_debug_location = get_token_location();
                          code_generate(parse_expression(FORINIT_CONTEXT),
                              VOID_CONTEXT, -1);
                      }
@@ -1953,7 +1957,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
-                     spare_dbgl1 = token_line_ref;
+                     spare_debug_location1 = get_token_location();
                      AO = parse_expression(CONDITION_CONTEXT);
                      if (!match_colon()) break;
                  }
@@ -1963,7 +1967,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
-                     spare_dbgl2 = token_line_ref;
+                     spare_debug_location2 = get_token_location();
                      AO2 = parse_expression(VOID_CONTEXT);
                      match_close_bracket();
                      flag = test_for_incdec(AO2);
@@ -1982,7 +1986,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                      if (AO.type != OMITTED_OT)
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = spare_dbgl1;
+                         statement_debug_location = spare_debug_location1;
                          code_generate(AO, CONDITION_CONTEXT, ln3);
                      }
 
@@ -1999,7 +2003,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                      assemble_label_no(ln);
                      sequence_point_follows = TRUE;
-                     debug_line_ref = spare_dbgl2;
+                     statement_debug_location = spare_debug_location2;
                      code_generate(AO2, VOID_CONTEXT, -1);
 
                      assemble_label_no(ln2);
@@ -2008,7 +2012,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                      if (AO.type != OMITTED_OT)
                      {   sequence_point_follows = TRUE;
-                         debug_line_ref = spare_dbgl1;
+                         statement_debug_location = spare_debug_location1;
                          code_generate(AO, CONDITION_CONTEXT, ln3);
                      }
                  }
@@ -2022,7 +2026,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      assemble_label_no(ln2);
 
                      sequence_point_follows = TRUE;
-                     debug_line_ref = spare_dbgl2;
+                     statement_debug_location = spare_debug_location2;
                      if (flag > 0)
                      {   AO3.value = flag;
                          if (AO3.value >= MAX_LOCAL_VARIABLES)

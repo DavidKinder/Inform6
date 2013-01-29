@@ -202,9 +202,16 @@ extern void make_global(int array_flag, int name_only)
     int array_type, data_type;
     assembly_operand AO;
 
+    int32 global_symbol;
+    const char *global_name;
+    debug_location_beginning beginning_debug_location =
+        get_token_location_beginning();
+
     directive_keywords.enabled = FALSE;
     get_next_token();
     i = token_value;
+    global_symbol = i;
+    global_name = token_text;
 
     if (!glulx_mode) {
         if ((token_type==SYMBOL_TT) && (stypes[i]==GLOBAL_VARIABLE_T)
@@ -217,7 +224,8 @@ extern void make_global(int array_flag, int name_only)
     }
 
     if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
-    {   if (array_flag)
+    {   discard_token_location(beginning_debug_location);
+        if (array_flag)
             ebf_error("new array name", token_text);
         else ebf_error("new global variable name", token_text);
         panic_mode_error_recovery(); return;
@@ -239,12 +247,14 @@ extern void make_global(int array_flag, int name_only)
     }
     else
     {   if (!glulx_mode && no_globals==233)
-        {   error("All 233 global variables already declared");
+        {   discard_token_location(beginning_debug_location);
+            error("All 233 global variables already declared");
             panic_mode_error_recovery();
             return;
         }
         if (glulx_mode && no_globals==MAX_GLOBAL_VARIABLES)
-        {   memoryerror("MAX_GLOBAL_VARIABLES", MAX_GLOBAL_VARIABLES);
+        {   discard_token_location(beginning_debug_location);
+            memoryerror("MAX_GLOBAL_VARIABLES", MAX_GLOBAL_VARIABLES);
             panic_mode_error_recovery();
             return;
         }
@@ -253,10 +263,6 @@ extern void make_global(int array_flag, int name_only)
         assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
         variable_tokens[svals[i]] = i;
 
-        if (debugfile_switch)
-        {   write_debug_byte(GLOBAL_DBR); write_debug_byte(no_globals);
-            write_debug_string(token_text);
-        }
         if (name_only) import_symbol(i);
         else global_initial_value[no_globals++]=0;
     }
@@ -265,13 +271,29 @@ extern void make_global(int array_flag, int name_only)
 
     RedefinitionOfSystemVar:
 
-    if (name_only) return;
+    if (name_only)
+    {   discard_token_location(beginning_debug_location);
+        return;
+    }
 
     get_next_token();
 
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
-    {   if (array_flag) ebf_error("array definition", token_text);
+    {   if (array_flag)
+        {   discard_token_location(beginning_debug_location);
+            ebf_error("array definition", token_text);
+        }
         put_token_back();
+        if (debugfile_switch && !array_flag)
+        {   debug_file_printf("<global-variable>");
+            debug_file_printf("<identifier>%s</identifier>", global_name);
+            debug_file_printf("<address>");
+            write_debug_global_backpatch(global_symbol);
+            debug_file_printf("</address>");
+            write_debug_locations
+                (get_token_location_end(beginning_debug_location));
+            debug_file_printf("</global-variable>");
+        }
         return;
     }
 
@@ -290,6 +312,14 @@ extern void make_global(int array_flag, int name_only)
                 4*(no_globals-1));
             }
             global_initial_value[no_globals-1] = AO.value;
+            debug_file_printf("<global-variable>");
+            debug_file_printf("<identifier>%s</identifier>", global_name);
+            debug_file_printf("<address>");
+            write_debug_global_backpatch(global_symbol);
+            debug_file_printf("</address>");
+            write_debug_locations
+                (get_token_location_end(beginning_debug_location));
+            debug_file_printf("</global-variable>");
             return;
         }
 
@@ -329,13 +359,17 @@ extern void make_global(int array_flag, int name_only)
              array_type = TABLE_ARRAY;
     else if ((token_type==DIR_KEYWORD_TT)&&(token_value==BUFFER_DK))
              array_type = BUFFER_ARRAY;
-    else {   if (array_flag)
-               ebf_error("'->', '-->', 'string', 'table' or 'buffer'", token_text);
-             else
-               ebf_error("'=', '->', '-->', 'string', 'table' or 'buffer'", token_text);
-             panic_mode_error_recovery();
-             return;
-         }
+    else
+    {   discard_token_location(beginning_debug_location);
+        if (array_flag)
+            ebf_error
+              ("'->', '-->', 'string', 'table' or 'buffer'", token_text);
+        else
+            ebf_error
+              ("'=', '->', '-->', 'string', 'table' or 'buffer'", token_text);
+        panic_mode_error_recovery();
+        return;
+    }
 
     array_entry_size=1;
     if ((array_type==WORD_ARRAY) || (array_type==TABLE_ARRAY))
@@ -343,7 +377,8 @@ extern void make_global(int array_flag, int name_only)
 
     get_next_token();
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
-    {   error("No array size or initial values given");
+    {   discard_token_location(beginning_debug_location);
+        error("No array size or initial values given");
         put_token_back();
         return;
     }
@@ -421,8 +456,9 @@ extern void make_global(int array_flag, int name_only)
                 if ((token_type == SEP_TT)
                     && ((token_value == OPEN_SQUARE_SEP)
                         || (token_value == CLOSE_SQUARE_SEP)))
-                {   error(
-            "Missing ';' to end the initial array values before \"[\" or \"]\"");
+                {   discard_token_location(beginning_debug_location);
+                    error("Missing ';' to end the initial array values "
+                          "before \"[\" or \"]\"");
                     return;
                 }
                 put_token_back();
@@ -520,6 +556,28 @@ advance as part of 'Zcharacter table':", unicode);
     }
 
     finish_array(i);
+
+    if (debugfile_switch)
+    {   debug_file_printf("<array>");
+        debug_file_printf("<identifier>%s</identifier>", global_name);
+        debug_file_printf("<value>");
+        write_debug_array_backpatch(global_symbol);
+        debug_file_printf("</value>");
+        debug_file_printf
+            ("<byte-count>%d</byte-count>",
+             dynamic_array_area_size - array_base);
+        debug_file_printf
+            ("<bytes-per-element>%d</bytes-per-element>",
+             array_entry_size);
+        debug_file_printf
+            ("<zeroth-element-holds-length>%s</zeroth-element-holds-length>",
+             (array_type == STRING_ARRAY || array_type == TABLE_ARRAY) ?
+                 "true" : "false");
+        get_next_token();
+        write_debug_locations(get_token_location_end(beginning_debug_location));
+        put_token_back();
+        debug_file_printf("</array>");
+    }
 
     if ((array_type==BYTE_ARRAY) || (array_type==WORD_ARRAY)) i--;
     if (array_type==BUFFER_ARRAY) i+=WORDSIZE-1;

@@ -48,7 +48,8 @@ int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
 int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
 
-dbgl debug_line_ref;               /* Source code ref of current statement   */
+debug_location statement_debug_location;
+                                   /* Location of current statement          */
 
 
 int32 *variable_tokens;            /* The allocated size is 
@@ -69,6 +70,10 @@ static char opcode_syntax_string[128];  /*  Text buffer holding the correct
                                       syntax for an opcode: used to produce
                                       helpful assembler error messages       */
 
+static int routine_symbol;         /* The symbol index of the routine currently
+                                      being compiled */
+static char *routine_name;         /* The name of the routine currently being
+                                      compiled                               */
 static int routine_locals;         /* The number of local variables used by
                                       the routine currently being compiled   */
 
@@ -89,9 +94,11 @@ static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
              *label_prev;
 static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
-static int   *sequence_point_labels;  /* Label numbers for each              */
-static dbgl  *sequence_point_refs;    /* Source code references for each     */
-                                      /* (used for making debugging file)    */
+static int   *sequence_point_labels;
+                                   /* Label numbers for each                 */
+static debug_location *sequence_point_locations;
+                                   /* Source code references for each        */
+                                   /* (used for making debugging file)       */
 
 static void set_label_offset(int label, int32 offset)
 {
@@ -790,7 +797,8 @@ extern void assemblez_instruction(assembly_instruction *AI)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
         {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_refs[next_sequence_point] = debug_line_ref;
+            sequence_point_locations[next_sequence_point] =
+                statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
         next_sequence_point++;
@@ -1092,7 +1100,8 @@ extern void assembleg_instruction(assembly_instruction *AI)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
         {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_refs[next_sequence_point] = debug_line_ref;
+            sequence_point_locations[next_sequence_point] =
+                statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
         next_sequence_point++;
@@ -1381,10 +1390,10 @@ extern void define_symbol_label(int symbol)
 }
 
 extern int32 assemble_routine_header(int no_locals,
-    int routine_asterisked, char *name, dbgl *line_ref, int embedded_flag,
-    int the_symbol)
+    int routine_asterisked, char *name, int embedded_flag, int the_symbol)
 {   int i, rv;
     int stackargs = FALSE;
+    int name_length;
 
     execution_never_reaches_here = FALSE;
 
@@ -1407,20 +1416,7 @@ extern int32 assemble_routine_header(int no_locals,
         printf("\n\n");
     }
 
-    if (debugfile_switch)
-    {   write_debug_byte(ROUTINE_DBR);
-        write_debug_byte(no_routines/256);
-        write_debug_byte(no_routines%256);
-        write_dbgl(*line_ref);
-        write_debug_address(zmachine_pc);
-        write_debug_string(name);
-
-        for (i=1; i<=no_locals; i++) write_debug_string(variable_name(i));
-
-        write_debug_byte(0);
-
-        routine_start_pc = zmachine_pc;
-    }
+    routine_start_pc = zmachine_pc;
 
     if (track_unused_routines) {
         /* The name of an embedded function is in a temporary buffer,
@@ -1433,6 +1429,12 @@ extern int32 assemble_routine_header(int no_locals,
         df_note_function_start(funcname, zmachine_pc, embedded_flag,
                                routine_starts_line);
     }
+
+    routine_symbol = the_symbol;
+    name_length = strlen(name) + 1;
+    routine_name =
+      my_malloc(name_length * sizeof(char), "temporary copy of routine name");
+    strncpy(routine_name, name, name_length);
 
     /*  Update the routine counter                                           */
 
@@ -1554,7 +1556,7 @@ extern int32 assemble_routine_header(int no_locals,
     return rv;
 }
 
-void assemble_routine_end(int embedded_flag, dbgl *line_ref)
+void assemble_routine_end(int embedded_flag, debug_locations locations)
 {   int32 i;
 
     /* No marker is made in the Z-machine's code area to indicate the        */
@@ -1595,27 +1597,73 @@ void assemble_routine_end(int embedded_flag, dbgl *line_ref)
 
     if (debugfile_switch)
     {
-        write_debug_byte(LINEREF_DBR);
-        write_debug_byte((no_routines-1)/256);
-        write_debug_byte((no_routines-1)%256);
-        write_debug_byte(next_sequence_point/256);
-        write_debug_byte(next_sequence_point%256);
-
-        for (i=0; i<next_sequence_point; i++)
-        {   int32 j = label_offsets[sequence_point_labels[i]]
-                - routine_start_pc;
-
-            write_dbgl(sequence_point_refs[i]);
-            write_debug_byte(j / 256);
-            write_debug_byte(j % 256);
+        debug_file_printf("<routine>");
+        if (embedded_flag)
+        {   debug_file_printf
+                ("<identifier artificial=\"true\">%s</identifier>",
+                 routine_name);
         }
-
-        write_debug_byte(ROUTINE_END_DBR);
-        write_debug_byte((no_routines-1)/256);
-        write_debug_byte((no_routines-1)%256);
-        write_dbgl(*line_ref);
-        write_debug_address(zmachine_pc);
+        else if (sflags[routine_symbol] & REPLACE_SFLAG)
+        {   /* The symbol type will be set to ROUTINE_T once the replaced
+               version has been given; if it is already set, we must be dealing
+               with a replacement, and we can use the routine name as-is.
+               Otherwise we look for a rename.  And if that doesn't work, we
+               fall back to an artificial identifier. */
+            if (stypes[routine_symbol] == ROUTINE_T)
+            {   /* Optional because there may be further replacements. */
+                write_debug_optional_identifier(routine_symbol);
+            }
+            else if (find_symbol_replacement(&routine_symbol))
+            {   debug_file_printf
+                    ("<identifier>%s</identifier>", symbs[routine_symbol]);
+            }
+            else
+            {   debug_file_printf
+                    ("<identifier artificial=\"true\">%s (replaced)"
+                         "</identifier>",
+                     routine_name);
+            }
+        } else
+        {   debug_file_printf("<identifier>%s</identifier>", routine_name);
+        }
+        debug_file_printf("<value>");
+        if (glulx_mode)
+        {   write_debug_code_backpatch(routine_start_pc);
+        } else
+        {   write_debug_packed_code_backpatch(routine_start_pc);
+        }
+        debug_file_printf("</value>");
+        debug_file_printf("<address>");
+        write_debug_code_backpatch(routine_start_pc);
+        debug_file_printf("</address>");
+        debug_file_printf
+            ("<byte-count>%d</byte-count>", zmachine_pc - routine_start_pc);
+        write_debug_locations(locations);
+        for (i = 1; i <= routine_locals; ++i)
+        {   debug_file_printf("<local-variable>");
+            debug_file_printf("<identifier>%s</identifier>", variable_name(i));
+            if (glulx_mode)
+            {   debug_file_printf
+                    ("<frame-offset>%d</frame-offset>", 4 * (i - 1));
+            }
+            else
+            {   debug_file_printf("<index>%d</index>", i);
+            }
+            debug_file_printf("</local-variable>");
+        }
+        for (i = 0; i < next_sequence_point; ++i)
+        {   debug_file_printf("<sequence-point>");
+            debug_file_printf("<address>");
+            write_debug_code_backpatch
+                (label_offsets[sequence_point_labels[i]]);
+            debug_file_printf("</address>");
+            write_debug_location(sequence_point_locations[i]);
+            debug_file_printf("</sequence-point>");
+        }
+        debug_file_printf("</routine>");
     }
+
+    my_free(&routine_name, "temporary copy of routine name");
 
     /* Issue warnings about any local variables not used in the routine. */
 
@@ -3023,8 +3071,10 @@ extern void asm_allocate_arrays(void)
     label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
     sequence_point_labels
         = my_calloc(sizeof(int), MAX_LABELS, "sequence point labels");
-    sequence_point_refs
-        = my_calloc(sizeof(dbgl), MAX_LABELS, "sequence point refs");
+    sequence_point_locations
+        = my_calloc(sizeof(debug_location),
+                    MAX_LABELS,
+                    "sequence point locations");
 
     zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
     zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
@@ -3043,7 +3093,7 @@ extern void asm_free_arrays(void)
     my_free(&label_next, "label dll 1");
     my_free(&label_prev, "label dll 2");
     my_free(&sequence_point_labels, "sequence point labels");
-    my_free(&sequence_point_refs, "sequence point refs");
+    my_free(&sequence_point_locations, "sequence point locations");
 
     my_free(&zcode_holding_area, "compiled routine code area");
     my_free(&zcode_markers, "compiled routine code markers");
