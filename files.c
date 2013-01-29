@@ -38,14 +38,14 @@ static int filename_storage_left;
 /* ------------------------------------------------------------------------- */
 /*   When emitting debug information, we won't have addresses of routines,   */
 /*   sequence points, Glulx objects (addresses of Z-machine objects aren't   */
-/*   needed), or grammar lines.  We only have their offsets from base        */
-/*   addresses, which won't be known until the end of compilation.  Since    */
-/*   everything else in the relevant debug records is known much earlier     */
-/*   and is less convenient to store up, we emit the debug records with a    */
-/*   placeholder value and then backpatch these placeholders.  The           */
-/*   following structs each store one offset and the point in the debug      */
-/*   information file where the corresponding address should be written      */
-/*   once the base address is known.                                         */
+/*   needed), globals, arrays, or grammar lines.  We only have their         */
+/*   offsets from base addresses, which won't be known until the end of      */
+/*   compilation.  Since everything else in the relevant debug records is    */
+/*   known much earlier and is less convenient to store up, we emit the      */
+/*   debug records with a placeholder value and then backpatch these         */
+/*   placeholders.  The following structs each store either an offset or a   */
+/*   symbol index and the point in the debug information file where the      */
+/*   corresponding address should be written once the base address is known. */
 /* ------------------------------------------------------------------------- */
 
 #define INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION 65536

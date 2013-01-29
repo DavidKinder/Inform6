@@ -17,7 +17,7 @@ int no_symbols;                        /* Total number of symbols defined    */
 int no_named_constants;                         /* Copied into story file    */
 
 /* ------------------------------------------------------------------------- */
-/*   Plus five arrays.  Each symbol has its own index n (an int32) and       */
+/*   Plus six arrays.  Each symbol has its own index n (an int32) and        */
 /*                                                                           */
 /*       svals[n]   is its value (must be 32 bits wide, i.e. an int32, tho'  */
 /*                  it is used to hold an unsigned 16 bit Z-machine value)   */
