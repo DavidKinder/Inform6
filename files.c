@@ -1366,7 +1366,7 @@ extern void write_debug_optional_identifier(int32 symbol_index)
         }
         debug_file_printf
             ("<identifier artificial=\"true\">%s "
-                 "(superceded replacement)</identifier>",
+                 "(superseded replacement)</identifier>",
              symbs[symbol_index]);
         if (fseek(Debug_fp, 0L, SEEK_END))
         {   fatalerror("I/O failure: can't seek in debugging information file");
@@ -1374,7 +1374,7 @@ extern void write_debug_optional_identifier(int32 symbol_index)
     }
     fgetpos(Debug_fp, &replacement_debug_backpatch_positions[symbol_index]);
     debug_file_printf("<identifier>%s</identifier>", symbs[symbol_index]);
-    /* Space for:       artificial="true" (superceded replacement) */
+    /* Space for:       artificial="true" (superseded replacement) */
     debug_file_printf("                                           ");
 }
 
