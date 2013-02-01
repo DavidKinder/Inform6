@@ -1106,12 +1106,7 @@ compiling modules: disabling -S switch\n");
     else { output_has_occurred = FALSE; }
 
     if (debugfile_switch)
-    {   end_debug_file
-            (code_offset,
-             object_tree_offset,
-             variables_offset,
-             glulx_mode ? arrays_offset : variables_offset,
-             grammar_table_offset);
+    {   end_debug_file();
     }
 
     if (temporary_files_switch && (no_errors>0)) remove_temp_files();

@@ -2333,11 +2333,11 @@ extern void write_debug_locations(debug_locations locations);
 extern void write_debug_optional_identifier(int32 symbol_index);
 extern void write_debug_symbol_backpatch(int32 symbol_index);
 extern void write_debug_symbol_optional_backpatch(int32 symbol_index);
+extern void write_debug_object_backpatch(int32 object_number);
 extern void write_debug_packed_code_backpatch(int32 offset);
 extern void write_debug_code_backpatch(int32 offset);
-extern void write_debug_object_backpatch(int32 object_number);
-extern void write_debug_global_backpatch(int32 symbol_index);
-extern void write_debug_array_backpatch(int32 symbol_index);
+extern void write_debug_global_backpatch(int32 offset);
+extern void write_debug_array_backpatch(int32 offset);
 extern void write_debug_grammar_backpatch(int32 offset);
 
 extern void begin_writing_debug_sections();
@@ -2346,12 +2346,7 @@ extern void end_writing_debug_sections(int32 end_address);
 
 extern void write_debug_undef(int32 symbol_index);
 
-extern void end_debug_file
-    (int32 code_base_address,
-     int32 object_base_address,
-     int32 global_base_address,
-     int32 array_base_address,
-     int32 grammar_base_address);
+extern void end_debug_file();
 
 extern void add_to_checksum(void *address);
 

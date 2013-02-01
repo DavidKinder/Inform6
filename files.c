@@ -55,29 +55,19 @@ typedef struct value_and_backpatch_position_struct
     fpos_t backpatch_position;
 } value_and_backpatch_position;
 
-int32 number_of_packed_code_values_to_backpatch;
-int32 number_of_available_packed_code_backpatches;
-value_and_backpatch_position *packed_code_values_and_backpatch_positions;
+typedef struct debug_backpatch_accumulator_struct
+{   int32 number_of_values_to_backpatch;
+    int32 number_of_available_backpatches;
+    value_and_backpatch_position *values_and_backpatch_positions;
+    int32 (* backpatching_function)(int32);
+} debug_backpatch_accumulator;
 
-int32 number_of_code_values_to_backpatch;
-int32 number_of_available_code_backpatches;
-value_and_backpatch_position *code_values_and_backpatch_positions;
-
-int32 number_of_object_values_to_backpatch;
-int32 number_of_available_object_backpatches;
-value_and_backpatch_position *object_values_and_backpatch_positions;
-
-int32 number_of_global_values_to_backpatch;
-int32 number_of_available_global_backpatches;
-value_and_backpatch_position *global_values_and_backpatch_positions;
-
-int32 number_of_array_values_to_backpatch;
-int32 number_of_available_array_backpatches;
-value_and_backpatch_position *array_values_and_backpatch_positions;
-
-int32 number_of_grammar_values_to_backpatch;
-int32 number_of_available_grammar_backpatches;
-value_and_backpatch_position *grammar_values_and_backpatch_positions;
+static debug_backpatch_accumulator object_backpatch_accumulator;
+static debug_backpatch_accumulator packed_code_backpatch_accumulator;
+static debug_backpatch_accumulator code_backpatch_accumulator;
+static debug_backpatch_accumulator global_backpatch_accumulator;
+static debug_backpatch_accumulator array_backpatch_accumulator;
+static debug_backpatch_accumulator grammar_backpatch_accumulator;
 
 /* ------------------------------------------------------------------------- */
 /*   File handles and names for temporary files.                             */
@@ -1412,137 +1402,80 @@ extern void write_debug_symbol_optional_backpatch(int32 symbol_index)
     debug_file_printf("*BACKPATCH*</value>");
 }
 
-extern void write_debug_packed_code_backpatch(int32 offset)
-{   if (number_of_packed_code_values_to_backpatch ==
-        number_of_available_packed_code_backpatches)
-    {   my_realloc(&packed_code_values_and_backpatch_positions,
+static void write_debug_backpatch
+    (debug_backpatch_accumulator *accumulator, int32 value)
+{   if (accumulator->number_of_values_to_backpatch ==
+        accumulator->number_of_available_backpatches)
+    {   my_realloc(&accumulator->values_and_backpatch_positions,
                    sizeof(value_and_backpatch_position) *
-                       number_of_available_packed_code_backpatches,
+                       accumulator->number_of_available_backpatches,
                    2 * sizeof(value_and_backpatch_position) *
-                       number_of_available_packed_code_backpatches,
-                   "packed_code values and debug information backpatch "
-                       "positions");
-        number_of_available_packed_code_backpatches *= 2;
+                       accumulator->number_of_available_backpatches,
+                   "values and debug information backpatch positions");
+        accumulator->number_of_available_backpatches *= 2;
     }
-    packed_code_values_and_backpatch_positions
-        [number_of_packed_code_values_to_backpatch].value = offset;
-    fgetpos(Debug_fp,
-            &packed_code_values_and_backpatch_positions
-                [number_of_packed_code_values_to_backpatch].backpatch_position);
-    ++number_of_packed_code_values_to_backpatch;
-    /* Reserve space for up to 10 digits plus a negative sign. */
-    debug_file_printf("*BACKPATCH*");
-}
-
-extern void write_debug_code_backpatch(int32 offset)
-{   if (number_of_code_values_to_backpatch ==
-        number_of_available_code_backpatches)
-    {   my_realloc(&code_values_and_backpatch_positions,
-                   sizeof(value_and_backpatch_position) *
-                       number_of_available_code_backpatches,
-                   2 * sizeof(value_and_backpatch_position) *
-                       number_of_available_code_backpatches,
-                   "code values and debug information backpatch positions");
-        number_of_available_code_backpatches *= 2;
-    }
-    code_values_and_backpatch_positions
-        [number_of_code_values_to_backpatch].value = offset;
-    fgetpos(Debug_fp,
-            &code_values_and_backpatch_positions
-                [number_of_code_values_to_backpatch].backpatch_position);
-    ++number_of_code_values_to_backpatch;
+    accumulator->values_and_backpatch_positions
+        [accumulator->number_of_values_to_backpatch].value = value;
+    fgetpos
+        (Debug_fp,
+         &accumulator->values_and_backpatch_positions
+             [accumulator->number_of_values_to_backpatch].backpatch_position);
+    ++(accumulator->number_of_values_to_backpatch);
     /* Reserve space for up to 10 digits plus a negative sign. */
     debug_file_printf("*BACKPATCH*");
 }
 
 extern void write_debug_object_backpatch(int32 object_number)
 {   if (glulx_mode)
-    {   if (number_of_object_values_to_backpatch ==
-            number_of_available_object_backpatches) {
-            my_realloc(&object_values_and_backpatch_positions,
-                       sizeof(value_and_backpatch_position) *
-                           number_of_available_object_backpatches,
-                       2 * sizeof(value_and_backpatch_position) *
-                           number_of_available_object_backpatches,
-                       "object values and debug information backpatch "
-                           "positions");
-            number_of_available_object_backpatches *= 2;
-        }
-        object_values_and_backpatch_positions
-            [number_of_object_values_to_backpatch].value = object_number - 1;
-        fgetpos(Debug_fp,
-                &object_values_and_backpatch_positions
-                    [number_of_object_values_to_backpatch].backpatch_position);
-        ++number_of_object_values_to_backpatch;
-        /* Reserve space for up to 10 digits plus a negative sign. */
-        debug_file_printf("*BACKPATCH*");
+    {   write_debug_backpatch(&object_backpatch_accumulator, object_number - 1);
     }
     else
     {   debug_file_printf("%d", object_number);
     }
 }
 
-extern void write_debug_global_backpatch(int32 symbol_index)
-{   if (number_of_global_values_to_backpatch ==
-        number_of_available_global_backpatches) {
-        my_realloc(&global_values_and_backpatch_positions,
-                   sizeof(value_and_backpatch_position) *
-                       number_of_available_global_backpatches,
-                   2 * sizeof(value_and_backpatch_position) *
-                       number_of_available_global_backpatches,
-                   "global values and debug information backpatch positions");
-        number_of_available_global_backpatches *= 2;
-    }
-    global_values_and_backpatch_positions
-        [number_of_global_values_to_backpatch].value = symbol_index;
-    fgetpos(Debug_fp,
-            &global_values_and_backpatch_positions
-                [number_of_global_values_to_backpatch].backpatch_position);
-    ++number_of_global_values_to_backpatch;
-    /* Reserve space for up to 10 digits plus a negative sign. */
-    debug_file_printf("*BACKPATCH*");
+static int32 backpatch_object_address(int32 index)
+{   return object_tree_offset + OBJECT_BYTE_LENGTH * index;
 }
 
-extern void write_debug_array_backpatch(int32 symbol_index)
-{   if (number_of_array_values_to_backpatch ==
-        number_of_available_array_backpatches) {
-        my_realloc(&array_values_and_backpatch_positions,
-                   sizeof(value_and_backpatch_position) *
-                       number_of_available_array_backpatches,
-                   2 * sizeof(value_and_backpatch_position) *
-                       number_of_available_array_backpatches,
-                   "array values and debug information backpatch positions");
-        number_of_available_array_backpatches *= 2;
-    }
-    array_values_and_backpatch_positions
-        [number_of_array_values_to_backpatch].value = symbol_index;
-    fgetpos(Debug_fp,
-            &array_values_and_backpatch_positions
-                [number_of_array_values_to_backpatch].backpatch_position);
-    ++number_of_array_values_to_backpatch;
-    /* Reserve space for up to 10 digits plus a negative sign. */
-    debug_file_printf("*BACKPATCH*");
+extern void write_debug_packed_code_backpatch(int32 offset)
+{   write_debug_backpatch(&packed_code_backpatch_accumulator, offset);
+}
+
+static int32 backpatch_packed_code_address(int32 offset)
+{   return (code_offset + offset) / scale_factor;
+}
+
+extern void write_debug_code_backpatch(int32 offset)
+{   write_debug_backpatch(&code_backpatch_accumulator, offset);
+}
+
+static int32 backpatch_code_address(int32 offset)
+{   return code_offset + offset;
+}
+
+extern void write_debug_global_backpatch(int32 offset)
+{   write_debug_backpatch(&global_backpatch_accumulator, offset);
+}
+
+static int32 backpatch_global_address(int32 offset)
+{   return variables_offset + WORDSIZE * (offset - MAX_LOCAL_VARIABLES);
+}
+
+extern void write_debug_array_backpatch(int32 offset)
+{   write_debug_backpatch(&array_backpatch_accumulator, offset);
+}
+
+static int32 backpatch_array_address(int32 offset)
+{   return (glulx_mode ? arrays_offset : variables_offset) + offset;
 }
 
 extern void write_debug_grammar_backpatch(int32 offset)
-{   if (number_of_grammar_values_to_backpatch ==
-        number_of_available_grammar_backpatches) {
-        my_realloc(&grammar_values_and_backpatch_positions,
-                   sizeof(value_and_backpatch_position) *
-                       number_of_available_grammar_backpatches,
-                   2 * sizeof(value_and_backpatch_position) *
-                       number_of_available_grammar_backpatches,
-                   "grammar values and debug information backpatch positions");
-        number_of_available_grammar_backpatches *= 2;
-    }
-    grammar_values_and_backpatch_positions
-        [number_of_grammar_values_to_backpatch].value = offset;
-    fgetpos(Debug_fp,
-            &grammar_values_and_backpatch_positions
-                [number_of_grammar_values_to_backpatch].backpatch_position);
-    ++number_of_grammar_values_to_backpatch;
-    /* Reserve space for up to 10 digits plus a negative sign. */
-    debug_file_printf("*BACKPATCH*");
+{   write_debug_backpatch(&grammar_backpatch_accumulator, offset);
+}
+
+static int32 backpatch_grammar_address(int32 offset)
+{   return grammar_table_offset + offset;
 }
 
 extern void begin_writing_debug_sections()
@@ -1593,132 +1526,30 @@ extern void write_debug_undef(int32 symbol_index)
     }
 }
 
-extern void end_debug_file
-    (int32 code_base_address,
-     int32 object_base_address,
-     int32 global_base_address,
-     int32 array_base_address,
-     int32 grammar_base_address)
-{   int *system_constant_list =
-        glulx_mode ? glulx_system_constant_list : z_system_constant_list;
-    int system_constant_index = 0;
-    int backpatch_index;
-    int backpatch_symbol;
-
-    /* Store system constants. */
-    for (; system_constant_list[system_constant_index] != -1;
-         ++system_constant_index)
-    {   int system_constant = system_constant_list[system_constant_index];
-        debug_file_printf("<constant>");
-        debug_file_printf("<identifier>#%s</identifier>",
-                          system_constants.keywords[system_constant]);
-        debug_file_printf("<value>%d</value>",
-                          value_of_system_constant(system_constant));
-        debug_file_printf("</constant>");
-    }
-    debug_file_printf("</inform-story-file>\n");
-
-    /* Backpatch debug information for routines and sequence points. */
-    if (!glulx_mode)
-    {   for (backpatch_index = number_of_packed_code_values_to_backpatch;
-             backpatch_index--;)
-        {   if (fsetpos
-                (Debug_fp,
-                 &packed_code_values_and_backpatch_positions
-                     [backpatch_index].backpatch_position))
-            {   fatalerror
-                    ("I/O failure: can't seek in debugging information file");
-            }
-            debug_file_printf
-                ("%11d", /* Space for up to 10 digits plus a negative sign. */
-                 (code_base_address +
-                  packed_code_values_and_backpatch_positions
-                      [backpatch_index].value) / scale_factor);
-        }
-    }
-    for (backpatch_index = number_of_code_values_to_backpatch;
+static void apply_debug_information_backpatches
+    (debug_backpatch_accumulator *accumulator)
+{   int32 backpatch_index, backpatch_value;
+    for (backpatch_index = accumulator->number_of_values_to_backpatch;
          backpatch_index--;)
     {   if (fsetpos
-            (Debug_fp,
-             &code_values_and_backpatch_positions
-                 [backpatch_index].backpatch_position))
-        {   fatalerror
-                ("I/O failure: can't seek in debugging information file");
-        }
-        debug_file_printf
-            ("%11d", /* Space for up to 10 digits plus a negative sign. */
-             code_base_address +
-             code_values_and_backpatch_positions[backpatch_index].value);
-    }
-
-    /* Backpatch debug information for Glulx objects. */
-    if (glulx_mode)
-    {   for (backpatch_index = number_of_object_values_to_backpatch;
-             backpatch_index--;)
-        {   if (fsetpos
                 (Debug_fp,
-                 &object_values_and_backpatch_positions
+                 &accumulator->values_and_backpatch_positions
                      [backpatch_index].backpatch_position))
-            {   fatalerror
-                    ("I/O failure: can't seek in debugging information file");
-            }
-            debug_file_printf
-                ("%11d", /* Space for up to 10 digits plus a negative sign. */
-                 object_base_address +
-                 OBJECT_BYTE_LENGTH *
-                 object_values_and_backpatch_positions[backpatch_index].value);
-        }
-    }
-
-    /* Backpatch debug information for globals. */
-    for (backpatch_index = number_of_global_values_to_backpatch;
-         backpatch_index--;)
-    {   if (fsetpos(Debug_fp,
-                    &global_values_and_backpatch_positions
-                      [backpatch_index].backpatch_position))
         {   fatalerror
                 ("I/O failure: can't seek in debugging information file");
         }
+        backpatch_value =
+            (*accumulator->backpatching_function)
+                (accumulator->values_and_backpatch_positions
+                    [backpatch_index].value);
         debug_file_printf
             ("%11d", /* Space for up to 10 digits plus a negative sign. */
-             global_base_address +
-                 WORDSIZE * (svals[global_values_and_backpatch_positions
-                     [backpatch_index].value] - MAX_LOCAL_VARIABLES));
+             backpatch_value);
     }
+}
 
-    /* Backpatch debug information for arrays. */
-    for (backpatch_index = number_of_array_values_to_backpatch;
-         backpatch_index--;)
-    {   if (fsetpos(Debug_fp,
-                    &array_values_and_backpatch_positions
-                      [backpatch_index].backpatch_position))
-        {   fatalerror
-                ("I/O failure: can't seek in debugging information file");
-        }
-        debug_file_printf
-            ("%11d", /* Space for up to 10 digits plus a negative sign. */
-             array_base_address +
-                svals[array_values_and_backpatch_positions
-                    [backpatch_index].value]);
-    }
-
-    /* Backpatch debug information for grammar lines. */
-    for (backpatch_index = number_of_grammar_values_to_backpatch;
-         backpatch_index--;)
-    {   if (fsetpos(Debug_fp,
-                    &grammar_values_and_backpatch_positions
-                      [backpatch_index].backpatch_position))
-        {   fatalerror
-                ("I/O failure: can't seek in debugging information file");
-        }
-        debug_file_printf
-            ("%11d", /* Space for up to 10 digits plus a negative sign. */
-             grammar_base_address +
-               grammar_values_and_backpatch_positions[backpatch_index].value);
-    }
-
-    /* Backpatch debug information for symbols, unless they were handled
-       above. */
+static void apply_debug_information_symbol_backpatches()
+{   int backpatch_symbol;
     for (backpatch_symbol = no_symbols; backpatch_symbol--;)
     {   if (symbol_debug_backpatch_positions[backpatch_symbol])
         {   if (fsetpos(Debug_fp,
@@ -1730,6 +1561,43 @@ extern void end_debug_file
             debug_file_printf("%11d", svals[backpatch_symbol]);
         }
     }
+}
+
+static void write_debug_system_constants()
+{   int *system_constant_list =
+        glulx_mode ? glulx_system_constant_list : z_system_constant_list;
+    int system_constant_index = 0;
+
+    /* Store system constants. */
+    for (; system_constant_list[system_constant_index] != -1;
+         ++system_constant_index)
+    {   int system_constant = system_constant_list[system_constant_index];
+        debug_file_printf("<constant>");
+        debug_file_printf
+            ("<identifier>#%s</identifier>",
+             system_constants.keywords[system_constant]);
+        debug_file_printf
+            ("<value>%d</value>",
+             value_of_system_constant(system_constant));
+        debug_file_printf("</constant>");
+    }
+}
+
+extern void end_debug_file()
+{   write_debug_system_constants();
+    debug_file_printf("</inform-story-file>\n");
+
+    if (glulx_mode)
+    {   apply_debug_information_backpatches(&object_backpatch_accumulator);
+    } else
+    {   apply_debug_information_backpatches(&packed_code_backpatch_accumulator);
+    }
+    apply_debug_information_backpatches(&code_backpatch_accumulator);
+    apply_debug_information_backpatches(&global_backpatch_accumulator);
+    apply_debug_information_backpatches(&array_backpatch_accumulator);
+    apply_debug_information_backpatches(&grammar_backpatch_accumulator);
+
+    apply_debug_information_symbol_backpatches();
 
     close_debug_file();
 }
@@ -1805,6 +1673,20 @@ extern void files_begin_pass(void)
         open_temporary_files();
 }
 
+static void initialise_accumulator
+    (debug_backpatch_accumulator *accumulator,
+     int32 (* backpatching_function)(int32))
+{   accumulator->number_of_values_to_backpatch = 0;
+    accumulator->number_of_available_backpatches =
+        INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
+    accumulator->values_and_backpatch_positions =
+        my_malloc
+            (sizeof(value_and_backpatch_position) *
+                 accumulator->number_of_available_backpatches,
+             "values and debug information backpatch positions");
+    accumulator->backpatching_function = backpatching_function;
+}
+
 extern void files_allocate_arrays(void)
 {   filename_storage = my_malloc(MAX_SOURCE_FILES*64, "filename storage");
     filename_storage_p = filename_storage;
@@ -1812,61 +1694,29 @@ extern void files_allocate_arrays(void)
     InputFiles = my_malloc(MAX_SOURCE_FILES*sizeof(FileId), 
         "input file storage");
     if (debugfile_switch)
-    {   if (!glulx_mode)
-        {   number_of_packed_code_values_to_backpatch = 0;
-            number_of_available_packed_code_backpatches =
-                INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-            packed_code_values_and_backpatch_positions =
-                my_malloc
-                    (sizeof(value_and_backpatch_position) *
-                         number_of_available_packed_code_backpatches,
-                     "packed code values and debug information backpatch "
-                         "positions");
+    {   if (glulx_mode)
+        {   initialise_accumulator
+                (&object_backpatch_accumulator, &backpatch_object_address);
+        } else
+        {   initialise_accumulator
+                (&packed_code_backpatch_accumulator,
+                 &backpatch_packed_code_address);
         }
-        number_of_code_values_to_backpatch = 0;
-        number_of_available_code_backpatches =
-            INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-        code_values_and_backpatch_positions =
-            my_malloc
-                (sizeof(value_and_backpatch_position) *
-                     number_of_available_code_backpatches,
-                 "code values and debug information backpatch positions");
-        if (glulx_mode)
-        {   number_of_object_values_to_backpatch = 0;
-            number_of_available_object_backpatches =
-                INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-            object_values_and_backpatch_positions =
-                my_malloc
-                    (sizeof(value_and_backpatch_position) *
-                         number_of_available_object_backpatches,
-                     "object values and debug information backpatch "
-                         "positions");
-        }
-        number_of_global_values_to_backpatch = 0;
-        number_of_available_global_backpatches =
-            INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-        global_values_and_backpatch_positions =
-            my_malloc
-                (sizeof(value_and_backpatch_position) *
-                     number_of_available_global_backpatches,
-                 "global values and debug information backpatch positions");
-        number_of_array_values_to_backpatch = 0;
-        number_of_available_array_backpatches =
-            INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-        array_values_and_backpatch_positions =
-            my_malloc
-                (sizeof(value_and_backpatch_position) *
-                     number_of_available_array_backpatches,
-                 "array values and debug information backpatch positions");
-        number_of_grammar_values_to_backpatch = 0;
-        number_of_available_grammar_backpatches =
-            INITIAL_DEBUG_INFORMATION_BACKPATCH_ALLOCATION;
-        grammar_values_and_backpatch_positions =
-            my_malloc
-                (sizeof(value_and_backpatch_position) *
-                     number_of_available_grammar_backpatches,
-                 "grammar values and debug information backpatch positions");
+        initialise_accumulator
+            (&code_backpatch_accumulator, &backpatch_code_address);
+        initialise_accumulator
+            (&global_backpatch_accumulator, &backpatch_global_address);
+        initialise_accumulator
+            (&array_backpatch_accumulator, &backpatch_array_address);
+        initialise_accumulator
+            (&grammar_backpatch_accumulator, &backpatch_grammar_address);
     }
+}
+
+static void tear_down_accumulator(debug_backpatch_accumulator *accumulator)
+{   my_free
+        (&(accumulator->values_and_backpatch_positions),
+         "values and debug information backpatch positions");
 }
 
 extern void files_free_arrays(void)
@@ -1874,28 +1724,14 @@ extern void files_free_arrays(void)
     my_free(&InputFiles, "input file storage");
     if (debugfile_switch)
     {   if (!glulx_mode)
-        {   my_free
-                (&packed_code_values_and_backpatch_positions,
-                 "packed code values and debug information backpatch "
-                     "positions");
+        {   tear_down_accumulator(&object_backpatch_accumulator);
+        } else
+        {   tear_down_accumulator(&packed_code_backpatch_accumulator);
         }
-        my_free
-            (&code_values_and_backpatch_positions,
-             "code values and debug information backpatch positions");
-        if (glulx_mode)
-        {   my_free
-                (&object_values_and_backpatch_positions,
-                 "object values and debug information backpatch positions");
-        }
-        my_free
-              (&global_values_and_backpatch_positions,
-               "global values and debug information backpatch positions");
-        my_free
-              (&array_values_and_backpatch_positions,
-               "array values and debug information backpatch positions");
-        my_free
-              (&grammar_values_and_backpatch_positions,
-               "grammar values and debug information backpatch positions");
+        tear_down_accumulator(&code_backpatch_accumulator);
+        tear_down_accumulator(&global_backpatch_accumulator);
+        tear_down_accumulator(&array_backpatch_accumulator);
+        tear_down_accumulator(&grammar_backpatch_accumulator);
     }
 }
 

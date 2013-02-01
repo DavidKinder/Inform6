@@ -549,7 +549,7 @@ static void emit_debug_information_for_predefined_symbol
                 debug_file_printf("<global-variable>");
                 debug_file_printf("<identifier>%s</identifier>", name);
                 debug_file_printf("<address>");
-                write_debug_global_backpatch(symbol);
+                write_debug_global_backpatch(value);
                 debug_file_printf("</address>");
                 debug_file_printf("</global-variable>");
                 break;

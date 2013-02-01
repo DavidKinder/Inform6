@@ -288,7 +288,7 @@ extern void make_global(int array_flag, int name_only)
         {   debug_file_printf("<global-variable>");
             debug_file_printf("<identifier>%s</identifier>", global_name);
             debug_file_printf("<address>");
-            write_debug_global_backpatch(global_symbol);
+            write_debug_global_backpatch(svals[global_symbol]);
             debug_file_printf("</address>");
             write_debug_locations
                 (get_token_location_end(beginning_debug_location));
@@ -315,7 +315,7 @@ extern void make_global(int array_flag, int name_only)
             debug_file_printf("<global-variable>");
             debug_file_printf("<identifier>%s</identifier>", global_name);
             debug_file_printf("<address>");
-            write_debug_global_backpatch(global_symbol);
+            write_debug_global_backpatch(svals[global_symbol]);
             debug_file_printf("</address>");
             write_debug_locations
                 (get_token_location_end(beginning_debug_location));
@@ -561,7 +561,7 @@ advance as part of 'Zcharacter table':", unicode);
     {   debug_file_printf("<array>");
         debug_file_printf("<identifier>%s</identifier>", global_name);
         debug_file_printf("<value>");
-        write_debug_array_backpatch(global_symbol);
+        write_debug_array_backpatch(svals[global_symbol]);
         debug_file_printf("</value>");
         debug_file_printf
             ("<byte-count>%d</byte-count>",
