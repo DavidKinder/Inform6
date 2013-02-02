@@ -4,7 +4,7 @@
 /*                              Inform 6.33                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2012                                 */
+/*   copyright (c) Graham Nelson 1993 - 2013                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   http://www.ifarchive.org/                                               */
@@ -30,7 +30,7 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "31st December 2012"
+#define RELEASE_DATE "2nd February 2013"
 #define RELEASE_NUMBER 1633
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
