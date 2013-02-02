@@ -712,6 +712,13 @@ static void stockup_symbols(void)
 
 extern void add_symbol_replacement_mapping(int original, int renamed)
 {
+    int ix;
+
+    if (original == renamed) {
+        error_named("A routine cannot be 'Replace'd to itself:", (char *)symbs[original]);
+        return;        
+    }
+
     if (symbol_replacements_count == symbol_replacements_size) {
         int oldsize = symbol_replacements_size;
         if (symbol_replacements_size == 0) 
@@ -720,6 +727,20 @@ extern void add_symbol_replacement_mapping(int original, int renamed)
             symbol_replacements_size *= 2;
         my_recalloc(&symbol_replacements, sizeof(value_pair_t), oldsize,
             symbol_replacements_size, "symbol replacement table");
+    }
+
+    /* If the original form is already in our table, report an error.
+       Same goes if the replaced form is already in the table as an
+       original. (Other collision cases have already been
+       detected.) */
+
+    for (ix=0; ix<symbol_replacements_count; ix++) {
+        if (original == symbol_replacements[ix].original_symbol) {
+            error_named("A routine cannot be 'Replace'd to more than one new name:", (char *)symbs[original]);
+        }
+        if (renamed == symbol_replacements[ix].original_symbol) {
+            error_named("A routine cannot be 'Replace'd to a 'Replace'd name:", (char *)symbs[original]);
+        }
     }
 
     symbol_replacements[symbol_replacements_count].original_symbol = original;
