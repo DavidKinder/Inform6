@@ -945,7 +945,9 @@ the first constant definition");
             break;
         }
 
-        write_debug_undef(token_value);
+        if (debugfile_switch)
+        {   write_debug_undef(token_value);
+        }
         end_symbol_scope(token_value);
         sflags[token_value] |= USED_SFLAG;
         break;

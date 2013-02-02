@@ -312,14 +312,16 @@ extern void make_global(int array_flag, int name_only)
                 4*(no_globals-1));
             }
             global_initial_value[no_globals-1] = AO.value;
-            debug_file_printf("<global-variable>");
-            debug_file_printf("<identifier>%s</identifier>", global_name);
-            debug_file_printf("<address>");
-            write_debug_global_backpatch(svals[global_symbol]);
-            debug_file_printf("</address>");
-            write_debug_locations
-                (get_token_location_end(beginning_debug_location));
-            debug_file_printf("</global-variable>");
+            if (debugfile_switch)
+            {   debug_file_printf("<global-variable>");
+                debug_file_printf("<identifier>%s</identifier>", global_name);
+                debug_file_printf("<address>");
+                write_debug_global_backpatch(svals[global_symbol]);
+                debug_file_printf("</address>");
+                write_debug_locations
+                    (get_token_location_end(beginning_debug_location));
+                debug_file_printf("</global-variable>");
+            }
             return;
         }
 
