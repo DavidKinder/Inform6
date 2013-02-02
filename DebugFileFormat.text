@@ -321,11 +321,8 @@ corresponding to those endpoints:
 Line numbers and character numbers begin at one, but file positions count from
 zero.
 
-If the compiler doesn't track file positions, they will be omitted.  If it
-doesn't track character numbers either, only line numbers will appear.
-
-Furthermore, in the special case where the endpoints coincide, as happens with
-sequence points, the end elements may be elided:
+In the special case where the endpoints coincide, as happens with sequence
+points, the end elements may be elided:
 
 	<source-code-location>
 	  <file-index>0</file-index>
