@@ -661,6 +661,7 @@ Library 6/3 or later");
 
     if (debugfile_switch)
     {   debug_file_printf("<table-entry>");
+        debug_file_printf("<type>grammar line</type>");
         debug_file_printf("<address>");
         write_debug_grammar_backpatch(mark);
         debug_file_printf("</address>");
