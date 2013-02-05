@@ -1088,9 +1088,11 @@ compiling modules: disabling -S switch\n");
     }
 
     init_vars();
-    allocate_arrays();
 
     if (debugfile_switch) begin_debug_file();
+
+    allocate_arrays();
+
     if (transcript_switch) open_transcript_file(Source_Name);
 
     run_pass();
@@ -1103,7 +1105,9 @@ compiling modules: disabling -S switch\n");
     if (no_errors==0) { output_file(); output_has_occurred = TRUE; }
     else { output_has_occurred = FALSE; }
 
-    if (debugfile_switch) close_debug_file();
+    if (debugfile_switch)
+    {   end_debug_file();
+    }
 
     if (temporary_files_switch && (no_errors>0)) remove_temp_files();
 
