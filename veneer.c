@@ -13,6 +13,9 @@
 int veneer_mode;                      /*  Is the code currently being
                                           compiled from the veneer?          */
 
+static debug_locations null_debug_locations =
+    { { 0, 0, 0, 0, 0, 0, 0 }, NULL, 0 };
+
 extern void compile_initial_routine(void)
 {
     /*  The first routine present in memory in any Inform game, beginning
@@ -24,12 +27,11 @@ extern void compile_initial_routine(void)
         trivial routine consisting of a call to "Main" followed by "quit".   */
 
   int32 j;
-    assembly_operand AO; dbgl null_dbgl;
-    null_dbgl.b1 = 0; null_dbgl.b2 = 0; null_dbgl.b3 = 0; null_dbgl.cc = 0;
+    assembly_operand AO;
 
     j = symbol_index("Main__", -1);
     assign_symbol(j,
-        assemble_routine_header(0, FALSE, "Main__", &null_dbgl, FALSE, j),
+        assemble_routine_header(0, FALSE, "Main__", FALSE, j),
         ROUTINE_T);
     sflags[j] |= SYSTEM_SFLAG + USED_SFLAG;
     if (trace_fns_setting==3) sflags[j] |= STAR_SFLAG;
@@ -59,7 +61,7 @@ extern void compile_initial_routine(void)
 
     }
 
-    assemble_routine_end(FALSE, &null_dbgl);
+    assemble_routine_end(FALSE, null_debug_locations);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2166,8 +2168,7 @@ extern assembly_operand veneer_routine(int code)
 
 static void compile_symbol_table_routine(void)
 {   int32 j, nl, arrays_l, routines_l, constants_l;
-    assembly_operand AO, AO2, AO3; dbgl null_dbgl;
-    null_dbgl.b1 = 0; null_dbgl.b2 = 0; null_dbgl.b3 = 0; null_dbgl.cc = 0;
+    assembly_operand AO, AO2, AO3;
 
     /* Assign local var names for the benefit of the debugging information 
        file. */
@@ -2176,7 +2177,7 @@ static void compile_symbol_table_routine(void)
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,
-        assemble_routine_header(2, FALSE, "Symb__Tab", &null_dbgl, FALSE, j),
+        assemble_routine_header(2, FALSE, "Symb__Tab", FALSE, j),
         ROUTINE_T);
     sflags[j] |= SYSTEM_SFLAG + USED_SFLAG;
     if (trace_fns_setting==3) sflags[j] |= STAR_SFLAG;
@@ -2187,7 +2188,7 @@ static void compile_symbol_table_routine(void)
     {   assemblez_0(rfalse_zc);
         variable_usage[1] = TRUE;
         variable_usage[2] = TRUE;
-        assemble_routine_end(FALSE, &null_dbgl);
+        assemble_routine_end(FALSE, null_debug_locations);
         veneer_mode = FALSE;
         return;
     }
@@ -2288,7 +2289,7 @@ static void compile_symbol_table_routine(void)
     assemblez_0(rfalse_zc);
     variable_usage[1] = TRUE;
     variable_usage[2] = TRUE;
-    assemble_routine_end(FALSE, &null_dbgl);
+    assemble_routine_end(FALSE, null_debug_locations);
     veneer_mode = FALSE;
   }
   else {
@@ -2297,7 +2298,7 @@ static void compile_symbol_table_routine(void)
     {   assembleg_1(return_gc, zero_operand);
         variable_usage[1] = TRUE;
         variable_usage[2] = TRUE;
-        assemble_routine_end(FALSE, &null_dbgl);
+        assemble_routine_end(FALSE, null_debug_locations);
         veneer_mode = FALSE;
         return;
     }

@@ -46,7 +46,7 @@ static void begin_syntax_line(int statement_mode)
 
     if (debugfile_switch)
     {   get_next_token();
-        debug_line_ref = token_line_ref;
+        statement_debug_location = get_token_location();
         put_token_back();
     }
 }
@@ -419,7 +419,8 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 {   int32 packed_address; int i; int debug_flag = FALSE;
     int switch_clause_made = FALSE, default_clause_made = FALSE,
         switch_label = 0;
-    dbgl start_line_ref = token_line_ref;
+    debug_location_beginning beginning_debug_location =
+        get_token_location_beginning();
 
     /*  (switch_label needs no initialisation here, but it prevents some
         compilers from issuing warnings)   */
@@ -474,7 +475,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         sflags[r_symbol] |= STAR_SFLAG;
 
     packed_address = assemble_routine_header(no_locals, debug_flag,
-        name, &start_line_ref, embedded_flag, r_symbol);
+        name, embedded_flag, r_symbol);
 
     do
     {   begin_syntax_line(TRUE);
@@ -483,8 +484,10 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
         if (token_type == EOF_TT)
         {   ebf_error("']'", token_text);
+            assemble_routine_end
+                (embedded_flag,
+                 get_token_location_end(beginning_debug_location));
             put_token_back();
-            assemble_routine_end(embedded_flag, &token_line_ref);
             break;
         }
 
@@ -494,7 +497,11 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
                 assemble_label_no(switch_label);
             directives.enabled = TRUE;
             sequence_point_follows = TRUE;
-            assemble_routine_end(embedded_flag, &token_line_ref);
+            get_next_token();
+            assemble_routine_end
+                (embedded_flag,
+                 get_token_location_end(beginning_debug_location));
+            put_token_back();
             break;
         }
 

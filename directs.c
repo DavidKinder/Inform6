@@ -48,6 +48,8 @@ extern int parse_given_directive(int internal_flag)
         Returns: FALSE if program continues, TRUE if end of file reached.    */
 
     int *trace_level; int32 i, j, k, n, flag;
+    const char *constant_name;
+    debug_location_beginning beginning_debug_location;
 
     switch(token_value)
     {
@@ -118,20 +120,40 @@ extern int parse_given_directive(int internal_flag)
 
       ParseConstantSpec:
         get_next_token(); i = token_value;
+        beginning_debug_location = get_token_location_beginning();
 
         if ((token_type != SYMBOL_TT)
             || (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))))
+        {   discard_token_location(beginning_debug_location);
             return ebf_error_recover("new constant name", token_text);
+        }
 
         assign_symbol(i, 0, CONSTANT_T);
+        constant_name = token_text;
 
         get_next_token();
 
         if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
+        {   if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+            {   debug_file_printf("<constant>");
+                debug_file_printf("<identifier>%s</identifier>", constant_name);
+                write_debug_symbol_optional_backpatch(i);
+                write_debug_locations(get_token_location_end(beginning_debug_location));
+                debug_file_printf("</constant>");
+            }
             goto ParseConstantSpec;
+        }
 
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
+        {   if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+            {   debug_file_printf("<constant>");
+                debug_file_printf("<identifier>%s</identifier>", constant_name);
+                write_debug_symbol_optional_backpatch(i);
+                write_debug_locations(get_token_location_end(beginning_debug_location));
+                debug_file_printf("</constant>");
+            }
             return FALSE;
+        }
 
         if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
             put_token_back();
@@ -158,6 +180,16 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 }
             }
         }
+
+        if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+        {   debug_file_printf("<constant>");
+            debug_file_printf("<identifier>%s</identifier>", constant_name);
+            write_debug_symbol_optional_backpatch(i);
+            write_debug_locations
+                (get_token_location_end(beginning_debug_location));
+            debug_file_printf("</constant>");
+        }
+
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
             goto ParseConstantSpec;
@@ -771,8 +803,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             local_variable_texts[3] = "dummy4";
 
             assign_symbol(i,
-                assemble_routine_header(k, FALSE, (char *) symbs[i],
-                    &token_line_ref, FALSE, i),
+                assemble_routine_header(k, FALSE, (char *) symbs[i], FALSE, i),
                 ROUTINE_T);
 
             /*  Ensure the return value of a stubbed routine is false,
@@ -787,7 +818,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
             for (i=1; i<=k; i++) variable_usage[i] = 1;
             sequence_point_follows = FALSE;
-            assemble_routine_end(FALSE, &token_line_ref);
+            assemble_routine_end(FALSE, get_token_locations());
         }
         break;
 
@@ -914,6 +945,9 @@ the first constant definition");
             break;
         }
 
+        if (debugfile_switch)
+        {   write_debug_undef(token_value);
+        }
         end_symbol_scope(token_value);
         sflags[token_value] |= USED_SFLAG;
         break;

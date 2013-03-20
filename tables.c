@@ -673,6 +673,7 @@ or less.");
     prop_defaults_offset = prop_defaults_at;
     prop_values_offset = object_props_at;
     static_memory_offset = grammar_table_at;
+    grammar_table_offset = grammar_table_at;
 
     if (extend_memory_map)
     {   extend_offset=256;
@@ -1006,49 +1007,32 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
     }
 
     if (debugfile_switch)
-    {   write_debug_byte(MAP_DBR);
-        write_debug_string("abbreviations table");
-          write_debug_address(abbrevs_at);
-        write_debug_string("header extension");
-          write_debug_address(headerext_at);
+    {   begin_writing_debug_sections();
+        write_debug_section("abbreviations", 64);
+        write_debug_section("abbreviations table", abbrevs_at);
+        write_debug_section("header extension", headerext_at);
         if (alphabet_modified)
-        {   write_debug_string("alphabets table");
-              write_debug_address(charset_at);
+        {   write_debug_section("alphabets table", charset_at);
         }
         if (zscii_defn_modified)
-        {   write_debug_string("Unicode table");
-              write_debug_address(unicode_at);
+        {   write_debug_section("Unicode table", unicode_at);
         }
-
-        write_debug_string("property defaults");
-          write_debug_address(prop_defaults_at);
-        write_debug_string("object tree");
-          write_debug_address(object_tree_at);
-        write_debug_string("common properties");
-          write_debug_address(object_props_at);
-        write_debug_string("class numbers");
-          write_debug_address(class_numbers_offset);
-        write_debug_string("individual properties");
-          write_debug_address(individuals_offset);
-        write_debug_string("global variables");
-          write_debug_address(globals_at);
-        write_debug_string("array space");
-          write_debug_address(globals_at+480);
-        write_debug_string("grammar table");
-          write_debug_address(grammar_table_at);
-        write_debug_string("actions table");
-          write_debug_address(actions_at);
-        write_debug_string("parsing routines");
-          write_debug_address(preactions_at);
-        write_debug_string("adjectives table");
-          write_debug_address(adjectives_offset);
-        write_debug_string("dictionary");
-          write_debug_address(dictionary_at);
-        write_debug_string("code area");
-          write_debug_address(Write_Code_At);
-        write_debug_string("strings area");
-          write_debug_address(Write_Strings_At);
-        write_debug_byte(0);
+        write_debug_section("property defaults", prop_defaults_at);
+        write_debug_section("object tree", object_tree_at);
+        write_debug_section("common properties", object_props_at);
+        write_debug_section("class numbers", class_numbers_offset);
+        write_debug_section("identifier names", identifier_names_offset);
+        write_debug_section("individual properties", individuals_offset);
+        write_debug_section("global variables", globals_at);
+        write_debug_section("array space", globals_at+480);
+        write_debug_section("grammar table", grammar_table_at);
+        write_debug_section("actions table", actions_at);
+        write_debug_section("parsing routines", preactions_at);
+        write_debug_section("adjectives table", adjectives_offset);
+        write_debug_section("dictionary", dictionary_at);
+        write_debug_section("code area", Write_Code_At);
+        write_debug_section("strings area", Write_Strings_At);
+        end_writing_debug_sections(Out_Size);
     }
 
     if (memory_map_switch)
@@ -1698,49 +1682,39 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
     }
 
     if (debugfile_switch)
-    {   write_debug_byte(MAP_DBR);
-        write_debug_string("abbreviations table");
-          write_debug_address(abbrevs_at);
-        write_debug_string("header extension");
-          write_debug_address(headerext_at);
-        if (alphabet_modified)
-        {   write_debug_string("alphabets table");
-              write_debug_address(charset_at);
+    {   begin_writing_debug_sections();
+        write_debug_section("memory layout id", GLULX_HEADER_SIZE);
+        write_debug_section("code area", Write_Code_At);
+        write_debug_section("string decoding table", Write_Strings_At);
+        write_debug_section("strings area",
+                            Write_Strings_At + compression_table_size);
+        if (Write_Strings_At + strings_length < Write_RAM_At)
+        {   write_debug_section
+                ("zero padding", Write_Strings_At + strings_length);
         }
-        if (zscii_defn_modified)
-        {   write_debug_string("Unicode table");
-              write_debug_address(unicode_at);
+        if (globals_at)
+        {   compiler_error("Failed assumption that globals are at start of "
+                           "Glulx RAM");
         }
-
-        write_debug_string("property defaults");
-          write_debug_address(prop_defaults_at);
-        write_debug_string("object tree");
-          write_debug_address(object_tree_at);
-        write_debug_string("common properties");
-          write_debug_address(object_props_at);
-        write_debug_string("class numbers");
-          write_debug_address(class_numbers_offset);
-        write_debug_string("individual properties");
-          write_debug_address(individuals_offset);
-        write_debug_string("global variables");
-          write_debug_address(globals_at);
-        write_debug_string("array space");
-          write_debug_address(globals_at+480); /* ###fix in Glulx */
-        write_debug_string("grammar table");
-          write_debug_address(grammar_table_at);
-        write_debug_string("actions table");
-          write_debug_address(actions_at);
-        write_debug_string("parsing routines");
-          write_debug_address(preactions_at);
-        write_debug_string("adjectives table");
-          write_debug_address(adjectives_offset);
-        write_debug_string("dictionary");
-          write_debug_address(dictionary_at);
-        write_debug_string("code area");
-          write_debug_address(Write_Code_At);
-        write_debug_string("strings area");
-          write_debug_address(Write_Strings_At);
-        write_debug_byte(0);
+        write_debug_section("global variables", Write_RAM_At + globals_at);
+        write_debug_section("array space", Write_RAM_At + arrays_at);
+        write_debug_section("abbreviations table", Write_RAM_At + abbrevs_at);
+        write_debug_section("object tree", Write_RAM_At + object_tree_at);
+        write_debug_section("common properties",
+                            Write_RAM_At + object_props_at);
+        write_debug_section("property defaults",
+                            Write_RAM_At + prop_defaults_at);
+        write_debug_section("class numbers",
+                            Write_RAM_At + class_numbers_offset);
+        write_debug_section("identifier names",
+                            Write_RAM_At + identifier_names_offset);
+        write_debug_section("grammar table", Write_RAM_At + grammar_table_at);
+        write_debug_section("actions table", Write_RAM_At + actions_at);
+        write_debug_section("dictionary", Write_RAM_At + dictionary_at);
+        if (MEMORY_MAP_EXTENSION)
+        {   write_debug_section("zero padding", Out_Size);
+        }
+        end_writing_debug_sections(Out_Size + MEMORY_MAP_EXTENSION);
     }
 
     if (memory_map_switch)
