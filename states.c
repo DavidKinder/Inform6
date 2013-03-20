@@ -1466,6 +1466,10 @@ static void parse_statement_z(int break_label, int continue_label)
 "In Version 3 no status-line drawing routine can be given");
                      else
                      {   assembly_operand AO5;
+                         /* Move the temp4 (buffer) value to the stack,
+                            since the routine might alter temp4. */
+                         assemblez_store(stack_pointer, AO);
+                         AO = stack_pointer;
                          put_token_back();
                          AO5 = parse_expression(CONSTANT_CONTEXT);
 
