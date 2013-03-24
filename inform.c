@@ -726,8 +726,8 @@ extern void translate_out_filename(char *new_name, char *old_name)
     /* Remove any pathname or extension in <file1>. */
 
     if (contains_separator(old_name)==1)
-    {   for (i=strlen(old_name)-1; (i>=0)&&(old_name[i]!=FN_SEP) ;i--) ;
-            if (old_name[i]==FN_SEP) i++;
+    {   for (i=strlen(old_name)-1; (i>0)&&(old_name[i]!=FN_SEP) ;i--) { };
+        if (old_name[i]==FN_SEP) i++;
         old_name += i;
     }
 #ifdef FILE_EXTENSIONS
