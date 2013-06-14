@@ -786,6 +786,11 @@ typedef struct objecttg {
     int32 propsize;
 } objecttg;
 
+typedef struct maybe_file_position_S
+{   int valid;
+    fpos_t position;
+} maybe_file_position;
+
 typedef struct debug_location_s
 {   int32 file_index;
     int32 beginning_byte_index;
@@ -2317,7 +2322,7 @@ extern void write_to_transcript_file(char *text);
 extern void close_transcript_file(void);
 extern void abort_transcript_file(void);
 
-extern void nullify_debug_file_position(fpos_t *position);
+extern void nullify_debug_file_position(maybe_file_position *position);
 
 extern void begin_debug_file(void);
 
@@ -2567,8 +2572,8 @@ extern int   *sflags;
 #else
   extern signed char *stypes;
 #endif
-extern fpos_t *symbol_debug_backpatch_positions;
-extern fpos_t *replacement_debug_backpatch_positions;
+extern maybe_file_position *symbol_debug_backpatch_positions;
+extern maybe_file_position *replacement_debug_backpatch_positions;
 extern int32 *individual_name_strings;
 extern int32 *attribute_name_strings;
 extern int32 *action_name_strings;

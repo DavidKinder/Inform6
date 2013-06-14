@@ -58,8 +58,8 @@ int no_named_constants;                         /* Copied into story file    */
 #else
   signed char *stypes;
 #endif
-  fpos_t  *symbol_debug_backpatch_positions;
-  fpos_t  *replacement_debug_backpatch_positions;
+  maybe_file_position  *symbol_debug_backpatch_positions;
+  maybe_file_position  *replacement_debug_backpatch_positions;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory to hold the text of symbol names: note that this memory is       */
@@ -1262,10 +1262,10 @@ extern void symbols_allocate_arrays(void)
     sflags     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol flags");
     if (debugfile_switch)
     {   symbol_debug_backpatch_positions =
-            my_calloc(sizeof(fpos_t),       MAX_SYMBOLS,
+            my_calloc(sizeof(maybe_file_position), MAX_SYMBOLS,
                       "symbol debug information backpatch positions");
         replacement_debug_backpatch_positions =
-            my_calloc(sizeof(fpos_t),       MAX_SYMBOLS,
+            my_calloc(sizeof(maybe_file_position), MAX_SYMBOLS,
                       "replacement debug information backpatch positions");
     }
     next_entry = my_calloc(sizeof(int),     MAX_SYMBOLS,
