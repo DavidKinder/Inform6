@@ -86,7 +86,7 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         this by noticing that input_file has increased.)                     */
 
     char name[PATHLEN];
-    char absolute_name[PATH_MAX];
+    /* char absolute_name[PATH_MAX]; */
     int x = 0;
     FILE *handle;
 
