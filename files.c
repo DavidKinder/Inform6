@@ -80,13 +80,23 @@ char Temp1_Name[PATHLEN], Temp2_Name[PATHLEN], Temp3_Name[PATHLEN];
 /*   Opening and closing source code files                                   */
 /* ------------------------------------------------------------------------- */
 
+#ifdef PC_WIN32
+#include <windows.h>
+char *realpath(const char *path, char *resolved_path)
+{
+  return GetFullPathNameA(path,PATHLEN,resolved_path,NULL) != 0 ? resolved_path : 0;
+}
+#endif
+
 extern void load_sourcefile(char *filename_given, int same_directory_flag)
 {
     /*  Meaning: open a new file of Inform source.  (The lexer picks up on
         this by noticing that input_file has increased.)                     */
 
     char name[PATHLEN];
-    /* char absolute_name[PATH_MAX]; */
+#ifdef HAS_REALPATH
+    char absolute_name[PATHLEN];
+#endif
     int x = 0;
     FILE *handle;
 
@@ -113,12 +123,12 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         debug_file_printf("<given-path>");
         debug_file_print_with_entities(filename_given);
         debug_file_printf("</given-path>");
-/*
+#ifdef HAS_REALPATH
         realpath(name, absolute_name);
         debug_file_printf("<resolved-path>");
         debug_file_print_with_entities(absolute_name);
+#endif
         debug_file_printf("</resolved-path>");
-*/
         debug_file_printf("<language>Inform 6</language>");
         debug_file_printf("</source>");
     }

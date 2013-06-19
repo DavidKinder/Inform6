@@ -30,7 +30,7 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "20th March 2013"
+#define RELEASE_DATE "19th June 2013"
 #define RELEASE_NUMBER 1633
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
@@ -125,6 +125,8 @@
 /*                         date                                              */
 /*   CHAR_IS_UNSIGNED    - if on your compiler the type "char" is unsigned   */
 /*                         by default, you should define this                */
+/*   HAS_REALPATH        - the POSIX realpath() function is available to     */
+/*                         find the absolute path to a file                  */
 /*                                                                           */
 /*   3. An estimate of the typical amount of memory likely to be free        */
 /*   should be given in DEFAULT_MEMORY_SIZE.                                 */
@@ -274,6 +276,8 @@ static int32 unique_task_id(void)
 #ifdef LINUX
 /* 1 */
 #define MACHINE_STRING   "Linux"
+/* 2 */
+#define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
@@ -341,6 +345,8 @@ static int32 unique_task_id(void)
 #ifdef OSX
 /* 1 */
 #define MACHINE_STRING   "Mac OS X"
+/* 2 */
+#define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
@@ -389,6 +395,8 @@ static int32 unique_task_id(void)
 #ifdef PC_WIN32
 /* 1 */
 #define MACHINE_STRING   "Win32"
+/* 2 */
+#define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
@@ -405,6 +413,7 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "Unix"
 /* 2 */
 #define USE_TEMPORARY_FILES
+#define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
@@ -429,6 +438,7 @@ static int32 unique_task_id(void)
 #endif
 /* 2 */
 #define USE_TEMPORARY_FILES
+#define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
