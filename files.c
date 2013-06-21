@@ -80,7 +80,7 @@ char Temp1_Name[PATHLEN], Temp2_Name[PATHLEN], Temp3_Name[PATHLEN];
 /*   Opening and closing source code files                                   */
 /* ------------------------------------------------------------------------- */
 
-#ifdef PC_WIN32
+#if defined(PC_WIN32) && defined(HAS_REALPATH)
 #include <windows.h>
 char *realpath(const char *path, char *resolved_path)
 {
@@ -127,8 +127,8 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         realpath(name, absolute_name);
         debug_file_printf("<resolved-path>");
         debug_file_print_with_entities(absolute_name);
-#endif
         debug_file_printf("</resolved-path>");
+#endif
         debug_file_printf("<language>Inform 6</language>");
         debug_file_printf("</source>");
     }
