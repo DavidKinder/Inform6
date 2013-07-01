@@ -404,6 +404,11 @@ static int32 unique_task_id(void)
 /* 6 */
 #define DEFAULT_ERROR_FORMAT 1
 #define PATHLEN 512
+#ifdef _MSC_VER /* Microsoft Visual C++ */
+#define snprintf _snprintf
+#define isnan _isnan
+#define isinf(x) (!_isnan(x) && !_finite(x))
+#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   UNIX block                                                              */
