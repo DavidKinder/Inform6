@@ -1829,7 +1829,7 @@ static int dictionary_find(char *dword)
 
 extern int dictionary_add(char *dword, int x, int y, int z)
 {   int n; uchar *p;
-    int ggfr, gfr, fr, r;
+    int ggfr = 0, gfr = 0, fr = 0, r = 0;
     int ggf = VACANT, gf = VACANT, f = VACANT, at = root;
     int a, b;
     int res=((version_number==3)?4:6);
