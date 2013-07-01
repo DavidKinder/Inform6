@@ -942,7 +942,7 @@ static df_function_t *df_function_for_address(uint32 address)
 */
 extern void df_note_function_symbol(int symbol)
 {
-    int bucket;
+    int bucket, symtype;
     df_reference_t *ent;
 
     /* If the compiler pass is over, looking up symbols does not create
@@ -957,7 +957,7 @@ extern void df_note_function_symbol(int symbol)
 
     /* We are only interested in functions, or forward-declared symbols
        that might turn out to be functions. */
-    int symtype = stypes[symbol];
+    symtype = stypes[symbol];
     if (symtype != ROUTINE_T && symtype != CONSTANT_T)
         return;
     if (symtype == CONSTANT_T && !(sflags[symbol] & UNKNOWN_SFLAG))
@@ -1121,10 +1121,11 @@ extern void locate_dead_functions(void)
        with and without useless functions. */
 
     {
+        df_function_t *func;
+
         df_total_size_before_stripping = 0;
         df_total_size_after_stripping = 0;
 
-        df_function_t *func;
         for (func = df_functions_head; func; func = func->funcnext) {
             if (func->address == DF_NOT_IN_FUNCTION)
                 continue;
