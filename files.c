@@ -124,10 +124,11 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         debug_file_print_with_entities(filename_given);
         debug_file_printf("</given-path>");
 #ifdef HAS_REALPATH
-        realpath(name, absolute_name);
-        debug_file_printf("<resolved-path>");
-        debug_file_print_with_entities(absolute_name);
-        debug_file_printf("</resolved-path>");
+        if (realpath(name, absolute_name))
+        {   debug_file_printf("<resolved-path>");
+            debug_file_print_with_entities(absolute_name);
+            debug_file_printf("</resolved-path>");
+        }
 #endif
         debug_file_printf("<language>Inform 6</language>");
         debug_file_printf("</source>");

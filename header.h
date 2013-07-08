@@ -285,7 +285,7 @@ static int32 unique_task_id(void)
 /* 5 */
 #define Temporary_Directory "/tmp"
 /* 6 */
-#define PATHLEN 512
+#define PATHLEN 8192
 #endif
 /* ------------------------------------------------------------------------- */
 /*   Macintosh block                                                         */
