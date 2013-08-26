@@ -182,7 +182,7 @@ static void make_abbrevs_lookup(void)
 static int try_abbreviations_from(unsigned char *text, int i, int from)
 {   int j, k; uchar *p, c;
     c=text[i];
-    for (j=from, p=(char *)abbreviations_at+from*MAX_ABBREV_LENGTH;
+    for (j=from, p=(uchar *)abbreviations_at+from*MAX_ABBREV_LENGTH;
          (j<no_abbreviations)&&(c==p[0]); j++, p+=MAX_ABBREV_LENGTH)
     {   if (text[i+1]==p[1])
         {   for (k=2; p[k]!=0; k++)
