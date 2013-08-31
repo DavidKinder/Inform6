@@ -463,6 +463,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
 advance as part of 'Zcharacter table':", unicode);
             }
             i += textual_form_length - 1;
+            continue;
         }
 
         /*  '@' is the escape character in Inform string notation: the various
