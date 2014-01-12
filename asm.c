@@ -641,6 +641,7 @@ static opcodez internal_number_to_opcode_z(int32 i)
     if (x.version2 == 0) return x;
     if (instruction_set_number <= x.version2) return x;
     i = x.extension;
+    if (i < 0) return invalid_opcode_z;
     x = extension_table_z[i];
     if (instruction_set_number < x.version1) return invalid_opcode_z;
     if (x.version2 == 0) return x;
