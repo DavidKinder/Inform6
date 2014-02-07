@@ -1268,19 +1268,19 @@ extern void debug_file_print_with_entities(const char*string)
     for (character = string[index]; character; character = string[++index])
     {   switch(character)
         {   case '"':
-                debug_file_printf("&quot;", character);
+                debug_file_printf("&quot;");
                 break;
             case '&':
-                debug_file_printf("&amp;", character);
+                debug_file_printf("&amp;");
                 break;
             case '\'':
-                debug_file_printf("&apos;", character);
+                debug_file_printf("&apos;");
                 break;
             case '<':
-                debug_file_printf("&lt;", character);
+                debug_file_printf("&lt;");
                 break;
             case '>':
-                debug_file_printf("&gt;", character);
+                debug_file_printf("&gt;");
                 break;
             default:
                 debug_file_printf("%c", character);
