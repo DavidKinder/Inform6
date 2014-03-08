@@ -646,6 +646,12 @@ static void stockup_symbols(void)
         if (DICT_CHAR_SIZE != 1)
             create_symbol("DICT_IS_UNICODE", 1, CONSTANT_T);
         create_symbol("NUM_ATTR_BYTES",     NUM_ATTR_BYTES, CONSTANT_T);
+        create_symbol("GOBJFIELD_CHAIN",    GOBJFIELD_CHAIN(), CONSTANT_T);
+        create_symbol("GOBJFIELD_NAME",     GOBJFIELD_NAME(), CONSTANT_T);
+        create_symbol("GOBJFIELD_PROPTAB",  GOBJFIELD_PROPTAB(), CONSTANT_T);
+        create_symbol("GOBJFIELD_PARENT",   GOBJFIELD_PARENT(), CONSTANT_T);
+        create_symbol("GOBJFIELD_SIBLING",  GOBJFIELD_SIBLING(), CONSTANT_T);
+        create_symbol("GOBJFIELD_CHILD",    GOBJFIELD_CHILD(), CONSTANT_T);
         create_symbol("INDIV_PROP_START",   INDIV_PROP_START, CONSTANT_T);
     }    
 

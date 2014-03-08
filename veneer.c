@@ -944,8 +944,8 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
     {   "PrintShortName",
         "obj q; switch(metaclass(obj))\
          {   0: print \"nothing\";\
-             Object: q = obj-->3; @streamstr q;\
-             Class: print \"class \"; q = obj-->3; @streamstr q;\
+             Object: q = obj-->GOBJFIELD_NAME; @streamstr q;\
+             Class: print \"class \"; q = obj-->GOBJFIELD_NAME; @streamstr q;\
              Routine: print \"(routine at \", obj, \")\";\
              String: print \"(string at \", obj, \")\";\
          } ]", "", "", "", "", ""
@@ -1353,7 +1353,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
            for (i=1 : i<=NUM_ATTR_BYTES : i++) {\
              o1->i = o2->i;\
            }\
-           p2 = o2-->4;\
+           p2 = o2-->GOBJFIELD_PROPTAB;\
            pcount = p2-->0;\
            p2 = p2+4;\
            for (i=0 : i<pcount : i++) {\
@@ -1383,7 +1383,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
         "crime obj id size p q;\
          print \"^[** Programming error: \";\
          if (crime<0) jump RErr;\
-         if (crime==1) { print \"class \"; q = obj-->3; @streamstr q;\
+         if (crime==1) { print \"class \"; q = obj-->GOBJFIELD_NAME; @streamstr q;\
          \": 'create' can have 0 to 3 parameters only **]\";}\
          if (crime == 40) \"tried to change printing variable \",\
          obj, \"; must be 0 to \", #dynam_string_table-->0-1, \" **]\";\
@@ -1508,7 +1508,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
         "CP__Tab",
         "obj id otab max res;\
            if (Z__Region(obj)~=1) {RT__Err(23, obj); rfalse;}\
-           otab = obj-->4;\
+           otab = obj-->GOBJFIELD_PROPTAB;\
            if (otab == 0) return 0;\
            max = otab-->0;\
            otab = otab+4;\
@@ -1819,7 +1819,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
         "obj;\
            if (Z__Region(obj) ~= 1)\
              return RT__Err(36);\
-           @aload obj 3 sp; @streamstr sp;\
+           @aload obj GOBJFIELD_NAME sp; @streamstr sp;\
          ]", "", "", "", "", ""
     },
     {
@@ -1828,25 +1828,25 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
         */
         "OB__Move",
         "obj dest par chi sib;\
-           par = obj-->5;\
+           par = obj-->GOBJFIELD_PARENT;\
            if (par ~= 0) {\
-             chi = par-->7;\
+             chi = par-->GOBJFIELD_CHILD;\
              if (chi == obj) {\
-               par-->7 = obj-->6;\
+               par-->GOBJFIELD_CHILD = obj-->GOBJFIELD_SIBLING;\
              }\
              else {\
                while (1) {\
-                 sib = chi-->6;\
+                 sib = chi-->GOBJFIELD_SIBLING;\
                  if (sib == obj)\
                    break;\
                  chi = sib;\
                }\
-               chi-->6 = obj-->6;\
+               chi-->GOBJFIELD_SIBLING = obj-->GOBJFIELD_SIBLING;\
              }\
            }\
-           obj-->6 = dest-->7;\
-           obj-->5 = dest;\
-           dest-->7 = obj;\
+           obj-->GOBJFIELD_SIBLING = dest-->GOBJFIELD_CHILD;\
+           obj-->GOBJFIELD_PARENT = dest;\
+           dest-->GOBJFIELD_CHILD = obj;\
            rfalse;\
          ]", "", "", "", "", ""
     },
@@ -1854,28 +1854,27 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
     {
         /*  OB__Remove: Remove an object from the tree. This does no
             more error checking than the Z-code \"remove\" opcode.
-            -->5 is parent; -->6 is sibling; -->7 is child.
         */
         "OB__Remove",
         "obj par chi sib;\
-           par = obj-->5;\
+           par = obj-->GOBJFIELD_PARENT;\
            if (par == 0)\
              rfalse;\
-           chi = par-->7;\
+           chi = par-->GOBJFIELD_CHILD;\
            if (chi == obj) {\
-             par-->7 = obj-->6;\
+             par-->GOBJFIELD_CHILD = obj-->GOBJFIELD_SIBLING;\
            }\
            else {\
              while (1) {\
-               sib = chi-->6;\
+               sib = chi-->GOBJFIELD_SIBLING;\
                if (sib == obj)\
                  break;\
                chi = sib;\
              }\
-             chi-->6 = obj-->6;\
+             chi-->GOBJFIELD_SIBLING = obj-->GOBJFIELD_SIBLING;\
            }\
-           obj-->6 = 0;\
-           obj-->5 = 0;\
+           obj-->GOBJFIELD_SIBLING = 0;\
+           obj-->GOBJFIELD_PARENT = 0;\
            rfalse;\
          ]", "", "", "", "", ""
     },

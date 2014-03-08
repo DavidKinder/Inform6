@@ -619,7 +619,7 @@ static void parse_print_g(int finally_return)
                                       parse_expression(QUANTITY_CONTEXT),
                                       QUANTITY_CONTEXT, -1);
                                   AO2.type = BYTECONSTANT_OT;
-                                  AO2.value = 3;
+                                  AO2.value = GOBJFIELD_NAME();
                                   AO2.marker = 0;
                                   assembleg_3(aload_gc, AO1, AO2, 
                                     stack_pointer);
@@ -2356,11 +2356,11 @@ static void parse_statement_g(int break_label, int continue_label)
                              AO2 = check_nonzero_at_runtime(AO2, -1,
                                  OBJECTLOOP_RTE);
                          AO4.type = BYTECONSTANT_OT;
-                         AO4.value = 5; /* parent */
+                         AO4.value = GOBJFIELD_PARENT();
                          AO4.marker = 0;
                          assembleg_3(aload_gc, AO2, AO4, stack_pointer);
                          AO4.type = BYTECONSTANT_OT;
-                         AO4.value = 7; /* child */
+                         AO4.value = GOBJFIELD_CHILD();
                          AO4.marker = 0;
                          assembleg_3(aload_gc, stack_pointer, AO4, stack_pointer);
                          AO2 = stack_pointer;
@@ -2372,7 +2372,7 @@ static void parse_statement_g(int break_label, int continue_label)
                                  CHILD_RTE);
                          }
                          AO4.type = BYTECONSTANT_OT;
-                         AO4.value = 7; /* child */
+                         AO4.value = GOBJFIELD_CHILD();
                          AO4.marker = 0;
                          assembleg_3(aload_gc, AO2, AO4, stack_pointer);
                          AO2 = stack_pointer;
@@ -2397,7 +2397,7 @@ static void parse_statement_g(int break_label, int continue_label)
                              en_ao.marker = 0;
                              set_constant_ot(&en_ao);
                              AO4.type = BYTECONSTANT_OT;
-                             AO4.value = 5; /* parent */
+                             AO4.value = GOBJFIELD_PARENT();
                              AO4.marker = 0;
                              assembleg_3(aload_gc, AO, AO4, stack_pointer);
                              assembleg_2_branch(jeq_gc, stack_pointer, AO5, 
@@ -2412,7 +2412,7 @@ static void parse_statement_g(int break_label, int continue_label)
                          AO2 = AO;
                      }
                      AO4.type = BYTECONSTANT_OT;
-                     AO4.value = 6; /* sibling */
+                     AO4.value = GOBJFIELD_SIBLING();
                      AO4.marker = 0;
                      assembleg_3(aload_gc, AO2, AO4, AO);
                      assembleg_1_branch(jnz_gc, AO, ln4);
@@ -2442,7 +2442,10 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  sequence_point_follows = FALSE;
                  assemble_label_no(ln3);
-                 assembleg_3(aload_gc, AO, two_operand, AO);
+                 AO4.type = BYTECONSTANT_OT;
+                 AO4.value = GOBJFIELD_CHAIN();
+                 AO4.marker = 0;
+                 assembleg_3(aload_gc, AO, AO4, AO);
                  assembleg_1_branch(jnz_gc, AO, ln);
                  assemble_label_no(ln2);
                  return;

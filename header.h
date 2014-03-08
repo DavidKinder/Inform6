@@ -2521,6 +2521,15 @@ extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES, NUM_ATTR_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 
+/* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
+   (Meaningful only for Glulx.) */
+#define GOBJFIELD_CHAIN()    (1+((NUM_ATTR_BYTES)/4))
+#define GOBJFIELD_NAME()     (2+((NUM_ATTR_BYTES)/4))
+#define GOBJFIELD_PROPTAB()  (3+((NUM_ATTR_BYTES)/4))
+#define GOBJFIELD_PARENT()   (4+((NUM_ATTR_BYTES)/4))
+#define GOBJFIELD_SIBLING()  (5+((NUM_ATTR_BYTES)/4))
+#define GOBJFIELD_CHILD()    (6+((NUM_ATTR_BYTES)/4))
+
 extern void *my_malloc(int32 size, char *whatfor);
 extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
     char *whatfor);
