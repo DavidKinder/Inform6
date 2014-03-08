@@ -186,7 +186,7 @@ static void select_target(int targ)
   }
   else {
     /* Glulx */
-    OBJECT_BYTE_LENGTH = (1 + (NUM_ATTR_BYTES) + 6*4);
+    OBJECT_BYTE_LENGTH = (1 + (NUM_ATTR_BYTES) + 6*4 + (GLULX_OBJECT_EXT_BYTES));
     DICT_WORD_BYTES = DICT_WORD_SIZE*DICT_CHAR_SIZE;
     if (DICT_CHAR_SIZE == 1) {
       DICT_ENTRY_BYTE_LENGTH = (7+DICT_WORD_BYTES);

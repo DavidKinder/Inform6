@@ -2518,11 +2518,13 @@ extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
 
 extern int32 MAX_OBJ_PROP_COUNT, MAX_OBJ_PROP_TABLE_SIZE;
 extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
-extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES, NUM_ATTR_BYTES;
+extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
+extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
    (Meaningful only for Glulx.) */
+/* GOBJFIELD: word offsets of various elements in the object structure. */
 #define GOBJFIELD_CHAIN()    (1+((NUM_ATTR_BYTES)/4))
 #define GOBJFIELD_NAME()     (2+((NUM_ATTR_BYTES)/4))
 #define GOBJFIELD_PROPTAB()  (3+((NUM_ATTR_BYTES)/4))

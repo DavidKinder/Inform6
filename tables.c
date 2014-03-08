@@ -1307,6 +1307,10 @@ static void construct_storyfile_g(void)
         p[mark++] = (val >> 8) & 0xFF;
         p[mark++] = (val) & 0xFF;
       }
+
+      for (j=0; j<GLULX_OBJECT_EXT_BYTES; j++) {
+        p[mark++] = 0;
+      }
     }
 
     if (object_props_at != mark)

@@ -255,6 +255,7 @@ int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
 int NUM_ATTR_BYTES;
+int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
 int32 MAX_NUM_STATIC_STRINGS;
 int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
@@ -312,6 +313,9 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","MAX_NUM_STATIC_STRINGS",
         MAX_NUM_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","MAX_OBJECTS",MAX_OBJECTS);
+    if (glulx_mode)
+      printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
+        GLULX_OBJECT_EXT_BYTES);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_OBJ_PROP_COUNT",
         MAX_OBJ_PROP_COUNT);
@@ -506,13 +510,14 @@ extern void set_memory_sizes(int size_flag)
     DICT_WORD_SIZE_g = 9;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
+    GLULX_OBJECT_EXT_BYTES = 0;
     MAX_UNICODE_CHARS = 64;
     MEMORY_MAP_EXTENSION = 0;
     /* We estimate the default Glulx stack size at 4096. That's about
        enough for 90 nested function calls with 8 locals each -- the
        same capacity as the Z-Spec's suggestion for Z-machine stack
-       size. Note that Inform 7 wants more stack, so if you're
-       compiling an I7 game, crank this up. */
+       size. Note that Inform 7 wants more stack; I7-generated code
+       sets MAX_STACK_SIZE to 65536 by default. */
     MAX_STACK_SIZE = 4096;
     OMIT_UNUSED_ROUTINES = 0;
     WARN_UNUSED_ROUTINES = 0;
@@ -615,6 +620,14 @@ static void explain_parameter(char *command)
   stores eight attributes. In Z-code this is always 6 (only 4 are used in \n\
   v3 games). In Glulx it can be any number which is a multiple of four, \n\
   plus three.\n");
+        return;
+    }
+    if (strcmp(command,"GLULX_OBJECT_EXT_BYTES")==0)
+    {   printf(
+"  GLULX_OBJECT_EXT_BYTES is an amount of additional space to add to each \n\
+  object record. It is initialized to zero bytes, and the game is free to \n\
+  use it as desired. (This is only meaningful in Glulx, since Z-code \n\
+  specifies the object structure.)\n");
         return;
     }
     if (strcmp(command,"MAX_STATIC_DATA")==0)
@@ -879,6 +892,8 @@ extern void memory_command(char *command)
             {   NUM_ATTR_BYTES=j, flag=1;
                 NUM_ATTR_BYTES_g=NUM_ATTR_BYTES_z=j;
             }
+            if (strcmp(command,"GLULX_OBJECT_EXT_BYTES")==0)
+                GLULX_OBJECT_EXT_BYTES=j, flag=1;
             if (strcmp(command,"MAX_STATIC_DATA")==0)
                 MAX_STATIC_DATA=j, flag=1;
             if (strcmp(command,"MAX_OLDEPTH")==0)

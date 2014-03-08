@@ -652,6 +652,8 @@ static void stockup_symbols(void)
         create_symbol("GOBJFIELD_PARENT",   GOBJFIELD_PARENT(), CONSTANT_T);
         create_symbol("GOBJFIELD_SIBLING",  GOBJFIELD_SIBLING(), CONSTANT_T);
         create_symbol("GOBJFIELD_CHILD",    GOBJFIELD_CHILD(), CONSTANT_T);
+        create_symbol("GOBJ_EXT_START",     1+NUM_ATTR_BYTES+6*WORDSIZE, CONSTANT_T);
+        create_symbol("GOBJ_TOTAL_LENGTH",  1+NUM_ATTR_BYTES+6*WORDSIZE+GLULX_OBJECT_EXT_BYTES, CONSTANT_T);
         create_symbol("INDIV_PROP_START",   INDIV_PROP_START, CONSTANT_T);
     }    
 

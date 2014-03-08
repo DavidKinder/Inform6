@@ -96,6 +96,8 @@ The values can be numeric literals or constants. They can be 0-255 for Z-code, o
 more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 <li><p>The debugging output file, generated when the <tt><b>-k</b></tt> is used, has been changed to a
 new, XML-based format.
+<li><p>A new Glulx-only setting <tt>$GLULX_OBJECT_EXT_BYTES</tt> has been added, which specifies an
+amount of additional space to add to each object record. The default is 0.
 </ul>
 <h3>Bugs fixed</h3>
 Items of the form [Mantis 510] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
@@ -126,6 +128,11 @@ that contains an error. [Mantis 1018,1035]
 third argument to the statement will not change the global variable that the statement uses internally. [Mantis 1084]
 <li><p>The 'Abbreviate' statement now works with words containing non-English characters. [Mantis 1130]
 <li><p>Attempting to use <tt>@pop</tt> opcode for V5 or higher no longer results in a crash. [Mantis 1172]
+<li><p>The Glulx-only setting <tt>$NUM_ATTR_BYTES</tt>, which determines the number of bytes in an object set aside
+for attribute flags, now works correctly. Note that this has required a change to the veneer routines that conflicts
+with the definition of <tt>FUNC_2_CP__Tab()</tt> in the &lsquo;Accelerated Functions&rsquo; section of the Glulx 3.1.2
+specification. If you change this setting, you should take great care if you also use the Glulx accelerated functions
+feature (as Inform 7 does by default). [Mantis 1197]
 </ul>
 
 <h2>Compiler 6.32</h2>
