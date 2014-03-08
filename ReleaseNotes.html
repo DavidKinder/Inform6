@@ -96,7 +96,12 @@ The values can be numeric literals or constants. They can be 0-255 for Z-code, o
 more efficient implementation, using Glulx&rsquo;s unsigned comparison opcodes.
 <li><p>The debugging output file, generated when the <tt><b>-k</b></tt> is used, has been changed to a
 new, XML-based format.
-<li><p>A new Glulx-only setting <tt>$GLULX_OBJECT_EXT_BYTES</tt> has been added, which specifies an
+<li><p>Two new Z-code settings have been added to support the extra words in the header extension table
+specified in section 11.1.7 of the <i>Z-Machine Standards Document</i> version 1.1. <tt>$ZCODE_HEADER_EXT_WORDS</tt>
+specifies how many extra words to add (so for all three words defined in the 1.1 standard, this would
+be set to 3). <tt>$ZCODE_HEADER_FLAGS_3</tt> specifies the value to put in the first of these three words,
+which is the "flags3" field.
+<li><p>A new Glulx setting <tt>$GLULX_OBJECT_EXT_BYTES</tt> has been added, which specifies an
 amount of additional space to add to each object record. The default is 0.
 </ul>
 <h3>Bugs fixed</h3>
@@ -128,7 +133,7 @@ that contains an error. [Mantis 1018,1035]
 third argument to the statement will not change the global variable that the statement uses internally. [Mantis 1084]
 <li><p>The 'Abbreviate' statement now works with words containing non-English characters. [Mantis 1130]
 <li><p>Attempting to use <tt>@pop</tt> opcode for V5 or higher no longer results in a crash. [Mantis 1172]
-<li><p>The Glulx-only setting <tt>$NUM_ATTR_BYTES</tt>, which determines the number of bytes in an object set aside
+<li><p>The Glulx setting <tt>$NUM_ATTR_BYTES</tt>, which determines the number of bytes in an object set aside
 for attribute flags, now works correctly. Note that this has required a change to the veneer routines that conflicts
 with the definition of <tt>FUNC_2_CP__Tab()</tt> in the &lsquo;Accelerated Functions&rsquo; section of the Glulx 3.1.2
 specification. If you change this setting, you should take great care if you also use the Glulx accelerated functions

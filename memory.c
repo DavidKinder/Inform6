@@ -254,6 +254,8 @@ int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
+int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
+int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int NUM_ATTR_BYTES;
 int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
 int32 MAX_NUM_STATIC_STRINGS;
@@ -297,6 +299,10 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_EXPRESSION_NODES",MAX_EXPRESSION_NODES);
     printf("|  %25s = %-7d |\n","MAX_GLOBAL_VARIABLES",MAX_GLOBAL_VARIABLES);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
+    if (!glulx_mode)
+      printf("|  %25s = %-7d |\n","ZCODE_HEADER_EXT_WORDS",ZCODE_HEADER_EXT_WORDS);
+    if (!glulx_mode)
+      printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
     printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE",
         MAX_INDIV_PROP_TABLE_SIZE);
@@ -510,6 +516,11 @@ extern void set_memory_sizes(int size_flag)
     DICT_WORD_SIZE_g = 9;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
+    /* Backwards-compatible behavior: allow for a unicode table
+       whether we need one or not. The user can set this to zero if
+       there's no unicode table. */
+    ZCODE_HEADER_EXT_WORDS = 3;
+    ZCODE_HEADER_FLAGS_3 = 0;
     GLULX_OBJECT_EXT_BYTES = 0;
     MAX_UNICODE_CHARS = 64;
     MEMORY_MAP_EXTENSION = 0;
@@ -620,6 +631,20 @@ static void explain_parameter(char *command)
   stores eight attributes. In Z-code this is always 6 (only 4 are used in \n\
   v3 games). In Glulx it can be any number which is a multiple of four, \n\
   plus three.\n");
+        return;
+    }
+    if (strcmp(command,"ZCODE_HEADER_EXT_WORDS")==0)
+    {   printf(
+"  ZCODE_HEADER_EXT_WORDS is the number of words in the Z-code header \n\
+  extension table (Z-Spec 1.0). The -W switch also sets this. It defaults \n\
+  to 3, but can be set higher. (It can be set lower if no Unicode \n\
+  translation table is created.)\n");
+        return;
+    }
+    if (strcmp(command,"ZCODE_HEADER_FLAGS_3")==0)
+    {   printf(
+"  ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
+  header extension table (Z-Spec 1.1).\n");
         return;
     }
     if (strcmp(command,"GLULX_OBJECT_EXT_BYTES")==0)
@@ -892,6 +917,10 @@ extern void memory_command(char *command)
             {   NUM_ATTR_BYTES=j, flag=1;
                 NUM_ATTR_BYTES_g=NUM_ATTR_BYTES_z=j;
             }
+            if (strcmp(command,"ZCODE_HEADER_EXT_WORDS")==0)
+                ZCODE_HEADER_EXT_WORDS=j, flag=1;
+            if (strcmp(command,"ZCODE_HEADER_FLAGS_3")==0)
+                ZCODE_HEADER_FLAGS_3=j, flag=1;
             if (strcmp(command,"GLULX_OBJECT_EXT_BYTES")==0)
                 GLULX_OBJECT_EXT_BYTES=j, flag=1;
             if (strcmp(command,"MAX_STATIC_DATA")==0)

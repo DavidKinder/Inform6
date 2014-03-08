@@ -145,7 +145,7 @@ static int32 rough_size_of_paged_memory_z(void)
             + 6*32;                                   /* abbreviations table */
 
     total += 8;                                    /* header extension table */
-    if (header_ext_setting>3) total += (header_ext_setting-3)*2;
+    if (ZCODE_HEADER_EXT_WORDS>3) total += (ZCODE_HEADER_EXT_WORDS-3)*2;
 
     if (alphabet_modified) total += 78;               /* character set table */
 
@@ -290,8 +290,17 @@ static void construct_storyfile_z(void)
     /*  ------------------- Header extension table ------------------------- */
 
     headerext_at = mark;
-    headerext_length = 3;                            /* Usually 3 words long */
-    if (header_ext_setting>3) headerext_length = header_ext_setting;
+    headerext_length = ZCODE_HEADER_EXT_WORDS;
+    if (zscii_defn_modified) {
+        /* Need at least 3 words for unicode table address */
+        if (headerext_length < 3)
+            headerext_length = 3;
+    }
+    if (ZCODE_HEADER_FLAGS_3) {
+        /* Need at least 4 words for the flags-3 field (ZSpec 1.1) */
+        if (headerext_length < 4)
+            headerext_length = 4;
+    }
     p[mark++] = 0; p[mark++] = headerext_length;
     for (i=0; i<headerext_length; i++)
     {   p[mark++] = 0; p[mark++] = 0;
@@ -780,11 +789,24 @@ or less.");
 
     /*  ------------------------ Header Extension -------------------------- */
 
-    i = headerext_at + 2;
-    p[i++] = 0; p[i++] = 0;                       /* Mouse x-coordinate slot */
-    p[i++] = 0; p[i++] = 0;                       /* Mouse y-coordinate slot */
-    j = unicode_at;
-    p[i++] = j/256; p[i++] = j%256;     /* Unicode translation table address */
+    /* The numbering in the spec is a little weird -- it's headerext_length
+       words *after* the initial length word. We follow the spec numbering
+       in this switch statement, so the count is 1-based. */
+    for (i=1; i<=headerext_length; i++) {
+        switch (i) {
+        case 3:
+            j = unicode_at;             /* Unicode translation table address */
+            break;
+        case 4:
+            j = ZCODE_HEADER_FLAGS_3;                        /* Flags 3 word */
+            break;
+        default:
+            j = 0;
+            break;
+        }
+        p[headerext_at+2*i+0] = j / 256;
+        p[headerext_at+2*i+1] = j % 256;
+    }
 
     /*  ----------------- The Header: Extras for modules ------------------- */
 
