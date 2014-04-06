@@ -138,6 +138,13 @@ for attribute flags, now works correctly. Note that this has required a change t
 with the definition of <tt>FUNC_2_CP__Tab()</tt> in the &lsquo;Accelerated Functions&rsquo; section of the Glulx 3.1.2
 specification. If you change this setting, you should take great care if you also use the Glulx accelerated functions
 feature (as Inform 7 does by default). [Mantis 1197]
+<li><p>The syntax of declaring a function so that it prints its name and arguments:
+<pre>
+  [ Whatever * x y;
+    ! Whatever function logic ...
+  ];
+</pre>
+is now supported for Glulx. [Mantis 1214]
 </ul>
 
 <h2>Compiler 6.32</h2>
