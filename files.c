@@ -256,7 +256,7 @@ static void sf_put(int c)
 
 /* Recursive procedure to generate the Glulx compression table. */
 
-static void output_compression(int entnum, int32 *size)
+static void output_compression(int entnum, int32 *size, int *count)
 {
   huffentity_t *ent = &(huff_entities[entnum]);
   int32 val;
@@ -264,6 +264,7 @@ static void output_compression(int entnum, int32 *size)
 
   sf_put(ent->type);
   (*size)++;
+  (*count)++;
 
   switch (ent->type) {
   case 0:
@@ -279,8 +280,8 @@ static void output_compression(int entnum, int32 *size)
     sf_put((val >> 8) & 0xFF);
     sf_put((val) & 0xFF);
     (*size) += 4;
-    output_compression(ent->u.branch[0], size);
-    output_compression(ent->u.branch[1], size);
+    output_compression(ent->u.branch[0], size, count);
+    output_compression(ent->u.branch[1], size, count);
     break;
   case 1:
     /* no data */
@@ -944,7 +945,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     {
       int32 ix, lx;
       int ch, jx, curbyte, bx;
-      int depth;
+      int depth, checkcount;
       huffbitlist_t *bits;
       int32 origsize;
 
@@ -971,7 +972,10 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         sf_put((lx) & 0xFF);
         size += 4;
 
-        output_compression(huff_entity_root, &size);
+        checkcount = 0;
+        output_compression(huff_entity_root, &size, &checkcount);
+        if (checkcount != no_huff_entities)
+          compiler_error("Compression table count mismatch.");
       }
 
       if (size - origsize != compression_table_size)

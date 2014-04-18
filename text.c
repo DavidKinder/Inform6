@@ -986,12 +986,12 @@ void compress_game_text()
     }
 
     huff_entity_root = (hufflist[0] - huff_entities);
-    no_huff_entities = branchstart+branches;
 
     for (ix=0; ix<MAXHUFFBYTES; ix++)
       bits.b[ix] = 0;
     compression_table_size = 12;
-    
+
+    no_huff_entities = 0; /* compress_makebits will total this up */
     compress_makebits(huff_entity_root, 0, -1, &bits);
   }
 
@@ -1100,6 +1100,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
   huffentity_t *ent = &(huff_entities[entnum]);
   char *cx;
 
+  no_huff_entities++;
   ent->addr = compression_table_size;
   ent->depth = depth;
   ent->bits = *bits;
