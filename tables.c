@@ -1633,25 +1633,25 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
             printf("\
 %6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
-%6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
+%6d global vars (maximum %3d)    %6d variable/array space (maximum %d)\n",
                  no_classes, MAX_CLASSES,
-                 no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
-                 no_globals,
+                 no_objects, MAX_OBJECTS,
+                 no_globals, MAX_GLOBAL_VARIABLES,
                  dynamic_array_area_size, MAX_STATIC_DATA);
 
             printf(
 "%6d verbs (maximum %3d)          %6d dictionary entries (maximum %d)\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
 %6d actions (maximum %3d)        %6d attributes (maximum %2d)\n\
-%6d common props (maximum %2d)    %6d individual props (unlimited)\n",
+%6d common props (maximum %3d)   %6d individual props (unlimited)\n",
                  no_Inform_verbs, MAX_VERBS,
                  dict_entries, MAX_DICT_ENTRIES,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
                  no_actions, MAX_ACTIONS,
-                 no_attributes, ((version_number==3)?32:48),
-                 no_properties-2, ((version_number==3)?30:62),
-                 no_individual_properties - 64);
+                 no_attributes, NUM_ATTR_BYTES*8,
+                 no_properties, INDIV_PROP_START,
+                 no_individual_properties - INDIV_PROP_START);
 
             if (track_unused_routines)
             {
@@ -1667,7 +1667,7 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 "%6ld characters used in text      %6ld bytes compressed (rate %d.%3ld)\n\
 %6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
 %6ld instructions of code         %6d sequence points\n\
-%6ld bytes readable memory used (maximum 65536)\n\
+%6ld bytes writable memory used   %6ld bytes read-only memory used\n\
 %6ld bytes used in machine    %10ld bytes free in machine\n",
                  (long int) total_chars_trans,
                  (long int) strings_length,
@@ -1676,7 +1676,8 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  no_abbreviations, MAX_ABBREVS,
                  no_routines,
                  (long int) no_instructions, no_sequence_points,
-                 (long int) Write_Code_At,
+                 (long int) (Out_Size - Write_RAM_At),
+                 (long int) Write_RAM_At,
                  (long int) Out_Size,
                  (long int)
                       (((long int) (limit*1024L)) - ((long int) Out_Size)));
