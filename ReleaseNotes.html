@@ -49,10 +49,10 @@ These are the changes delivered in version 6.33 of the Inform compiler.
 <h3>Features added</h3>
 <ul>
 <li><p>Unused routines can now be detected and omitted from the compiled game, through two
-new settings. If <tt>$WARN_UNUSED_ROUTINES</tt> is set to 1, unused routines are reported during
-compilation. If <tt>$OMIT_UNUSED_ROUTINES</tt> is set to 1, unused routines (other than those in the
-Inform library) are omitted; if it is set to 2, unused routines anywhere, even in the library, are
-omitted.
+new settings. If <tt>$WARN_UNUSED_ROUTINES</tt> is set to 1, unused routines (other than those in
+the Inform library) are reported during compilation; if it is set to 2, unused routines anywhere,
+even in the library, are reported. If <tt>$OMIT_UNUSED_ROUTINES</tt> is set to 1, unused routines
+are omitted.
 <li><p>A new command line switch <tt><b>-Cu</b></tt> can be used to specify that the source file
 character set is UTF-8, allowing source files to contain Unicode characters beyond those defined in
 ISO 8859-1 to 8859-9.
