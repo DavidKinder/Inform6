@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Inform Release Notes</h1>
-<h3>Inform Compiler 6.33, 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
+<h3>Inform Compiler 6.34, 6.33, 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
 
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
@@ -43,6 +43,17 @@ specific ones to Graham for permitting it in the first place, and to Andrew for 
 Glulx.
 There are, naturally, sure to be imperfections in the release, and these should be reported through the
 <a href="http://inform7.com/mantis/">Inform bug tracker</a>.
+
+<h2>Compiler 6.34</h2>
+These are the changes delivered in version 6.34 of the Inform compiler.
+<h3>Bugs fixed</h3>
+Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+<ul>
+<li><p>The output for the <tt>$list</tt> command line argument now includes the value of the
+<tt>$MAX_ARRAYS</tt> setting. [Mantis 1355]
+<li><p>Memory settings can no longer overflow if set to very large values. These values are limited to a
+maximum of 999999999: setting them higher just results in a warning. [Mantis 1356]
+</ul>
 
 <h2>Compiler 6.33</h2>
 These are the changes delivered in version 6.33 of the Inform compiler.
@@ -105,7 +116,7 @@ which is the "flags3" field.
 amount of additional space to add to each object record. The default is 0.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis 510] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
 <li><p>Function calls of the form <tt>f(g)(h)</tt> (that is, where <tt>f()</tt> returns the address of a
 function that is called with <tt>h</tt> as its argument) are now compiled correctly: previously, such calls were
@@ -151,7 +162,7 @@ is now supported for Glulx. [Mantis 1214]
 <h2>Compiler 6.32</h2>
 These are the changes delivered in version 6.32 of the Inform compiler.
 <h3>Features added</h3>
-Items of the form [C63104] quote the feature&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the feature&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>The Z-machine opcodes for pushing and pulling values from the stack are <tt>@push</tt> and <tt>@pull</tt>, used like this:
@@ -220,7 +231,7 @@ memory setting, <tt>$DICT_CHAR_SIZE</tt>: by default this is 1, but setting it t
 However, this also requires library changes to be useful, as the library makes use of this dictionary table.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [C63102] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>Strict mode is no longer enabled by default when generating V3 and V4 Z-code files, as strict mode
@@ -249,7 +260,7 @@ long paths on this platform.
 <h2>Compiler 6.31</h2>
 These are the changes delivered in version 6.31 of the Inform compiler.
 <h3>Bugs fixed</h3>
-Items of the form [C63016] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>When individual properties are read (successfully), there is no longer a futile attempt to look up 
@@ -371,7 +382,7 @@ object&rsquo;s <tt>name</tt> property. This is most commonly triggered if you tr
 typing <tt>name 'g' 'string'</tt> when you intended <tt>name 'g//' 'string'</tt>.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [C62127] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C62NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>A problem with multiple assignment involving pointer arithmetic in Strict mode giving the wrong 
@@ -708,7 +719,7 @@ if <tt><i>value</i></tt> refers to a routine, runs that routine; if <tt><i>value
 prints that string (with a terminating newline unless <tt><i>flag</i></tt> is 
 true).</blockquote>
 <h3>Bugs fixed</h3>
-Items of the form [L61036] quote the bug&rsquo;s reference number in the &lsquo;Library&rsquo; section of the Inform 
+Items of the form [L610NN] quote the bug&rsquo;s reference number in the &lsquo;Library&rsquo; section of the Inform 
 Patch List.
 <ul>
 <li><p>A command like EMPTY ME no longer replies &ldquo;yourself can't contain things&rdquo;. [L61036] 
