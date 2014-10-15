@@ -693,6 +693,8 @@ int glulx_system_constant_list[] =
       grammar_table_SC,
       actions_table_SC,
       globals_array_SC,
+      highest_class_number_SC,
+      highest_object_number_SC,
       -1 };
 
 static int32 value_of_system_constant_g(int t)
@@ -718,6 +720,10 @@ static int32 value_of_system_constant_g(int t)
     return actions_offset;
   case globals_array_SC:
     return variables_offset;
+  case highest_class_number_SC:
+    return no_classes-1;
+  case highest_object_number_SC:
+    return no_objects-1;
   }
 
   error_named("System constant not implemented in Glulx",
@@ -892,6 +898,23 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      v = DICT_ENTRY_FLAG_POS+5;
                      break;
 
+                 case lowest_attribute_number_SC:
+                 case lowest_action_number_SC:
+                 case lowest_routine_number_SC:
+                 case lowest_array_number_SC:
+                 case lowest_constant_number_SC:
+                 case lowest_class_number_SC:
+                     o->type = BYTECONSTANT_OT;
+                     o->marker = 0;
+                     v = 0;
+                     break;
+                 case lowest_object_number_SC:
+                 case lowest_property_number_SC:
+                     o->type = BYTECONSTANT_OT;
+                     o->marker = 0;
+                     v = 1;
+                     break;
+ 
                  /* ###fix: need to fill more of these in! */
 
                  default:
