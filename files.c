@@ -1464,7 +1464,14 @@ extern void write_debug_packed_code_backpatch(int32 offset)
 }
 
 static int32 backpatch_packed_code_address(int32 offset)
-{   return (code_offset + offset) / scale_factor;
+{
+    if (OMIT_UNUSED_ROUTINES) {
+        int stripped;
+        offset = df_stripped_offset_for_code_offset(offset, &stripped);
+        if (stripped)
+            return 0;
+    }
+    return (code_offset + offset) / scale_factor;
 }
 
 extern void write_debug_code_backpatch(int32 offset)
@@ -1472,7 +1479,14 @@ extern void write_debug_code_backpatch(int32 offset)
 }
 
 static int32 backpatch_code_address(int32 offset)
-{   return code_offset + offset;
+{
+    if (OMIT_UNUSED_ROUTINES) {
+        int stripped;
+        offset = df_stripped_offset_for_code_offset(offset, &stripped);
+        if (stripped)
+            return 0;
+    }
+    return code_offset + offset;
 }
 
 extern void write_debug_global_backpatch(int32 offset)

@@ -2628,6 +2628,7 @@ extern void df_note_function_end(uint32 endaddress);
 extern void df_note_function_symbol(int symbol);
 extern void locate_dead_functions(void);
 extern uint32 df_stripped_address_for_address(uint32);
+extern uint32 df_stripped_offset_for_code_offset(uint32, int *);
 extern void df_prepare_function_iterate(void);
 extern uint32 df_next_function_iterate(int *);
 

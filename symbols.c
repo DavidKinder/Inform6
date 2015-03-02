@@ -844,7 +844,7 @@ struct df_reference_struct {
 #define DF_FUNCTION_HASH_BUCKETS (1023)
 
 /* Table of all compiled functions. (Only created if track_unused_routines
-   is set.) */
+   is set.) This is a hash table. */
 static df_function_t **df_functions;
 /* List of all compiled functions, in address order. The first entry
    has address DF_NOT_IN_FUNCTION, and stands in for the global namespace. */
@@ -853,6 +853,11 @@ static df_function_t *df_functions_tail;
 /* Used during output_file(), to track how far the code-area output has
    gotten. */
 static df_function_t *df_iterator;
+
+/* Array of all compiled functions in address order. (Does not include
+   the global namespace entry.) This is generated only if needed. */
+static df_function_t **df_functions_sorted;
+static int df_functions_sorted_count;
 
 #define DF_NOT_IN_FUNCTION ((uint32)0xFFFFFFFF)
 #define DF_SYMBOL_HASH_BUCKETS (4095)
@@ -1160,6 +1165,14 @@ extern void locate_dead_functions(void)
     /* df_measure_hash_table_usage(); */
 }
 
+/* Given an original function address, return where it winds up after
+   unused-function stripping. The function must not itself be unused.
+
+   Both the input and output are offsets, and already scaled by
+   scale_factor.
+
+   This is used by the backpatching system.
+*/
 extern uint32 df_stripped_address_for_address(uint32 addr)
 {
     df_function_t *func;
@@ -1183,6 +1196,85 @@ extern uint32 df_stripped_address_for_address(uint32 addr)
         return func->newaddress / scale_factor;
     else
         return func->newaddress;
+}
+
+/* Given an address in the function area, return where it winds up after
+   unused-function stripping. The address can be a function or anywhere
+   within the function. If the address turns out to be in a stripped
+   function, returns 0 (and sets *stripped).
+
+   The input and output are offsets, but *not* scaled.
+
+   This is only used by the debug-file system.
+*/
+uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
+{
+    df_function_t *func;
+    int count;
+
+    if (!track_unused_routines)
+        compiler_error("DF: df_stripped_offset_for_code_offset called, but function references have not been mapped");
+
+    if (!df_functions_sorted) {
+        /* To do this efficiently, we need a binary-searchable table. Fine,
+           we'll make one. Include both used and unused functions. */
+
+        for (func = df_functions_head, count = 0; func; func = func->funcnext) {
+            if (func->address == DF_NOT_IN_FUNCTION)
+                continue;
+            count++;
+        }
+        df_functions_sorted_count = count;
+
+        df_functions_sorted = my_calloc(sizeof(df_function_t *), df_functions_sorted_count, "df function sorted table");
+
+        for (func = df_functions_head, count = 0; func; func = func->funcnext) {
+            if (func->address == DF_NOT_IN_FUNCTION)
+                continue;
+            df_functions_sorted[count] = func;
+            count++;
+        }
+    }
+
+    /* Do a binary search. Maintain beg <= res < end, where res is the
+       function containing the desired address. */
+    int beg = 0;
+    int end = df_functions_sorted_count;
+
+    /* Set stripped flag until we decide on a non-stripped function. */
+    *stripped = TRUE;
+
+    while (1) {
+        if (beg >= end) {
+            error("DF: offset_for_code_offset: Could not locate address.");
+            return 0;
+        }
+        if (beg+1 == end) {
+            func = df_functions_sorted[beg];
+            if (func->usage == 0)
+                return 0;
+            *stripped = FALSE;
+            return func->newaddress + (offset - func->address);
+        }
+        int new = (beg + end) / 2;
+        if (new <= beg || new >= end)
+            compiler_error("DF: binary search went off the rails");
+
+        func = df_functions_sorted[new];
+        if (offset >= func->address) {
+            if (offset < func->address+func->length) {
+                /* We don't need to loop further; decide here. */
+                if (func->usage == 0)
+                    return 0;
+                *stripped = FALSE;
+                return func->newaddress + (offset - func->address);
+            }
+            beg = new;
+        }
+        else {
+            end = new;
+        }
+    }
 }
 
 /* The output_file() routines in files.c have to run down the list of
@@ -1250,6 +1342,8 @@ extern void init_symbols_vars(void)
     df_functions_head = NULL;
     df_functions_tail = NULL;
     df_current_function = NULL;
+    df_functions_sorted = NULL;
+    df_functions_sorted_count = 0;
 }
 
 extern void symbols_begin_pass(void) 
@@ -1295,6 +1389,9 @@ extern void symbols_allocate_arrays(void)
         memset(df_functions, 0, sizeof(df_function_t *) * DF_FUNCTION_HASH_BUCKETS);
         df_functions_head = NULL;
         df_functions_tail = NULL;
+
+        df_functions_sorted = NULL;
+        df_functions_sorted_count = 0;
 
         df_note_function_start("<global namespace>", DF_NOT_IN_FUNCTION, FALSE, -1);
         df_note_function_end(DF_NOT_IN_FUNCTION);
@@ -1354,6 +1451,9 @@ extern void symbols_free_arrays(void)
         }
         my_free(&df_symbol_map, "df symbol-map hash table");
     }
+    if (df_functions_sorted) {
+        my_free(&df_functions, "df function sorted table");
+    }
     if (df_functions) {
         for (i=0; i<DF_FUNCTION_HASH_BUCKETS; i++) {
             df_function_t *func = df_functions[i];
@@ -1364,9 +1464,9 @@ extern void symbols_free_arrays(void)
             }
         }
         my_free(&df_functions, "df function hash table");
-        df_functions_head = NULL;
-        df_functions_tail = NULL;
     }
+    df_functions_head = NULL;
+    df_functions_tail = NULL;
 
     if (individual_name_strings != NULL)
         my_free(&individual_name_strings, "property name strings");
