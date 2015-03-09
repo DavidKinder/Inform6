@@ -504,9 +504,9 @@ extern void make_global(int array_flag, int name_only)
                     unicode = text_to_unicode(token_text+j);
                     if (glulx_mode)
                     {
-                        if (unicode < 0 || unicode >= 256)
+                        if (array_entry_size == 1 && (unicode < 0 || unicode >= 256))
                         {
-                            error("Unicode characters beyond Latin-1 are not yet supported in Glulx array literals");
+                            error("Unicode characters beyond Latin-1 cannot be used in a byte array");
                         }
                         else
                         {

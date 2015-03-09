@@ -59,6 +59,11 @@ These are the changes delivered in version 6.34 of the Inform compiler.
 <tt>#lowest_class_number</tt>,
 <tt>#lowest_object_number</tt>, and
 <tt>#lowest_property_number</tt>.
+<li><p>Unicode characters can now be included in Glulx word arrays as literals, e.g.
+<pre>
+  Array text1 table "A @{1c4} A";
+  Array text2 --> "A @oef A";
+</pre>
 </ul>
 <h3>Bugs fixed</h3>
 Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
