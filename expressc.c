@@ -2804,7 +2804,15 @@ static void generate_code_from(int n, int void_flag)
     if (!glulx_mode) {
 
         if (ET[n].to_expression)
-        {   if (ET[n].true_label != -1)
+        {
+            if (void_flag) {
+                warning("Logical expression has no side-effects");
+                if (ET[n].true_label != -1)
+                    assemble_label_no(ET[n].true_label);
+                else
+                    assemble_label_no(ET[n].false_label);
+            }
+            else if (ET[n].true_label != -1)
             {   assemblez_1(push_zc, zero_operand);
                 assemblez_jump(next_label++);
                 assemble_label_no(ET[n].true_label);
@@ -2828,7 +2836,15 @@ static void generate_code_from(int n, int void_flag)
     else {
 
         if (ET[n].to_expression)
-        {   if (ET[n].true_label != -1)
+        {   
+            if (void_flag) {
+                warning("Logical expression has no side-effects");
+                if (ET[n].true_label != -1)
+                    assemble_label_no(ET[n].true_label);
+                else
+                    assemble_label_no(ET[n].false_label);
+            }
+            else if (ET[n].true_label != -1)
             {   assembleg_store(stack_pointer, zero_operand);
                 assembleg_jump(next_label++);
                 assemble_label_no(ET[n].true_label);
