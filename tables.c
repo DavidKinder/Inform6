@@ -4,7 +4,7 @@
 /*               tables.                                                     */
 /*                                                                           */
 /*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   copyright (c) Graham Nelson 1993 - 2015                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
