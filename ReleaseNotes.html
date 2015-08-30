@@ -74,11 +74,17 @@ a logical expression but not assigning or using the result of that expression. [
 <tt>$MAX_ARRAYS</tt> setting. [Mantis 1355]
 <li><p>Memory settings can no longer overflow if set to very large values. These values are limited to a
 maximum of 999999999: setting them higher just results in a warning. [Mantis 1356]
-<li>The debugging output file now contains the correct function addresses even when the compiler has been
+<li><p>The debugging output file now contains the correct function addresses even when the compiler has been
 told to omit unused functions. [Mantis 1515]
-<li>Crashes caused by over-long identifiers have been fixed. Note that as a result, the previously allowed
+<li><p>Crashes caused by over-long identifiers have been fixed. Note that as a result, the previously allowed
 (although undocumented) use of strings or dictionary words in an action-based (implicit) switch statement
-now causes an error. [Mantis 1696]
+now causes an error. [Mantis 1696,1702]
+<li><p>The object table is now always generated at an even Z-Machine address, as the logic in the veneer
+routine <tt>RA__Pr()</tt> requires this. [Mantis 1712]
+<li><p>The <b>F</b> and <b>u</b> options are now explicitly disallowed with the <tt>Switches</tt> directive.
+[Mantis 1703]
+<li><p>Assigning values to system functions now leads to an error message, rather than a crash. [Mantis 1704]
+<li><p>Crashes due to over-long abbreviations have been fixed. [Mantis 1719]
 </ul>
 
 <h2>Compiler 6.33</h2>
