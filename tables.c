@@ -228,11 +228,11 @@ static int32 rough_size_of_paged_memory_g(void)
 static void construct_storyfile_z(void)
 {   uchar *p;
     int32 i, j, k, l, mark, objs, strings_length, code_length,
-          limit, excess, extend_offset, headerext_length;
-    int32 globals_at, link_table_at, dictionary_at, actions_at, preactions_at,
-          abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
-          map_of_module, grammar_table_at, charset_at, headerext_at,
-          terminating_chars_at, unicode_at, id_names_length;
+          limit=0, excess=0, extend_offset=0, headerext_length=0;
+    int32 globals_at=0, link_table_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
+          abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
+          map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
+          terminating_chars_at=0, unicode_at=0, id_names_length=0;
     int skip_backpatching = FALSE;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -329,6 +329,12 @@ static void construct_storyfile_z(void)
     }
 
     /*  -------------------- Objects and Properties ------------------------ */
+
+    /* The object table must be word-aligned. The Z-machine spec does not
+       require this, but the RA__Pr() veneer routine does. See 
+       http://inform7.com/mantis/view.php?id=1712.
+    */
+    while ((mark%2) != 0) p[mark++]=0;
 
     prop_defaults_at = mark;
 
@@ -1152,7 +1158,7 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");
             for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[64];
+            {   char abbrev_string[MAX_ABBREV_LENGTH];
                 strcpy(abbrev_string,
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
@@ -1269,6 +1275,7 @@ static void construct_storyfile_g(void)
     /* ---------------- Various Things I'm Not Sure About ------------------ */
     /* Actually, none of these are relevant to Glulx. */
     headerext_at = mark;
+    charset_at = 0;
     if (alphabet_modified)
       charset_at = mark;
     unicode_at = 0;
@@ -1288,7 +1295,7 @@ static void construct_storyfile_g(void)
         p[mark++] = objectatts[i*NUM_ATTR_BYTES+j];
       }
       for (j=0; j<6; j++) {
-        int32 val;
+        int32 val = 0;
         switch (j) {
         case 0: /* next object in the linked list. */
           if (i == no_objects-1)
@@ -1841,7 +1848,7 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");
             for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[64];
+            {   char abbrev_string[MAX_ABBREV_LENGTH];
                 strcpy(abbrev_string,
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)

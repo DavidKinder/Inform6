@@ -38,7 +38,8 @@ extern void compile_initial_routine(void)
 
     if (!glulx_mode) {
 
-        AO.value = 0; AO.type = LONG_CONSTANT_OT; AO.marker = MAIN_MV;
+        INITAOTV(&AO, LONG_CONSTANT_OT, 0);
+        AO.marker = MAIN_MV;
 
         sequence_point_follows = FALSE;
 
@@ -52,7 +53,8 @@ extern void compile_initial_routine(void)
     }
     else {
 
-        AO.value = 0; AO.type = CONSTANT_OT; AO.marker = MAIN_MV;
+        INITAOTV(&AO, CONSTANT_OT, 0);
+        AO.marker = MAIN_MV;
 
         sequence_point_follows = FALSE;
 
@@ -2151,15 +2153,13 @@ static void mark_as_needed_g(int code)
 extern assembly_operand veneer_routine(int code)
 {   assembly_operand AO;
     if (!glulx_mode) { 
-        AO.type = LONG_CONSTANT_OT;
+        INITAOTV(&AO, LONG_CONSTANT_OT, code);
         AO.marker = VROUTINE_MV;
-        AO.value = code;
         mark_as_needed_z(code);
     }
     else {
-        AO.type = CONSTANT_OT;
+        INITAOTV(&AO, CONSTANT_OT, code);
         AO.marker = VROUTINE_MV;
-        AO.value = code;
         mark_as_needed_g(code);
     }
     return(AO);
@@ -2192,9 +2192,9 @@ static void compile_symbol_table_routine(void)
         return;
     }
 
-    AO.value = 1; AO.type = VARIABLE_OT; AO.marker = 0;
-    AO2.type = SHORT_CONSTANT_OT; AO2.marker = 0;
-    AO3.type = LONG_CONSTANT_OT; AO3.marker = 0;
+    INITAOTV(&AO, VARIABLE_OT, 1);
+    INITAOT(&AO2, SHORT_CONSTANT_OT);
+    INITAOT(&AO3, LONG_CONSTANT_OT);
 
     arrays_l = next_label++;
     routines_l = next_label++;

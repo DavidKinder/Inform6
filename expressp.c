@@ -57,7 +57,7 @@ extern int *variable_usage;
 int system_function_usage[32];
 
 static int get_next_etoken(void)
-{   int v, symbol, mark_symbol_as_used = FALSE,
+{   int v, symbol = 0, mark_symbol_as_used = FALSE,
         initial_bracket_level = bracket_level;
 
     etoken_count++;
@@ -1019,7 +1019,7 @@ static void remove_bracket_layer_from_emitter_stack()
 static void emit_token(token_data t)
 {   assembly_operand o1, o2; int arity, stack_size, i;
     int op_node_number, operand_node_number, previous_node_number;
-    int32 x;
+    int32 x = 0;
 
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
@@ -1107,7 +1107,7 @@ static void emit_token(token_data t)
             {   int index = emitter_stack[emitter_sp-arity].value;
                 if(!glulx_mode)
                     index -= 256;
-                if(index > 0 && index < NUMBER_SYSTEM_FUNCTIONS)
+                if(index >= 0 && index < NUMBER_SYSTEM_FUNCTIONS)
                     error_named("System function name used as a value:", system_functions.keywords[index]);
                 else
                     compiler_error("Found unnamed system function used as a value");
@@ -1467,7 +1467,7 @@ static void check_property_operator(int from_node)
 static void check_lvalues(int from_node)
 {   int below = ET[from_node].down;
     int opnum = ET[from_node].operator_number, opnum_below;
-    int lvalue_form, i, j;
+    int lvalue_form, i, j = 0;
 
     if (below != -1)
     {
@@ -1737,9 +1737,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
         ET[n].up = -1;
         ET[n].right = -1;
         ET[n].value = AO;
-        AO.type = EXPRESSION_OT;
+        INITAOT(&AO, EXPRESSION_OT);
         AO.value = n;
-        AO.marker = 0;
     }
 
     insert_exp_to_cond(AO.value, context);

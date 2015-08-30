@@ -497,7 +497,7 @@ extern void make_global(int array_flag, int name_only)
             {   assembly_operand chars;
 
                 int j;
-                chars.marker = 0;
+                INITAO(&chars);
                 for (i=0,j=0; token_text[j]!=0; i++,j+=textual_form_length)
                 {
                     int32 unicode; int zscii;

@@ -174,8 +174,8 @@ extern assembly_operand action_of_name(char *name)
     j = symbol_index(action_sub, -1);
 
     if (stypes[j] == FAKE_ACTION_T)
-    {   AO.value = svals[j];
-        AO.marker = 0;
+    {   INITAO(&AO);
+        AO.value = svals[j];
         if (!glulx_mode)
           AO.type = LONG_CONSTANT_OT;
         else
@@ -194,6 +194,7 @@ extern assembly_operand action_of_name(char *name)
     }
     sflags[j] |= USED_SFLAG;
 
+    INITAO(&AO);
     AO.value = svals[j];
     AO.marker = ACTION_MV;
     if (!glulx_mode) {
@@ -773,7 +774,7 @@ extern void extend_verb(void)
 {
     /*  Parse an entire Extend ... directive.                                */
 
-    int Inform_verb, k, l, lines, extend_mode;
+    int Inform_verb = -1, k, l, lines, extend_mode;
 
     directive_keywords.enabled = TRUE;
     directives.enabled = FALSE;

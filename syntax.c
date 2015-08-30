@@ -324,10 +324,6 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
                 ebf_error("action (or fake action) name", token_text);
                 continue;
             }
-            spec_stack[spec_sp].type = 
-                ((!glulx_mode) ? LONG_CONSTANT_OT : CONSTANT_OT);
-            spec_stack[spec_sp].value = 0;
-            spec_stack[spec_sp].marker = 0;
             spec_stack[spec_sp] = action_of_name(token_text);
 
             if (spec_stack[spec_sp].value == -1)
@@ -456,6 +452,12 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             break;
         }
 
+        if (strlen(token_text) > MAX_IDENTIFIER_LENGTH)
+        {   error_named("Local variable identifier too long:", token_text);
+            panic_mode_error_recovery();
+            break;
+        }
+
         if (no_locals == MAX_LOCAL_VARIABLES-1)
         {   error_numbered("Too many local variables for a routine; max is",
                 MAX_LOCAL_VARIABLES-1);
@@ -564,12 +566,10 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
                 put_token_back(); put_token_back();
 
                 if (!glulx_mode) {
-                    AO.type = VARIABLE_OT; AO.value = 249; AO.marker = 0;
+                    INITAOTV(&AO, VARIABLE_OT, 249);
                 }
                 else {
-                    AO.type = GLOBALVAR_OT;
-                    AO.value = MAX_LOCAL_VARIABLES+6; /* sw__var */
-                    AO.marker = 0;
+                    INITAOTV(&AO, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+6); /* sw__var */
                 }
                 parse_switch_spec(AO, switch_label, TRUE);
 
@@ -590,7 +590,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
 extern void parse_code_block(int break_label, int continue_label,
     int switch_rule)
-{   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label,
+{   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label = 0,
         unary_minus_flag;
 
     begin_syntax_line(TRUE);

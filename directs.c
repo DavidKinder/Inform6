@@ -47,7 +47,7 @@ extern int parse_given_directive(int internal_flag)
 
         Returns: FALSE if program continues, TRUE if end of file reached.    */
 
-    int *trace_level; int32 i, j, k, n, flag;
+    int *trace_level = NULL; int32 i, j, k, n, flag;
     const char *constant_name;
     debug_location_beginning beginning_debug_location;
 
@@ -81,6 +81,12 @@ extern int parse_given_directive(int internal_flag)
                return ebf_error_recover("abbreviation string", token_text);
            if (strlen(token_text)<2)
            {   error_named("It's not worth abbreviating", token_text);
+               continue;
+           }
+           /* Abbreviation string with null must fit in a MAX_ABBREV_LENGTH
+              array. */
+           if (strlen(token_text)>=MAX_ABBREV_LENGTH)
+           {   error_named("Abbreviation too long", token_text);
                continue;
            }
            make_abbreviation(token_text);

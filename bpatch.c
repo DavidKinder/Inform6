@@ -393,7 +393,7 @@ extern void backpatch_zmachine(int mv, int zmachine_area, int32 offset)
 }
 
 extern void backpatch_zmachine_image_z(void)
-{   int bm = 0, zmachine_area; int32 offset, value, addr;
+{   int bm = 0, zmachine_area; int32 offset, value, addr = 0;
     ASSERT_ZCODE();
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
@@ -434,7 +434,7 @@ extern void backpatch_zmachine_image_z(void)
 }
 
 extern void backpatch_zmachine_image_g(void)
-{   int bm = 0, zmachine_area; int32 offset, value, addr;
+{   int bm = 0, zmachine_area; int32 offset, value, addr = 0;
     ASSERT_GLULX();
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
@@ -464,7 +464,7 @@ extern void backpatch_zmachine_image_g(void)
             if (compiler_error("Illegal area to backpatch"))
               backpatch_error_flag = TRUE;
         }
-        addr = addr + offset - Write_RAM_At; 
+        addr = addr + offset - Write_RAM_At;
 
         value = (zmachine_paged_memory[addr] << 24)
                 | (zmachine_paged_memory[addr+1] << 16)

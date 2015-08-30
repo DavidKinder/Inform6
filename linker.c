@@ -896,7 +896,7 @@ at strings offset %04x (+%04x)\n",
             {   objectsz[1].child = no_objects+1;
             }
             else
-            {   int j1, j2 = objectsz[1].child;
+            {   int j1 = 0, j2 = objectsz[1].child;
                 while (j2 != 0)
                 {   j1 = j2;
                     j2 = objectsz[j2].next;

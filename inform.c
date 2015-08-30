@@ -936,7 +936,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
 /* ------------------------------------------------------------------------- */
 
 extern void translate_temp_filename(int i)
-{   char *p;
+{   char *p = NULL;
     switch(i)
     {   case 1: p=Temp1_Name; break;
         case 2: p=Temp2_Name; break;
@@ -1327,7 +1327,11 @@ extern void switches(char *p, int cmode)
                       transcript_switch = state; break;
         case 's': statistics_switch = state; break;
         case 't': asm_trace_setting=2; break;
-        case 'u': optimise_switch = state; break;
+        case 'u': if (cmode == 0) {
+                      error("The switch '-u' can't be set with 'Switches'");
+                      break;
+                  }
+                  optimise_switch = state; break;
         case 'v': if (glulx_mode) { s = select_glulx_version(p+i+1)+1; break; }
                   if ((cmode==0) && (version_set_switch)) { s=2; break; }
                   version_set_switch = TRUE; s=2;
@@ -1376,7 +1380,11 @@ extern void switches(char *p, int cmode)
                       default:  error_format=1; break;
                   }
                   break;
-        case 'F': switch(p[i+1])
+        case 'F': if (cmode == 0) {
+                      error("The switch '-F' can't be set with 'Switches'");
+                      break;
+                  }
+                  switch(p[i+1])
                   {   case '0': s=2; temporary_files_switch = FALSE; break;
                       case '1': s=2; temporary_files_switch = TRUE; break;
                       default:  temporary_files_switch = state; break;
