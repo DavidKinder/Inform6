@@ -76,6 +76,9 @@ a logical expression but not assigning or using the result of that expression. [
 maximum of 999999999: setting them higher just results in a warning. [Mantis 1356]
 <li>The debugging output file now contains the correct function addresses even when the compiler has been
 told to omit unused functions. [Mantis 1515]
+<li>Crashes caused by over-long identifiers have been fixed. Note that as a result, the previously allowed
+(although undocumented) use of strings or dictionary words in an action-based (implicit) switch statement
+now causes an error. [Mantis 1696]
 </ul>
 
 <h2>Compiler 6.33</h2>

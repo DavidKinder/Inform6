@@ -1553,6 +1553,9 @@ extern void get_next_token(void)
                     "Name exceeds the maximum length of %d characters:",
                          MAX_IDENTIFIER_LENGTH);
                 error_named(bad_length, circle[circle_position].text);
+                /* Trim token so that it doesn't violate
+                   MAX_IDENTIFIER_LENGTH during error recovery */
+                circle[circle_position].text[MAX_IDENTIFIER_LENGTH] = 0;
             }
 
             if (dont_enter_into_symbol_table)

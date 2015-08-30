@@ -320,6 +320,10 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
 
         if (action_switch)
         {   get_next_token();
+            if (token_type == SQ_TT || token_type == DQ_TT) {
+                ebf_error("action (or fake action) name", token_text);
+                continue;
+            }
             spec_stack[spec_sp].type = 
                 ((!glulx_mode) ? LONG_CONSTANT_OT : CONSTANT_OT);
             spec_stack[spec_sp].value = 0;
