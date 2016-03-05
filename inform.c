@@ -1257,6 +1257,7 @@ printf("  S   compile strict error-checking at run-time (on by default)\n");
 printf("  T   enable throwback of errors in the DDE\n");
 #endif
 printf("  U   insert \"Constant USE_MODULES;\" automatically\n");
+printf("  V   print the version and date of this program\n");
 printf("  Wn  header extension table is at least n words (n = 3 to 99)\n");
 printf("  X   compile with INFIX debugging facilities present\n");
   printf("\n");
@@ -1416,6 +1417,7 @@ extern void switches(char *p, int cmode)
                   break;
         case 'H': compression_switch = state; break;
         case 'U': define_USE_MODULES_switch = state; break;
+        case 'V': exit(0); break;
         case 'W': if ((p[i+1]>='0') && (p[i+1]<='9'))
                   {   s=2; ZCODE_HEADER_EXT_WORDS = p[i+1]-'0';
                       if ((p[i+2]>='0') && (p[i+2]<='9'))
