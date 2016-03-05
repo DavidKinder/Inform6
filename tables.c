@@ -72,11 +72,11 @@ int32 RAM_Size, Write_RAM_At; /* Glulx */
 /* ------------------------------------------------------------------------- */
 
 int release_number,                    /* Release number game is to have     */
-    statusline_flag,                   /* Either TIME_STYLE or SCORE_STYLE   */
+    statusline_flag;                   /* Either TIME_STYLE or SCORE_STYLE   */
 
-    serial_code_given_in_program;      /* If TRUE, a Serial directive has    */
-char serial_code_buffer[7];            /* specified this 6-digit serial code */
-                                       /* (overriding the usual date-stamp)  */
+int serial_code_given_in_program       /* If TRUE, a Serial directive has    */
+    = FALSE;                           /* specified this 6-digit serial code */
+char serial_code_buffer[7];            /* (overriding the usual date-stamp)  */
 int flags2_requirements[16];           /* An array of which bits in Flags 2 of
                                           the header will need to be set:
                                           e.g. if the save_undo / restore_undo
@@ -1877,7 +1877,6 @@ extern void construct_storyfile(void)
 
 extern void init_tables_vars(void)
 {
-    serial_code_given_in_program = FALSE;
     release_number = 1;
     statusline_flag = SCORE_STYLE;
 

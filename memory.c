@@ -856,6 +856,13 @@ static void explain_parameter(char *command)
   into the game file.\n");
         return;
     }
+    if (strcmp(command,"SERIAL")==0)
+    {
+        printf(
+"  SERIAL, if set, will be used as the six digit serial number written into \n\
+  the header of the output file.\n");
+        return;
+    }
 
     printf("No such memory setting as \"%s\"\n",command);
 
@@ -1074,6 +1081,15 @@ extern void memory_command(char *command)
                 OMIT_UNUSED_ROUTINES=j, flag=1;
                 if (OMIT_UNUSED_ROUTINES > 1 || OMIT_UNUSED_ROUTINES < 0)
                     OMIT_UNUSED_ROUTINES = 1;
+            }
+            if (strcmp(command,"SERIAL")==0)
+            {
+                if (j >= 0 && j <= 999999)
+                {
+                    sprintf(serial_code_buffer,"%06d",j);
+                    serial_code_given_in_program = TRUE;
+                    flag=1;
+                }
             }
 
             if (flag==0)
