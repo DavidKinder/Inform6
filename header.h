@@ -31,13 +31,13 @@
 /* ------------------------------------------------------------------------- */
 
 #define RELEASE_DATE "5th March 2016"
-#define RELEASE_NUMBER 1633
+#define RELEASE_NUMBER 1634
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
 
 /* N indicates an intermediate release for Inform 7 */
-#define RELEASE_SUFFIX "N"
+/*#define RELEASE_SUFFIX "N"*/
 
 /* ------------------------------------------------------------------------- */
 /*   Our host machine or OS for today is...                                  */
