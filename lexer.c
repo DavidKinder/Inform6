@@ -2,7 +2,7 @@
 /*   "lexer" : Lexical analyser                                              */
 /*                                                                           */
 /*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2015                                 */
+/*   copyright (c) Graham Nelson 1993 - 2016                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
