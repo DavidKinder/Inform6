@@ -479,6 +479,10 @@ static char current_source_path[PATHLEN];
        char Charset_Map[PATHLEN];
 static char ICL_Path[PATHLEN];
 
+/* Set one of the above Path buffers to the given location, or list of
+   locations. (A list is comma-separated, and only accepted for Source_Path,
+   Include_Path, ICL_Path, Module_Path.)
+*/
 static void set_path_value(char *path, char *value)
 {   int i, j;
 
@@ -508,6 +512,65 @@ Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
     }
 }
 
+/* Prepend the given location or list of locations to one of the above
+   Path buffers. This is only permitted for Source_Path, Include_Path, 
+   ICL_Path, Module_Path.
+
+   An empty field (in the comma-separated list) means the current
+   directory. If the Path buffer is entirely empty, we assume that
+   we want to search both value and the current directory, so
+   the result will be "value,".
+*/
+static void prepend_path_value(char *path, char *value)
+{
+    int i, j;
+    int oldlen = strlen(path);
+    int newlen;
+    char new_path[PATHLEN];
+
+    if ((path != Source_Path) && (path != Include_Path)
+        && (path != ICL_Path) && (path != Module_Path))
+    {   printf("The character '+' is used to add to a list \
+of possible locations, and can only be used in the Include_Path, Source_Path, \
+Module_Path or ICL_Path variables. Other paths are for output only.\n");
+        exit(1);
+    }
+
+    for (i=0, j=0;;)
+    {
+        if (i >= PATHLEN-1) {
+            printf("A specified path is longer than %d characters.\n",
+                PATHLEN-1);
+            exit(1);
+        }
+        if ((value[j] == FN_ALT) || (value[j] == 0))
+        {   if ((path != Debugging_Name) && (path != Transcript_Name)
+                 && (path != Language_Name) && (path != Charset_Map)
+                 && (i>0) && (isalnum(new_path[i-1]))) new_path[i++] = FN_SEP;
+            new_path[i++] = value[j++];
+            if (value[j-1] == 0) {
+                newlen = i-1;
+                break;
+            }
+        }
+        else new_path[i++] = value[j++];
+    }
+
+    if (newlen+1+oldlen >= PATHLEN-1) {
+        printf("A specified path is longer than %d characters.\n",
+            PATHLEN-1);
+        exit(1);
+    }
+
+    i = newlen;
+    new_path[i++] = FN_ALT;
+    for (j=0; j<oldlen;)
+        new_path[i++] = path[j++];
+    new_path[i] = 0;
+    
+    strcpy(path, new_path);
+}
+
 static void set_default_paths(void)
 {
     set_path_value(Source_Path,     Source_Directory);
@@ -522,23 +585,36 @@ static void set_default_paths(void)
     set_path_value(Charset_Map,     "");
 }
 
-/* Parse a path option which looks like either "dir" or 
-   "pathname=dir". If there is no "=", we assume "include_path=...". 
+/* Parse a path option which looks like "dir", "+dir", "pathname=dir",
+   or "+pathname=dir". If there is no "=", we assume "include_path=...".
+   If the option begins with a "+" the directory is prepended to the
+   existing path instead of replacing it.
 */
 static void set_path_command(char *command)
-{   int i, j; char *path_to_set = NULL, *new_value;
+{   int i, j; char *path_to_set = NULL;
+    int prepend = 0;
+
+    if (command[0] == '+') {
+        prepend = 1;
+        command++;
+    }
+
     for (i=0; (command[i]!=0) && (command[i]!='=');i++) ;
 
-    if (command[i]==0) { new_value=command; path_to_set=Include_Path; }
-    else
-    {   char pathname[PATHLEN];
-        if (i>=PATHLEN) i=PATHLEN-1;
-        new_value = command+i+1;
-        for (j=0;j<i;j++)
-            if (isupper(command[j])) pathname[j]=tolower(command[j]);
-            else pathname[j]=command[j];
-        pathname[j]=0;
+    path_to_set=Include_Path; 
 
+    if (command[i] == '=') { 
+        char pathname[PATHLEN];
+        if (i>=PATHLEN) i=PATHLEN-1;
+        for (j=0;j<i;j++) {
+            char ch = command[j];
+            if (isupper(ch)) ch=tolower(ch);
+            pathname[j]=ch;
+        }
+        pathname[j]=0;
+        command = command+i+1;
+
+        path_to_set = NULL;
         if (strcmp(pathname, "source_path")==0)  path_to_set=Source_Path;
         if (strcmp(pathname, "include_path")==0) path_to_set=Include_Path;
         if (strcmp(pathname, "code_path")==0)    path_to_set=Code_Path;
@@ -556,7 +632,10 @@ static void set_path_command(char *command)
         }
     }
 
-    set_path_value(path_to_set, new_value);
+    if (!prepend)
+        set_path_value(path_to_set, command);
+    else
+        prepend_path_value(path_to_set, command);
 }
 
 static int contains_separator(char *name)
@@ -847,10 +926,14 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
 "   The four input path variables can be set to lists of alternative paths\n\
    separated by '%c' characters: these alternatives are always tried in\n\
    the order they are specified in, that is, left to right through the text\n\
-   in the path variable.\n\
-   (Modules are written to the first alternative in the module_path list;\n\
-   it is an error to give alternatives at all for purely output paths.)\n\n",
+   in the path variable.\n\n",
    FN_ALT);
+    printf(
+"   If two '+' signs are used (\"inform ++include_path=dir jigsaw\") then\n\
+   the path or paths are added to the existing list.\n\n");
+    printf(
+"   (Modules are written to the first alternative in the module_path list;\n\
+   it is an error to give alternatives at all for purely output paths.)\n\n");
 
 #ifdef FILE_EXTENSIONS
     printf("3. The following file extensions are added:\n\n\
