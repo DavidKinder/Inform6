@@ -483,7 +483,13 @@ static void set_path_value(char *path, char *value)
 {   int i, j;
 
     for (i=0, j=0;;)
-    {   if ((value[j] == FN_ALT) || (value[j] == 0))
+    {
+        if (i >= PATHLEN-1) {
+            printf("A specified path is longer than %d characters.\n",
+                PATHLEN-1);
+            exit(1);
+        }
+        if ((value[j] == FN_ALT) || (value[j] == 0))
         {   if ((value[j] == FN_ALT)
                 && (path != Source_Path) && (path != Include_Path)
                 && (path != ICL_Path) && (path != Module_Path))
@@ -496,11 +502,6 @@ Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
                  && (path != Language_Name) && (path != Charset_Map)
                  && (i>0) && (isalnum(path[i-1]))) path[i++] = FN_SEP;
             path[i++] = value[j++];
-            if (i == PATHLEN-1) {
-                printf("A specified path is longer than %d characters.\n",
-                    PATHLEN-1);
-                exit(1);
-            }
             if (value[j-1] == 0) return;
         }
         else path[i++] = value[j++];
@@ -521,6 +522,9 @@ static void set_default_paths(void)
     set_path_value(Charset_Map,     "");
 }
 
+/* Parse a path option which looks like either "dir" or 
+   "pathname=dir". If there is no "=", we assume "include_path=...". 
+*/
 static void set_path_command(char *command)
 {   int i, j; char *path_to_set = NULL, *new_value;
     for (i=0; (command[i]!=0) && (command[i]!='=');i++) ;
