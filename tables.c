@@ -324,6 +324,9 @@ static void construct_storyfile_z(void)
         p[mark++] = zscii_high_water_mark;
         for (i=0;i<zscii_high_water_mark;i++)
         {   j = zscii_to_unicode(155 + i);
+            if (j < 0 || j > 0xFFFF) {
+                error("Z-machine Unicode translation table cannot contain characters beyond $FFFF.");
+            }
             p[mark++] = j/256; p[mark++] = j%256;
         }
     }
