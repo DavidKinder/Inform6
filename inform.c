@@ -489,7 +489,7 @@ static void set_path_value(char *path, char *value)
                 && (path != ICL_Path) && (path != Module_Path))
             {   printf("The character '%c' is used to divide entries in a list \
 of possible locations, and can only be used in the Include_Path, Source_Path, \
-Module_Path or ICL_Path variables. Other paths are for output only.", FN_ALT);
+Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
                 exit(1);
             }
             if ((path != Debugging_Name) && (path != Transcript_Name)
