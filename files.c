@@ -376,6 +376,7 @@ static void output_file_z(void)
 
     if (temporary_files_switch)
     {   fclose(Temp2_fp);
+        Temp2_fp = NULL;
         fin=fopen(Temp2_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 2");
@@ -508,6 +509,7 @@ static void output_file_z(void)
     {   if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
+        fin = NULL;
     }
 
     if (size_before_code + code_length != size)
@@ -522,6 +524,7 @@ static void output_file_z(void)
 
     if (temporary_files_switch)
     {   fclose(Temp1_fp);
+        Temp1_fp = NULL;
         fin=fopen(Temp1_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 1");
@@ -529,6 +532,7 @@ static void output_file_z(void)
         if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 1");
         fclose(fin);
+        fin = NULL;
         remove(Temp1_Name); remove(Temp2_Name);
     }
     else
@@ -542,6 +546,7 @@ static void output_file_z(void)
     if (temporary_files_switch)
     {   if (module_switch)
         {   fclose(Temp3_fp);
+            Temp3_fp = NULL;
             fin=fopen(Temp3_Name,"rb");
             if (fin==NULL)
                 fatalerror("I/O failure: couldn't reopen temporary file 3");
@@ -549,6 +554,7 @@ static void output_file_z(void)
             if (ferror(fin))
                 fatalerror("I/O failure: couldn't read from temporary file 3");
             fclose(fin);
+            fin = NULL;
             remove(Temp3_Name);
         }
     }
@@ -763,6 +769,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
     if (temporary_files_switch)
     {   fclose(Temp2_fp);
+        Temp2_fp = NULL;
         fin=fopen(Temp2_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 2");
@@ -932,6 +939,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     {   if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
+        fin = NULL;
     }
 
     if (size_before_code + code_length != size)
@@ -1678,10 +1686,13 @@ extern void check_temp_files(void)
 
 extern void remove_temp_files(void)
 {   if (Temp1_fp != NULL) fclose(Temp1_fp);
+    Temp1_fp = NULL;
     if (Temp2_fp != NULL) fclose(Temp2_fp);
+    Temp2_fp = NULL;
     remove(Temp1_Name); remove(Temp2_Name);
     if (module_switch)
     {   if (Temp3_fp != NULL) fclose(Temp3_fp);
+        Temp3_fp = NULL;
         remove(Temp3_Name);
     }
 }
