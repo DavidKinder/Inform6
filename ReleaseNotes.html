@@ -100,6 +100,10 @@ routine <tt>RA__Pr()</tt> requires this. [Mantis 1712]
 <li><p>Representing the at symbol '@' by <tt>@{0040}</tt> now works when compiling to Glulx. [Mantis 1933]
 <li><p>The <tt>USE_TEMPORARY_FILES</tt> option no longer has a bug that led to files being closed more than
 once. [Mantis 1934]
+<li><p>The platform-specific definitions in <tt>header.h</tt> for Unix have been cleaned up: "UNIX64" has been
+removed, since it was identical to "UNIX"; and "UNIX" no longer implies "USE_TEMPORARY_FILES". [Mantis 1937]
+<li><p>The platform-specific definitions in <tt>header.h</tt> for the Macintosh have been cleaned up: "MACINTOSH" is
+now "MAC_CLASSIC"; "OSX" is now "MACOS", and "MACOS" now uses "HUGE_SIZE" for the default array sizes. [Mantis 1937]
 </ul>
 
 <h2>Compiler 6.33</h2>
