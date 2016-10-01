@@ -1867,7 +1867,8 @@ extern assembly_operand parse_expression(int context)
 
         if ((a.type == ENDEXP_TT) && (b.type == ENDEXP_TT))
         {   if (emitter_sp == 0)
-            {   compiler_error("SR error: emitter stack empty");
+            {   error("No expression between brackets '(' and ')'");
+                put_token_back();
                 return AO;
             }
             if (emitter_sp > 1)
