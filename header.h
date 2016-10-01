@@ -707,20 +707,6 @@ static int32 unique_task_id(void)
 #define  GPAGESIZE 256
 /* All Glulx memory boundaries must be multiples of GPAGESIZE. */
 
-/* In many places the compiler encodes a source-code location (file and
-   line number) into an int32 value. The encoded value looks like
-   file_number + FILE_LINE_SCALE_FACTOR*line_number. This will go
-   badly if a source file has more than FILE_LINE_SCALE_FACTOR lines,
-   of course. But this value is roughly eight million, which is a lot
-   of lines. 
-
-   There is also potential trouble if we have more than 512 source files;
-   perhaps 256, depending on signedness issues. However, there are other
-   spots in the compiler that assume no more than 255 source files, so
-   we'll stick with this for now.
-*/
-#define  FILE_LINE_SCALE_FACTOR  (0x800000L)
-
 /* ------------------------------------------------------------------------- */
 /*   Structure definitions (there are a few others local to files)           */
 /* ------------------------------------------------------------------------- */
@@ -800,6 +786,10 @@ typedef struct debug_location_s
     int32 end_line_number;
     int32 beginning_character_number;
     int32 end_character_number;
+    int32 orig_file_index;
+    int32 orig_beg_line_number;
+    int32 orig_beg_char_number;
+    /* We only track the beginning #origsource location, not the end. */
 } debug_location;
 
 typedef struct debug_locations_s
@@ -808,11 +798,21 @@ typedef struct debug_locations_s
     int reference_count;
 } debug_locations;
 
+typedef struct brief_location_s
+{   int32 file_index;
+    int32 line_number;
+    int32 orig_file_index;
+    int32 orig_line_number;
+} brief_location;
+
 typedef struct debug_location_beginning_s
 {   debug_locations *head;
     int32 beginning_byte_index;
     int32 beginning_line_number;
     int32 beginning_character_number;
+    int32 orig_file_index;
+    int32 orig_beg_line_number;
+    int32 orig_beg_char_number;
 } debug_location_beginning;
 
 typedef struct keyword_group_s
@@ -836,6 +836,10 @@ typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
                                             NULL when closed                 */
+    int is_input;                       /*  Is this a source file that we are
+                                            parsing? If not, this is an
+                                            origsource filename (and handle
+                                            is NULL).                        */
 } FileId;
 
 typedef struct ErrorPosition_s
@@ -843,6 +847,10 @@ typedef struct ErrorPosition_s
     char *source;
     int  line_number;
     int  main_flag;
+    int  orig_file;
+    char *orig_source;
+    int32 orig_line;
+    int32 orig_char;
 } ErrorPosition;
 
 /*  A memory block can hold at most ALLOC_CHUNK_SIZE * 72:  */
@@ -1333,19 +1341,20 @@ typedef struct operator_s
 #define MESSAGE_CODE     23
 #define NEARBY_CODE      24
 #define OBJECT_CODE      25
-#define PROPERTY_CODE    26
-#define RELEASE_CODE     27
-#define REPLACE_CODE     28
-#define SERIAL_CODE      29
-#define SWITCHES_CODE    30
-#define STATUSLINE_CODE  31
-#define STUB_CODE        32
-#define SYSTEM_CODE      33
-#define TRACE_CODE       34
-#define UNDEF_CODE       35
-#define VERB_CODE        36
-#define VERSION_CODE     37
-#define ZCHARACTER_CODE  38
+#define ORIGSOURCE_CODE  26
+#define PROPERTY_CODE    27
+#define RELEASE_CODE     28
+#define REPLACE_CODE     29
+#define SERIAL_CODE      30
+#define SWITCHES_CODE    31
+#define STATUSLINE_CODE  32
+#define STUB_CODE        33
+#define SYSTEM_CODE      34
+#define TRACE_CODE       35
+#define UNDEF_CODE       36
+#define VERB_CODE        37
+#define VERSION_CODE     38
+#define ZCHARACTER_CODE  39
 
 #define OPENBLOCK_CODE   100
 #define CLOSEBLOCK_CODE  101
@@ -2227,7 +2236,7 @@ extern void  make_upper_case(char *str);
 /*   Extern definitions for "directs"                                        */
 /* ------------------------------------------------------------------------- */
 
-extern int32 routine_starts_line;
+extern brief_location routine_starts_line;
 
 extern int  no_routines, no_named_routines, no_locals, no_termcs;
 extern int  terminating_characters[];
@@ -2252,7 +2261,7 @@ extern void memoryerror(char *s, int32 size) NORETURN;
 extern void error(char *s);
 extern void error_named(char *s1, char *s2);
 extern void error_numbered(char *s1, int val);
-extern void error_named_at(char *s1, char *s2, int32 report_line);
+extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
 extern void char_error(char *s, int ch);
 extern void unicode_char_error(char *s, int32 uni);
@@ -2260,8 +2269,8 @@ extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
-extern void dbnu_warning(char *type, char *name, int32 report_line);
-extern void uncalled_routine_warning(char *type, char *name, int32 report_line);
+extern void dbnu_warning(char *type, char *name, brief_location report_line);
+extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
 extern void link_error(char *s);
 extern void link_error_named(char *s1, char *s2);
@@ -2312,7 +2321,9 @@ extern int test_for_incdec(assembly_operand AO);
 /*   Extern definitions for "files"                                          */
 /* ------------------------------------------------------------------------- */
 
-extern int  input_file;
+extern int  total_files;
+extern int  current_input_file;
+extern int  total_input_files;
 extern FileId *InputFiles;
 
 extern FILE *Temp1_fp, *Temp2_fp, *Temp3_fp;
@@ -2364,6 +2375,7 @@ extern void add_to_checksum(void *address);
 extern void load_sourcefile(char *story_name, int style);
 extern int file_load_chars(int file_number, char *buffer, int length);
 extern void close_all_source(void);
+extern int register_orig_sourcefile(char *filename);
 
 extern void output_file(void);
 
@@ -2461,6 +2473,10 @@ extern void report_errors_at_current_line(void);
 extern debug_location get_current_debug_location(void);
 extern debug_location get_error_report_debug_location(void);
 extern int32 get_current_line_start(void);
+extern void set_origsource_location(char *source, int32 line, int32 charnum);
+extern brief_location get_brief_location(ErrorPosition *errpos);
+extern void export_brief_location(brief_location loc, ErrorPosition *errpos);
+extern brief_location blank_brief_location;
 
 extern void put_token_back(void);
 extern void get_next_token(void);
@@ -2583,7 +2599,7 @@ extern int no_symbols;
 extern int32 **symbs;
 extern int32 *svals;
 extern int   *smarks;
-extern int32 *slines;
+extern brief_location *slines;
 extern int   *sflags;
 #ifdef VAX
   extern char *stypes;
@@ -2614,7 +2630,7 @@ extern void issue_unused_warnings(void);
 extern void add_symbol_replacement_mapping(int original, int renamed);
 extern int find_symbol_replacement(int *value);
 extern void df_note_function_start(char *name, uint32 address, 
-    int embedded_flag, int32 source_line);
+    int embedded_flag, brief_location source_line);
 extern void df_note_function_end(uint32 endaddress);
 extern void df_note_function_symbol(int symbol);
 extern void locate_dead_functions(void);

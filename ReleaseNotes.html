@@ -76,6 +76,22 @@ e.g.
 <li><p>It has always been possible to replace the paths used by the compiler with a command line option of the
 form <tt>+include_path=foo</tt>. It is now possible to add to an existing path without replacing it by using
 an additional '+' character, like so: <tt>++include_path=foo</tt>.
+<li><p>A new <tt>Origsource</tt> directive has been added to allow a record of the location of the relevant in
+a higher-level language that has been converted to Inform 6. (In practice, this will very likely be the location in
+an Inform 7 source.) The syntax is
+<pre>
+  Origsource &lt;file&gt;
+  Origsource &lt;file&gt; &lt;line&gt;
+  Origsource &lt;file&gt; &lt;line&gt; &lt;char&gt;
+  Origsource
+</pre>
+The first three forms declare that all following lines are derived from the named Inform 7 source file (with an
+optional line number and character number). This will be reported in error messages and in debug output. The
+declaration holds through the next <tt>Origsource</tt> directive (but does not apply to included files). The fourth
+form, with no arguments, clears the declaration.
+
+Unlike the <tt>Include</tt> directive, <tt>Origsource</tt> does not open the named file or even verify that it exists.
+The filename is treated as an opaque string.
 </ul>
 <h3>Bugs fixed</h3>
 Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 

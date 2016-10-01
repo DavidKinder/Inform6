@@ -939,7 +939,7 @@ or less.");
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
 %6d textual lines              %8ld characters ",
-            input_file, no_syntax_lines,
+            total_input_files, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_unicode) printf("(UTF-8)\n");
             else if (character_set_setting == 0) printf("(plain ASCII)\n");
@@ -1617,7 +1617,7 @@ table format requested (producing number 2 format instead)");
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
 %6d textual lines              %8ld characters ",
-            input_file, no_syntax_lines,
+            total_input_files, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_unicode) printf("(UTF-8)\n");
             else if (character_set_setting == 0) printf("(plain ASCII)\n");
