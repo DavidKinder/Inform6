@@ -128,6 +128,14 @@ but not used as a value:", unicode);
             current_token.symflags = sflags[symbol];
             switch(stypes[symbol])
             {   case ROUTINE_T:
+                    /* Replaced functions must always be backpatched
+                       because there could be another definition coming. */
+                    if (sflags[symbol] & REPLACE_SFLAG)
+                    {   current_token.marker = SYMBOL_MV;
+                        if (module_switch) import_symbol(symbol);
+                        v = symbol;
+                        break;
+                    }
                     current_token.marker = IROUTINE_MV;
                     break;
                 case GLOBAL_VARIABLE_T:
