@@ -688,6 +688,7 @@ static int32 unique_task_id(void)
 #define  MAX_DICT_WORD_SIZE     40
 #define  MAX_DICT_WORD_BYTES    (40*4)
 #define  MAX_NUM_ATTR_BYTES     39
+#define  MAX_VERB_WORD_SIZE    120
 
 #define  VENEER_CONSTRAINT_ON_CLASSES_Z       256
 #define  VENEER_CONSTRAINT_ON_IP_TABLE_SIZE_Z 128

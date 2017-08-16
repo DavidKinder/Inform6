@@ -122,6 +122,8 @@ once. [Mantis 1934]
 removed, since it was identical to "UNIX"; and "UNIX" no longer implies "USE_TEMPORARY_FILES". [Mantis 1937]
 <li><p>The platform-specific definitions in <tt>header.h</tt> for the Macintosh have been cleaned up: "MACINTOSH" is
 now "MAC_CLASSIC"; "OSX" is now "MACOS", and "MACOS" now uses "HUGE_SIZE" for the default array sizes. [Mantis 1937]
+<li><p>The maximum length of a verb is now limited to 120 (which can be changed in the source code). Previously
+very long verbs would crash the compiler. [Mantis 2023]
 </ul>
 
 <h2>Compiler 6.33</h2>
