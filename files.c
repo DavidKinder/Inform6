@@ -7,8 +7,8 @@
 /*             routines in "inform.c", since they are tied up with ICL       */
 /*             settings and are very host OS-dependent.                      */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2016                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2017                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
