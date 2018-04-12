@@ -16,7 +16,7 @@ OBJECTS = $(patsubst %.c,%.o,${SOURCES})
 all:	$(BINNAME)
 
 # Rules
-%.o: %.c
+%.o: %.c header.h
 	$(CC) $(DEFINES) $(CCOPTS) -o $@ -c $<
 
 $(BINNAME): $(OBJECTS)
