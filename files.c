@@ -114,18 +114,19 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
     is_include = !same_directory_flag && !command_line_flag;
     do
     {   if (infh_switch && is_include) {
-            try_include_extension = Infh_Extension;
             start_x = x;
-        }
-        x = translate_in_filename(x, name, filename_given, same_directory_flag,
-                command_line_flag);
-        try_include_extension = Include_Extension;
-        
-        handle = fopen(name,"r");
-        if (infh_switch && is_include && handle == NULL) {
-            /* Retry the include with the standard Include_Extension */
-            x = translate_in_filename(start_x, name, 
-                    filename_given, same_directory_flag, command_line_flag);
+            try_include_extension = Infh_Extension;
+            x = translate_in_filename(x, name, filename_given, same_directory_flag, command_line_flag);
+            handle = fopen(name,"r");
+            if (handle == NULL) {
+                /* Retry the include with the standard Include_Extension */
+                try_include_extension = Include_Extension;
+                x = translate_in_filename(start_x, name, filename_given, same_directory_flag, command_line_flag);
+                handle = fopen(name,"r");
+            }
+        } else {
+            try_include_extension = Include_Extension;
+            x = translate_in_filename(x, name, filename_given, same_directory_flag, command_line_flag);
             handle = fopen(name,"r");
         }
     } while ((handle == NULL) && (x != 0));
