@@ -490,6 +490,7 @@ static int32 unique_task_id(void)
 #endif
 #ifndef Include_Extension
 #define Include_Extension ".h"
+#define Infh_Extension ".infh"
 #endif
 #ifndef Code_Extension
 #define Code_Extension    ".z3"
@@ -2405,6 +2406,7 @@ extern int
     offsets_switch,         percentages_switch,   obsolete_switch,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
+    infh_switch,
     memory_map_switch,      module_switch,        temporary_files_switch,
     define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
     runtime_error_checking_switch;
@@ -2417,6 +2419,8 @@ extern int32 requested_glulx_version;
 extern int error_format,    store_the_text,       asm_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
+
+extern char *try_include_extension;
 
 extern char Debugging_Name[];
 extern char Transcript_Name[];
