@@ -107,8 +107,11 @@ static void select_target(int targ)
     /* Z-machine */
     WORDSIZE = 2;
     MAXINTWORD = 0x7FFF;
-    INDIV_PROP_START = 64;
 
+    if (INDIV_PROP_START != 64) {
+        INDIV_PROP_START = 64;
+        fatalerror("You cannot change INDIV_PROP_START in Z-code");
+    }
     if (DICT_WORD_SIZE != 6) {
       DICT_WORD_SIZE = 6;
       fatalerror("You cannot change DICT_WORD_SIZE in Z-code");
@@ -138,8 +141,12 @@ static void select_target(int targ)
     /* Glulx */
     WORDSIZE = 4;
     MAXINTWORD = 0x7FFFFFFF;
-    INDIV_PROP_START = 256; /* This could be a memory setting */
     scale_factor = 0; /* It should never even get used in Glulx */
+
+    if (INDIV_PROP_START < 256) {
+        INDIV_PROP_START = 256;
+        warning_numbered("INDIV_PROP_START should be at least 256 in Glulx. Setting to", INDIV_PROP_START);
+    }
 
     if (NUM_ATTR_BYTES % 4 != 3) {
       NUM_ATTR_BYTES += (3 - (NUM_ATTR_BYTES % 4)); 
@@ -237,6 +244,7 @@ int bothpasses_switch,              /* -b */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
     temporary_files_switch,         /* -F */
+    infh_switch,                    /* -I */
     module_switch,                  /* -M */
     runtime_error_checking_switch,  /* -S */
     define_USE_MODULES_switch,      /* -U */
@@ -261,6 +269,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
 static int r_e_c_s_set;             /* has -S been explicitly set? */
 
 int glulx_mode;                     /* -G */
+
+char *try_include_extension = Include_Extension;
 
 static void reset_switch_settings(void)
 {   asm_trace_setting=0;
@@ -732,7 +742,7 @@ extern int translate_in_filename(int last_value,
     if ((command_line_flag==1)||(same_directory_flag==1))
         extension = Source_Extension;
     else
-        extension = Include_Extension;
+        extension = try_include_extension;
 
     extension = check_extension(old_name, extension);
 #else
@@ -951,6 +961,10 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
    except that any extension you give (on the command line or in a filename\n\
    used in a program) will override these.  If you give the null extension\n\
    \".\" then Inform uses no file extension at all (removing the \".\").\n\n");
+    printf("\
+   If you specify the '-I' switch, then an additional Include\n\
+   extension, '%s', will be tried before the standard '%s'\n\n",
+   Infh_Extension, Include_Extension);
 #endif
 
     printf("Names of four individual files can also be set using the same\n\
@@ -1332,6 +1346,9 @@ printf("  F1  use temporary files to reduce memory consumption\n");
 #endif
 printf("  G   compile a Glulx game file\n");
 printf("  H   use Huffman encoding to compress Glulx strings\n");
+
+printf("  I   use an alternate '%s' extension for #Includes\n", Infh_Extension);
+
 printf("  M   compile as a Module for future linking\n");
 
 #ifdef ARCHIMEDES
@@ -1503,6 +1520,7 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'H': compression_switch = state; break;
+        case 'I': infh_switch = state; break;
         case 'U': define_USE_MODULES_switch = state; break;
         case 'V': exit(0); break;
         case 'W': if ((p[i+1]>='0') && (p[i+1]<='9'))

@@ -104,14 +104,31 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
 #endif
     int x = 0;
     FILE *handle;
+    int command_line_flag, is_include;
+    int start_x;
 
     if (total_files == MAX_SOURCE_FILES)
         memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
 
+    command_line_flag = (total_files==0) ? 1 : 0;
+    is_include = !same_directory_flag && !command_line_flag;
     do
-    {   x = translate_in_filename(x, name, filename_given, same_directory_flag,
-                (total_files==0)?1:0);
-        handle = fopen(name,"r");
+    {   if (infh_switch && is_include) {
+            start_x = x;
+            try_include_extension = Infh_Extension;
+            x = translate_in_filename(x, name, filename_given, same_directory_flag, command_line_flag);
+            handle = fopen(name,"r");
+            if (handle == NULL) {
+                /* Retry the include with the standard Include_Extension */
+                try_include_extension = Include_Extension;
+                x = translate_in_filename(start_x, name, filename_given, same_directory_flag, command_line_flag);
+                handle = fopen(name,"r");
+            }
+        } else {
+            try_include_extension = Include_Extension;
+            x = translate_in_filename(x, name, filename_given, same_directory_flag, command_line_flag);
+            handle = fopen(name,"r");
+        }
     } while ((handle == NULL) && (x != 0));
 
     if (filename_storage_left <= (int)strlen(name))
