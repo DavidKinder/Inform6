@@ -305,8 +305,8 @@ static void list_memory_sizes(void)
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
-    printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE",
-        MAX_INDIV_PROP_TABLE_SIZE);
+    printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE", MAX_INDIV_PROP_TABLE_SIZE);
+    printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     printf("|  %25s = %-7d |\n","MAX_LABELS",MAX_LABELS);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
     printf("|  %25s = %-7d |\n","MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
@@ -547,6 +547,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_z;
+    INDIV_PROP_START = 64;
   }
   else {
     MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_g;
@@ -556,6 +557,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_g;
+    INDIV_PROP_START = 256;
   }
 }
 
@@ -778,6 +780,12 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_INDIV_PROP_TABLE_SIZE is the number of bytes allocated to hold the \n\
   table of ..variable values.\n");
+        return;
+    }
+    if (strcmp(command,"INDIV_PROP_START")==0)
+    {   printf(
+"  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
+  properties are numbered INDIV_PROP_START and up.\n");
         return;
     }
     if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
@@ -1040,6 +1048,8 @@ extern void memory_command(char *command)
                 MAX_SOURCE_FILES=j, flag=1;
             if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
                 MAX_INDIV_PROP_TABLE_SIZE=j, flag=1;
+            if (strcmp(command,"INDIV_PROP_START")==0)
+                INDIV_PROP_START=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_TABLE_SIZE")==0)
                 MAX_OBJ_PROP_TABLE_SIZE=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)

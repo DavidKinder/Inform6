@@ -107,8 +107,11 @@ static void select_target(int targ)
     /* Z-machine */
     WORDSIZE = 2;
     MAXINTWORD = 0x7FFF;
-    INDIV_PROP_START = 64;
 
+    if (INDIV_PROP_START != 64) {
+        INDIV_PROP_START = 64;
+        fatalerror("You cannot change INDIV_PROP_START in Z-code");
+    }
     if (DICT_WORD_SIZE != 6) {
       DICT_WORD_SIZE = 6;
       fatalerror("You cannot change DICT_WORD_SIZE in Z-code");
@@ -138,8 +141,12 @@ static void select_target(int targ)
     /* Glulx */
     WORDSIZE = 4;
     MAXINTWORD = 0x7FFFFFFF;
-    INDIV_PROP_START = 256; /* This could be a memory setting */
     scale_factor = 0; /* It should never even get used in Glulx */
+
+    if (INDIV_PROP_START < 256) {
+        INDIV_PROP_START = 256;
+        warning_numbered("INDIV_PROP_START should be at least 256 in Glulx. Setting to", INDIV_PROP_START);
+    }
 
     if (NUM_ATTR_BYTES % 4 != 3) {
       NUM_ATTR_BYTES += (3 - (NUM_ATTR_BYTES % 4)); 
