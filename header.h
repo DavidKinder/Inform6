@@ -1,10 +1,10 @@
 /* ------------------------------------------------------------------------- */
 /*   Header file for Inform:  Z-machine ("Infocom" format) compiler          */
 /*                                                                           */
-/*                              Inform 6.33                                  */
+/*                              Inform 6.34                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   http://www.ifarchive.org/                                               */
@@ -30,8 +30,8 @@
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define RELEASE_DATE "10th May 2014"
-#define RELEASE_NUMBER 1633
+#define RELEASE_DATE "28th June 2018"
+#define RELEASE_NUMBER 1634
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
@@ -50,15 +50,14 @@
 /*     #define ATARIST     -  for the Atari ST                               */
 /*     #define BEOS        -  for the BeBox                                  */
 /*     #define LINUX       -  for Linux under gcc (essentially as Unix)      */
-/*     #define MACINTOSH   -  for the Apple Mac under Think C or Codewarrior */
+/*     #define MACOS       -  for the Apple Mac with OS X (another Unix)     */
+/*     #define MAC_CLASSIC -  for the Apple Mac under Think C or Codewarrior */
 /*     #define MAC_MPW     -  for MPW under Codewarrior (and maybe Think C)  */
 /*     #define OS2         -  for OS/2 32-bit mode under IBM's C Set++       */
-/*     #define OSX         -  for the Apple Mac with OS X (another Unix)     */
 /*     #define PC          -  for 386+ IBM PCs, eg. Microsoft Visual C/C++   */
 /*     #define PC_QUICKC   -  for small IBM PCs under QuickC                 */
 /*     #define PC_WIN32    -  for Borland C++ or Microsoft Visual C++        */
 /*     #define UNIX        -  for Unix under gcc (or big IBM PC under djgpp) */
-/*     #define UNIX64      -  for 64-bit Unix under gcc                      */
 /*     #define VMS         -  for VAX or ALPHA under DEC C, but not VAX C    */
 /*                                                                           */
 /*     In most cases executables are already available at                    */
@@ -291,10 +290,10 @@ static int32 unique_task_id(void)
 /*   Macintosh block                                                         */
 /* ------------------------------------------------------------------------- */
 #ifdef MAC_MPW
-#define MACINTOSH
+#define MAC_CLASSIC
 #endif
 
-#ifdef MACINTOSH
+#ifdef MAC_CLASSIC
 /* 1 */
 #ifdef MAC_MPW
 #define MACHINE_STRING   "Macintosh Programmer's Workshop"
@@ -340,15 +339,15 @@ static int32 unique_task_id(void)
 #define FN_SEP '/'
 #endif
 /* ------------------------------------------------------------------------- */
-/*   OSX block                                                              */
+/*   MACOS block                                                              */
 /* ------------------------------------------------------------------------- */
-#ifdef OSX
+#ifdef MACOS
 /* 1 */
-#define MACHINE_STRING   "Mac OS X"
+#define MACHINE_STRING   "MacOS"
 /* 2 */
 #define HAS_REALPATH
 /* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
+#define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -415,44 +414,21 @@ static int32 unique_task_id(void)
 /* ------------------------------------------------------------------------- */
 #ifdef UNIX
 /* 1 */
-#define MACHINE_STRING   "Unix"
-/* 2 */
-#define USE_TEMPORARY_FILES
-#define HAS_REALPATH
-/* 3 */
-#define DEFAULT_MEMORY_SIZE HUGE_SIZE
-/* 4 */
-#define FN_SEP '/'
-/* 5 */
-#define PATHLEN 512
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#ifdef MAIN_INFORM_FILE
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
-#endif
-/* ------------------------------------------------------------------------- */
-/*   UNIX64 block                                                            */
-/* ------------------------------------------------------------------------- */
-#ifdef UNIX64
-/* 1 */
 #ifndef MACHINE_STRING
 #define MACHINE_STRING   "Unix"
 #endif
 /* 2 */
-#define USE_TEMPORARY_FILES
 #define HAS_REALPATH
 /* 3 */
 #define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
-#define Temporary_Directory "/tmp"
 #define PATHLEN 512
+#define Temporary_Directory "/tmp"
 #define INCLUDE_TASK_ID
 #ifdef MAIN_INFORM_FILE
+#include <unistd.h>
 static int32 unique_task_id(void)
 {   return (int32)getpid();
 }
@@ -630,6 +606,14 @@ static int32 unique_task_id(void)
     typedef char uchar;
 #endif
 
+#if defined(__GNUC__) || defined(__clang__)
+#define NORETURN __attribute__((__noreturn__))
+#endif /* defined(__GNUC__) || defined(__clang__) */
+
+#ifndef NORETURN
+#define NORETURN
+#endif
+
 /* ------------------------------------------------------------------------- */
 /*   A macro (rather than constant) definition:                              */
 /* ------------------------------------------------------------------------- */
@@ -660,12 +644,10 @@ static int32 unique_task_id(void)
 #define TRUE -1
 #define FALSE 0
 
-#define ASSERT_ZCODE()   \
-  ((!glulx_mode) ?       \
-    0 : compiler_error("assertion violated (not in Z-code compiler)"))
-#define ASSERT_GLULX()   \
-  ((glulx_mode)  ?       \
-    0 : compiler_error("assertion violated (not in Glulx compiler)"))
+/* These checked the glulx_mode global during development, but are no
+   longer needed. */
+#define ASSERT_ZCODE() (0)
+#define ASSERT_GLULX() (0)
 
 
 #define ReadInt32(ptr)                               \
@@ -706,6 +688,7 @@ static int32 unique_task_id(void)
 #define  MAX_DICT_WORD_SIZE     40
 #define  MAX_DICT_WORD_BYTES    (40*4)
 #define  MAX_NUM_ATTR_BYTES     39
+#define  MAX_VERB_WORD_SIZE    120
 
 #define  VENEER_CONSTRAINT_ON_CLASSES_Z       256
 #define  VENEER_CONSTRAINT_ON_IP_TABLE_SIZE_Z 128
@@ -725,20 +708,6 @@ static int32 unique_task_id(void)
 #define  GPAGESIZE 256
 /* All Glulx memory boundaries must be multiples of GPAGESIZE. */
 
-/* In many places the compiler encodes a source-code location (file and
-   line number) into an int32 value. The encoded value looks like
-   file_number + FILE_LINE_SCALE_FACTOR*line_number. This will go
-   badly if a source file has more than FILE_LINE_SCALE_FACTOR lines,
-   of course. But this value is roughly eight million, which is a lot
-   of lines. 
-
-   There is also potential trouble if we have more than 512 source files;
-   perhaps 256, depending on signedness issues. However, there are other
-   spots in the compiler that assume no more than 255 source files, so
-   we'll stick with this for now.
-*/
-#define  FILE_LINE_SCALE_FACTOR  (0x800000L)
-
 /* ------------------------------------------------------------------------- */
 /*   Structure definitions (there are a few others local to files)           */
 /* ------------------------------------------------------------------------- */
@@ -750,6 +719,10 @@ typedef struct assembly_operand_t
     int   symflags;  /* 6.30 */
     int   marker;
 } assembly_operand;
+
+#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symtype=0, (aop)->symflags=0)
+#define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
+#define INITAO(aop) INITAOTV(aop, 0, 0)
 
 #define  MAX_LINES_PER_VERB 32
 typedef struct verbt {
@@ -814,6 +787,10 @@ typedef struct debug_location_s
     int32 end_line_number;
     int32 beginning_character_number;
     int32 end_character_number;
+    int32 orig_file_index;
+    int32 orig_beg_line_number;
+    int32 orig_beg_char_number;
+    /* We only track the beginning #origsource location, not the end. */
 } debug_location;
 
 typedef struct debug_locations_s
@@ -822,11 +799,21 @@ typedef struct debug_locations_s
     int reference_count;
 } debug_locations;
 
+typedef struct brief_location_s
+{   int32 file_index;
+    int32 line_number;
+    int32 orig_file_index;
+    int32 orig_line_number;
+} brief_location;
+
 typedef struct debug_location_beginning_s
 {   debug_locations *head;
     int32 beginning_byte_index;
     int32 beginning_line_number;
     int32 beginning_character_number;
+    int32 orig_file_index;
+    int32 orig_beg_line_number;
+    int32 orig_beg_char_number;
 } debug_location_beginning;
 
 typedef struct keyword_group_s
@@ -850,6 +837,10 @@ typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
                                             NULL when closed                 */
+    int is_input;                       /*  Is this a source file that we are
+                                            parsing? If not, this is an
+                                            origsource filename (and handle
+                                            is NULL).                        */
 } FileId;
 
 typedef struct ErrorPosition_s
@@ -857,6 +848,10 @@ typedef struct ErrorPosition_s
     char *source;
     int  line_number;
     int  main_flag;
+    int  orig_file;
+    char *orig_source;
+    int32 orig_line;
+    int32 orig_char;
 } ErrorPosition;
 
 /*  A memory block can hold at most ALLOC_CHUNK_SIZE * 72:  */
@@ -1347,19 +1342,20 @@ typedef struct operator_s
 #define MESSAGE_CODE     23
 #define NEARBY_CODE      24
 #define OBJECT_CODE      25
-#define PROPERTY_CODE    26
-#define RELEASE_CODE     27
-#define REPLACE_CODE     28
-#define SERIAL_CODE      29
-#define SWITCHES_CODE    30
-#define STATUSLINE_CODE  31
-#define STUB_CODE        32
-#define SYSTEM_CODE      33
-#define TRACE_CODE       34
-#define UNDEF_CODE       35
-#define VERB_CODE        36
-#define VERSION_CODE     37
-#define ZCHARACTER_CODE  38
+#define ORIGSOURCE_CODE  26
+#define PROPERTY_CODE    27
+#define RELEASE_CODE     28
+#define REPLACE_CODE     29
+#define SERIAL_CODE      30
+#define SWITCHES_CODE    31
+#define STATUSLINE_CODE  32
+#define STUB_CODE        33
+#define SYSTEM_CODE      34
+#define TRACE_CODE       35
+#define UNDEF_CODE       36
+#define VERB_CODE        37
+#define VERSION_CODE     38
+#define ZCHARACTER_CODE  39
 
 #define OPENBLOCK_CODE   100
 #define CLOSEBLOCK_CODE  101
@@ -2170,6 +2166,11 @@ extern void assembleg_2(int internal_number, assembly_operand o1,
   assembly_operand o2);
 extern void assembleg_3(int internal_number, assembly_operand o1,
   assembly_operand o2, assembly_operand o3);
+extern void assembleg_4(int internal_number, assembly_operand o1,
+  assembly_operand o2, assembly_operand o3, assembly_operand o4);
+extern void assembleg_5(int internal_number, assembly_operand o1,
+  assembly_operand o2, assembly_operand o3, assembly_operand o4,
+  assembly_operand o5);
 extern void assembleg_0_branch(int internal_number,
   int label);
 extern void assembleg_1_branch(int internal_number,
@@ -2236,7 +2237,7 @@ extern void  make_upper_case(char *str);
 /*   Extern definitions for "directs"                                        */
 /* ------------------------------------------------------------------------- */
 
-extern int32 routine_starts_line;
+extern brief_location routine_starts_line;
 
 extern int  no_routines, no_named_routines, no_locals, no_termcs;
 extern int  terminating_characters[];
@@ -2254,14 +2255,14 @@ extern int  no_errors, no_warnings, no_suppressed_warnings,
 
 extern ErrorPosition ErrorReport;
 
-extern void fatalerror(char *s);
-extern void fatalerror_named(char *s1, char *s2);
-extern void memory_out_error(int32 size, int32 howmany, char *name);
-extern void memoryerror(char *s, int32 size);
+extern void fatalerror(char *s) NORETURN;
+extern void fatalerror_named(char *s1, char *s2) NORETURN;
+extern void memory_out_error(int32 size, int32 howmany, char *name) NORETURN;
+extern void memoryerror(char *s, int32 size) NORETURN;
 extern void error(char *s);
 extern void error_named(char *s1, char *s2);
 extern void error_numbered(char *s1, int val);
-extern void error_named_at(char *s1, char *s2, int32 report_line);
+extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
 extern void char_error(char *s, int ch);
 extern void unicode_char_error(char *s, int32 uni);
@@ -2269,8 +2270,8 @@ extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
-extern void dbnu_warning(char *type, char *name, int32 report_line);
-extern void uncalled_routine_warning(char *type, char *name, int32 report_line);
+extern void dbnu_warning(char *type, char *name, brief_location report_line);
+extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
 extern void link_error(char *s);
 extern void link_error_named(char *s1, char *s2);
@@ -2321,7 +2322,9 @@ extern int test_for_incdec(assembly_operand AO);
 /*   Extern definitions for "files"                                          */
 /* ------------------------------------------------------------------------- */
 
-extern int  input_file;
+extern int  total_files;
+extern int  current_input_file;
+extern int  total_input_files;
 extern FileId *InputFiles;
 
 extern FILE *Temp1_fp, *Temp2_fp, *Temp3_fp;
@@ -2360,19 +2363,20 @@ extern void write_debug_global_backpatch(int32 offset);
 extern void write_debug_array_backpatch(int32 offset);
 extern void write_debug_grammar_backpatch(int32 offset);
 
-extern void begin_writing_debug_sections();
+extern void begin_writing_debug_sections(void);
 extern void write_debug_section(const char*name, int32 beginning_address);
 extern void end_writing_debug_sections(int32 end_address);
 
 extern void write_debug_undef(int32 symbol_index);
 
-extern void end_debug_file();
+extern void end_debug_file(void);
 
 extern void add_to_checksum(void *address);
 
 extern void load_sourcefile(char *story_name, int style);
 extern int file_load_chars(int file_number, char *buffer, int length);
 extern void close_all_source(void);
+extern int register_orig_sourcefile(char *filename);
 
 extern void output_file(void);
 
@@ -2470,6 +2474,10 @@ extern void report_errors_at_current_line(void);
 extern debug_location get_current_debug_location(void);
 extern debug_location get_error_report_debug_location(void);
 extern int32 get_current_line_start(void);
+extern void set_origsource_location(char *source, int32 line, int32 charnum);
+extern brief_location get_brief_location(ErrorPosition *errpos);
+extern void export_brief_location(brief_location loc, ErrorPosition *errpos);
+extern brief_location blank_brief_location;
 
 extern void put_token_back(void);
 extern void get_next_token(void);
@@ -2592,7 +2600,7 @@ extern int no_symbols;
 extern int32 **symbs;
 extern int32 *svals;
 extern int   *smarks;
-extern int32 *slines;
+extern brief_location *slines;
 extern int   *sflags;
 #ifdef VAX
   extern char *stypes;
@@ -2623,11 +2631,12 @@ extern void issue_unused_warnings(void);
 extern void add_symbol_replacement_mapping(int original, int renamed);
 extern int find_symbol_replacement(int *value);
 extern void df_note_function_start(char *name, uint32 address, 
-    int embedded_flag, int32 source_line);
+    int embedded_flag, brief_location source_line);
 extern void df_note_function_end(uint32 endaddress);
 extern void df_note_function_symbol(int symbol);
 extern void locate_dead_functions(void);
 extern uint32 df_stripped_address_for_address(uint32);
+extern uint32 df_stripped_offset_for_code_offset(uint32, int *);
 extern void df_prepare_function_iterate(void);
 extern uint32 df_next_function_iterate(int *);
 

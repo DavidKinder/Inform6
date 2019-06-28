@@ -2,8 +2,8 @@
 /*   "memory" : Memory management and ICL memory setting commands            */
 /*              (For "memoryerror", see "errors.c")                          */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -290,6 +290,7 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
     printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
     printf("|  %25s = %-7d |\n","ALLOC_CHUNK_SIZE",ALLOC_CHUNK_SIZE);
+    printf("|  %25s = %-7d |\n","MAX_ARRAYS",MAX_ARRAYS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_CLASSES",MAX_CLASSES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
@@ -304,8 +305,8 @@ static void list_memory_sizes(void)
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
-    printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE",
-        MAX_INDIV_PROP_TABLE_SIZE);
+    printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE", MAX_INDIV_PROP_TABLE_SIZE);
+    printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     printf("|  %25s = %-7d |\n","MAX_LABELS",MAX_LABELS);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
     printf("|  %25s = %-7d |\n","MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
@@ -546,6 +547,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_z;
+    INDIV_PROP_START = 64;
   }
   else {
     MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_g;
@@ -555,6 +557,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_g;
+    INDIV_PROP_START = 256;
   }
 }
 
@@ -779,6 +782,12 @@ static void explain_parameter(char *command)
   table of ..variable values.\n");
         return;
     }
+    if (strcmp(command,"INDIV_PROP_START")==0)
+    {   printf(
+"  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
+  properties are numbered INDIV_PROP_START and up.\n");
+        return;
+    }
     if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
     {   printf(
 "  MAX_OBJ_PROP_COUNT is the maximum number of properties a single object \n\
@@ -855,10 +864,70 @@ static void explain_parameter(char *command)
   into the game file.\n");
         return;
     }
+    if (strcmp(command,"SERIAL")==0)
+    {
+        printf(
+"  SERIAL, if set, will be used as the six digit serial number written into \n\
+  the header of the output file.\n");
+        return;
+    }
 
     printf("No such memory setting as \"%s\"\n",command);
 
     return;
+}
+
+/* Parse a decimal number as an int32. Return true if a valid number
+   was found; otherwise print a warning and return false.
+
+   Anything over nine digits is considered an overflow; we report a
+   warning but return +/- 999999999 (and true). This is not entirely
+   clever about leading zeroes ("0000000001" is treated as an
+   overflow) but this is better than trying to detect genuine
+   overflows in a long.
+
+   (Some Glulx settings might conceivably want to go up to $7FFFFFFF,
+   which is a ten-digit number, but we're not going to allow that
+   today.)
+
+   This used to rely on atoi(), and we retain the atoi() behavior of
+   ignoring garbage characters after a valid decimal number.
+ */
+static int parse_memory_setting(char *str, char *label, int32 *result)
+{
+    char *cx = str;
+    char *ex;
+    long val;
+
+    *result = 0;
+
+    while (*cx == ' ') cx++;
+
+    val = strtol(cx, &ex, 10);    
+
+    if (ex == cx) {
+        printf("Bad numerical setting in $ command \"%s=%s\"\n",
+            label, str);
+        return 0;
+    }
+
+    if (*cx == '-') {
+        if (ex > cx+10) {
+            val = -999999999;
+            printf("Numerical setting underflowed in $ command \"%s=%s\" (limiting to %ld)\n",
+                label, str, val);
+        }
+    }
+    else {
+        if (ex > cx+9) {
+            val = 999999999;
+            printf("Numerical setting overflowed in $ command \"%s=%s\" (limiting to %ld)\n",
+                label, str, val);
+        }
+    }
+
+    *result = (int32)val;
+    return 1;
 }
 
 extern void memory_command(char *command)
@@ -876,10 +945,7 @@ extern void memory_command(char *command)
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
         {   command[i]=0;
-            j=(int32) atoi(command+i+1);
-            if ((j==0) && (command[i+1]!='0'))
-            {   printf("Bad numerical setting in $ command \"%s=%s\"\n",
-                    command,command+i+1);
+            if (!parse_memory_setting(command+i+1, command, &j)) {
                 return;
             }
             if (strcmp(command,"BUFFER_LENGTH")==0)
@@ -982,6 +1048,8 @@ extern void memory_command(char *command)
                 MAX_SOURCE_FILES=j, flag=1;
             if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
                 MAX_INDIV_PROP_TABLE_SIZE=j, flag=1;
+            if (strcmp(command,"INDIV_PROP_START")==0)
+                INDIV_PROP_START=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_TABLE_SIZE")==0)
                 MAX_OBJ_PROP_TABLE_SIZE=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
@@ -1023,6 +1091,15 @@ extern void memory_command(char *command)
                 OMIT_UNUSED_ROUTINES=j, flag=1;
                 if (OMIT_UNUSED_ROUTINES > 1 || OMIT_UNUSED_ROUTINES < 0)
                     OMIT_UNUSED_ROUTINES = 1;
+            }
+            if (strcmp(command,"SERIAL")==0)
+            {
+                if (j >= 0 && j <= 999999)
+                {
+                    sprintf(serial_code_buffer,"%06d",j);
+                    serial_code_given_in_program = TRUE;
+                    flag=1;
+                }
             }
 
             if (flag==0)

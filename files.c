@@ -7,14 +7,19 @@
 /*             routines in "inform.c", since they are tied up with ICL       */
 /*             settings and are very host OS-dependent.                      */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
 #include "header.h"
 
-int input_file;                         /* Number of source files so far     */
+int total_files;                        /* Number of files so far, including 
+                                           #include and #origsource files    */
+int total_input_files;                  /* Number of source files so far
+                                           (excludes #origsource)            */
+int current_input_file;                 /* Most recently-opened source file  */
+static int current_origsource_file;     /* Most recently-used #origsource    */
 
 int32 total_chars_read;                 /* Characters read in (from all
                                            source files put together)        */
@@ -100,12 +105,12 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
     int x = 0;
     FILE *handle;
 
-    if (input_file == MAX_SOURCE_FILES)
+    if (total_files == MAX_SOURCE_FILES)
         memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
 
     do
     {   x = translate_in_filename(x, name, filename_given, same_directory_flag,
-                (input_file==0)?1:0);
+                (total_files==0)?1:0);
         handle = fopen(name,"r");
     } while ((handle == NULL) && (x != 0));
 
@@ -114,12 +119,12 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
 
     filename_storage_left -= strlen(name)+1;
     strcpy(filename_storage_p, name);
-    InputFiles[input_file].filename = filename_storage_p;
+    InputFiles[total_files].filename = filename_storage_p;
 
     filename_storage_p += strlen(name)+1;
 
     if (debugfile_switch)
-    {   debug_file_printf("<source index=\"%d\">", input_file);
+    {   debug_file_printf("<source index=\"%d\">", total_files);
         debug_file_printf("<given-path>");
         debug_file_print_with_entities(filename_given);
         debug_file_printf("</given-path>");
@@ -134,13 +139,17 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         debug_file_printf("</source>");
     }
 
-    InputFiles[input_file].handle = handle;
-    if (InputFiles[input_file].handle==NULL)
+    InputFiles[total_files].handle = handle;
+    if (InputFiles[total_files].handle==NULL)
         fatalerror_named("Couldn't open source file", name);
+
+    InputFiles[total_files].is_input = TRUE;
 
     if (line_trace_level > 0) printf("\nOpening file \"%s\"\n",name);
 
-    input_file++;
+    total_files++;
+    total_input_files++;
+    current_input_file = total_files;
 }
 
 static void close_sourcefile(int file_number)
@@ -162,7 +171,67 @@ static void close_sourcefile(int file_number)
 
 extern void close_all_source(void)
 {   int i;
-    for (i=0; i<input_file; i++) close_sourcefile(i+1);
+    for (i=0; i<total_files; i++) close_sourcefile(i+1);
+}
+
+/* ------------------------------------------------------------------------- */
+/*   Register an #origsource filename. This goes in the InputFiles table,    */
+/*   but we do not open the file or advance current_input_file.              */
+/* ------------------------------------------------------------------------- */
+
+extern int register_orig_sourcefile(char *filename)
+{
+    int ix;
+
+    /* If the filename has already been used as an origsource filename,
+       return that entry. We check the most-recently-used file first, and
+       then search the list. */
+    if (current_origsource_file > 0 && current_origsource_file <= total_files) {
+        if (!strcmp(filename, InputFiles[current_origsource_file-1].filename))
+            return current_origsource_file;
+    }
+
+    for (ix=0; ix<total_files; ix++) {
+        if (InputFiles[ix].is_input)
+            continue;
+        if (!strcmp(filename, InputFiles[ix].filename)) {
+            current_origsource_file = ix+1;
+            return current_origsource_file;
+        }
+    }
+
+    /* This filename has never been used before. Allocate a new InputFiles
+       entry. */
+
+    char *name = filename; /* no translation */
+
+    if (total_files == MAX_SOURCE_FILES)
+        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+
+    if (filename_storage_left <= (int)strlen(name))
+        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+
+    filename_storage_left -= strlen(name)+1;
+    strcpy(filename_storage_p, name);
+    InputFiles[total_files].filename = filename_storage_p;
+
+    filename_storage_p += strlen(name)+1;
+
+    if (debugfile_switch)
+    {   debug_file_printf("<source index=\"%d\">", total_files);
+        debug_file_printf("<given-path>");
+        debug_file_print_with_entities(filename);
+        debug_file_printf("</given-path>");
+        debug_file_printf("<language>Inform 7</language>");
+        debug_file_printf("</source>");
+    }
+
+    InputFiles[total_files].handle = NULL;
+    InputFiles[total_files].is_input = FALSE;
+
+    total_files++;
+    current_origsource_file = total_files;
+    return current_origsource_file;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -174,7 +243,7 @@ extern int file_load_chars(int file_number, char *buffer, int length)
 {
     int read_in; FILE *handle;
 
-    if (file_number-1 > input_file)
+    if (file_number-1 > total_files)
     {   buffer[0] = 0; return 1; }
 
     handle = InputFiles[file_number-1].handle;
@@ -320,7 +389,7 @@ static void output_compression(int entnum, int32 *size, int *count)
 }
 
 static void output_file_z(void)
-{   FILE *fin; char new_name[PATHLEN];
+{   FILE *fin=NULL; char new_name[PATHLEN];
     int32 length, blanks=0, size, i, j, offset;
     uint32 code_length, size_before_code, next_cons_check;
     int use_function;
@@ -376,6 +445,7 @@ static void output_file_z(void)
 
     if (temporary_files_switch)
     {   fclose(Temp2_fp);
+        Temp2_fp = NULL;
         fin=fopen(Temp2_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 2");
@@ -508,6 +578,7 @@ static void output_file_z(void)
     {   if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
+        fin = NULL;
     }
 
     if (size_before_code + code_length != size)
@@ -522,6 +593,7 @@ static void output_file_z(void)
 
     if (temporary_files_switch)
     {   fclose(Temp1_fp);
+        Temp1_fp = NULL;
         fin=fopen(Temp1_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 1");
@@ -529,6 +601,7 @@ static void output_file_z(void)
         if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 1");
         fclose(fin);
+        fin = NULL;
         remove(Temp1_Name); remove(Temp2_Name);
     }
     else
@@ -542,6 +615,7 @@ static void output_file_z(void)
     if (temporary_files_switch)
     {   if (module_switch)
         {   fclose(Temp3_fp);
+            Temp3_fp = NULL;
             fin=fopen(Temp3_Name,"rb");
             if (fin==NULL)
                 fatalerror("I/O failure: couldn't reopen temporary file 3");
@@ -549,6 +623,7 @@ static void output_file_z(void)
             if (ferror(fin))
                 fatalerror("I/O failure: couldn't read from temporary file 3");
             fclose(fin);
+            fin = NULL;
             remove(Temp3_Name);
         }
     }
@@ -619,7 +694,7 @@ static void output_file_z(void)
 }
 
 static void output_file_g(void)
-{   FILE *fin; char new_name[PATHLEN];
+{   FILE *fin=NULL; char new_name[PATHLEN];
     int32 size, i, j, offset;
     int32 VersionNum;
     uint32 code_length, size_before_code, next_cons_check;
@@ -763,6 +838,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
     if (temporary_files_switch)
     {   fclose(Temp2_fp);
+        Temp2_fp = NULL;
         fin=fopen(Temp2_Name,"rb");
         if (fin==NULL)
             fatalerror("I/O failure: couldn't reopen temporary file 2");
@@ -932,6 +1008,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     {   if (ferror(fin))
             fatalerror("I/O failure: couldn't read from temporary file 2");
         fclose(fin);
+        fin = NULL;
     }
 
     if (size_before_code + code_length != size)
@@ -986,7 +1063,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
       for (lx=0, ix=0; lx<no_strings; lx++) {
         int escapelen=0, escapetype=0;
         int done=FALSE;
-        int32 escapeval;
+        int32 escapeval=0;
         if (compression_switch)
           sf_put(0xE1); /* type byte -- compressed string */
         else
@@ -1347,10 +1424,26 @@ static void write_debug_location_internals(debug_location location)
     }
 }
 
+static void write_debug_location_origsource_internals(debug_location location)
+{   debug_file_printf
+        ("<file-index>%d</file-index>", location.orig_file_index - 1);
+    if (location.orig_beg_line_number)
+        debug_file_printf
+            ("<line>%d</line>", location.orig_beg_line_number);
+    if (location.orig_beg_char_number)
+        debug_file_printf
+            ("<character>%d</character>", location.orig_beg_char_number);
+}
+
 extern void write_debug_location(debug_location location)
 {   if (location.file_index && location.file_index != 255)
     {   debug_file_printf("<source-code-location>");
         write_debug_location_internals(location);
+        debug_file_printf("</source-code-location>");
+    }
+    if (location.orig_file_index)
+    {   debug_file_printf("<source-code-location>");
+        write_debug_location_origsource_internals(location);
         debug_file_printf("</source-code-location>");
     }
 }
@@ -1362,6 +1455,11 @@ extern void write_debug_locations(debug_locations locations)
         for (; current; current = current->next, ++index)
         {   debug_file_printf("<source-code-location index=\"%d\">", index);
             write_debug_location_internals(current->location);
+            debug_file_printf("</source-code-location>");
+        }
+        if (locations.location.orig_file_index)
+        {   debug_file_printf("<source-code-location>");
+            write_debug_location_origsource_internals(locations.location);
             debug_file_printf("</source-code-location>");
         }
     }
@@ -1464,7 +1562,14 @@ extern void write_debug_packed_code_backpatch(int32 offset)
 }
 
 static int32 backpatch_packed_code_address(int32 offset)
-{   return (code_offset + offset) / scale_factor;
+{
+    if (OMIT_UNUSED_ROUTINES) {
+        int stripped;
+        offset = df_stripped_offset_for_code_offset(offset, &stripped);
+        if (stripped)
+            return 0;
+    }
+    return (code_offset + offset) / scale_factor;
 }
 
 extern void write_debug_code_backpatch(int32 offset)
@@ -1472,7 +1577,14 @@ extern void write_debug_code_backpatch(int32 offset)
 }
 
 static int32 backpatch_code_address(int32 offset)
-{   return code_offset + offset;
+{
+    if (OMIT_UNUSED_ROUTINES) {
+        int stripped;
+        offset = df_stripped_offset_for_code_offset(offset, &stripped);
+        if (stripped)
+            return 0;
+    }
+    return code_offset + offset;
 }
 
 extern void write_debug_global_backpatch(int32 offset)
@@ -1664,10 +1776,13 @@ extern void check_temp_files(void)
 
 extern void remove_temp_files(void)
 {   if (Temp1_fp != NULL) fclose(Temp1_fp);
+    Temp1_fp = NULL;
     if (Temp2_fp != NULL) fclose(Temp2_fp);
+    Temp2_fp = NULL;
     remove(Temp1_Name); remove(Temp2_Name);
     if (module_switch)
     {   if (Temp3_fp != NULL) fclose(Temp3_fp);
+        Temp3_fp = NULL;
         remove(Temp3_Name);
     }
 }
@@ -1686,7 +1801,11 @@ extern void init_files_vars(void)
 }
 
 extern void files_begin_prepass(void)
-{   input_file = 0;
+{   
+    total_files = 0;
+    total_input_files = 0;
+    current_input_file = 0;
+    current_origsource_file = 0;
 }
 
 extern void files_begin_pass(void)

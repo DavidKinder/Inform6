@@ -3,8 +3,8 @@
 /*               end of dynamic memory, gluing together all the required     */
 /*               tables.                                                     */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -72,11 +72,11 @@ int32 RAM_Size, Write_RAM_At; /* Glulx */
 /* ------------------------------------------------------------------------- */
 
 int release_number,                    /* Release number game is to have     */
-    statusline_flag,                   /* Either TIME_STYLE or SCORE_STYLE   */
+    statusline_flag;                   /* Either TIME_STYLE or SCORE_STYLE   */
 
-    serial_code_given_in_program;      /* If TRUE, a Serial directive has    */
-char serial_code_buffer[7];            /* specified this 6-digit serial code */
-                                       /* (overriding the usual date-stamp)  */
+int serial_code_given_in_program       /* If TRUE, a Serial directive has    */
+    = FALSE;                           /* specified this 6-digit serial code */
+char serial_code_buffer[7];            /* (overriding the usual date-stamp)  */
 int flags2_requirements[16];           /* An array of which bits in Flags 2 of
                                           the header will need to be set:
                                           e.g. if the save_undo / restore_undo
@@ -228,11 +228,11 @@ static int32 rough_size_of_paged_memory_g(void)
 static void construct_storyfile_z(void)
 {   uchar *p;
     int32 i, j, k, l, mark, objs, strings_length, code_length,
-          limit, excess, extend_offset, headerext_length;
-    int32 globals_at, link_table_at, dictionary_at, actions_at, preactions_at,
-          abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
-          map_of_module, grammar_table_at, charset_at, headerext_at,
-          terminating_chars_at, unicode_at, id_names_length;
+          limit=0, excess=0, extend_offset=0, headerext_length=0;
+    int32 globals_at=0, link_table_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
+          abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
+          map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
+          terminating_chars_at=0, unicode_at=0, id_names_length=0;
     int skip_backpatching = FALSE;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -324,11 +324,20 @@ static void construct_storyfile_z(void)
         p[mark++] = zscii_high_water_mark;
         for (i=0;i<zscii_high_water_mark;i++)
         {   j = zscii_to_unicode(155 + i);
+            if (j < 0 || j > 0xFFFF) {
+                error("Z-machine Unicode translation table cannot contain characters beyond $FFFF.");
+            }
             p[mark++] = j/256; p[mark++] = j%256;
         }
     }
 
     /*  -------------------- Objects and Properties ------------------------ */
+
+    /* The object table must be word-aligned. The Z-machine spec does not
+       require this, but the RA__Pr() veneer routine does. See 
+       http://inform7.com/mantis/view.php?id=1712.
+    */
+    while ((mark%2) != 0) p[mark++]=0;
 
     prop_defaults_at = mark;
 
@@ -930,7 +939,7 @@ or less.");
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
 %6d textual lines              %8ld characters ",
-            input_file, no_syntax_lines,
+            total_input_files, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_unicode) printf("(UTF-8)\n");
             else if (character_set_setting == 0) printf("(plain ASCII)\n");
@@ -1152,7 +1161,7 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");
             for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[64];
+            {   char abbrev_string[MAX_ABBREV_LENGTH];
                 strcpy(abbrev_string,
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
@@ -1269,6 +1278,7 @@ static void construct_storyfile_g(void)
     /* ---------------- Various Things I'm Not Sure About ------------------ */
     /* Actually, none of these are relevant to Glulx. */
     headerext_at = mark;
+    charset_at = 0;
     if (alphabet_modified)
       charset_at = mark;
     unicode_at = 0;
@@ -1288,7 +1298,7 @@ static void construct_storyfile_g(void)
         p[mark++] = objectatts[i*NUM_ATTR_BYTES+j];
       }
       for (j=0; j<6; j++) {
-        int32 val;
+        int32 val = 0;
         switch (j) {
         case 0: /* next object in the linked list. */
           if (i == no_objects-1)
@@ -1607,7 +1617,7 @@ table format requested (producing number 2 format instead)");
         {   printf("In:\
 %3d source code files            %6d syntactic lines\n\
 %6d textual lines              %8ld characters ",
-            input_file, no_syntax_lines,
+            total_input_files, no_syntax_lines,
             total_source_line_count, (long int) total_chars_read);
             if (character_set_unicode) printf("(UTF-8)\n");
             else if (character_set_setting == 0) printf("(plain ASCII)\n");
@@ -1841,7 +1851,7 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");
             for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[64];
+            {   char abbrev_string[MAX_ABBREV_LENGTH];
                 strcpy(abbrev_string,
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
@@ -1870,7 +1880,6 @@ extern void construct_storyfile(void)
 
 extern void init_tables_vars(void)
 {
-    serial_code_given_in_program = FALSE;
     release_number = 1;
     statusline_flag = SCORE_STYLE;
 

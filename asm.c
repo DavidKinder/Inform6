@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "asm" : The Inform assembler                                            */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -782,8 +782,8 @@ static void write_operand(assembly_operand op)
 extern void assemblez_instruction(assembly_instruction *AI)
 {
     uchar *start_pc, *operands_pc;
-    int32 offset, j, topbits, types_byte1, types_byte2;
-    int operand_rules, min, max, no_operands_given, at_seq_point = FALSE;
+    int32 offset, j, topbits=0, types_byte1, types_byte2;
+    int operand_rules, min=0, max=0, no_operands_given, at_seq_point = FALSE;
     assembly_operand o1, o2;
     opcodez opco;
 
@@ -875,7 +875,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
             if (opco.no == VAR_LONG) byteout(0, 0);
             types_byte1=0xff; types_byte2=0xff;
             for (j=0; j<no_operands_given; j++)
-            {   int multi, mask;
+            {   int multi=0, mask=0;
                 switch(j)
                 {   case 0: case 4: multi=0x40; mask=0xc0; break;
                     case 1: case 5: multi=0x10; mask=0x30; break;
@@ -921,7 +921,10 @@ extern void assemblez_instruction(assembly_instruction *AI)
     /* 4. Assemble a Store destination, if needed */
 
     if ((AI->store_variable_number) != -1)
-    {   o1.type = VARIABLE_OT;
+    {   if (AI->store_variable_number >= MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES) {
+            goto OpcodeSyntaxError;
+        }
+        o1.type = VARIABLE_OT;
         o1.value = AI->store_variable_number;
         variable_usage[o1.value] = TRUE;
         o1.marker = 0;
@@ -1266,7 +1269,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
       case GLOBALVAR_OT:
         /* Global variable -- a constant address. */
         k -= MAX_LOCAL_VARIABLES;
-        if (0) {
+        if (/* DISABLES CODE */ (0)) {
             /* We could write the value as a marker and patch it later... */
             j = 7;
             byteout(((k) >> 24) & 0xFF, VARIABLE_MV);
@@ -1353,7 +1356,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
             start_pc<zcode_holding_area + zcode_ha_size;
             j++, start_pc++) {
             if (j%16==0) printf("\n                               ");
-            if (0) {
+            if (/* DISABLES CODE */ (0)) {
                 printf("%02x ", *start_pc);
             }
             else {
@@ -1406,9 +1409,8 @@ extern int32 assemble_routine_header(int no_locals,
       stackargs = TRUE;
     }
 
-    if (veneer_mode) routine_starts_line = -1;
-    else routine_starts_line = ErrorReport.line_number
-             + FILE_LINE_SCALE_FACTOR*ErrorReport.file_number;
+    if (veneer_mode) routine_starts_line = blank_brief_location;
+    else routine_starts_line = get_brief_location(&ErrorReport);
 
     if (asm_trace_level > 0)
     {   printf("\n%5d  +%05lx  [ %s ", ErrorReport.line_number,
@@ -2710,8 +2712,7 @@ static void parse_assembly_z(void)
         custom_opcode_z.code = atoi(token_text+i);
         while (isdigit(token_text[i])) i++;
 
-        {   int max, min;
-            min = 0;
+        {   max = 0; min = 0;
             switch(n)
             {   case ZERO: case ONE: max = 16; break;
                 case VAR: case VAR_LONG: min = 32; max = 64; break;
@@ -2900,6 +2901,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         }
     }
 
+    min = 0; max = 0;
     switch(O.no)
     {   case TWO:      min = 2; max = 2;
                        /* Exception for the V6 set_colour, which can take

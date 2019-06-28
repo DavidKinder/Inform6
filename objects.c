@@ -6,8 +6,8 @@
 /*                    checks syntax and translates such directives into      */
 /*                    specifications for the object-maker.                   */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -186,7 +186,6 @@ Advanced game to get an extra 62)");
         }
     }
     else {
-        /* INDIV_PROP_START could be a memory setting */
         if (no_properties==INDIV_PROP_START) {
             discard_token_location(beginning_debug_location);
             error_numbered("All properties already declared -- max is",
@@ -1030,7 +1029,7 @@ static void properties_segment_z(int this_segment)
         to the token value for the introductory word ("private" or "with").  */
 
 
-    int   i, property_name_symbol, property_number, next_prop, length,
+    int   i, property_name_symbol, property_number=0, next_prop=0, length,
           individual_property, this_identifier_number;
 
     do

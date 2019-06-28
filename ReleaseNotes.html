@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Inform Release Notes</h1>
-<h3>Inform Compiler 6.33, 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
+<h3>Inform Compiler 6.34, 6.33, 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
 
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
@@ -43,6 +43,89 @@ specific ones to Graham for permitting it in the first place, and to Andrew for 
 Glulx.
 There are, naturally, sure to be imperfections in the release, and these should be reported through the
 <a href="http://inform7.com/mantis/">Inform bug tracker</a>.
+
+<h2>Compiler 6.34</h2>
+These are the changes delivered in version 6.34 of the Inform compiler.
+<h3>Features added</h3>
+<ul>
+<li><p>The following system constants are now supported for Glulx:
+<tt>#highest_class_number</tt>,
+<tt>#highest_object_number</tt>,
+<tt>#lowest_attribute_number</tt>,
+<tt>#lowest_action_number</tt>,
+<tt>#lowest_routine_number</tt>,
+<tt>#lowest_array_number</tt>,
+<tt>#lowest_constant_number</tt>,
+<tt>#lowest_class_number</tt>,
+<tt>#lowest_object_number</tt>, and
+<tt>#lowest_property_number</tt>.
+<li><p>Unicode characters can now be included in Glulx word arrays as literals, e.g.
+<pre>
+  Array text1 table "A @{1c4} A";
+  Array text2 --> "A @oef A";
+</pre>
+<li><p>For Glulx, high-plane Unicode characters in the range $100000 to $10FFFF are supported in UTF-8 source
+code, and in <tt>@{...}</tt> sequences, which can now contain up to six hex digits.
+<li><p>The new command line switch <tt><b>-V</b></tt> simply prints the version and date of the compiler and
+then exits.
+<li><p>The new setting <tt>$SERIAL</tt> sets the six digit serial number written into the header of the game,
+e.g.
+<pre>
+  $SERIAL=160305
+</pre>
+<li><p>It has always been possible to replace the paths used by the compiler with a command line option of the
+form <tt>+include_path=foo</tt>. It is now possible to add to an existing path without replacing it by using
+an additional '+' character, like so: <tt>++include_path=foo</tt>.
+<li><p>A new <tt>Origsource</tt> directive has been added to allow a record of the location of the relevant in
+a higher-level language that has been converted to Inform 6. (In practice, this will very likely be the location in
+an Inform 7 source.) The syntax is
+<pre>
+  Origsource &lt;file&gt;
+  Origsource &lt;file&gt; &lt;line&gt;
+  Origsource &lt;file&gt; &lt;line&gt; &lt;char&gt;
+  Origsource
+</pre>
+The first three forms declare that all following lines are derived from the named Inform 7 source file (with an
+optional line number and character number). This will be reported in error messages and in debug output. The
+declaration holds through the next <tt>Origsource</tt> directive (but does not apply to included files). The fourth
+form, with no arguments, clears the declaration.
+
+Unlike the <tt>Include</tt> directive, <tt>Origsource</tt> does not open the named file or even verify that it exists.
+The filename is treated as an opaque string.
+<li><p>The constant <tt>$INDIV_PROP_START</tt> is now a setting that can be changed for Glulx.
+</ul>
+<h3>Bugs fixed</h3>
+Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+<ul>
+<li><p>It is no longer possible to cause values to be pushed onto the stack but not then pulled by evaluating
+a logical expression but not assigning or using the result of that expression. [Mantis 509]
+<li><p>Replacing a recursive function now works correctly. [Mantis 1094]
+<li><p>The output for the <tt>$list</tt> command line argument now includes the value of the
+<tt>$MAX_ARRAYS</tt> setting. [Mantis 1355]
+<li><p>Memory settings can no longer overflow if set to very large values. These values are limited to a
+maximum of 999999999: setting them higher just results in a warning. [Mantis 1356]
+<li><p>The debugging output file now contains the correct function addresses even when the compiler has been
+told to omit unused functions. [Mantis 1515]
+<li><p>Invalid statements with empty parentheses (like <tt>return ();</tt>) now generate a sensible error. [Mantis 1688]
+<li><p>Crashes caused by over-long identifiers have been fixed. Note that as a result, the previously allowed
+(although undocumented) use of strings or dictionary words in an action-based (implicit) switch statement
+now causes an error. [Mantis 1696,1702]
+<li><p>The object table is now always generated at an even Z-Machine address, as the logic in the veneer
+routine <tt>RA__Pr()</tt> requires this. [Mantis 1712]
+<li><p>The <b>F</b> and <b>u</b> options are now explicitly disallowed with the <tt>Switches</tt> directive.
+[Mantis 1703]
+<li><p>Assigning values to system functions now leads to an error message, rather than a crash. [Mantis 1704]
+<li><p>Crashes due to over-long abbreviations have been fixed. [Mantis 1719]
+<li><p>Representing the at symbol '@' by <tt>@{0040}</tt> now works when compiling to Glulx. [Mantis 1933]
+<li><p>The <tt>USE_TEMPORARY_FILES</tt> option no longer has a bug that led to files being closed more than
+once. [Mantis 1934]
+<li><p>The platform-specific definitions in <tt>header.h</tt> for Unix have been cleaned up: "UNIX64" has been
+removed, since it was identical to "UNIX"; and "UNIX" no longer implies "USE_TEMPORARY_FILES". [Mantis 1937]
+<li><p>The platform-specific definitions in <tt>header.h</tt> for the Macintosh have been cleaned up: "MACINTOSH" is
+now "MAC_CLASSIC"; "OSX" is now "MACOS", and "MACOS" now uses "HUGE_SIZE" for the default array sizes. [Mantis 1937]
+<li><p>The maximum length of a verb is now limited to 120 (which can be changed in the source code). Previously
+very long verbs would crash the compiler. [Mantis 2023]
+</ul>
 
 <h2>Compiler 6.33</h2>
 These are the changes delivered in version 6.33 of the Inform compiler.
@@ -105,7 +188,7 @@ which is the "flags3" field.
 amount of additional space to add to each object record. The default is 0.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis 510] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
+Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
 <li><p>Function calls of the form <tt>f(g)(h)</tt> (that is, where <tt>f()</tt> returns the address of a
 function that is called with <tt>h</tt> as its argument) are now compiled correctly: previously, such calls were
@@ -151,7 +234,7 @@ is now supported for Glulx. [Mantis 1214]
 <h2>Compiler 6.32</h2>
 These are the changes delivered in version 6.32 of the Inform compiler.
 <h3>Features added</h3>
-Items of the form [C63104] quote the feature&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the feature&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>The Z-machine opcodes for pushing and pulling values from the stack are <tt>@push</tt> and <tt>@pull</tt>, used like this:
@@ -220,7 +303,7 @@ memory setting, <tt>$DICT_CHAR_SIZE</tt>: by default this is 1, but setting it t
 However, this also requires library changes to be useful, as the library makes use of this dictionary table.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [C63102] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>Strict mode is no longer enabled by default when generating V3 and V4 Z-code files, as strict mode
@@ -249,7 +332,7 @@ long paths on this platform.
 <h2>Compiler 6.31</h2>
 These are the changes delivered in version 6.31 of the Inform compiler.
 <h3>Bugs fixed</h3>
-Items of the form [C63016] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C63NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>When individual properties are read (successfully), there is no longer a futile attempt to look up 
@@ -371,7 +454,7 @@ object&rsquo;s <tt>name</tt> property. This is most commonly triggered if you tr
 typing <tt>name 'g' 'string'</tt> when you intended <tt>name 'g//' 'string'</tt>.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [C62127] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
+Items of the form [C62NNN] quote the bug&rsquo;s reference number in the &lsquo;Compiler&rsquo; section of the Inform 
 Patch List. 
 <ul>
 <li><p>A problem with multiple assignment involving pointer arithmetic in Strict mode giving the wrong 
@@ -708,7 +791,7 @@ if <tt><i>value</i></tt> refers to a routine, runs that routine; if <tt><i>value
 prints that string (with a terminating newline unless <tt><i>flag</i></tt> is 
 true).</blockquote>
 <h3>Bugs fixed</h3>
-Items of the form [L61036] quote the bug&rsquo;s reference number in the &lsquo;Library&rsquo; section of the Inform 
+Items of the form [L610NN] quote the bug&rsquo;s reference number in the &lsquo;Library&rsquo; section of the Inform 
 Patch List.
 <ul>
 <li><p>A command like EMPTY ME no longer replies &ldquo;yourself can't contain things&rdquo;. [L61036] 

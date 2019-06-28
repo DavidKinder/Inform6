@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "expressc" :  The expression code generator                             */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -25,74 +25,30 @@ assembly_operand stack_pointer, temp_var1, temp_var2, temp_var3,
 static void make_operands(void)
 {
   if (!glulx_mode) {
-    stack_pointer.type = VARIABLE_OT;
-    stack_pointer.value = 0;
-    stack_pointer.marker = 0;
-    temp_var1.type = VARIABLE_OT;
-    temp_var1.value = 255;
-    temp_var1.marker = 0;
-    temp_var2.type = VARIABLE_OT;
-    temp_var2.value = 254;
-    temp_var2.marker = 0;
-    temp_var3.type = VARIABLE_OT;
-    temp_var3.value = 253;
-    temp_var3.marker = 0;
-    temp_var4.type = VARIABLE_OT;
-    temp_var4.value = 252;
-    temp_var4.marker = 0;
-    zero_operand.type = SHORT_CONSTANT_OT;
-    zero_operand.value = 0;
-    zero_operand.marker = 0;
-    one_operand.type = SHORT_CONSTANT_OT;
-    one_operand.value = 1;
-    one_operand.marker = 0;
-    two_operand.type = SHORT_CONSTANT_OT;
-    two_operand.value = 2;
-    two_operand.marker = 0;
-    three_operand.type = SHORT_CONSTANT_OT;
-    three_operand.value = 3;
-    three_operand.marker = 0;
-    four_operand.type = SHORT_CONSTANT_OT;
-    four_operand.value = 4;
-    four_operand.marker = 0;
-    valueless_operand.type = OMITTED_OT;
-    valueless_operand.value = 0;
-    valueless_operand.marker = 0;
+    INITAOTV(&stack_pointer, VARIABLE_OT, 0);
+    INITAOTV(&temp_var1, VARIABLE_OT, 255);
+    INITAOTV(&temp_var2, VARIABLE_OT, 254);
+    INITAOTV(&temp_var3, VARIABLE_OT, 253);
+    INITAOTV(&temp_var4, VARIABLE_OT, 252);
+    INITAOTV(&zero_operand, SHORT_CONSTANT_OT, 0);
+    INITAOTV(&one_operand, SHORT_CONSTANT_OT, 1);
+    INITAOTV(&two_operand, SHORT_CONSTANT_OT, 2);
+    INITAOTV(&three_operand, SHORT_CONSTANT_OT, 3);
+    INITAOTV(&four_operand, SHORT_CONSTANT_OT, 4);
+    INITAOTV(&valueless_operand, OMITTED_OT, 0);
   }
   else {
-    stack_pointer.type = LOCALVAR_OT;
-    stack_pointer.value = 0;
-    stack_pointer.marker = 0;
-    temp_var1.type = GLOBALVAR_OT;
-    temp_var1.value = MAX_LOCAL_VARIABLES+0;
-    temp_var1.marker = 0;
-    temp_var2.type = GLOBALVAR_OT;
-    temp_var2.value = MAX_LOCAL_VARIABLES+1;
-    temp_var2.marker = 0;
-    temp_var3.type = GLOBALVAR_OT;
-    temp_var3.value = MAX_LOCAL_VARIABLES+2;
-    temp_var3.marker = 0;
-    temp_var4.type = GLOBALVAR_OT;
-    temp_var4.value = MAX_LOCAL_VARIABLES+3;
-    temp_var4.marker = 0;
-    zero_operand.type = ZEROCONSTANT_OT;
-    zero_operand.value = 0;
-    zero_operand.marker = 0;
-    one_operand.type = BYTECONSTANT_OT;
-    one_operand.value = 1;
-    one_operand.marker = 0;
-    two_operand.type = BYTECONSTANT_OT;
-    two_operand.value = 2;
-    two_operand.marker = 0;
-    three_operand.type = BYTECONSTANT_OT;
-    three_operand.value = 3;
-    three_operand.marker = 0;
-    four_operand.type = BYTECONSTANT_OT;
-    four_operand.value = 4;
-    four_operand.marker = 0;
-    valueless_operand.type = OMITTED_OT;
-    valueless_operand.value = 0;
-    valueless_operand.marker = 0;
+    INITAOTV(&stack_pointer, LOCALVAR_OT, 0);
+    INITAOTV(&temp_var1, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+0);
+    INITAOTV(&temp_var2, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+1);
+    INITAOTV(&temp_var3, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+2);
+    INITAOTV(&temp_var4, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+3);
+    INITAOTV(&zero_operand, ZEROCONSTANT_OT, 0);
+    INITAOTV(&one_operand, BYTECONSTANT_OT, 1);
+    INITAOTV(&two_operand, BYTECONSTANT_OT, 2);
+    INITAOTV(&three_operand, BYTECONSTANT_OT, 3);
+    INITAOTV(&four_operand, BYTECONSTANT_OT, 4);
+    INITAOTV(&valueless_operand, OMITTED_OT, 0);
   }
 }
 
@@ -468,28 +424,30 @@ static void pop_zm_stack(void)
 {   assembly_operand st;
     if (version_number < 5) assemblez_0(pop_zc);
     else
-    {   st.marker = 0; st.type = VARIABLE_OT; st.value = 0;
+    {   INITAOTV(&st, VARIABLE_OT, 0);
         assemblez_1_branch(jz_zc, st, -2, TRUE);
     }
 }
 
 static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
     assembly_operand AO3)
-{   int vr;
+{   int vr = 0;
 
     assembly_operand zero_ao, max_ao, size_ao, en_ao, type_ao, an_ao,
         index_ao;
-    int x, y, byte_flag, read_flag, from_module;
+    int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE, from_module = FALSE;
 
     if (AO1.marker == ARRAY_MV)
     {   
+        INITAO(&zero_ao);
+
         if ((oc == loadb_zc) || (oc == storeb_zc)) byte_flag=TRUE;
         else byte_flag = FALSE;
         if ((oc == loadb_zc) || (oc == loadw_zc)) read_flag=TRUE;
         else read_flag = FALSE;
 
         zero_ao.type = SHORT_CONSTANT_OT;
-        zero_ao.value = 0; zero_ao.marker = 0;
+        zero_ao.value = 0;
 
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
@@ -617,7 +575,9 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
     switch(oc) { case loadb_zc: vr = RT__ChLDB_VR; break;
                  case loadw_zc: vr = RT__ChLDW_VR; break;
                  case storeb_zc: vr = RT__ChSTB_VR; break;
-                 case storew_zc: vr = RT__ChSTW_VR; break; }
+                 case storew_zc: vr = RT__ChSTW_VR; break;
+                 default: compiler_error("unknown array opcode");
+    }
 
     if ((oc == loadb_zc) || (oc == loadw_zc))
         assemblez_3_to(call_vs_zc, veneer_routine(vr), AO1, AO2, AO3);
@@ -651,10 +611,9 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
 
     passed_label = next_label++;
     failed_label = next_label++;
-    AO2.type = LONG_CONSTANT_OT;
-    AO2.value = actual_largest_object_SC;
+    INITAOTV(&AO2, LONG_CONSTANT_OT, actual_largest_object_SC);
     AO2.marker = INCON_MV;
-    AO3.value = 5; AO3.type = SHORT_CONSTANT_OT; AO3.marker = 0;
+    INITAOTV(&AO3, SHORT_CONSTANT_OT, 5);
 
     if ((rte_number == IN_RTE) || (rte_number == HAS_RTE)
         || (rte_number == PROPERTY_RTE) || (rte_number == PROP_NUM_RTE)
@@ -694,7 +653,7 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
     }
 
     assemble_label_no(failed_label);
-    AO2.type = SHORT_CONSTANT_OT; AO2.value = rte_number; AO2.marker = 0;
+    INITAOTV(&AO2, SHORT_CONSTANT_OT, rte_number);
     if (version_number >= 5)
       assemblez_3(call_vn_zc, veneer_routine(RT__Err_VR), AO2, AO1);
     else
@@ -709,13 +668,13 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
     else
     {   if (check_sp)
         {   /* Push the short constant 2 */
-            AO2.type = SHORT_CONSTANT_OT; AO2.value = 2; AO2.marker = 0;
+            INITAOTV(&AO2, SHORT_CONSTANT_OT, 2);
             assemblez_store(AO1, AO2);
         }
         else
         {   /* Store either short constant 2 or the operand's value in
                the temporary variable */
-            AO2.type = SHORT_CONSTANT_OT; AO2.value = 2; AO2.marker = 0;
+            INITAOTV(&AO2, SHORT_CONSTANT_OT, 2);
             AO3 = temp_var2; assemblez_store(AO3, AO2);
             last_label = next_label++;
             assemblez_jump(last_label);
@@ -732,7 +691,7 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
 static void compile_conditional_z(int oc,
     assembly_operand AO1, assembly_operand AO2, int label, int flag)
 {   assembly_operand AO3; int the_zc, error_label = label,
-    va_flag = FALSE, va_label;
+    va_flag = FALSE, va_label = 0;
 
     ASSERT_ZCODE(); 
 
@@ -761,8 +720,9 @@ static void compile_conditional_z(int oc,
                     assemblez_store(temp_var2, AO2);
                     if ((AO2.type == VARIABLE_OT)&&(AO2.value == 0))
                         assemblez_store(AO2, temp_var2);
-                    zero_ao.type = SHORT_CONSTANT_OT; zero_ao.marker = 0;
-                    zero_ao.value = 0; max_ao = zero_ao; max_ao.value = 48;
+                    INITAOT(&zero_ao, SHORT_CONSTANT_OT);
+                    zero_ao.value = 0; 
+                    max_ao = zero_ao; max_ao.value = 48;
                     assemblez_2_branch(jl_zc,temp_var2,zero_ao,fa_label,TRUE);
                     assemblez_2_branch(jl_zc,temp_var2,max_ao,pa_label,TRUE);
                     assemble_label_no(fa_label);
@@ -781,7 +741,7 @@ static void compile_conditional_z(int oc,
         return;
     }
 
-    AO3.type = VARIABLE_OT; AO3.value = 0; AO3.marker = 0; 
+    INITAOTV(&AO3, VARIABLE_OT, 0);
 
     the_zc = (version_number == 3)?call_zc:call_vs_zc;
     if (oc == 201)
@@ -827,11 +787,11 @@ static void write_result_g(assembly_operand to, assembly_operand from)
 
 static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     assembly_operand AO3)
-{   int vr;
+{   int vr = 0;
     int data_len, read_flag; 
     assembly_operand zero_ao, max_ao, size_ao, en_ao, type_ao, an_ao,
         index_ao, five_ao;
-    int passed_label, failed_label, final_label, x, y;
+    int passed_label, failed_label, final_label, x = 0, y = 0;
 
     if ((oc == aloadb_gc) || (oc == astoreb_gc)) data_len = 1;
     else if ((oc == aloads_gc) || (oc == astores_gc)) data_len = 2;
@@ -844,7 +804,7 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
 
     if (AO1.marker == ARRAY_MV)
     {   
-        zero_ao.value = 0; zero_ao.marker = 0;
+        INITAO(&zero_ao);
 
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
@@ -991,7 +951,8 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
         case aloadb_gc: vr = RT__ChLDB_VR; break;
         case aload_gc: vr = RT__ChLDW_VR; break;
         case astoreb_gc: vr = RT__ChSTB_VR; break;
-        case astore_gc: vr = RT__ChSTW_VR; break; 
+        case astore_gc: vr = RT__ChSTW_VR; break;
+        default: compiler_error("unknown array opcode");
     }
 
     if ((oc == aloadb_gc) || (oc == aload_gc)) 
@@ -1050,7 +1011,7 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     assembleg_1_branch(jz_gc, AO, failed_label);
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
-    AO3.marker = 0;
+    INITAO(&AO3);
     AO3.value = 0x70; /* type byte -- object */
     set_constant_ot(&AO3);
     assembleg_2_branch(jeq_gc, stack_pointer, AO3, passed_label);
@@ -1060,14 +1021,12 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     assembleg_1_branch(jz_gc, AO, failed_label);
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
-    AO3.marker = 0;
+    INITAO(&AO3);
     AO3.value = 0x70; /* type byte -- object */
     set_constant_ot(&AO3);
     assembleg_2_branch(jne_gc, stack_pointer, AO3, failed_label);
     /* Test if inside the "Class" object... */
-    AO3.type = BYTECONSTANT_OT;
-    AO3.value = GOBJFIELD_PARENT();
-    AO3.marker = 0;
+    INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
     assembleg_3(aload_gc, AO, AO3, stack_pointer);
     ln = symbol_index("Class", -1);
     AO3.value = svals[ln];
@@ -1077,7 +1036,7 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   }
   
   assemble_label_no(failed_label);
-  AO2.marker = 0;
+  INITAO(&AO2);
   AO2.value = rte_number; 
   set_constant_ot(&AO2);
   assembleg_call_2(veneer_routine(RT__Err_VR), AO2, AO1, zero_operand);
@@ -1119,7 +1078,7 @@ static void compile_conditional_g(condclass *cc,
     assembly_operand AO1, assembly_operand AO2, int label, int flag)
 {   assembly_operand AO4; 
     int the_zc, error_label = label,
-    va_flag = FALSE, va_label;
+    va_flag = FALSE, va_label = 0;
 
     ASSERT_GLULX(); 
 
@@ -1162,13 +1121,13 @@ static void compile_conditional_g(condclass *cc,
               }
             }
 
-            max_ao.marker = 0;
+            INITAO(&max_ao);
             max_ao.value = NUM_ATTR_BYTES*8;
             set_constant_ot(&max_ao);
             assembleg_2_branch(jlt_gc, temp_var2, zero_operand, fa_label);
             assembleg_2_branch(jlt_gc, temp_var2, max_ao, pa_label);
             assemble_label_no(fa_label);
-            en_ao.marker = 0;
+            INITAO(&en_ao);
             en_ao.value = 19; /* INVALIDATTR_RTE */
             set_constant_ot(&en_ao);
             assembleg_store(stack_pointer, temp_var2);
@@ -1187,8 +1146,8 @@ static void compile_conditional_g(condclass *cc,
           set_constant_ot(&AO2);
         }
         else {
+          INITAO(&AO4);
           AO4.value = 8;
-          AO4.marker = 0;
           AO4.type = BYTECONSTANT_OT;
           if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
             if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) 
@@ -1212,8 +1171,8 @@ static void compile_conditional_g(condclass *cc,
             error_label = next_label++;
           AO1 = check_nonzero_at_runtime(AO1, error_label, IN_RTE);
         }
+        INITAO(&AO4);
         AO4.value = GOBJFIELD_PARENT();
-        AO4.marker = 0;
         AO4.type = BYTECONSTANT_OT;
         assembleg_3(aload_gc, AO1, AO4, stack_pointer);
         AO1 = stack_pointer;
@@ -1418,9 +1377,7 @@ static void generate_code_from(int n, int void_flag)
                 if (((ET[below].value.type == VARIABLE_OT)
                      && (ET[below].value.value == 0))
                     && ((oc != je_zc) || (arity>4)) )
-                {   left_operand.type = VARIABLE_OT;
-                    left_operand.value = 255;
-                    left_operand.marker = 0;
+                {   INITAOTV(&left_operand, VARIABLE_OT, 255);
                     assemblez_store(left_operand, ET[below].value);
                 }
                 else left_operand = ET[below].value;
@@ -1663,7 +1620,7 @@ static void generate_code_from(int n, int void_flag)
                     assemblez_store(temp_var2, by_ao);
                     ln = next_label++;
                     assemblez_1_branch(jz_zc, temp_var2, ln, FALSE);
-                    error_ao.type = SHORT_CONSTANT_OT; error_ao.marker = 0;
+                    INITAOT(&error_ao, SHORT_CONSTANT_OT);
                     error_ao.value = DBYZERO_RTE;
                     assemblez_2(call_vn_zc, veneer_routine(RT__Err_VR),
                         error_ao);
@@ -1809,9 +1766,8 @@ static void generate_code_from(int n, int void_flag)
                  {   case RANDOM_SYSF:
                          if (j>1)
                          {  assembly_operand AO, AO2; int arg_c, arg_et;
-                            AO.value = j; AO.marker = 0;
-                                AO.type = SHORT_CONSTANT_OT;
-                            AO2.type = LONG_CONSTANT_OT;
+                            INITAOTV(&AO, SHORT_CONSTANT_OT, j);
+                            INITAOT(&AO2, LONG_CONSTANT_OT);
                             AO2.value = begin_word_array();
                             AO2.marker = ARRAY_MV;
 
@@ -2219,7 +2175,7 @@ static void generate_code_from(int n, int void_flag)
                     assembleg_store(temp_var2, by_ao);
                     ln = next_label++;
                     assembleg_1_branch(jnz_gc, temp_var2, ln);
-                    error_ao.marker = 0;
+                    INITAO(&error_ao);
                     error_ao.value = DBYZERO_RTE;
                     set_constant_ot(&error_ao);
                     assembleg_call_1(veneer_routine(RT__Err_VR),
@@ -2544,11 +2500,10 @@ static void generate_code_from(int n, int void_flag)
                          if (j>1)
                          {  assembly_operand AO, AO2; 
                             int arg_c, arg_et;
+                            INITAO(&AO);
                             AO.value = j; 
-                            AO.marker = 0;
                             set_constant_ot(&AO);
-                            AO2.type = CONSTANT_OT;
-                            AO2.value = begin_word_array();
+                            INITAOTV(&AO2, CONSTANT_OT, begin_word_array());
                             AO2.marker = ARRAY_MV;
 
                             for (arg_c=0, arg_et = ET[below].right;arg_c<j;
@@ -2577,9 +2532,7 @@ static void generate_code_from(int n, int void_flag)
                             if (runtime_error_checking_switch)
                                 AO = check_nonzero_at_runtime(AO, -1,
                                     PARENT_RTE);
-                            AO2.type = BYTECONSTANT_OT;
-                            AO2.value = GOBJFIELD_PARENT();
-                            AO2.marker = 0; 
+                            INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_PARENT());
                             assembleg_3(aload_gc, AO, AO2, Result);
                          }
                          break;
@@ -2591,9 +2544,7 @@ static void generate_code_from(int n, int void_flag)
                             if (runtime_error_checking_switch)
                                AO = check_nonzero_at_runtime(AO, -1,
                                (sf_number==CHILD_SYSF)?CHILD_RTE:ELDEST_RTE);
-                            AO2.type = BYTECONSTANT_OT;
-                            AO2.value = GOBJFIELD_CHILD();
-                            AO2.marker = 0;
+                            INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
                             assembleg_3(aload_gc, AO, AO2, Result);
                          }
                          break;
@@ -2606,9 +2557,7 @@ static void generate_code_from(int n, int void_flag)
                                AO = check_nonzero_at_runtime(AO, -1,
                                (sf_number==SIBLING_SYSF)
                                    ?SIBLING_RTE:YOUNGER_RTE);
-                            AO2.type = BYTECONSTANT_OT;
-                            AO2.value = GOBJFIELD_SIBLING();
-                            AO2.marker = 0;
+                            INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_SIBLING());
                             assembleg_3(aload_gc, AO, AO2, Result);
                          }
                          break;
@@ -2619,9 +2568,7 @@ static void generate_code_from(int n, int void_flag)
                             if (runtime_error_checking_switch)
                                 AO = check_nonzero_at_runtime(AO, -1,
                                     CHILDREN_RTE);
-                            AO2.type = BYTECONSTANT_OT;
-                            AO2.value = GOBJFIELD_CHILD();
-                            AO2.marker = 0;
+                            INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
                             assembleg_store(temp_var1, zero_operand);
                             assembleg_3(aload_gc, AO, AO2, temp_var2);
                             AO2.value = GOBJFIELD_SIBLING();
@@ -2657,9 +2604,7 @@ static void generate_code_from(int n, int void_flag)
                          if (runtime_error_checking_switch)
                            AO = check_nonzero_at_runtime(AO, -1,
                              YOUNGEST_RTE);
-                         AO2.marker = 0;
-                         AO2.value = GOBJFIELD_CHILD();
-                         AO2.type = BYTECONSTANT_OT;
+                         INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
                          assembleg_3(aload_gc, AO, AO2, temp_var1);
                          AO2.value = GOBJFIELD_SIBLING();
                          assembleg_1_branch(jz_gc, temp_var1, next_label+1);
@@ -2680,9 +2625,7 @@ static void generate_code_from(int n, int void_flag)
                            AO = check_nonzero_at_runtime(AO, -1,
                              YOUNGEST_RTE);
                          assembleg_store(temp_var3, AO);
-                         AO2.marker = 0;
-                         AO2.value = GOBJFIELD_PARENT();
-                         AO2.type = BYTECONSTANT_OT;
+                         INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_PARENT());
                          assembleg_3(aload_gc, temp_var3, AO2, temp_var1);
                          assembleg_1_branch(jz_gc, temp_var1, next_label+2);
                          AO2.value = GOBJFIELD_CHILD();
@@ -2776,8 +2719,8 @@ static void generate_code_from(int n, int void_flag)
                  if (offstack > 1)
                      error("*** Function call cannot be generated with more than one nonstack argument ***");
 
+                 INITAO(&AO);
                  AO.value = j;
-                 AO.marker = 0;
                  set_constant_ot(&AO);
 
                  if (void_flag)
@@ -2804,7 +2747,15 @@ static void generate_code_from(int n, int void_flag)
     if (!glulx_mode) {
 
         if (ET[n].to_expression)
-        {   if (ET[n].true_label != -1)
+        {
+            if (void_flag) {
+                warning("Logical expression has no side-effects");
+                if (ET[n].true_label != -1)
+                    assemble_label_no(ET[n].true_label);
+                else
+                    assemble_label_no(ET[n].false_label);
+            }
+            else if (ET[n].true_label != -1)
             {   assemblez_1(push_zc, zero_operand);
                 assemblez_jump(next_label++);
                 assemble_label_no(ET[n].true_label);
@@ -2828,7 +2779,15 @@ static void generate_code_from(int n, int void_flag)
     else {
 
         if (ET[n].to_expression)
-        {   if (ET[n].true_label != -1)
+        {   
+            if (void_flag) {
+                warning("Logical expression has no side-effects");
+                if (ET[n].true_label != -1)
+                    assemble_label_no(ET[n].true_label);
+                else
+                    assemble_label_no(ET[n].false_label);
+            }
+            else if (ET[n].true_label != -1)
             {   assembleg_store(stack_pointer, zero_operand);
                 assembleg_jump(next_label++);
                 assemble_label_no(ET[n].true_label);

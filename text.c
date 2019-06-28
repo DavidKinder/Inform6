@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "text" : Text translation, the abbreviations optimiser, the dictionary  */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -667,7 +667,11 @@ string; substituting '   '.");
         else {
           unicode = text_to_unicode((char *) (text_in+i));
           i += textual_form_length - 1;
-          if (unicode >= 0 && unicode < 256) {
+          if (unicode == '@' || unicode == '\0') {
+            write_z_char_g('@');
+            write_z_char_g(unicode ? '@' : '0');
+          }
+          else if (unicode >= 0 && unicode < 256) {
             write_z_char_g(unicode);
           }
           else {
@@ -795,7 +799,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 /*   The compressor. This uses the usual Huffman compression algorithm. */
 void compress_game_text()
 {
-  int entities, branchstart, branches;
+  int entities=0, branchstart, branches;
   int numlive;
   int32 lx;
   int jx;
@@ -869,7 +873,7 @@ void compress_game_text()
     for (lx=0, ix=0; lx<no_strings; lx++) {
       int escapelen=0, escapetype=0;
       int done=FALSE;
-      int32 escapeval;
+      int32 escapeval=0;
       while (!done) {
         if (temporary_files_switch)
           ch = fgetc(Temp1_fp);
@@ -1009,7 +1013,7 @@ void compress_game_text()
   for (lx=0, ix=0; lx<no_strings; lx++) {
     int escapelen=0, escapetype=0;
     int done=FALSE;
-    int32 escapeval;
+    int32 escapeval=0;
     jx = 0; 
     compressed_offsets[lx] = compression_table_size + compression_string_size;
     compression_string_size++; /* for the type byte */
@@ -1156,7 +1160,7 @@ typedef struct optab_s
     int32  popularity;
     int32  score;
     int32  location;
-    char text[64];
+    char text[MAX_ABBREV_LENGTH];
 } optab;
 static optab *bestyet, *bestyet2;
 
@@ -1166,7 +1170,7 @@ static char *sub_buffer;
 
 static void optimise_pass(void)
 {   int32 i; int t1, t2;
-    int32 j, j2, k, nl, matches, noflags, score, min, minat, x, scrabble, c;
+    int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
     for (i=0; i<256; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
     {   if ((*(tlbtab[i].text)!=(int) '\n')&&(tlbtab[i].occurrences!=0))
@@ -1268,7 +1272,7 @@ static int any_overlap(char *s1, char *s2)
 
 extern void optimise_abbreviations(void)
 {   int32 i, j, t, max=0, MAX_GTABLE;
-    int32 j2, selected, available, maxat, nl;
+    int32 j2, selected, available, maxat=0, nl;
     tlb test;
 
     printf("Beginning calculation of optimal abbreviations...\n");

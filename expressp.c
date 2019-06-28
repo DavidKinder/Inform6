@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "expressp" :  The expression parser                                     */
 /*                                                                           */
-/*   Part of Inform 6.33                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2014                                 */
+/*   Part of Inform 6.34                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2018                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -57,7 +57,7 @@ extern int *variable_usage;
 int system_function_usage[32];
 
 static int get_next_etoken(void)
-{   int v, symbol, mark_symbol_as_used = FALSE,
+{   int v, symbol = 0, mark_symbol_as_used = FALSE,
         initial_bracket_level = bracket_level;
 
     etoken_count++;
@@ -128,6 +128,14 @@ but not used as a value:", unicode);
             current_token.symflags = sflags[symbol];
             switch(stypes[symbol])
             {   case ROUTINE_T:
+                    /* Replaced functions must always be backpatched
+                       because there could be another definition coming. */
+                    if (sflags[symbol] & REPLACE_SFLAG)
+                    {   current_token.marker = SYMBOL_MV;
+                        if (module_switch) import_symbol(symbol);
+                        v = symbol;
+                        break;
+                    }
                     current_token.marker = IROUTINE_MV;
                     break;
                 case GLOBAL_VARIABLE_T:
@@ -693,6 +701,8 @@ int glulx_system_constant_list[] =
       grammar_table_SC,
       actions_table_SC,
       globals_array_SC,
+      highest_class_number_SC,
+      highest_object_number_SC,
       -1 };
 
 static int32 value_of_system_constant_g(int t)
@@ -718,6 +728,10 @@ static int32 value_of_system_constant_g(int t)
     return actions_offset;
   case globals_array_SC:
     return variables_offset;
+  case highest_class_number_SC:
+    return no_classes-1;
+  case highest_object_number_SC:
+    return no_objects-1;
   }
 
   error_named("System constant not implemented in Glulx",
@@ -892,6 +906,23 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      v = DICT_ENTRY_FLAG_POS+5;
                      break;
 
+                 case lowest_attribute_number_SC:
+                 case lowest_action_number_SC:
+                 case lowest_routine_number_SC:
+                 case lowest_array_number_SC:
+                 case lowest_constant_number_SC:
+                 case lowest_class_number_SC:
+                     o->type = BYTECONSTANT_OT;
+                     o->marker = 0;
+                     v = 0;
+                     break;
+                 case lowest_object_number_SC:
+                 case lowest_property_number_SC:
+                     o->type = BYTECONSTANT_OT;
+                     o->marker = 0;
+                     v = 1;
+                     break;
+ 
                  /* ###fix: need to fill more of these in! */
 
                  default:
@@ -996,7 +1027,7 @@ static void remove_bracket_layer_from_emitter_stack()
 static void emit_token(token_data t)
 {   assembly_operand o1, o2; int arity, stack_size, i;
     int op_node_number, operand_node_number, previous_node_number;
-    int32 x;
+    int32 x = 0;
 
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
@@ -1084,7 +1115,7 @@ static void emit_token(token_data t)
             {   int index = emitter_stack[emitter_sp-arity].value;
                 if(!glulx_mode)
                     index -= 256;
-                if(index > 0 && index < NUMBER_SYSTEM_FUNCTIONS)
+                if(index >= 0 && index < NUMBER_SYSTEM_FUNCTIONS)
                     error_named("System function name used as a value:", system_functions.keywords[index]);
                 else
                     compiler_error("Found unnamed system function used as a value");
@@ -1444,7 +1475,7 @@ static void check_property_operator(int from_node)
 static void check_lvalues(int from_node)
 {   int below = ET[from_node].down;
     int opnum = ET[from_node].operator_number, opnum_below;
-    int lvalue_form, i, j;
+    int lvalue_form, i, j = 0;
 
     if (below != -1)
     {
@@ -1714,9 +1745,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
         ET[n].up = -1;
         ET[n].right = -1;
         ET[n].value = AO;
-        AO.type = EXPRESSION_OT;
+        INITAOT(&AO, EXPRESSION_OT);
         AO.value = n;
-        AO.marker = 0;
     }
 
     insert_exp_to_cond(AO.value, context);
@@ -1845,7 +1875,8 @@ extern assembly_operand parse_expression(int context)
 
         if ((a.type == ENDEXP_TT) && (b.type == ENDEXP_TT))
         {   if (emitter_sp == 0)
-            {   compiler_error("SR error: emitter stack empty");
+            {   error("No expression between brackets '(' and ')'");
+                put_token_back();
                 return AO;
             }
             if (emitter_sp > 1)
