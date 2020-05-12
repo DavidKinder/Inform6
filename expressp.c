@@ -150,6 +150,9 @@ but not used as a value:", unicode);
                 case ARRAY_T:
                     current_token.marker = ARRAY_MV;
                     break;
+                case STATIC_ARRAY_T:
+                    current_token.marker = STATIC_ARRAY_MV;
+                    break;
                 case INDIVIDUAL_PROPERTY_T:
                     if (module_switch) current_token.marker = IDENT_MV;
                     break;

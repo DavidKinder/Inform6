@@ -1302,6 +1302,7 @@ typedef struct operator_s
 #define OBJECT_T              9
 #define CLASS_T               10
 #define FAKE_ACTION_T         11
+#define STATIC_ARRAY_T        12
 
 /* ------------------------------------------------------------------------- */
 /*   Statusline_flag values                                                  */
@@ -1477,6 +1478,7 @@ typedef struct operator_s
 #define FATALERROR_DK   33
 #define WARNING_DK      34
 #define TERMINATING_DK  35
+#define STATIC_DK       36
 
 /*  Index numbers into the keyword group "trace_keywords" (see "lexer.c")  */
 
@@ -1858,7 +1860,7 @@ typedef struct operator_s
 #define PROP_ZA                4
 #define CLASS_NUMBERS_ZA       5
 #define INDIVIDUAL_PROP_ZA     6
-#define DYNAMIC_ARRAY_ZA       7 /* Z-code only */
+#define DYNAMIC_ARRAY_ZA       7
 #define GRAMMAR_ZA             8
 #define ACTIONS_ZA             9
 #define PREACTIONS_ZA         10
@@ -1869,8 +1871,7 @@ typedef struct operator_s
 #define LINK_DATA_ZA          15
 
 #define SYMBOLS_ZA            16
-
-#define ARRAY_ZA              17 /* Glulx only */
+#define STATIC_ARRAY_ZA       17 /* Z-code only */
 #define GLOBALVAR_ZA          18 /* Glulx only */
 
 /* ------------------------------------------------------------------------- */
@@ -1886,7 +1887,7 @@ typedef struct operator_s
 #define INCON_MV               3     /* "Hardware" constant (table address) */
 #define IROUTINE_MV            4     /* Call to internal routine */
 #define VROUTINE_MV            5     /* Call to veneer routine */
-#define ARRAY_MV               6     /* Ref to internal array address */
+#define ARRAY_MV               6     /* Ref to internal dynam array address */
 #define NO_OBJS_MV             7     /* Ref to number of game objects */
 #define INHERIT_MV             8     /* Inherited property value */
 #define INHERIT_INDIV_MV       9     /* Inherited indiv property value */
@@ -1902,8 +1903,9 @@ typedef struct operator_s
 #define INDIVPT_MV            14     /* Individual prop table address */
 #define ACTION_MV             15     /* Action number */
 #define OBJECT_MV             16     /* Ref to internal object number */
+#define STATIC_ARRAY_MV       17     /* Ref to internal static array address */
 
-#define LARGEST_BPATCH_MV     16     /* Larger marker values are never written
+#define LARGEST_BPATCH_MV     17     /* Larger marker values are never written
                                         to backpatch tables */
 
 /* Value indicating an imported symbol record: */
@@ -2058,17 +2060,19 @@ extern void verbs_free_arrays(void);
 extern int no_globals, no_arrays;
 extern int dynamic_array_area_size;
 extern int *dynamic_array_area;
+extern int static_array_area_size;
+extern int *static_array_area;
 extern int32 *global_initial_value;
 extern int32 *array_symbols;
-extern int  *array_sizes, *array_types;
+extern int  *array_sizes, *array_types, *array_locs;
 
 extern void make_global(int array_flag, int name_only);
 extern void set_variable_value(int i, int32 v);
 extern void check_globals(void);
 extern int32 begin_table_array(void);
 extern int32 begin_word_array(void);
-extern void array_entry(int32 i, assembly_operand VAL);
-extern void finish_array(int32 i);
+extern void array_entry(int32 i, int is_static, assembly_operand VAL);
+extern void finish_array(int32 i, int is_static);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "asm"                                            */
@@ -2194,8 +2198,10 @@ extern void parse_assembly(void);
 /*   Extern definitions for "bpatch"                                         */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block zcode_backpatch_table, zmachine_backpatch_table;
-extern int32 zcode_backpatch_size, zmachine_backpatch_size;
+extern memory_block zcode_backpatch_table, staticarray_backpatch_table,
+    zmachine_backpatch_table;
+extern int32 zcode_backpatch_size, staticarray_backpatch_size,
+    zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;
 
 extern int32 backpatch_value(int32 value);
@@ -2677,7 +2683,8 @@ extern int32
     action_names_offset,    fake_action_names_offset,
     routine_names_offset,   routines_array_offset, routine_flags_array_offset,
     global_names_offset,    global_flags_array_offset,
-    array_flags_array_offset, constant_names_offset, constants_array_offset;
+    array_flags_array_offset, constant_names_offset, constants_array_offset,
+    static_arrays_offset;
 extern int32
     arrays_offset, object_tree_offset, grammar_table_offset,
     abbreviations_offset;    /* For Glulx */

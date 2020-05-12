@@ -18,7 +18,7 @@ uchar *zmachine_paged_memory;          /* Where we shall store the story file
                                           at the end of the compilation pass */
 
 /* In Glulx, zmachine_paged_memory contains all of RAM -- i.e. all but
-   the header, the code, and the static strings. */
+   the header, the code, the static arrays, and the static strings. */
 
 /* ------------------------------------------------------------------------- */
 /*   Offsets of various areas in the Z-machine: these are set to nominal     */
@@ -58,7 +58,8 @@ int32 code_offset,
       routine_flags_array_offset,
       global_names_offset,
       global_flags_array_offset,
-      array_flags_array_offset;
+      array_flags_array_offset,
+      static_arrays_offset;
 int32 arrays_offset,
       object_tree_offset,
       grammar_table_offset,
@@ -187,7 +188,7 @@ static int32 rough_size_of_paged_memory_g(void)
 {
     /*  This function calculates a modest over-estimate of the amount of
         memory required to store the machine's paged memory area
-        (that is, everything up to the start of the code area).              */
+        (that is, everything past the start of RAM). */
 
     int32 total;
 
@@ -232,7 +233,8 @@ static void construct_storyfile_z(void)
     int32 globals_at=0, link_table_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
           abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
           map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
-          terminating_chars_at=0, unicode_at=0, id_names_length=0;
+          terminating_chars_at=0, unicode_at=0, id_names_length=0,
+          static_arrays_at=0;
     int skip_backpatching = FALSE;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -595,6 +597,12 @@ table format requested (producing number 2 format instead)");
         mark += 30;
     }
 
+    /*  ------------------------ Static Arrays ----------------------------- */
+
+    static_arrays_at = mark;
+    for (i=0; i<static_array_area_size; i++)
+        p[mark++] = static_array_area[i];
+    
     /*  ----------------- A gap before the code area ----------------------- */
     /*  (so that it will start at an exact packed address and so that all    */
     /*  routine packed addresses are >= 256, hence long constants)           */
@@ -692,6 +700,7 @@ or less.");
     prop_values_offset = object_props_at;
     static_memory_offset = grammar_table_at;
     grammar_table_offset = grammar_table_at;
+    static_arrays_offset = static_arrays_at;
 
     if (extend_memory_map)
     {   extend_offset=256;
@@ -1128,6 +1137,11 @@ printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) map_of_module);
 printf("        | map of module addrs |\n");
 }
+if (static_array_area_size)
+{
+printf("        +---------------------+   %05lx\n", (long int) static_arrays_at);
+printf("        |    static arrays    |\n");
+}
 printf("        +=====================+   %05lx\n", (long int) Write_Code_At);
 printf("Above   |       Z-code        |\n");
 printf("readable+---------------------+   %05lx\n",
@@ -1182,7 +1196,7 @@ static void construct_storyfile_g(void)
     int32 globals_at, dictionary_at, actions_at, preactions_at,
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
           grammar_table_at, charset_at, headerext_at,
-          unicode_at, arrays_at;
+        unicode_at, arrays_at, static_arrays_at;
     int32 threespaces, code_length;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -1242,8 +1256,10 @@ static void construct_storyfile_g(void)
     Write_Strings_At = Write_Code_At + code_length;
     strings_length = compression_table_size + compression_string_size;
 
+    static_arrays_at = Write_Strings_At + strings_length;
+
     /* Now figure out where RAM starts. */
-    Write_RAM_At = Write_Strings_At + strings_length;
+    Write_RAM_At = static_arrays_at + static_array_area_size;
     /* The Write_RAM_At boundary must be a multiple of GPAGESIZE. */
     while (Write_RAM_At % GPAGESIZE)
       Write_RAM_At++;
@@ -1554,6 +1570,7 @@ table format requested (producing number 2 format instead)");
 
     code_offset = Write_Code_At;
     strings_offset = Write_Strings_At;
+    static_arrays_offset = static_arrays_at;
 
     /*  --------------------------- The Header ----------------------------- */
 
@@ -1725,9 +1742,10 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         write_debug_section("string decoding table", Write_Strings_At);
         write_debug_section("strings area",
                             Write_Strings_At + compression_table_size);
-        if (Write_Strings_At + strings_length < Write_RAM_At)
+        write_debug_section("static array space", static_arrays_at);
+        if (static_arrays_at + static_array_area_size < Write_RAM_At)
         {   write_debug_section
-                ("zero padding", Write_Strings_At + strings_length);
+                ("zero padding", static_arrays_at + static_array_area_size);
         }
         if (globals_at)
         {   compiler_error("Failed assumption that globals are at start of "
@@ -1770,6 +1788,12 @@ printf("        | string decode table |\n");
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) Write_Strings_At + compression_table_size);
 printf("        |       strings       |\n");
+            if (static_array_area_size)
+            {
+printf("        +---------------------+   %06lx\n", 
+  (long int) (static_arrays_at));
+printf("        |    static arrays    |\n");
+            }
 printf("        +=====================+   %06lx\n", 
   (long int) (Write_RAM_At+globals_at));
 printf("Dynamic |  global variables   |\n");
@@ -1897,6 +1921,7 @@ extern void init_tables_vars(void)
       identifier_names_offset=0x800;
       class_numbers_offset = 0x800;
       arrays_offset = 0x0800; /* only used in Glulx, but might as well set */
+      static_arrays_offset = 0x0800;
     }
     else {
       code_offset = 0x12345;
@@ -1910,6 +1935,7 @@ extern void init_tables_vars(void)
       individuals_offset=0x12345;
       identifier_names_offset=0x12345;
       class_numbers_offset = 0x12345;
+      static_arrays_offset = 0x12345;
     }
 }
 

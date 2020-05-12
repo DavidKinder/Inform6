@@ -283,6 +283,7 @@ extern char *typename(int type)
         case LABEL_T:               return("Label");
         case GLOBAL_VARIABLE_T:     return("Global variable");
         case ARRAY_T:               return("Array");
+        case STATIC_ARRAY_T:        return("Static array");
         case CONSTANT_T:            return("Defined constant");
         case ATTRIBUTE_T:           return("Attribute");
         case PROPERTY_T:            return("Property");
