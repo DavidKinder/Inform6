@@ -170,7 +170,7 @@ static void parse_action(void)
             if (version_number==4)
                 assemblez_4_to(call_vs_zc, AO, AO2, AO3, AO4, temp_var1);
             else
-                assemblez_4(call_zc, AO, AO2, AO3, AO4);
+                assemblez_4_to(call_zc, AO, AO2, AO3, AO4, temp_var1);
             break;
           case 3:
             AO5 = code_generate(AO5, QUANTITY_CONTEXT, -1);
