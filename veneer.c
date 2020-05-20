@@ -232,7 +232,11 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          {   if (identifier >= 1 && identifier < 64 && obj.#identifier <= 2)\
                  return obj.identifier;\
              RT__Err(\"read\", obj, identifier); return; }\
+         #IFV3;\
+         if (obj..#identifier > 2) RT__Err(\"read\", obj, identifier);\
+         #IFNOT;\
          if (obj..#identifier > 2) RT__Err(\"read\", obj, identifier, 2);\
+         #ENDIF;\
          return x-->0;\
          ]", "", "", "", "", ""
     },
