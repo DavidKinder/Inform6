@@ -178,6 +178,8 @@ static int32 rough_size_of_paged_memory_z(void)
     total += (subtract_pointers(dictionary_top, dictionary))  /* dictionary */
              + ((module_switch)?30:0);                        /* module map */
 
+    total += static_array_area_size;                       /* static arrays */
+
     total += scale_factor*0x100            /* maximum null bytes before code */
             + 1000;             /* fudge factor (in case the above is wrong) */
 
