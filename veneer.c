@@ -2234,7 +2234,7 @@ static void compile_symbol_table_routine(void)
             AO3.marker = 0;
             assemblez_store(temp_var3, AO3);
             AO3.value = svals[array_symbols[j]];
-            AO3.marker = ARRAY_MV;
+            AO3.marker = (!array_locs[j] ? ARRAY_MV : STATIC_ARRAY_MV);
             assemblez_1(ret_zc, AO3);
             assemble_label_no(nl);
         }

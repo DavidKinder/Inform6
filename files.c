@@ -1170,12 +1170,57 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
     }
     
-    /*  (4.5)  Output any null bytes (required to reach a GPAGESIZE address)
+    /*  (5)  Output static arrays (if any). */
+    {
+        /* We have to backpatch entries mentioned in staticarray_backpatch_table. */
+        int32 size_before_arrays = size;
+        int32 val, ix, jx;
+        for (ix=0, jx=0; ix<staticarray_backpatch_size; ix += 5) {
+            backpatch_error_flag = FALSE;
+            backpatch_marker = read_byte_from_memory_block(&staticarray_backpatch_table, ix);
+            /* datalen is always 4 for array backpatching */
+            offset = 
+                (read_byte_from_memory_block(&staticarray_backpatch_table, ix+1) << 24)
+                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+2) << 16)
+                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+3) << 8)
+                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+4));
+            while (jx<offset) {
+                sf_put(static_array_area[jx]);
+                size++;
+                jx++;
+            }
+
+            /* Write out the converted value of the backpatch marker. */
+            val = static_array_area[jx++];
+            val = (val << 8) | static_array_area[jx++];
+            val = (val << 8) | static_array_area[jx++];
+            val = (val << 8) | static_array_area[jx++];
+            val = backpatch_value(val);
+            sf_put((val >> 24) & 0xFF);
+            sf_put((val >> 16) & 0xFF);
+            sf_put((val >> 8) & 0xFF);
+            sf_put((val) & 0xFF);
+            size += 4;
+        }
+
+        /* Flush out the last bit of static_array_area, after the last backpatch marker. */
+        offset = static_array_area_size;
+        while (jx<offset) {
+            sf_put(static_array_area[jx]);
+            size++;
+            jx++;
+        }
+
+        if (size_before_arrays + static_array_area_size != size)
+            compiler_error("Static array output length did not match");
+    }
+
+    /*  (5.5)  Output any null bytes (required to reach a GPAGESIZE address)
              before RAMSTART. */
 
     while (size % GPAGESIZE) { sf_put(0); size++; }
 
-    /*  (5)  Output RAM. */
+    /*  (6)  Output RAM. */
 
     for (i=0; i<RAM_Size; i++)
     {   sf_put(zmachine_paged_memory[i]); size++;

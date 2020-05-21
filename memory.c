@@ -156,6 +156,14 @@ extern void my_free(void *pointer, char *whatitwas)
 /* ------------------------------------------------------------------------- */
 /*   Extensible blocks of memory, providing a kind of RAM disc as an         */
 /*   alternative to the temporary files option                               */
+/*                                                                           */
+/*   The allocation is slightly confusing. A block can store up to 72        */
+/*   chunks, which are allocated as needed when data is written. (Data does  */
+/*   not have to be written in order, but you should not try to read a byte  */
+/*   before writing it.) The size of a chunk is defined by ALLOC_CHUNK_SIZE. */
+/*   So any block can store any amount of data, but you increase the limit   */
+/*   (for all blocks) by increasing ALLOC_CHUNK_SIZE, not the number of      */
+/*   chunks.                                                                 */
 /* ------------------------------------------------------------------------- */
 
 static char chunk_name_buffer[60];
@@ -165,6 +173,7 @@ static char *chunk_name(memory_block *MB, int no)
     if (MB == &zcode_area)          p = "Z-code area";
     if (MB == &link_data_area)      p = "link data area";
     if (MB == &zcode_backpatch_table) p = "Z-code backpatch table";
+    if (MB == &staticarray_backpatch_table) p = "Static array backpatch table";
     if (MB == &zmachine_backpatch_table) p = "Z-machine backpatch table";
     sprintf(chunk_name_buffer, "%s chunk %d", p, no);
     return(chunk_name_buffer);

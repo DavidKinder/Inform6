@@ -840,9 +840,9 @@ static void parse_statement_z(int break_label, int continue_label)
                          if (j > ln2) ln2 = j;
                      }
                      put_token_back();
-                     array_entry(ln++,parse_expression(CONSTANT_CONTEXT));
+                     array_entry(ln++, FALSE, parse_expression(CONSTANT_CONTEXT));
                  } while (TRUE);
-                 finish_array(ln);
+                 finish_array(ln, FALSE);
                  if (ln == 0)
                      error("No lines of text given for 'box' display");
 
@@ -1801,9 +1801,9 @@ static void parse_statement_g(int break_label, int continue_label)
                          if (j > ln2) ln2 = j;
                      }
                      put_token_back();
-                     array_entry(ln++,parse_expression(CONSTANT_CONTEXT));
+                     array_entry(ln++, FALSE, parse_expression(CONSTANT_CONTEXT));
                  } while (TRUE);
-                 finish_array(ln);
+                 finish_array(ln, FALSE);
                  if (ln == 0)
                      error("No lines of text given for 'box' display");
 

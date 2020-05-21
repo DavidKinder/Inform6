@@ -479,7 +479,7 @@ keyword_group directive_keywords =
     "string", "table", "buffer", "data", "initial", "initstr",
     "with", "private", "has", "class",
     "error", "fatalerror", "warning",
-    "terminating",
+    "terminating", "static",
     "" },
     DIR_KEYWORD_TT, FALSE, TRUE
 };
