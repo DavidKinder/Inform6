@@ -2,7 +2,7 @@
 /*   "expressp" :  The expression parser                                     */
 /*                                                                           */
 /*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   copyright (c) Graham Nelson 1993 - 2020                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
