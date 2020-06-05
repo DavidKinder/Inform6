@@ -76,6 +76,12 @@ e.g.
 <li><p>It has always been possible to replace the paths used by the compiler with a command line option of the
 form <tt>+include_path=foo</tt>. It is now possible to add to an existing path without replacing it by using
 an additional '+' character, like so: <tt>++include_path=foo</tt>.
+<li><p>The <tt>Replace</tt> directive can now be applied to routines in any file, whether it has the <tt>System_file</tt> directive or not. <tt>Replace</tt> also now works on recursive functions, which it previously did not. Its behavior can now be described this way:
+<pre>
+  Replace Func;
+  Replace Func OriginalFunc;
+</pre>
+Multiple definitions of <tt>Func()</tt> may follow this directive. <tt>Func</tt> will refer to the last-defined version, except that definitions in normal files are preferred over definitions in <tt>System_file</tt> files or the veneer. With the two-symbol form (introduced in 6.33), the latter symbol will refer to the <em>first</em>-defined version of the function.
 <li><p>A new <tt>Origsource</tt> directive has been added to allow a record of the location of the relevant in
 a higher-level language that has been converted to Inform 6. (In practice, this will very likely be the location in
 an Inform 7 source.) The syntax is
