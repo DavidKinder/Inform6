@@ -420,11 +420,13 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         break;
 
     case IFV3_CODE:
-        flag = FALSE; if (version_number == 3) flag = TRUE;
+        flag = FALSE;
+        if (!glulx_mode && version_number <= 3) flag = TRUE;
         goto HashIfCondition;
 
     case IFV5_CODE:
-        flag = TRUE; if (version_number == 3) flag = FALSE;
+        flag = TRUE;
+        if (!glulx_mode && version_number <= 3) flag = FALSE;
         goto HashIfCondition;
 
     case IFTRUE_CODE:
