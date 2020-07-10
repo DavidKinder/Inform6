@@ -1504,6 +1504,8 @@ extern void switches(char *p, int cmode)
                   r_e_c_s_set = TRUE; break;
         case 'G': if (cmode == 0)
                       error("The switch '-G' can't be set with 'Switches'");
+                  else if (version_set_switch)
+                      error("The '-G' switch cannot follow the '-v' switch");
                   else
                   {   glulx_mode = state;
                       adjust_memory_sizes();
