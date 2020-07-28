@@ -576,6 +576,10 @@ static int32 unique_task_id(void)
 #endif
 #endif
 
+#ifndef Default_Language
+#define Default_Language "English"
+#endif
+
 #ifndef FN_SEP
 #define FN_SEP '/'
 #endif
