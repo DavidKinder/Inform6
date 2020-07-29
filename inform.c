@@ -588,7 +588,7 @@ static void set_default_paths(void)
     set_path_value(Temporary_Path,  Temporary_Directory);
     set_path_value(Debugging_Name,  Debugging_File);
     set_path_value(Transcript_Name, Transcript_File);
-    set_path_value(Language_Name,   "English");
+    set_path_value(Language_Name,   Default_Language);
     set_path_value(Charset_Map,     "");
 }
 

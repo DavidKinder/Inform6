@@ -476,12 +476,17 @@ static int32 unique_task_id(void)
 #define Transcript_File "gametext"
 #endif
 #endif
+
 #ifndef Debugging_File
 #ifdef FILE_EXTENSIONS
 #define Debugging_File "gameinfo.dbg"
 #else
 #define Debugging_File "gamedebug"
 #endif
+#endif
+
+#ifndef Default_Language
+#define Default_Language "English"
 #endif
 
 #ifdef FILE_EXTENSIONS
