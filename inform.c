@@ -1263,6 +1263,12 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 "  (filename)    read in a list of commands (in the format above)\n\
                 from this \"setup file\"\n\n");
 
+  printf("Alternate command-line formats for the above:\n\
+     --list\n\
+     --size huge, --size large, --size small\n\
+     --helpopt SETTING\n\
+     --opt SETTING=number\n\n");
+
 #ifndef PROMPT_INPUT
     printf("For example: \"inform -dexs $huge curses\".\n\n");
 #endif
