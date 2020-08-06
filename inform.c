@@ -1222,7 +1222,8 @@ static void cli_print_help(int help_level)
 {
     printf(
 "\nThis program is a compiler of Infocom format (also called \"Z-machine\")\n\
-story files: copyright (c) Graham Nelson 1993 - 2020.\n\n");
+story files, as well as \"Glulx\" story files:\n\
+Copyright (c) Graham Nelson 1993 - 2020.\n\n");
 
    /* For people typing just "inform", a summary only: */
 
@@ -1325,7 +1326,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   w   disable warning messages\n\
   x   print # for every 100 lines compiled\n\
   y   trace linking system\n\
-  z   print memory map of the Z-machine\n\n");
+  z   print memory map of the virtual machine\n\n");
 
 printf("\
   B   use big memory model (for large V6/V7 files)\n\
