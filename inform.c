@@ -1595,7 +1595,24 @@ static int copy_icl_word(char *from, char *to, int max)
     return i;
 }
 
+/* Copy a string, converting to uppercase. The to array should be
+   (at least) max characters. Result will be null-terminated, so
+   at most max-1 characters will be copied. 
+*/
+static int strcpyupper(char *to, char *from, int max)
+{
+    int ix;
+    for (ix=0; ix<max-1; ix++) {
+        char ch = from[ix];
+        if (islower(ch)) ch = toupper(ch);
+        to[ix] = ch;
+    }
+    to[ix] = 0;
+    return ix;
+}
+
 static void execute_icl_command(char *p);
+static int execute_dashdash_command(char *p, char *p2);
 
 static int execute_icl_header(char *argname)
 {
@@ -1727,6 +1744,60 @@ static void execute_icl_command(char *p)
     }
 }
 
+/* Convert a --command into the equivalent ICL command and call 
+   execute_icl_command(). The dashes have already been stripped.
+
+   The second argument is the following command-line argument 
+   (or NULL if there was none). This may or may not be consumed.
+   Returns TRUE if it was.
+*/
+static int execute_dashdash_command(char *p, char *p2)
+{
+    char cli_buff[256];
+    int consumed2 = FALSE;
+    
+    if (!strcmp(p, "help")) {
+        strcpy(cli_buff, "-h");
+    }
+    else if (!strcmp(p, "list")) {
+        strcpy(cli_buff, "$LIST");
+    }
+    else if (!strcmp(p, "size")) {
+        consumed2 = TRUE;
+        if (!(p2 && (!strcmpcis(p2, "HUGE") || !strcmpcis(p2, "LARGE") || !strcmpcis(p2, "SMALL")))) {
+            printf("--size must be followed by \"huge\", \"large\", or \"small\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$");
+        strcpyupper(cli_buff+1, p2, 255);
+    }
+    else if (!strcmp(p, "opt")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--opt must be followed by \"setting=number\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$");
+        strcpyupper(cli_buff+1, p2, 255);
+    }
+    else if (!strcmp(p, "helpopt")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--helpopt must be followed by \"setting\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$?");
+        strcpyupper(cli_buff+2, p2, 254);
+    }
+    else {
+        printf("Switch \"--%s\" unknown (try \"inform -h\")\n", p);
+        return FALSE;
+    }
+
+    execute_icl_command(cli_buff);
+    return consumed2;
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Opening and closing banners                                             */
 /* ------------------------------------------------------------------------- */
@@ -1773,9 +1844,18 @@ static void read_command_line(int argc, char **argv)
     if (argc==1) switches("-h",1);
 
     for (i=1, cli_files_specified=0; i<argc; i++)
-        if (icl_command(argv[i]))
+        if (argv[i][0] == '-' && argv[i][1] == '-') {
+            char *nextarg = NULL;
+            if (i+1 < argc) nextarg = argv[i+1];
+            int consumed2 = execute_dashdash_command(argv[i]+2, nextarg);
+            if (consumed2 && i+1 < argc) {
+                i++;
+            }
+        }
+        else if (icl_command(argv[i])) {
             execute_icl_command(argv[i]);
-        else
+        }
+        else {
             switch(++cli_files_specified)
             {   case 1: cli_file1 = argv[i]; break;
                 case 2: cli_file2 = argv[i]; break;
@@ -1783,6 +1863,7 @@ static void read_command_line(int argc, char **argv)
                     printf("Command line error: unknown parameter '%s'\n",
                         argv[i]); return;
             }
+        }
 }
 #endif
 
