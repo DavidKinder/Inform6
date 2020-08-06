@@ -1247,18 +1247,21 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   +dir          set Include_Path to this directory\n\
   +PATH=dir     change the PATH to this directory\n\n\
   $...          one of the following memory commands:\n");
+  
   printf(
 "     $list            list current memory allocation settings\n\
      $huge            make standard \"huge game\" settings %s\n\
      $large           make standard \"large game\" settings %s\n\
      $small           make standard \"small game\" settings %s\n\
      $?SETTING        explain briefly what SETTING is for\n\
-     $SETTING=number  change SETTING to given number\n\n\
-  (filename)    read in a list of commands (in the format above)\n\
-                from this \"setup file\"\n\n",
+     $SETTING=number  change SETTING to given number\n\n",
     (DEFAULT_MEMORY_SIZE==HUGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==LARGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==SMALL_SIZE)?"(default)":"");
+
+  printf(
+"  (filename)    read in a list of commands (in the format above)\n\
+                from this \"setup file\"\n\n");
 
 #ifndef PROMPT_INPUT
     printf("For example: \"inform -dexs $huge curses\".\n\n");
@@ -1790,7 +1793,7 @@ static int execute_dashdash_command(char *p, char *p2)
         strcpyupper(cli_buff+2, p2, 254);
     }
     else {
-        printf("Switch \"--%s\" unknown (try \"inform -h\")\n", p);
+        printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
         return FALSE;
     }
 
