@@ -1267,10 +1267,12 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
                 from this \"setup file\"\n\n");
 
   printf("Alternate command-line formats for the above:\n\
-     --list\n\
-     --size huge, --size large, --size small\n\
-     --helpopt SETTING\n\
-     --opt SETTING=number\n\n");
+  --help                 (this page)\n\
+  --list\n\
+  --size huge, --size large, --size small\n\
+  --helpopt SETTING\n\
+  --opt SETTING=number\n\
+  --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
     printf("For example: \"inform -dexs $huge curses\".\n\n");
@@ -1813,7 +1815,14 @@ static int execute_dashdash_command(char *p, char *p2)
         strcpy(cli_buff, "$?");
         strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
-    //### --config
+    else if (!strcmp(p, "config")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--config must be followed by \"file.icl\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "(%s)", p2);
+    }
     //### --path name=foo?
     else {
         printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
