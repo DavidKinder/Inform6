@@ -1248,7 +1248,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   -switches     a list of compiler switches, 1 or 2 letter\n\
                 (see \"inform -h2\" for the full range)\n\n\
   +dir          set Include_Path to this directory\n\
-  +PATH=dir     change the PATH to this directory\n\n\
+  ++dir         add this directory to Include_Path\n\
+  +PATH=dir     change the PATH to this directory\n\
+  ++PATH=dir    add this directory to the PATH\n\n\
   $...          one of the following memory commands:\n");
   
   printf(
@@ -1268,6 +1270,8 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
   printf("Alternate command-line formats for the above:\n\
   --help                 (this page)\n\
+  --path PATH=dir\n\
+  --addpath PATH=dir\n\
   --list\n\
   --size huge, --size large, --size small\n\
   --helpopt SETTING\n\
@@ -1815,6 +1819,22 @@ static int execute_dashdash_command(char *p, char *p2)
         strcpy(cli_buff, "$?");
         strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
+    else if (!strcmp(p, "path")) {
+        consumed2 = TRUE;
+        if (!p2 || !strchr(p2, '=')) {
+            printf("--path must be followed by \"name=path\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "+%s", p2);
+    }
+    else if (!strcmp(p, "addpath")) {
+        consumed2 = TRUE;
+        if (!p2 || !strchr(p2, '=')) {
+            printf("--addpath must be followed by \"name=path\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "++%s", p2);
+    }
     else if (!strcmp(p, "config")) {
         consumed2 = TRUE;
         if (!p2) {
@@ -1823,7 +1843,6 @@ static int execute_dashdash_command(char *p, char *p2)
         }
         snprintf(cli_buff, CMD_BUF_SIZE, "(%s)", p2);
     }
-    //### --path name=foo?
     else {
         printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
         return FALSE;
