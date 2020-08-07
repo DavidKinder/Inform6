@@ -10,6 +10,8 @@
 #define MAIN_INFORM_FILE
 #include "header.h"
 
+#define CMD_BUF_SIZE (256)
+
 /* ------------------------------------------------------------------------- */
 /*   Compiler progress                                                       */
 /* ------------------------------------------------------------------------- */
@@ -1627,7 +1629,7 @@ static int execute_dashdash_command(char *p, char *p2);
 static int execute_icl_header(char *argname)
 {
   FILE *command_file;
-  char cli_buff[256], fw[256];
+  char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
   int line = 0;
   int errcount = 0;
   int i;
@@ -1645,14 +1647,14 @@ static int execute_icl_header(char *argname)
   }
 
   while (feof(command_file)==0) {
-    if (fgets(cli_buff,256,command_file)==0) break;
+    if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
     line++;
     if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
       break;
-    i = copy_icl_word(cli_buff+2, fw, 256);
+    i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
     if (icl_command(fw)) {
       execute_icl_command(fw);
-      copy_icl_word(cli_buff+2 + i, fw, 256);
+      copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
       if ((fw[0] != 0) && (fw[0] != '!')) {
         icl_header_error(filename, line);
         errcount++;
@@ -1674,17 +1676,17 @@ static int execute_icl_header(char *argname)
 
 
 static void run_icl_file(char *filename, FILE *command_file)
-{   char cli_buff[256], fw[256];
+{   char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
     int i, x, line = 0;
     printf("[Running ICL file '%s']\n", filename);
 
     while (feof(command_file)==0)
-    {   if (fgets(cli_buff,256,command_file)==0) break;
+    {   if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
         line++;
-        i = copy_icl_word(cli_buff, fw, 256);
+        i = copy_icl_word(cli_buff, fw, CMD_BUF_SIZE);
         if (icl_command(fw))
         {   execute_icl_command(fw);
-            copy_icl_word(cli_buff + i, fw, 256);
+            copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!'))
             {   icl_error(filename, line);
                 printf("expected comment or nothing but found '%s'\n", fw);
@@ -1710,7 +1712,7 @@ static void run_icl_file(char *filename, FILE *command_file)
                     case 2: printf("[Compiling <%s> to <%s>]\n",
                                 story_name, code_name);
                             compile(x, story_name, code_name);
-                            copy_icl_word(cli_buff + i, fw, 256);
+                            copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
                             if (fw[0]!=0)
                             {   icl_error(filename, line);
                         printf("Expected comment or nothing but found '%s'\n",
@@ -1728,14 +1730,18 @@ static void run_icl_file(char *filename, FILE *command_file)
     }
 }
 
+/* This should only be called if the argument has been verified to be
+   an ICL command, e.g. by checking icl_command().
+*/
 static void execute_icl_command(char *p)
-{   char filename[PATHLEN], cli_buff[256];
+{   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
     FILE *command_file;
 
     switch(p[0])
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
         case '$': memory_command(p+1); break;
+            //### strcpy guard!
         case '(': strcpy(cli_buff,p+1); cli_buff[strlen(cli_buff)-1]=0;
                   {   int x = 0;
                       do
@@ -1763,7 +1769,7 @@ static void execute_icl_command(char *p)
 */
 static int execute_dashdash_command(char *p, char *p2)
 {
-    char cli_buff[256];
+    char cli_buff[CMD_BUF_SIZE];
     int consumed2 = FALSE;
     
     if (!strcmp(p, "help")) {
@@ -1779,16 +1785,17 @@ static int execute_dashdash_command(char *p, char *p2)
             return consumed2;
         }
         strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, 255);
+        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
     }
     else if (!strcmp(p, "opt")) {
         consumed2 = TRUE;
+        //### or no equals sign
         if (!p2) {
             printf("--opt must be followed by \"setting=number\"\n");
             return consumed2;
         }
         strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, 255);
+        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
     }
     else if (!strcmp(p, "helpopt")) {
         consumed2 = TRUE;
@@ -1797,8 +1804,10 @@ static int execute_dashdash_command(char *p, char *p2)
             return consumed2;
         }
         strcpy(cli_buff, "$?");
-        strcpyupper(cli_buff+2, p2, 254);
+        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
+    //### --config
+    //### --path name=foo?
     else {
         printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
         return FALSE;
@@ -1812,19 +1821,26 @@ static int execute_dashdash_command(char *p, char *p2)
 /*   Opening and closing banners                                             */
 /* ------------------------------------------------------------------------- */
 
-char banner_line[80];
+char banner_line[CMD_BUF_SIZE];
 
+/* We store the banner text for use elsewhere (see files.c).
+*/
 static void banner(void)
 {
-    sprintf(banner_line, "Inform %d.%d%d",
+    int len;
+    snprintf(banner_line, CMD_BUF_SIZE, "Inform %d.%d%d",
         (VNUMBER/100)%10, (VNUMBER/10)%10, VNUMBER%10);
 #ifdef RELEASE_SUFFIX
-    strcat(banner_line, RELEASE_SUFFIX);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, "%s", RELEASE_SUFFIX);
 #endif
 #ifdef MACHINE_STRING
-    sprintf(banner_line+strlen(banner_line), " for %s", MACHINE_STRING);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, " for %s", MACHINE_STRING);
 #endif
-    sprintf(banner_line+strlen(banner_line), " (%s)", RELEASE_DATE);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, " (%s)", RELEASE_DATE);
+    
     printf("%s\n", banner_line);
 }
 
