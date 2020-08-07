@@ -1797,8 +1797,7 @@ static int execute_dashdash_command(char *p, char *p2)
     }
     else if (!strcmp(p, "opt")) {
         consumed2 = TRUE;
-        //### or no equals sign
-        if (!p2) {
+        if (!p2 || !strchr(p2, '=')) {
             printf("--opt must be followed by \"setting=number\"\n");
             return consumed2;
         }
