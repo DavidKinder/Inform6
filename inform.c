@@ -10,6 +10,8 @@
 #define MAIN_INFORM_FILE
 #include "header.h"
 
+#define CMD_BUF_SIZE (256)
+
 /* ------------------------------------------------------------------------- */
 /*   Compiler progress                                                       */
 /* ------------------------------------------------------------------------- */
@@ -1222,7 +1224,8 @@ static void cli_print_help(int help_level)
 {
     printf(
 "\nThis program is a compiler of Infocom format (also called \"Z-machine\")\n\
-story files: copyright (c) Graham Nelson 1993 - 2020.\n\n");
+story files, as well as \"Glulx\" story files:\n\
+Copyright (c) Graham Nelson 1993 - 2020.\n\n");
 
    /* For people typing just "inform", a summary only: */
 
@@ -1245,20 +1248,35 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   -switches     a list of compiler switches, 1 or 2 letter\n\
                 (see \"inform -h2\" for the full range)\n\n\
   +dir          set Include_Path to this directory\n\
-  +PATH=dir     change the PATH to this directory\n\n\
+  ++dir         add this directory to Include_Path\n\
+  +PATH=dir     change the PATH to this directory\n\
+  ++PATH=dir    add this directory to the PATH\n\n\
   $...          one of the following memory commands:\n");
+  
   printf(
 "     $list            list current memory allocation settings\n\
      $huge            make standard \"huge game\" settings %s\n\
      $large           make standard \"large game\" settings %s\n\
      $small           make standard \"small game\" settings %s\n\
      $?SETTING        explain briefly what SETTING is for\n\
-     $SETTING=number  change SETTING to given number\n\n\
-  (filename)    read in a list of commands (in the format above)\n\
-                from this \"setup file\"\n\n",
+     $SETTING=number  change SETTING to given number\n\n",
     (DEFAULT_MEMORY_SIZE==HUGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==LARGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==SMALL_SIZE)?"(default)":"");
+
+  printf(
+"  (filename)    read in a list of commands (in the format above)\n\
+                from this \"setup file\"\n\n");
+
+  printf("Alternate command-line formats for the above:\n\
+  --help                 (this page)\n\
+  --path PATH=dir\n\
+  --addpath PATH=dir\n\
+  --list\n\
+  --size huge, --size large, --size small\n\
+  --helpopt SETTING\n\
+  --opt SETTING=number\n\
+  --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
     printf("For example: \"inform -dexs $huge curses\".\n\n");
@@ -1316,7 +1334,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   w   disable warning messages\n\
   x   print # for every 100 lines compiled\n\
   y   trace linking system\n\
-  z   print memory map of the Z-machine\n\n");
+  z   print memory map of the virtual machine\n\n");
 
 printf("\
   B   use big memory model (for large V6/V7 files)\n\
@@ -1595,12 +1613,29 @@ static int copy_icl_word(char *from, char *to, int max)
     return i;
 }
 
+/* Copy a string, converting to uppercase. The to array should be
+   (at least) max characters. Result will be null-terminated, so
+   at most max-1 characters will be copied. 
+*/
+static int strcpyupper(char *to, char *from, int max)
+{
+    int ix;
+    for (ix=0; ix<max-1; ix++) {
+        char ch = from[ix];
+        if (islower(ch)) ch = toupper(ch);
+        to[ix] = ch;
+    }
+    to[ix] = 0;
+    return ix;
+}
+
 static void execute_icl_command(char *p);
+static int execute_dashdash_command(char *p, char *p2);
 
 static int execute_icl_header(char *argname)
 {
   FILE *command_file;
-  char cli_buff[256], fw[256];
+  char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
   int line = 0;
   int errcount = 0;
   int i;
@@ -1618,14 +1653,14 @@ static int execute_icl_header(char *argname)
   }
 
   while (feof(command_file)==0) {
-    if (fgets(cli_buff,256,command_file)==0) break;
+    if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
     line++;
     if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
       break;
-    i = copy_icl_word(cli_buff+2, fw, 256);
+    i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
     if (icl_command(fw)) {
       execute_icl_command(fw);
-      copy_icl_word(cli_buff+2 + i, fw, 256);
+      copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
       if ((fw[0] != 0) && (fw[0] != '!')) {
         icl_header_error(filename, line);
         errcount++;
@@ -1647,17 +1682,17 @@ static int execute_icl_header(char *argname)
 
 
 static void run_icl_file(char *filename, FILE *command_file)
-{   char cli_buff[256], fw[256];
+{   char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
     int i, x, line = 0;
     printf("[Running ICL file '%s']\n", filename);
 
     while (feof(command_file)==0)
-    {   if (fgets(cli_buff,256,command_file)==0) break;
+    {   if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
         line++;
-        i = copy_icl_word(cli_buff, fw, 256);
+        i = copy_icl_word(cli_buff, fw, CMD_BUF_SIZE);
         if (icl_command(fw))
         {   execute_icl_command(fw);
-            copy_icl_word(cli_buff + i, fw, 256);
+            copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!'))
             {   icl_error(filename, line);
                 printf("expected comment or nothing but found '%s'\n", fw);
@@ -1683,7 +1718,7 @@ static void run_icl_file(char *filename, FILE *command_file)
                     case 2: printf("[Compiling <%s> to <%s>]\n",
                                 story_name, code_name);
                             compile(x, story_name, code_name);
-                            copy_icl_word(cli_buff + i, fw, 256);
+                            copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
                             if (fw[0]!=0)
                             {   icl_error(filename, line);
                         printf("Expected comment or nothing but found '%s'\n",
@@ -1701,49 +1736,146 @@ static void run_icl_file(char *filename, FILE *command_file)
     }
 }
 
+/* This should only be called if the argument has been verified to be
+   an ICL command, e.g. by checking icl_command().
+*/
 static void execute_icl_command(char *p)
-{   char filename[PATHLEN], cli_buff[256];
+{   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
     FILE *command_file;
-
+    int len;
+    
     switch(p[0])
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
         case '$': memory_command(p+1); break;
-        case '(': strcpy(cli_buff,p+1); cli_buff[strlen(cli_buff)-1]=0;
+        case '(': len = strlen(p);
+                  if (p[len-1] != ')') {
+                      printf("Error in ICL: (command) missing closing paren\n");
+                      break;
+                  }
+                  len -= 2; /* omit parens */
+                  if (len > CMD_BUF_SIZE-1) len = CMD_BUF_SIZE-1;
+                  strncpy(cli_buff, p+1, len);
+                  cli_buff[len]=0;
                   {   int x = 0;
                       do
                       {   x = translate_icl_filename(x, filename, cli_buff);
                           command_file = fopen(filename,"r");
                       } while ((command_file == NULL) && (x != 0));
                   }
-                  if (command_file == NULL)
+                  if (command_file == NULL) {
                       printf("Error in ICL: Couldn't open command file '%s'\n",
                           filename);
-                  else
-                  {   run_icl_file(filename, command_file);
-                      fclose(command_file);
+                      break;
                   }
+                  run_icl_file(filename, command_file);
+                  fclose(command_file);
                   break;
     }
+}
+
+/* Convert a --command into the equivalent ICL command and call 
+   execute_icl_command(). The dashes have already been stripped.
+
+   The second argument is the following command-line argument 
+   (or NULL if there was none). This may or may not be consumed.
+   Returns TRUE if it was.
+*/
+static int execute_dashdash_command(char *p, char *p2)
+{
+    char cli_buff[CMD_BUF_SIZE];
+    int consumed2 = FALSE;
+    
+    if (!strcmp(p, "help")) {
+        strcpy(cli_buff, "-h");
+    }
+    else if (!strcmp(p, "list")) {
+        strcpy(cli_buff, "$LIST");
+    }
+    else if (!strcmp(p, "size")) {
+        consumed2 = TRUE;
+        if (!(p2 && (!strcmpcis(p2, "HUGE") || !strcmpcis(p2, "LARGE") || !strcmpcis(p2, "SMALL")))) {
+            printf("--size must be followed by \"huge\", \"large\", or \"small\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$");
+        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+    }
+    else if (!strcmp(p, "opt")) {
+        consumed2 = TRUE;
+        if (!p2 || !strchr(p2, '=')) {
+            printf("--opt must be followed by \"setting=number\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$");
+        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+    }
+    else if (!strcmp(p, "helpopt")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--helpopt must be followed by \"setting\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$?");
+        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+    }
+    else if (!strcmp(p, "path")) {
+        consumed2 = TRUE;
+        if (!p2 || !strchr(p2, '=')) {
+            printf("--path must be followed by \"name=path\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "+%s", p2);
+    }
+    else if (!strcmp(p, "addpath")) {
+        consumed2 = TRUE;
+        if (!p2 || !strchr(p2, '=')) {
+            printf("--addpath must be followed by \"name=path\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "++%s", p2);
+    }
+    else if (!strcmp(p, "config")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--config must be followed by \"file.icl\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "(%s)", p2);
+    }
+    else {
+        printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
+        return FALSE;
+    }
+
+    execute_icl_command(cli_buff);
+    return consumed2;
 }
 
 /* ------------------------------------------------------------------------- */
 /*   Opening and closing banners                                             */
 /* ------------------------------------------------------------------------- */
 
-char banner_line[80];
+char banner_line[CMD_BUF_SIZE];
 
+/* We store the banner text for use elsewhere (see files.c).
+*/
 static void banner(void)
 {
-    sprintf(banner_line, "Inform %d.%d%d",
+    int len;
+    snprintf(banner_line, CMD_BUF_SIZE, "Inform %d.%d%d",
         (VNUMBER/100)%10, (VNUMBER/10)%10, VNUMBER%10);
 #ifdef RELEASE_SUFFIX
-    strcat(banner_line, RELEASE_SUFFIX);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, "%s", RELEASE_SUFFIX);
 #endif
 #ifdef MACHINE_STRING
-    sprintf(banner_line+strlen(banner_line), " for %s", MACHINE_STRING);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, " for %s", MACHINE_STRING);
 #endif
-    sprintf(banner_line+strlen(banner_line), " (%s)", RELEASE_DATE);
+    len = strlen(banner_line);
+    snprintf(banner_line+len, CMD_BUF_SIZE-len, " (%s)", RELEASE_DATE);
+    
     printf("%s\n", banner_line);
 }
 
@@ -1773,9 +1905,18 @@ static void read_command_line(int argc, char **argv)
     if (argc==1) switches("-h",1);
 
     for (i=1, cli_files_specified=0; i<argc; i++)
-        if (icl_command(argv[i]))
+        if (argv[i][0] == '-' && argv[i][1] == '-') {
+            char *nextarg = NULL;
+            if (i+1 < argc) nextarg = argv[i+1];
+            int consumed2 = execute_dashdash_command(argv[i]+2, nextarg);
+            if (consumed2 && i+1 < argc) {
+                i++;
+            }
+        }
+        else if (icl_command(argv[i])) {
             execute_icl_command(argv[i]);
-        else
+        }
+        else {
             switch(++cli_files_specified)
             {   case 1: cli_file1 = argv[i]; break;
                 case 2: cli_file2 = argv[i]; break;
@@ -1783,6 +1924,7 @@ static void read_command_line(int argc, char **argv)
                     printf("Command line error: unknown parameter '%s'\n",
                         argv[i]); return;
             }
+        }
 }
 #endif
 
