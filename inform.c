@@ -1736,26 +1736,34 @@ static void run_icl_file(char *filename, FILE *command_file)
 static void execute_icl_command(char *p)
 {   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
     FILE *command_file;
-
+    int len;
+    
     switch(p[0])
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
         case '$': memory_command(p+1); break;
-            //### strcpy guard!
-        case '(': strcpy(cli_buff,p+1); cli_buff[strlen(cli_buff)-1]=0;
+        case '(': len = strlen(p);
+                  if (p[len-1] != ')') {
+                      printf("Error in ICL: (command) missing closing paren\n");
+                      break;
+                  }
+                  len -= 2; /* omit parens */
+                  if (len > CMD_BUF_SIZE-1) len = CMD_BUF_SIZE-1;
+                  strncpy(cli_buff, p+1, len);
+                  cli_buff[len]=0;
                   {   int x = 0;
                       do
                       {   x = translate_icl_filename(x, filename, cli_buff);
                           command_file = fopen(filename,"r");
                       } while ((command_file == NULL) && (x != 0));
                   }
-                  if (command_file == NULL)
+                  if (command_file == NULL) {
                       printf("Error in ICL: Couldn't open command file '%s'\n",
                           filename);
-                  else
-                  {   run_icl_file(filename, command_file);
-                      fclose(command_file);
+                      break;
                   }
+                  run_icl_file(filename, command_file);
+                  fclose(command_file);
                   break;
     }
 }
