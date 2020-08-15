@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Inform Release Notes</h1>
-<h3>Inform Compiler 6.34, 6.33, 6.32, 6.31, 6.30<br>Inform Library 6/11</h3>
+<h3>Inform Compiler 6.30 to 6.35<br>Inform Library 6/11</h3>
 
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
@@ -41,8 +41,31 @@ suggestions, providing support and facilities, testing, and so on &mdash; for th
 listed. So instead, this is a general thank-you to everybody who has made this release happen, and 
 specific ones to Graham for permitting it in the first place, and to Andrew for his pioneering work on 
 Glulx.
-There are, naturally, sure to be imperfections in the release, and these should be reported through the
-<a href="http://inform7.com/mantis/">Inform bug tracker</a>.
+
+<h2>Compiler 6.35</h2>
+These are the changes delivered in version 6.35 of the Inform compiler.
+
+<h3>Features added</h3>
+<ul>
+<li><p>Some Unix-style command line options are now supported, primarily to avoid the use of $ in command
+lines (although the old syntax is still supported). The new syntax for these options is:
+<pre>
+  --help
+  --path PATH=dir
+  --addpath PATH=dir
+  --list
+  --size huge, --size large, --size small
+  --helpopt SETTING
+  --opt SETTING=number
+  --config filename
+</pre>
+</ul>
+
+<h3>Bugs fixed</h3>
+<ul>
+<li><p>If a common property array overflows when compiling to Z-code version 3, the object is no longer
+corrupted.
+</ul>
 
 <h2>Compiler 6.34</h2>
 These are the changes delivered in version 6.34 of the Inform compiler.
