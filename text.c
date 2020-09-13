@@ -1559,6 +1559,8 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
        applying to the text of dictionary entries: first produce a sequence
        of 6 (v3) or 9 (v4+) Z-characters                                     */
 
+    int dictsize = (version_number==3) ? 6 : 9;
+
     number_and_case = 0;
 
     for (i=0, j=0; dword[j]!=0; i++, j++)
@@ -1574,7 +1576,7 @@ to give number of dictionary word", dword);
             }
             break;
         }
-        if (i>=9) break;
+        if (i>=dictsize) break;
 
         k=(int) dword[j];
         if (k==(int) '\'')
