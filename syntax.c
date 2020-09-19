@@ -600,6 +600,11 @@ extern void parse_code_block(int break_label, int continue_label,
     {   do
         {   begin_syntax_line(TRUE);
             get_next_token();
+            
+            if ((token_type == SEP_TT) && (token_value == HASH_SEP))
+            {   parse_directive(TRUE);
+                continue;
+            }
             if (token_type == SEP_TT && token_value == CLOSE_BRACE_SEP)
             {   if (switch_clause_made && (!default_clause_made))
                     assemble_label_no(switch_label);
