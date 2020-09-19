@@ -51,6 +51,26 @@ extern int parse_given_directive(int internal_flag)
     const char *constant_name;
     debug_location_beginning beginning_debug_location;
 
+    if (internal_flag)
+    {
+        /* Only certain directives, such as #ifdef, are permitted within
+           a routine or object definition. In older versions of Inform,
+           nearly any directive was accepted, but this was -- to quote
+           an old code comment -- "about as well-supported as Wile E. 
+           Coyote one beat before the plummet-lines kick in." */
+        
+        if (token_value != IFV3_CODE && token_value != IFV5_CODE
+            && token_value != IFDEF_CODE && token_value != IFNDEF_CODE
+            && token_value != IFTRUE_CODE && token_value != IFFALSE_CODE
+            && token_value != IFNOT_CODE && token_value != ENDIF_CODE
+            && token_value != MESSAGE_CODE && token_value != ORIGSOURCE_CODE
+            && token_value != TRACE_CODE) {
+            char *dirname = directives.keywords[token_value];
+            error_named("Cannot nest this directive inside a routine or object:", dirname);
+            panic_mode_error_recovery(); return FALSE;
+        }
+    }
+    
     switch(token_value)
     {
 
@@ -110,10 +130,6 @@ extern int parse_given_directive(int internal_flag)
     /* --------------------------------------------------------------------- */
 
     case CLASS_CODE: 
-        if (internal_flag)
-        {   error("Cannot nest #Class inside a routine or object");
-            panic_mode_error_recovery(); return FALSE;
-        }
         make_class(NULL);                                 /* See "objects.c" */
         return FALSE;
 
@@ -631,10 +647,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case NEARBY_CODE:
-        if (internal_flag)
-        {   error("Cannot nest #Nearby inside a routine or object");
-            panic_mode_error_recovery(); return FALSE;
-        }
         make_object(TRUE, NULL, -1, -1, -1);
         return FALSE;                                     /* See "objects.c" */
 
@@ -643,10 +655,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case OBJECT_CODE:
-        if (internal_flag)
-        {   error("Cannot nest #Object inside a routine or object");
-            panic_mode_error_recovery(); return FALSE;
-        }
         make_object(FALSE, NULL, -1, -1, -1);
         return FALSE;                                     /* See "objects.c" */
 
@@ -837,11 +845,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case STUB_CODE:
-        if (internal_flag)
-        {   error("Cannot nest #Stub inside a routine or object");
-            panic_mode_error_recovery(); return FALSE;
-        }
-
         /* The upcoming symbol is a definition; don't count it as a
            top-level reference *to* the stub function. */
         df_dont_note_global_symbols = TRUE;
