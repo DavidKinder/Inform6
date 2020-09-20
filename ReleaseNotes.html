@@ -63,8 +63,27 @@ lines (although the old syntax is still supported). The new syntax for these opt
 
 <h3>Bugs fixed</h3>
 <ul>
+<li><p>Only the following directives are now allowed in a function or object definition: all others give
+an error:
+<pre>
+  #ifv3
+  #ifv5
+  #ifdef
+  #ifndef
+  #iftrue
+  #iffalse
+  #ifnot
+  #endif
+  #message
+  #origsource
+  #trace
+</pre>
+<li><p>An <tt>#ifdef</tt> statement at the start of a <tt>switch</tt> block now compiles correctly, and no
+longer gives a spurious error.
 <li><p>If a common property array overflows when compiling to Z-code version 3, the object is no longer
 corrupted.
+<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 z-characters
+(instead of 9).
 </ul>
 
 <h2>Compiler 6.34</h2>
