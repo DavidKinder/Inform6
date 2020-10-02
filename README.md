@@ -12,7 +12,7 @@ The latest version of Inform is [Inform 7](http://inform7.com/), but Inform 6 st
 
 To use the compiler, you will need an executable. There are [pre-built executables](https://ifarchive.org/indexes/if-archive/infocom/compilers/inform6/executables/) available, or you can compile the source yourself. There is no makefile as compilation does not really need one: all that is required is a C compiler and for it to be invoked with something like
 
-      cc -o inform6 *.c
+      cc -o inform *.c
       
 To write a work of interactive fiction with Inform 6, you will also need a version of the Inform 6 library. [Stable versions](https://ifarchive.org/indexes/if-archive/infocom/compilers/inform6/library/) of the library are available, and development of the library continues in a [separate project](https://gitlab.com/DavidGriffith/inform6lib).
 
