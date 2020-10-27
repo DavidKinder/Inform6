@@ -81,6 +81,10 @@ extern void finish_array(int32 i, int is_static)
       area = static_array_area;
       area_size = static_array_area_size;
   }
+
+  if (i == 0) {
+      error("An array must have at least one entry");
+  }
   
     /*  Write the array size into the 0th byte/word of the array, if it's
         a "table" or "string" array                                          */
@@ -245,7 +249,7 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 /*                                                                           */
 /*      | ->       |  <number-of-entries>                                    */
 /*      | -->      |  <entry-1> ... <entry-n>                                */
-/*      | string   |  [ <entry-1> [,] [;] <entry-2> ... <entry-n> ];         */
+/*      | string   |  [ <entry-1> [;] <entry-2> ... <entry-n> ];             */
 /*      | table                                                              */
 /*      | buffer                                                             */
 /*                                                                           */
@@ -530,8 +534,8 @@ extern void make_global(int array_flag, int name_only)
 
             CalculatedArraySize:
 
-            if (module_switch && (AO.marker != 0))
-            {   error("Array sizes must be known now, not externally defined");
+            if (AO.marker != 0)
+            {   error("Array sizes must be known now, not defined later");
                 break;
             }
 
