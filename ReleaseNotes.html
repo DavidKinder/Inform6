@@ -80,9 +80,15 @@ an error:
 </pre>
 <li><p>An <tt>#ifdef</tt> statement at the start of a <tt>switch</tt> block now compiles correctly, and no
 longer gives a spurious error.
+<li><p>The following, incorrect forms of array declaration now generate an error:
+<pre>
+  Array foo --> 'dictword';
+  Array foo --> FunctionName;
+  Array foo --> [];
+</pre>
 <li><p>If a common property array overflows when compiling to Z-code version 3, the object is no longer
 corrupted.
-<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 z-characters
+<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
 (instead of 9).
 </ul>
 
