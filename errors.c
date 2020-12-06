@@ -85,6 +85,11 @@ static char *location_text(brief_location report_line)
        This uses the static buffer other_pos_buff. */
     
     ErrorPosition errpos;
+    errpos.file_number = -1;
+    errpos.source = NULL;
+    errpos.line_number = 0;
+    errpos.main_flag = 0;
+    errpos.orig_source = NULL;
     export_brief_location(report_line, &errpos);
 
     int j;
