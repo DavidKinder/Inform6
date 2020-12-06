@@ -304,8 +304,8 @@ extern void make_global(int array_flag, int name_only)
     if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
     {   discard_token_location(beginning_debug_location);
         if (array_flag)
-            ebf_error("new array name", token_text);
-        else ebf_error("new global variable name", token_text);
+            ebf_symbol_error("new array name", token_text, typename(stypes[i]), slines[i]);
+        else ebf_symbol_error("new global variable name", token_text, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery(); return;
     }
 
