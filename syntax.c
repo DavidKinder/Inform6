@@ -167,9 +167,12 @@ extern int parse_directive(int internal_flag)
         df_dont_note_global_symbols = TRUE;
         get_next_token();
         df_dont_note_global_symbols = FALSE;
-        if ((token_type != SYMBOL_TT)
-            || ((!(sflags[token_value] & UNKNOWN_SFLAG))
-                && (!(sflags[token_value] & REPLACE_SFLAG))))
+        if (token_type != SYMBOL_TT)
+        {   ebf_error("routine name", token_text);
+            return(FALSE);
+        }
+        if ((!(sflags[token_value] & UNKNOWN_SFLAG))
+            && (!(sflags[token_value] & REPLACE_SFLAG)))
         {   ebf_symbol_error("routine name", token_text, typename(stypes[token_value]), slines[token_value]);
             return(FALSE);
         }
