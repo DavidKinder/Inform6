@@ -170,7 +170,7 @@ extern int parse_directive(int internal_flag)
         if ((token_type != SYMBOL_TT)
             || ((!(sflags[token_value] & UNKNOWN_SFLAG))
                 && (!(sflags[token_value] & REPLACE_SFLAG))))
-        {   ebf_error("routine name", token_text);
+        {   ebf_symbol_error("routine name", token_text, typename(stypes[token_value]), slines[token_value]);
             return(FALSE);
         }
 
