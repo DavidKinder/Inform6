@@ -18,6 +18,8 @@ static char error_message_buff[ERROR_BUFLEN+4]; /* room for ellipsis */
 
 ErrorPosition ErrorReport;             /*  Maintained by "lexer.c"           */
 
+static char other_pos_buff[ERROR_BUFLEN+1];       /* Used by location_text() */
+
 static void print_preamble(void)
 {
     /*  Only really prints the preamble to an error or warning message:
@@ -74,6 +76,37 @@ static void print_preamble(void)
             printf("File \"%s\"; Line %d\t# ", p, ErrorReport.line_number);
             break;
     }
+}
+
+static char *location_text(brief_location report_line)
+{
+    /* Convert the location to a brief string. 
+       (Some error messages need to report a secondary location.)
+       This uses the static buffer other_pos_buff. */
+    
+    ErrorPosition errpos;
+    export_brief_location(report_line, &errpos);
+
+    int j;
+    char *p;
+    
+    j = errpos.file_number;
+    if (j <= 0 || j > total_files) p = errpos.source;
+    else p = InputFiles[j-1].filename;
+    
+    if (!p) p = "";
+
+    int len = 0;
+    
+    if (!(errpos.main_flag)) {
+        snprintf(other_pos_buff+len, ERROR_BUFLEN-len,
+                 "\"%s\", ", p);
+        len = strlen(other_pos_buff);
+    }
+    snprintf(other_pos_buff+len, ERROR_BUFLEN-len,
+             "line %d", errpos.line_number);
+
+    return other_pos_buff;
 }
 
 static void ellipsize_error_message_buff(void)
@@ -237,6 +270,12 @@ extern void no_such_label(char *lname)
 
 extern void ebf_error(char *s1, char *s2)
 {   snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found %s", s1, s2);
+    ellipsize_error_message_buff();
+    error(error_message_buff);
+}
+
+extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line)
+{   snprintf(error_message_buff, ERROR_BUFLEN, "\"%s\" is a name already in use and may not be used as a %s too (%s \"%s\" was defined at %s)", name, s1, type, name, location_text(report_line));
     ellipsize_error_message_buff();
     error(error_message_buff);
 }

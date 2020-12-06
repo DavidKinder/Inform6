@@ -1067,12 +1067,7 @@ static void properties_segment_z(int this_segment)
             {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
                     this_identifier_number = svals[token_value];
                 else
-                {   char already_error[128];
-                    sprintf(already_error,
-                        "\"%s\" is a name already in use (with type %s) \
-and may not be used as a property name too",
-                        token_text, typename(stypes[token_value]));
-                    error(already_error);
+                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
                     return;
                 }
             }
@@ -1336,12 +1331,7 @@ static void properties_segment_g(int this_segment)
             {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
                     this_identifier_number = svals[token_value];
                 else
-                {   char already_error[128];
-                    sprintf(already_error,
-                        "\"%s\" is a name already in use (with type %s) \
-and may not be used as a property name too",
-                        token_text, typename(stypes[token_value]));
-                    error(already_error);
+                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
                     return;
                 }
             }
