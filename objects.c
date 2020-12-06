@@ -121,9 +121,16 @@ more than",
 
     get_next_token();
     i = token_value; name = token_text;
-    if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
+    if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new attribute name", token_text);
+        panic_mode_error_recovery(); 
+        put_token_back();
+        return;
+    }
+    if (!(sflags[i] & UNKNOWN_SFLAG))
+    {   discard_token_location(beginning_debug_location);
+        ebf_symbol_error("new attribute name", token_text, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery(); 
         put_token_back();
         return;
@@ -212,9 +219,16 @@ Advanced game to get an extra 62)");
     get_next_token();
 
     i = token_value; name = token_text;
-    if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
+    if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new property name", token_text);
+        panic_mode_error_recovery();
+        put_token_back();
+        return;
+    }
+    if (!(sflags[i] & UNKNOWN_SFLAG))
+    {   discard_token_location(beginning_debug_location);
+        ebf_symbol_error("new property name", token_text, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery();
         put_token_back();
         return;
@@ -1752,10 +1766,15 @@ inconvenience, please contact the maintainers.");
     }
     else
     {   get_next_token();
-        if ((token_type != SYMBOL_TT)
-            || (!(sflags[token_value] & UNKNOWN_SFLAG)))
+        if (token_type != SYMBOL_TT)
         {   discard_token_location(beginning_debug_location);
             ebf_error("new class name", token_text);
+            panic_mode_error_recovery();
+            return;
+        }
+        if (!(sflags[token_value] & UNKNOWN_SFLAG))
+        {   discard_token_location(beginning_debug_location);
+            ebf_symbol_error("new class name", token_text, typename(stypes[token_value]), slines[token_value]);
             panic_mode_error_recovery();
             return;
         }
