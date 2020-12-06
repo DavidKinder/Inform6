@@ -1971,10 +1971,13 @@ extern void make_object(int nearby_flag,
 
     if (token_type == DQ_TT) textual_name = token_text;
     else
-    {   if ((token_type != SYMBOL_TT)
-            || (!(sflags[token_value] & UNKNOWN_SFLAG)))
+    {   if (token_type != SYMBOL_TT) {
             ebf_error("name for new object or its textual short name",
                 token_text);
+        }
+        else if (!(sflags[token_value] & UNKNOWN_SFLAG)) {
+            ebf_symbol_error("new object", token_text, typename(stypes[token_value]), slines[token_value]);
+        }
         else
         {   internal_name_symbol = token_value;
             strcpy(internal_name, token_text);
