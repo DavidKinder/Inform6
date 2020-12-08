@@ -38,6 +38,14 @@ static int ebf_error_recover(char *s1, char *s2)
     return FALSE;
 }
 
+static int ebf_symbol_error_recover(char *s1, char *name, char *type, brief_location report_line)
+{
+    /* Same for ebf_symbol_error(). */
+    ebf_symbol_error(s1, name, type, report_line);
+    panic_mode_error_recovery();
+    return FALSE;
+}
+
 /* ------------------------------------------------------------------------- */
 
 extern int parse_given_directive(int internal_flag)
@@ -144,10 +152,14 @@ extern int parse_given_directive(int internal_flag)
         get_next_token(); i = token_value;
         beginning_debug_location = get_token_location_beginning();
 
-        if ((token_type != SYMBOL_TT)
-            || (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))))
+        if (token_type != SYMBOL_TT)
         {   discard_token_location(beginning_debug_location);
             return ebf_error_recover("new constant name", token_text);
+        }
+
+        if (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG)))
+        {   discard_token_location(beginning_debug_location);
+            return ebf_symbol_error_recover("new constant name", token_text, typename(stypes[i]), slines[i]);
         }
 
         assign_symbol(i, 0, CONSTANT_T);
@@ -584,8 +596,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             panic_mode_error_recovery(); return FALSE;
         }
         get_next_token(); i = token_value;
-        if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
+        if (token_type != SYMBOL_TT)
             return ebf_error_recover("new low string name", token_text);
+        if (!(sflags[i] & UNKNOWN_SFLAG))
+            return ebf_symbol_error_recover("new low string name", token_text, typename(stypes[i]), slines[i]);
 
         get_next_token();
         if (token_type != DQ_TT)
