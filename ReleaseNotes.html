@@ -59,6 +59,8 @@ lines (although the old syntax is still supported). The new syntax for these opt
   --opt SETTING=number
   --config filename
 </pre>
+<li>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
+what the error is and where the symbol was previously defined.
 </ul>
 
 <h3>Bugs fixed</h3>
@@ -155,36 +157,34 @@ the end of ROM (after string storage). The syntax is
 </pre>
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
 <li><p>It is no longer possible to cause values to be pushed onto the stack but not then pulled by evaluating
-a logical expression but not assigning or using the result of that expression. [Mantis 509]
-<li><p>Replacing a recursive function now works correctly. [Mantis 1094]
+a logical expression but not assigning or using the result of that expression.
+<li><p>Replacing a recursive function now works correctly.
 <li><p>The output for the <tt>$list</tt> command line argument now includes the value of the
-<tt>$MAX_ARRAYS</tt> setting. [Mantis 1355]
+<tt>$MAX_ARRAYS</tt> setting.
 <li><p>Memory settings can no longer overflow if set to very large values. These values are limited to a
-maximum of 999999999: setting them higher just results in a warning. [Mantis 1356]
+maximum of 999999999: setting them higher just results in a warning.
 <li><p>The debugging output file now contains the correct function addresses even when the compiler has been
-told to omit unused functions. [Mantis 1515]
-<li><p>Invalid statements with empty parentheses (like <tt>return ();</tt>) now generate a sensible error. [Mantis 1688]
+told to omit unused functions.
+<li><p>Invalid statements with empty parentheses (like <tt>return ();</tt>) now generate a sensible error.
 <li><p>Crashes caused by over-long identifiers have been fixed. Note that as a result, the previously allowed
 (although undocumented) use of strings or dictionary words in an action-based (implicit) switch statement
-now causes an error. [Mantis 1696,1702]
+now causes an error.
 <li><p>The object table is now always generated at an even Z-Machine address, as the logic in the veneer
-routine <tt>RA__Pr()</tt> requires this. [Mantis 1712]
+routine <tt>RA__Pr()</tt> requires this.
 <li><p>The <b>F</b> and <b>u</b> options are now explicitly disallowed with the <tt>Switches</tt> directive.
-[Mantis 1703]
-<li><p>Assigning values to system functions now leads to an error message, rather than a crash. [Mantis 1704]
-<li><p>Crashes due to over-long abbreviations have been fixed. [Mantis 1719]
-<li><p>Representing the at symbol '@' by <tt>@{0040}</tt> now works when compiling to Glulx. [Mantis 1933]
+<li><p>Assigning values to system functions now leads to an error message, rather than a crash.
+<li><p>Crashes due to over-long abbreviations have been fixed.
+<li><p>Representing the at symbol '@' by <tt>@{0040}</tt> now works when compiling to Glulx.
 <li><p>The <tt>USE_TEMPORARY_FILES</tt> option no longer has a bug that led to files being closed more than
-once. [Mantis 1934]
+once.
 <li><p>The platform-specific definitions in <tt>header.h</tt> for Unix have been cleaned up: "UNIX64" has been
-removed, since it was identical to "UNIX"; and "UNIX" no longer implies "USE_TEMPORARY_FILES". [Mantis 1937]
+removed, since it was identical to "UNIX"; and "UNIX" no longer implies "USE_TEMPORARY_FILES".
 <li><p>The platform-specific definitions in <tt>header.h</tt> for the Macintosh have been cleaned up: "MACINTOSH" is
-now "MAC_CLASSIC"; "OSX" is now "MACOS", and "MACOS" now uses "HUGE_SIZE" for the default array sizes. [Mantis 1937]
+now "MAC_CLASSIC"; "OSX" is now "MACOS", and "MACOS" now uses "HUGE_SIZE" for the default array sizes.
 <li><p>The maximum length of a verb is now limited to 120 (which can be changed in the source code). Previously
-very long verbs would crash the compiler. [Mantis 2023]
+very long verbs would crash the compiler.
 <li><p>Compiling to Z-code version 3 has shown a number of regressions since Inform 6.15:
  <ul>
  <li>Diverted actions, of the form <tt>&lt;&lt;ACTION&gt;&gt;</tt>, are fixed.
@@ -253,47 +253,46 @@ which is the "flags3" field.
 amount of additional space to add to each object record. The default is 0.
 </ul>
 <h3>Bugs fixed</h3>
-Items of the form [Mantis N] quote the bug&rsquo;s reference number in Inform 7&rsquo;s Mantis bug tracker. 
 <ul>
 <li><p>Function calls of the form <tt>f(g)(h)</tt> (that is, where <tt>f()</tt> returns the address of a
 function that is called with <tt>h</tt> as its argument) are now compiled correctly: previously, such calls were
-compiled as if the code was <tt>f(g(h))</tt>. [Mantis 510]
+compiled as if the code was <tt>f(g(h))</tt>.
 <li><p>The bounds checking related to internal arrays that are are sized from various compiler settings
 has been improved, so that it should not be possible to crash the compiler if these settings are too small.
 In addition, a start has been made on allowing the compiler to grow its internal buffers, rather than relying
-on these settings to specify sufficient buffer sizes. [Mantis 601,603,610,614,758,842,844]
+on these settings to specify sufficient buffer sizes.
 <li><p>The error message shown when too many global variables are declared now tells the user to
-increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting. [Mantis 611]
-<li><p>The setting <tt>$MAX_CLASS_TABLE_SIZE</tt>, which was not used anywhere, has been removed. [Mantis 612]
+increase the <tt>$MAX_GLOBAL_VARIABLES</tt> setting.
+<li><p>The setting <tt>$MAX_CLASS_TABLE_SIZE</tt>, which was not used anywhere, has been removed.
 <li><p>The compiler no longer crashes if run with the <tt><b>-k</b></tt> switch and passed a source file
-containing no routines at all. [Mantis 843]
+containing no routines at all.
 <li><p>Floating-point constants in &ldquo;<tt>#Ifdef TARGET_GLULX;</tt>&rdquo; sections do not now cause an error
-when compiling to Z-code. [Mantis 927]
+when compiling to Z-code.
 <li><p>The error message produced if an action routine is not found for an action name has been improved to include
-the action name, and a sensible line number. [Mantis 1014]
+the action name, and a sensible line number.
 <li><p>The compiler is now better at not producing spurious additional errors after it has encountered a directive
-that contains an error. [Mantis 1018,1035]
-<li><p>The compiler no longer crashes when reporting errors after line 65,535 in long Inform 6 source files. [Mantis 1023]
+that contains an error.
+<li><p>The compiler no longer crashes when reporting errors after line 65,535 in long Inform 6 source files.
 <li><p>The compiler now reports a meaningful text compression rate when outputting statistics for Glulx with the
-<tt>-Gs</tt> switches. [Mantis 1026]
-<li><p>An error is now reported if a source file ends with an unterminated object definition. [Mantis 1036]
+<tt>-Gs</tt> switches.
+<li><p>An error is now reported if a source file ends with an unterminated object definition.
 <li><p>The three argument form of the <tt>read</tt> statement no longer assumes that the routine passed as the
-third argument to the statement will not change the global variable that the statement uses internally. [Mantis 1084]
-<li><p>The 'Abbreviate' statement now works with words containing non-English characters. [Mantis 1130]
-<li><p>Attempting to use <tt>@pop</tt> opcode for V5 or higher no longer results in a crash. [Mantis 1172]
+third argument to the statement will not change the global variable that the statement uses internally.
+<li><p>The 'Abbreviate' statement now works with words containing non-English characters.
+<li><p>Attempting to use <tt>@pop</tt> opcode for V5 or higher no longer results in a crash.
 <li><p>The Glulx setting <tt>$NUM_ATTR_BYTES</tt>, which determines the number of bytes in an object set aside
 for attribute flags, now works correctly. Note that this has required a change to the veneer routines that conflicts
 with the definition of <tt>FUNC_2_CP__Tab()</tt> in the &lsquo;Accelerated Functions&rsquo; section of the Glulx 3.1.2
 specification. If you change this setting, you should take great care if you also use the Glulx accelerated functions
-feature (as Inform 7 does by default). [Mantis 1197]
+feature (as Inform 7 does by default).
 <li><p>The syntax of declaring a function so that it prints its name and arguments:
 <pre>
   [ Whatever * x y;
     ! Whatever function logic ...
   ];
 </pre>
-is now supported for Glulx. [Mantis 1214]
-<li><p>The statistics produced by the <tt>-s</tt> compiler switch are now correct for Glulx. [Mantis 1267]
+is now supported for Glulx.
+<li><p>The statistics produced by the <tt>-s</tt> compiler switch are now correct for Glulx.
 </ul>
 
 <h2>Compiler 6.32</h2>
