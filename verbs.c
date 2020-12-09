@@ -132,13 +132,15 @@ extern void make_fake_action(void)
         ebf_error("new fake action name", token_text);
         panic_mode_error_recovery(); return;
     }
+    /* Action symbols (including fake_actions) may collide with other kinds of symbols. So we don't check that. */
 
     snprintf(action_sub, MAX_IDENTIFIER_LENGTH+4, "%s__A", token_text);
     i = symbol_index(action_sub, -1);
 
     if (!(sflags[i] & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new fake action name", token_text);
+        /* The user didn't know they were defining FOO__A, but they were and it's a problem. */
+        ebf_symbol_error("new fake action name", action_sub, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery(); return;
     }
 

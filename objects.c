@@ -121,9 +121,16 @@ more than",
 
     get_next_token();
     i = token_value; name = token_text;
-    if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
+    if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new attribute name", token_text);
+        panic_mode_error_recovery(); 
+        put_token_back();
+        return;
+    }
+    if (!(sflags[i] & UNKNOWN_SFLAG))
+    {   discard_token_location(beginning_debug_location);
+        ebf_symbol_error("new attribute name", token_text, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery(); 
         put_token_back();
         return;
@@ -212,9 +219,16 @@ Advanced game to get an extra 62)");
     get_next_token();
 
     i = token_value; name = token_text;
-    if ((token_type != SYMBOL_TT) || (!(sflags[i] & UNKNOWN_SFLAG)))
+    if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new property name", token_text);
+        panic_mode_error_recovery();
+        put_token_back();
+        return;
+    }
+    if (!(sflags[i] & UNKNOWN_SFLAG))
+    {   discard_token_location(beginning_debug_location);
+        ebf_symbol_error("new property name", token_text, typename(stypes[i]), slines[i]);
         panic_mode_error_recovery();
         put_token_back();
         return;
@@ -1067,12 +1081,7 @@ static void properties_segment_z(int this_segment)
             {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
                     this_identifier_number = svals[token_value];
                 else
-                {   char already_error[128];
-                    sprintf(already_error,
-                        "\"%s\" is a name already in use (with type %s) \
-and may not be used as a property name too",
-                        token_text, typename(stypes[token_value]));
-                    error(already_error);
+                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
                     return;
                 }
             }
@@ -1336,12 +1345,7 @@ static void properties_segment_g(int this_segment)
             {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
                     this_identifier_number = svals[token_value];
                 else
-                {   char already_error[128];
-                    sprintf(already_error,
-                        "\"%s\" is a name already in use (with type %s) \
-and may not be used as a property name too",
-                        token_text, typename(stypes[token_value]));
-                    error(already_error);
+                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
                     return;
                 }
             }
@@ -1762,10 +1766,15 @@ inconvenience, please contact the maintainers.");
     }
     else
     {   get_next_token();
-        if ((token_type != SYMBOL_TT)
-            || (!(sflags[token_value] & UNKNOWN_SFLAG)))
+        if (token_type != SYMBOL_TT)
         {   discard_token_location(beginning_debug_location);
             ebf_error("new class name", token_text);
+            panic_mode_error_recovery();
+            return;
+        }
+        if (!(sflags[token_value] & UNKNOWN_SFLAG))
+        {   discard_token_location(beginning_debug_location);
+            ebf_symbol_error("new class name", token_text, typename(stypes[token_value]), slines[token_value]);
             panic_mode_error_recovery();
             return;
         }
@@ -1962,10 +1971,13 @@ extern void make_object(int nearby_flag,
 
     if (token_type == DQ_TT) textual_name = token_text;
     else
-    {   if ((token_type != SYMBOL_TT)
-            || (!(sflags[token_value] & UNKNOWN_SFLAG)))
+    {   if (token_type != SYMBOL_TT) {
             ebf_error("name for new object or its textual short name",
                 token_text);
+        }
+        else if (!(sflags[token_value] & UNKNOWN_SFLAG)) {
+            ebf_symbol_error("new object", token_text, typename(stypes[token_value]), slines[token_value]);
+        }
         else
         {   internal_name_symbol = token_value;
             strcpy(internal_name, token_text);

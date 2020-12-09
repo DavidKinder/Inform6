@@ -2276,6 +2276,7 @@ extern void error_named(char *s1, char *s2);
 extern void error_numbered(char *s1, int val);
 extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
+extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line);
 extern void char_error(char *s, int ch);
 extern void unicode_char_error(char *s, int32 uni);
 extern void no_such_label(char *lname);
