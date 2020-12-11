@@ -2064,13 +2064,13 @@ static void transfer_routine_g(void)
                 ((form_len == 2) ? "short" : "long")));
         }
         if (form_len == 1) {
-            if (addr < -0x80 && addr >= 0x80) {
+            if (addr < -0x80 || addr >= 0x80) {
                 error("*** Label out of range for byte branch ***");
             }
-        zcode_holding_area[i] = (addr) & 0xFF;
+            zcode_holding_area[i] = (addr) & 0xFF;
         }
         else if (form_len == 2) {
-            if (addr < -0x8000 && addr >= 0x8000) {
+            if (addr < -0x8000 || addr >= 0x8000) {
                 error("*** Label out of range for short branch ***");
             }
             zcode_holding_area[i] = (addr >> 8) & 0xFF;
