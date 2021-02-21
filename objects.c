@@ -1420,7 +1420,8 @@ the names '%s' and '%s' actually refer to the same property",
             if (token_type == SEGMENT_MARKER_TT) { put_token_back(); break; }
 
             if ((!individual_property) && (property_number==1)
-                && (token_type != SQ_TT) && (token_type != DQ_TT)
+                && ((token_type != SQ_TT) || (strlen(token_text) <2 )) 
+                && (token_type != DQ_TT)
                 )
                 warning ("'name' property should only contain dictionary words");
 
