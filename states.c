@@ -1178,6 +1178,14 @@ static void parse_statement_z(int break_label, int continue_label)
 
                  statements.enabled = TRUE;
                  get_next_token();
+
+                 /* An #if directive around the ELSE clause is legal. */
+                 while ((token_type == SEP_TT) && (token_value == HASH_SEP))
+                 {   parse_directive(TRUE);
+                     statements.enabled = TRUE;
+                     get_next_token();
+                 }
+                 
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
@@ -2152,6 +2160,14 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  statements.enabled = TRUE;
                  get_next_token();
+                 
+                 /* An #if directive around the ELSE clause is legal. */
+                 while ((token_type == SEP_TT) && (token_value == HASH_SEP))
+                 {   parse_directive(TRUE);
+                     statements.enabled = TRUE;
+                     get_next_token();
+                 }
+                 
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
