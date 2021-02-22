@@ -92,6 +92,16 @@ longer gives a spurious error.
 corrupted.
 <li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
 (instead of 9).
+<li><p>The incorrect code
+<pre>
+  Object foo with name 'x';
+</pre>
+now correctly causes the warning
+<pre>
+  'name' property should only contain dictionary words
+</pre>
+when compiled to either Glulx or Z-code: previously the warning only appeared when compiling to Z-code.
+<li><p>The compiler now correctly handles <tt>#If</tt> directives around <tt>if</tt> and <tt>else</tt> clauses.
 </ul>
 
 <h2>Compiler 6.34</h2>
