@@ -1210,6 +1210,9 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
 {
     df_function_t *func;
     int count;
+	int beg;
+	int end;
+	int new;
 
     if (!track_unused_routines)
         compiler_error("DF: df_stripped_offset_for_code_offset called, but function references have not been mapped");
@@ -1237,8 +1240,8 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
 
     /* Do a binary search. Maintain beg <= res < end, where res is the
        function containing the desired address. */
-    int beg = 0;
-    int end = df_functions_sorted_count;
+    beg = 0;
+    end = df_functions_sorted_count;
 
     /* Set stripped flag until we decide on a non-stripped function. */
     *stripped = TRUE;
@@ -1255,7 +1258,7 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
             *stripped = FALSE;
             return func->newaddress + (offset - func->address);
         }
-        int new = (beg + end) / 2;
+        new = (beg + end) / 2;
         if (new <= beg || new >= end)
             compiler_error("DF: binary search went off the rails");
 

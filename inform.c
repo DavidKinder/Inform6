@@ -1901,14 +1901,17 @@ static void read_command_line(int argc, char **argv)
 }
 #else
 static void read_command_line(int argc, char **argv)
-{   int i;
+{   
+	int i;
+	int consumed2;
+
     if (argc==1) switches("-h",1);
 
     for (i=1, cli_files_specified=0; i<argc; i++)
         if (argv[i][0] == '-' && argv[i][1] == '-') {
             char *nextarg = NULL;
             if (i+1 < argc) nextarg = argv[i+1];
-            int consumed2 = execute_dashdash_command(argv[i]+2, nextarg);
+            consumed2 = execute_dashdash_command(argv[i]+2, nextarg);
             if (consumed2 && i+1 < argc) {
                 i++;
             }

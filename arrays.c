@@ -279,6 +279,10 @@ extern void make_global(int array_flag, int name_only)
     int array_type, data_type;
     int is_static = FALSE;
     assembly_operand AO;
+	
+	int extraspace;
+	int orig_area_size;
+	int32 new_area_size;
 
     int32 global_symbol;
     const char *global_name;
@@ -512,13 +516,11 @@ extern void make_global(int array_flag, int name_only)
 
     /*  Leave room to write the array size in later, if string/table array   */
     
-    int extraspace = 0;
+    extraspace = 0;
     if ((array_type==STRING_ARRAY) || (array_type==TABLE_ARRAY))
         extraspace += array_entry_size;
     if (array_type==BUFFER_ARRAY)
         extraspace += WORDSIZE;
-
-    int orig_area_size;
     
     if (!is_static) {
         orig_area_size = dynamic_array_area_size;
@@ -685,7 +687,7 @@ advance as part of 'Zcharacter table':", unicode);
         debug_file_printf("<value>");
         write_debug_array_backpatch(svals[global_symbol]);
         debug_file_printf("</value>");
-        int32 new_area_size = (!is_static ? dynamic_array_area_size : static_array_area_size);
+        new_area_size = (!is_static ? dynamic_array_area_size : static_array_area_size);
         debug_file_printf
             ("<byte-count>%d</byte-count>",
              new_area_size - array_base);
