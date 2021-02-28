@@ -80,6 +80,10 @@ static void print_preamble(void)
 
 static char *location_text(brief_location report_line)
 {
+    int j;
+    char *p;
+    int len;
+
     /* Convert the location to a brief string. 
        (Some error messages need to report a secondary location.)
        This uses the static buffer other_pos_buff. */
@@ -91,9 +95,6 @@ static char *location_text(brief_location report_line)
     errpos.main_flag = 0;
     errpos.orig_source = NULL;
     export_brief_location(report_line, &errpos);
-
-    int j;
-    char *p;
     
     j = errpos.file_number;
     if (j <= 0 || j > total_files) p = errpos.source;
@@ -101,7 +102,7 @@ static char *location_text(brief_location report_line)
     
     if (!p) p = "";
 
-    int len = 0;
+    len = 0;
     
     if (!(errpos.main_flag)) {
         snprintf(other_pos_buff+len, ERROR_BUFLEN-len,
