@@ -182,6 +182,7 @@ extern void close_all_source(void)
 extern int register_orig_sourcefile(char *filename)
 {
     int ix;
+    char *name;
 
     /* If the filename has already been used as an origsource filename,
        return that entry. We check the most-recently-used file first, and
@@ -203,7 +204,7 @@ extern int register_orig_sourcefile(char *filename)
     /* This filename has never been used before. Allocate a new InputFiles
        entry. */
 
-    char *name = filename; /* no translation */
+    name = filename; /* no translation */
 
     if (total_files == MAX_SOURCE_FILES)
         memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
