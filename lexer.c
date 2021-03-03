@@ -940,7 +940,7 @@ extern int is_systemfile(void)
 
 extern void set_origsource_location(char *source, int32 line, int32 charnum)
 {
-	int file_no;
+    int file_no;
 
     if (!source) {
         /* Clear the Origsource declaration. */

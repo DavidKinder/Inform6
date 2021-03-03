@@ -279,10 +279,9 @@ extern void make_global(int array_flag, int name_only)
     int array_type, data_type;
     int is_static = FALSE;
     assembly_operand AO;
-	
-	int extraspace;
-	int orig_area_size;
-	int32 new_area_size;
+    
+    int extraspace;
+    int orig_area_size;
 
     int32 global_symbol;
     const char *global_name;
@@ -682,7 +681,9 @@ advance as part of 'Zcharacter table':", unicode);
     finish_array(i, is_static);
 
     if (debugfile_switch)
-    {   debug_file_printf("<array>");
+    {
+        int32 new_area_size;
+        debug_file_printf("<array>");
         debug_file_printf("<identifier>%s</identifier>", global_name);
         debug_file_printf("<value>");
         write_debug_array_backpatch(svals[global_symbol]);

@@ -80,9 +80,9 @@ static void print_preamble(void)
 
 static char *location_text(brief_location report_line)
 {
-	int j;
+    int j;
     char *p;
-	int len;
+    int len;
 
     /* Convert the location to a brief string. 
        (Some error messages need to report a secondary location.)

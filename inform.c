@@ -1910,6 +1910,7 @@ static void read_command_line(int argc, char **argv)
     for (i=1, cli_files_specified=0; i<argc; i++)
         if (argv[i][0] == '-' && argv[i][1] == '-') {
             char *nextarg = NULL;
+            int consumed2;
             if (i+1 < argc) nextarg = argv[i+1];
             consumed2 = execute_dashdash_command(argv[i]+2, nextarg);
             if (consumed2 && i+1 < argc) {

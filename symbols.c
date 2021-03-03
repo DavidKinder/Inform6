@@ -1210,9 +1210,8 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
 {
     df_function_t *func;
     int count;
-	int beg;
-	int end;
-	int new;
+    int beg;
+    int end;
 
     if (!track_unused_routines)
         compiler_error("DF: df_stripped_offset_for_code_offset called, but function references have not been mapped");
@@ -1247,6 +1246,7 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
     *stripped = TRUE;
 
     while (1) {
+        int new;
         if (beg >= end) {
             error("DF: offset_for_code_offset: Could not locate address.");
             return 0;

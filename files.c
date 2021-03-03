@@ -182,7 +182,7 @@ extern void close_all_source(void)
 extern int register_orig_sourcefile(char *filename)
 {
     int ix;
-	char *name;
+    char *name;
 
     /* If the filename has already been used as an origsource filename,
        return that entry. We check the most-recently-used file first, and
