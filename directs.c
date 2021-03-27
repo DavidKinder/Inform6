@@ -595,6 +595,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {   error("'LowString' cannot be used in -M (Module) mode");
             panic_mode_error_recovery(); return FALSE;
         }
+        if (glulx_mode) {
+            error("The LowString directive has no meaning in Glulx.");
+            panic_mode_error_recovery(); return FALSE;
+        }
         get_next_token(); i = token_value;
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("new low string name", token_text);
