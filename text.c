@@ -507,8 +507,14 @@ advance as part of 'Zcharacter table':", unicode);
                 if ((d1 == 127) || (d1 >= 10) || (d2 == 127) || (d2 >= 10))
                     error("'@..' must have two decimal digits");
                 else
-                {   i+=2;
-                    write_z_char_z(1); write_z_char_z(d1*10 + d2);
+                {
+                    j = d1*10 + d2;
+                    if (j >= 32) { //### MAX_DYNAMIC_STRINGS
+                        memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+                        j = 0;
+                    }
+                    i+=2;
+                    write_z_char_z(1); write_z_char_z(j);
                 }
             }
             else
