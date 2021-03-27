@@ -509,7 +509,7 @@ advance as part of 'Zcharacter table':", unicode);
                 else
                 {
                     j = d1*10 + d2;
-                    if (j >= 32) { //### MAX_DYNAMIC_STRINGS
+                    if (j >= MAX_DYNAMIC_STRINGS) {
                         memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
                         j = 0;
                     }
