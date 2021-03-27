@@ -1584,6 +1584,11 @@ static void parse_statement_z(int break_label, int continue_label)
                  assemblez_2_to(loadw_zc, AO, AO2, AO3);
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                     if (AO2.value < 0 || AO2.value >= 32) { //### MAX_DYNAMIC_STRINGS
+                         memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+                     }
+                 }
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, LONG_CONSTANT_OT);
@@ -2516,6 +2521,11 @@ static void parse_statement_g(int break_label, int continue_label)
         case STRING_CODE:
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                     if (AO2.value < 0 || AO2.value >= MAX_DYNAMIC_STRINGS) {
+                         memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+                     }
+                 }
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, CONSTANT_OT);
