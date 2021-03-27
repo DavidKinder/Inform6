@@ -383,8 +383,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_PROP_TABLE_SIZE_z = 30000;
         MAX_PROP_TABLE_SIZE_g = 60000;
 
-        MAX_ABBREVS = 64;
-
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 200;
         MAX_VERBSPACE = 4096;
@@ -432,8 +430,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_PROP_TABLE_SIZE_z = 15000;
         MAX_PROP_TABLE_SIZE_g = 30000;
-
-        MAX_ABBREVS = 64;
 
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 140;
@@ -483,8 +479,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_PROP_TABLE_SIZE_z = 8000;
         MAX_PROP_TABLE_SIZE_g = 16000;
 
-        MAX_ABBREVS = 64;
-
         MAX_EXPRESSION_NODES = 40;
         MAX_VERBS = 110;
         MAX_VERBSPACE = 2048;
@@ -526,6 +520,7 @@ extern void set_memory_sizes(int size_flag)
     DICT_WORD_SIZE_g = 9;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
+    MAX_ABBREVS = 64;
     /* Backwards-compatible behavior: allow for a unicode table
        whether we need one or not. The user can set this to zero if
        there's no unicode table. */
