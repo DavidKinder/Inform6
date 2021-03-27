@@ -206,6 +206,16 @@ static void select_target(int targ)
       DICT_ENTRY_FLAG_POS = (4+DICT_WORD_BYTES);
     }
   }
+
+  if (!targ) {
+    /* Z-machine */
+    /* The Z-machine's 96 abbreviations are used for these two purposes.
+       We were supposed to make sure they were set consistently. This
+       is a double-check. */
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96) {
+      compiler_error("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code");
+    }
+  }
 }
 
 /* ------------------------------------------------------------------------- */
