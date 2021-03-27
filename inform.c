@@ -212,8 +212,18 @@ static void select_target(int targ)
     /* The Z-machine's 96 abbreviations are used for these two purposes.
        We were supposed to make sure they were set consistently. This
        is a double-check. */
-    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96) {
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
+        || MAX_ABBREVS > 96
+        || MAX_DYNAMIC_STRINGS > 96) {
       compiler_error("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code");
+    }
+  }
+  else {
+    if (MAX_DYNAMIC_STRINGS > 100) {
+      MAX_DYNAMIC_STRINGS = 100;
+      warning("MAX_DYNAMIC_STRINGS cannot exceed 100; resetting to 100");
+      /* This is because they are specified in text literals like "@00",
+         with two digits. */
     }
   }
 }

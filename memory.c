@@ -691,7 +691,7 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_DYNAMIC_STRINGS")==0)
     {   printf(
 "  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
-  (\"@00\").  It is not allowed to exceed 96 in Z-code or 99 in Glulx.\n");
+  (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
         return;
     }
     if (strcmp(command,"MAX_ARRAYS")==0)
