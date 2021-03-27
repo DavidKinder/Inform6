@@ -25,10 +25,7 @@ char *all_text, *all_text_top;         /* Start and next byte free in (large)
                                           text buffer holding the entire text
                                           of the game, when it is being
                                           recorded                           */
-int put_strings_in_low_memory,         /* When TRUE, put static strings in
-                                          the low strings pool at 0x100 rather
-                                          than in the static strings area    */
-    is_abbreviation,                   /* When TRUE, the string being trans
+int is_abbreviation,                   /* When TRUE, the string being trans
                                           is itself an abbreviation string
                                           so can't make use of abbreviations */
     abbrevs_lookup_table_made,         /* The abbreviations lookup table is
@@ -2198,7 +2195,6 @@ extern void init_text_vars(void)
     grandflags = NULL;
     no_chars_transcribed = 0;
     is_abbreviation = FALSE;
-    put_strings_in_low_memory = FALSE;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
