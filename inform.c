@@ -221,7 +221,7 @@ static void select_target(int targ)
     if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
         || MAX_ABBREVS < 0
         || MAX_DYNAMIC_STRINGS < 0) {
-      warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting");
+      warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting both");
       MAX_DYNAMIC_STRINGS = 32;
       MAX_ABBREVS = 64;
     }
