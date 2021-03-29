@@ -443,8 +443,9 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
         if ((economy_switch) && (!is_abbreviation)
             && ((k=abbrevs_lookup[text_in[i]])!=-1))
         {   if ((j=try_abbreviations_from(text_in, i, k))!=-1)
-            {   if (j<32) { write_z_char_z(2); write_z_char_z(j); }
-                else { write_z_char_z(3); write_z_char_z(j-32); }
+            {   /* abbreviations run from MAX_DYNAMIC_STRINGS to 96 */
+                j += MAX_DYNAMIC_STRINGS;
+                write_z_char_z(j/32+1); write_z_char_z(j%32);
             }
         }
 
