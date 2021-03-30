@@ -93,6 +93,10 @@ extern int parse_given_directive(int internal_flag)
            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                return FALSE;
 
+           if (!glulx_mode && no_abbreviations==96)
+           {   error("All 96 Z-machine abbreviations already declared");
+               panic_mode_error_recovery(); return FALSE;
+           }
            if (no_abbreviations==MAX_ABBREVS)
                memoryerror("MAX_ABBREVS", MAX_ABBREVS);
 
