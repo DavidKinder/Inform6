@@ -501,7 +501,7 @@ advance as part of 'Zcharacter table':", unicode);
             else if (isdigit(text_in[i+1])!=0)
             {   int d1, d2;
 
-                /*   @..   */
+                /*   @.. (dynamic string)   */
 
                 d1 = character_digit_value[text_in[i+1]];
                 d2 = character_digit_value[text_in[i+2]];
@@ -515,7 +515,7 @@ advance as part of 'Zcharacter table':", unicode);
                         j = 0;
                     }
                     i+=2;
-                    write_z_char_z(1); write_z_char_z(j);
+                    write_z_char_z(j/32+1); write_z_char_z(j%32);
                 }
             }
             else
