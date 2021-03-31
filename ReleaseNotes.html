@@ -59,6 +59,9 @@ lines (although the old syntax is still supported). The new syntax for these opt
   --opt SETTING=number
   --config filename
 </pre>
+<li>The settings <tt>$MAX_ABBREVS</tt> and <tt>MAX_DYNAMIC_STRINGS</tt> control the number of abbreviations
+and the number of dynamic strings, respectively. When compiling to Z-code these settings are linked, as they
+both use the same 96 Z-code abbreviations that are available.
 <li>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
 what the error is and where the symbol was previously defined.
 </ul>
