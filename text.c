@@ -2,7 +2,7 @@
 /*   "text" : Text translation, the abbreviations optimiser, the dictionary  */
 /*                                                                           */
 /*   Part of Inform 6.35                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
