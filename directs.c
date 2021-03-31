@@ -93,9 +93,8 @@ extern int parse_given_directive(int internal_flag)
            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                return FALSE;
 
-           /* Z-code has a 64-abbrev limit; Glulx doesn't. */
-           if (!glulx_mode && no_abbreviations==64)
-           {   error("All 64 abbreviations already declared");
+           if (!glulx_mode && no_abbreviations==96)
+           {   error("All 96 Z-machine abbreviations already declared");
                panic_mode_error_recovery(); return FALSE;
            }
            if (no_abbreviations==MAX_ABBREVS)
@@ -593,6 +592,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case LOWSTRING_CODE:
         if (module_switch)
         {   error("'LowString' cannot be used in -M (Module) mode");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        if (glulx_mode) {
+            error("The LowString directive has no meaning in Glulx.");
             panic_mode_error_recovery(); return FALSE;
         }
         get_next_token(); i = token_value;

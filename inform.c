@@ -206,6 +206,34 @@ static void select_target(int targ)
       DICT_ENTRY_FLAG_POS = (4+DICT_WORD_BYTES);
     }
   }
+
+  if (!targ) {
+    /* Z-machine */
+    /* The Z-machine's 96 abbreviations are used for these two purposes.
+       Make sure they are set consistently. If exactly one has been
+       set non-default, set the other to match. */
+    if (MAX_DYNAMIC_STRINGS == 32 && MAX_ABBREVS != 64) {
+        MAX_DYNAMIC_STRINGS = 96 - MAX_ABBREVS;
+    }
+    if (MAX_ABBREVS == 64 && MAX_DYNAMIC_STRINGS != 32) {
+        MAX_ABBREVS = 96 - MAX_DYNAMIC_STRINGS;
+    }
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
+        || MAX_ABBREVS < 0
+        || MAX_DYNAMIC_STRINGS < 0) {
+      warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting both");
+      MAX_DYNAMIC_STRINGS = 32;
+      MAX_ABBREVS = 64;
+    }
+  }
+  else {
+    if (MAX_DYNAMIC_STRINGS > 100) {
+      MAX_DYNAMIC_STRINGS = 100;
+      warning("MAX_DYNAMIC_STRINGS cannot exceed 100; resetting to 100");
+      /* This is because they are specified in text literals like "@00",
+         with two digits. */
+    }
+  }
 }
 
 /* ------------------------------------------------------------------------- */
