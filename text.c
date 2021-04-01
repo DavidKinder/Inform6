@@ -1482,8 +1482,8 @@ extern void optimise_abbreviations(void)
 /*   For Glulx, the form is instead: (But see below about Unicode-valued     */
 /*   dictionaries and my heinie.)                                            */
 /*                                                                           */
-/*        <plain text>      <flags>   <verbnumber>     <adjectivenumber>     */
-/*        DICT_WORD_SIZE     short       short            short              */
+/*        <tag>  <plain text>    <flags>  <verbnumber>   <adjectivenumber>   */
+/*         $60    DICT_WORD_SIZE  short    short          short              */
 /*                                                                           */
 /*   These records are stored in "accession order" (i.e. in order of their   */
 /*   first being received by these routines) and only alphabetically sorted  */
@@ -2040,6 +2040,7 @@ extern void dictionary_set_verb_number(char *dword, int to)
 static char *d_show_to;
 static int d_show_total;
 
+//### Let's make this dynamic and not use strlen all the time!
 static void show_char(char c)
 {   if (d_show_to == NULL) printf("%c", c);
     else
@@ -2093,7 +2094,7 @@ extern void word_to_ascii(uchar *p, char *results)
 static void recursively_show_z(int node)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[32];
-    int res = (version_number == 3)?4:6;
+    int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
         recursively_show_z(dtree[node].branch[0]);
@@ -2141,8 +2142,36 @@ static void recursively_show_z(int node)
 }
 
 static void recursively_show_g(int node)
-{
-  warning("### Glulx dictionary-show not yet implemented.\n");
+{   int i, cprinted;
+    uchar *p;
+
+    if (dtree[node].branch[0] != VACANT)
+        recursively_show_g(dtree[node].branch[0]);
+
+    p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
+
+    /*### this assumes DICT_CHAR_SIZE=1; doesn't work for 4 */
+    for (cprinted = 0; cprinted<DICT_WORD_SIZE && p[1+cprinted]; cprinted++)
+        show_char(p[1+cprinted]);
+    for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
+        show_char(' ');
+
+    if (d_show_to == NULL)
+    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        /* ### flags */
+        printf("\n");
+    }
+
+    if (d_show_total++ == 5)
+    {   d_show_total = 0;
+        if (d_show_to != NULL)
+        {   write_to_transcript_file(d_show_to);
+            d_show_to[0] = 0;
+        }
+    }
+
+    if (dtree[node].branch[1] != VACANT)
+        recursively_show_g(dtree[node].branch[1]);
 }
 
 static void show_alphabet(int i)
@@ -2177,7 +2206,7 @@ extern void show_dictionary(void)
 }
 
 extern void write_dictionary_to_transcript(void)
-{   char d_buffer[81];
+{   char d_buffer[321];
 
     sprintf(d_buffer, "\n[Dictionary contains %d entries:]\n", dict_entries);
 
