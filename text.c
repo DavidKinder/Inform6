@@ -2037,15 +2037,28 @@ extern void dictionary_set_verb_number(char *dword, int to)
 /*   by the linker.                                                          */
 /* ------------------------------------------------------------------------- */
 
-static char *d_show_to;
-static int d_show_total;
+/* In the dictionary-showing code, if d_show_buf is NULL, the text is
+   printed directly. (The "Trace Dictionary" directive does this.)
+   If d_show_buf is not NULL, we add words to it (reallocing if necessary)
+   until it's a page-width. 
+*/
+static char *d_show_buf = NULL;
+static int d_show_size; /* allocated size */
+static int d_show_len;  /* current length */
 
-//### Let's make this dynamic and not use strlen all the time!
 static void show_char(char c)
-{   if (d_show_to == NULL) printf("%c", c);
-    else
-    {   int i = strlen(d_show_to);
-        d_show_to[i] = c; d_show_to[i+1] = 0;
+{
+    if (d_show_buf == NULL) {
+        printf("%c", c);
+    }
+    else {
+        if (d_show_len+2 >= d_show_size) {
+            int newsize = 2 * d_show_len + 16;
+            my_realloc(&d_show_buf, d_show_size, newsize, "dictionary display buffer");
+            d_show_size = newsize;
+        }
+        d_show_buf[d_show_len++] = c;
+        d_show_buf[d_show_len] = '\0';
     }
 }
 
@@ -2108,7 +2121,7 @@ static void recursively_show_z(int node)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
-    if (d_show_to == NULL)
+    if (d_show_buf == NULL)
     {   for (i=0; i<3+res; i++) printf("%02x ",p[i]);
 
         flags = (int) p[res];
@@ -2129,12 +2142,10 @@ static void recursively_show_z(int node)
         printf("\n");
     }
 
-    if (d_show_total++ == 5)
-    {   d_show_total = 0;
-        if (d_show_to != NULL)
-        {   write_to_transcript_file(d_show_to);
-            d_show_to[0] = 0;
-        }
+    if (d_show_len >= 70)
+    {
+        write_to_transcript_file(d_show_buf);
+        d_show_len = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2156,18 +2167,16 @@ static void recursively_show_g(int node)
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
-    if (d_show_to == NULL)
+    if (d_show_buf == NULL)
     {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         /* ### flags */
         printf("\n");
     }
 
-    if (d_show_total++ == 5)
-    {   d_show_total = 0;
-        if (d_show_to != NULL)
-        {   write_to_transcript_file(d_show_to);
-            d_show_to[0] = 0;
-        }
+    if (d_show_len >= 70)
+    {
+        write_to_transcript_file(d_show_buf);
+        d_show_len = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2193,7 +2202,7 @@ static void show_alphabet(int i)
 extern void show_dictionary(void)
 {   printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
-    {   d_show_total = 0; d_show_to = NULL; 
+    {   d_show_len = 0; d_show_buf = NULL; 
         if (!glulx_mode)    
             recursively_show_z(root);
         else
@@ -2206,20 +2215,25 @@ extern void show_dictionary(void)
 }
 
 extern void write_dictionary_to_transcript(void)
-{   char d_buffer[321];
+{
+    d_show_size = 80; /* initial size */
+    d_show_buf = my_malloc(d_show_size, "dictionary display buffer");
 
-    sprintf(d_buffer, "\n[Dictionary contains %d entries:]\n", dict_entries);
-
-    d_buffer[0] = 0; write_to_transcript_file(d_buffer);
+    sprintf(d_show_buf, "[Dictionary contains %d entries:]", dict_entries);
+    write_to_transcript_file(d_show_buf);
+    
+    d_show_len = 0;
 
     if (dict_entries != 0)
-    {   d_show_total = 0; d_show_to = d_buffer; 
+    {
         if (!glulx_mode)    
             recursively_show_z(root);
         else
             recursively_show_g(root);
     }
-    if (d_show_total != 0) write_to_transcript_file(d_buffer);
+    if (d_show_len != 0) write_to_transcript_file(d_show_buf);
+
+    my_free(&d_show_buf, "dictionary display buffer");
 }
 
 /* ========================================================================= */
@@ -2288,6 +2302,10 @@ extern void text_allocate_arrays(void)
     strings_holding_area
          = my_malloc(MAX_STATIC_STRINGS,"static strings holding area");
     low_strings = my_malloc(MAX_LOW_STRINGS,"low (abbreviation) strings");
+
+    d_show_buf = NULL;
+    d_show_size = 0;
+    d_show_len = 0;
 
     huff_entities = NULL;
     hufflist = NULL;
