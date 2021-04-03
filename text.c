@@ -2038,7 +2038,7 @@ extern void dictionary_set_verb_number(char *dword, int to)
 /* ------------------------------------------------------------------------- */
 
 /* In the dictionary-showing code, if d_show_buf is NULL, the text is
-   printed directly. (The "Trace Dictionary" directive does this.)
+   printed directly. (The "Trace dictionary" directive does this.)
    If d_show_buf is not NULL, we add words to it (reallocing if necessary)
    until it's a page-width. 
 */
