@@ -2142,7 +2142,7 @@ static void recursively_show_z(int node)
         printf("\n");
     }
 
-    if (d_show_len >= 70)
+    if (d_show_len >= 64)
     {
         write_to_transcript_file(d_show_buf);
         d_show_len = 0;
@@ -2173,7 +2173,7 @@ static void recursively_show_g(int node)
         printf("\n");
     }
 
-    if (d_show_len >= 70)
+    if (d_show_len >= 64)
     {
         write_to_transcript_file(d_show_buf);
         d_show_len = 0;
