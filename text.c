@@ -2162,6 +2162,7 @@ static void recursively_show_g(int node)
     p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
 
     /*### this assumes DICT_CHAR_SIZE=1; doesn't work for 4 */
+    
     for (cprinted = 0; cprinted<DICT_WORD_SIZE && p[1+cprinted]; cprinted++)
         show_char(p[1+cprinted]);
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
@@ -2169,7 +2170,19 @@ static void recursively_show_g(int node)
 
     if (d_show_buf == NULL)
     {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
-        /* ### flags */
+        int flags = (p[DICT_WORD_SIZE+1] << 8) | (p[DICT_WORD_SIZE+2]);
+        int verbnum = (p[DICT_WORD_SIZE+3] << 8) | (p[DICT_WORD_SIZE+4]);
+        if (flags & 128)
+        {   printf("noun ");
+            if (flags & 4)  printf("p"); else printf(" ");
+            printf(" ");
+        }
+        else printf("       ");
+        if (flags & 8)
+        {   printf("preposition    ");
+        }
+        if ((flags & 3) == 3) printf("metaverb:%d  ", verbnum);
+        else if ((flags & 3) == 1) printf("verb:%d  ", verbnum);
         printf("\n");
     }
 
