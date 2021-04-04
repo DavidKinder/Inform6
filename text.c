@@ -200,9 +200,7 @@ extern void make_abbreviation(char *text)
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
-    is_abbreviation = TRUE;
     abbrev_values[no_abbreviations] = compile_string(text, TRUE, TRUE);
-    is_abbreviation = FALSE;
 
     /*   The quality is the number of Z-chars saved by using this            */
     /*   abbreviation: note that it takes 2 Z-chars to print it.             */
@@ -217,7 +215,7 @@ extern void make_abbreviation(char *text)
 extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
 {   int i, j; uchar *c;
 
-    is_abbreviation = is_abbrev;
+    is_abbreviation = is_abbrev; /* Set FALSE before returning! */
 
     /* Put into the low memory pool (at 0x100 in the Z-machine) of strings   */
     /* which may be wanted as possible entries in the abbreviations table    */
