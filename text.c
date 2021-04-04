@@ -2146,7 +2146,7 @@ static void recursively_show_z(int node)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
+    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
     {
         write_to_transcript_file(d_show_buf, TRLN_DICT);
         d_show_len = 0;
@@ -2191,7 +2191,7 @@ static void recursively_show_g(int node)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
+    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
     {
         write_to_transcript_file(d_show_buf, TRLN_DICT);
         d_show_len = 0;
@@ -2253,6 +2253,7 @@ extern void write_dictionary_to_transcript(void)
     if (d_show_len != 0) write_to_transcript_file(d_show_buf, TRLN_DICT);
 
     my_free(&d_show_buf, "dictionary display buffer");
+    d_show_len = 0; d_show_buf = NULL;
 }
 
 /* ========================================================================= */
