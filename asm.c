@@ -854,7 +854,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text);
+        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text, FALSE);
         if (!tmp)
             memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
         j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));

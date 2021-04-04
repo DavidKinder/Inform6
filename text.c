@@ -25,10 +25,7 @@ char *all_text, *all_text_top;         /* Start and next byte free in (large)
                                           text buffer holding the entire text
                                           of the game, when it is being
                                           recorded                           */
-int is_abbreviation,                   /* When TRUE, the string being trans
-                                          is itself an abbreviation string
-                                          so can't make use of abbreviations */
-    abbrevs_lookup_table_made,         /* The abbreviations lookup table is
+int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           constructed when the first non-
                                           abbreviation string is translated:
                                           this flag is TRUE after that       */
@@ -212,27 +209,24 @@ extern void make_abbreviation(char *text)
 /*   The front end routine for text translation                              */
 /* ------------------------------------------------------------------------- */
 
-extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
+extern int32 compile_string(char *b, int in_low_memory, int is_abbreviation)
 {   int i, j; uchar *c;
-
-    is_abbreviation = is_abbrev; /* Set FALSE before returning! */
 
     /* Put into the low memory pool (at 0x100 in the Z-machine) of strings   */
     /* which may be wanted as possible entries in the abbreviations table    */
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b);
+        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, is_abbreviation);
         if (!low_strings_top)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
-        is_abbreviation = FALSE;
         return(0x21+(j/2));
     }
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b);
+    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, is_abbreviation);
     if (!c)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
 
@@ -266,8 +260,6 @@ extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
              c++, static_strings_extent++)
             write_byte_to_memory_block(&static_strings_area,
                 static_strings_extent, *c);
-
-    is_abbreviation = FALSE;
 
     if (!glulx_mode) {
         return(j/scale_factor);
@@ -360,10 +352,12 @@ static void write_z_char_g(int i)
 /*   The return value will not exceed p_limit. If the translation tries to   */
 /*   overflow this boundary, the return value will be NULL (and you should   */
 /*   display an error).                                                      */
+/*   If is_abbreviation is TRUE, the string being translated is itself an    */
+/*   abbreviation string, so it can't make use of abbreviations.             */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
+extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int is_abbreviation)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
     unsigned char *text_in;
@@ -2266,7 +2260,6 @@ extern void init_text_vars(void)
     grandtable = NULL;
     grandflags = NULL;
     no_chars_transcribed = 0;
-    is_abbreviation = FALSE;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
