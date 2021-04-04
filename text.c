@@ -197,7 +197,7 @@ extern void make_abbreviation(char *text)
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
-    abbrev_values[no_abbreviations] = compile_string(text, TRUE, TRUE);
+    abbrev_values[no_abbreviations] = compile_string(text, STRCTX_ABBREV);
 
     /*   The quality is the number of Z-chars saved by using this            */
     /*   abbreviation: note that it takes 2 Z-chars to print it.             */
@@ -206,14 +206,26 @@ extern void make_abbreviation(char *text)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   The front end routine for text translation                              */
+/*   The front end routine for text translation.                             */
+/*   strctx indicates the purpose of the string. This is mostly used for     */
+/*   informational output (gametext.txt), but we treat some string contexts  */
+/*   specially during compilation.                                           */
 /* ------------------------------------------------------------------------- */
 
-extern int32 compile_string(char *b, int in_low_memory, int is_abbreviation)
+extern int32 compile_string(char *b, int strctx)
 {   int i, j; uchar *c;
 
-    /* Put into the low memory pool (at 0x100 in the Z-machine) of strings   */
-    /* which may be wanted as possible entries in the abbreviations table    */
+    /* In Z-code, abbreviations go in the low memory pool (0x100). So
+       do strings explicitly defined with the Lowstring directive.
+       (In Glulx, STRCTX_LOWSTRING is not used and the in_low_memory flag is
+       ignored.) */
+    int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+
+    /* In theory, this flag should only be set for STRCTX_ABBREV. However,
+       the compiler has historically set it for the Lowstring directive
+       as well -- the in_low_memory and is_abbreviation flag were always
+       the same. I am preserving that convention. */
+    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);

@@ -608,7 +608,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != DQ_TT)
             return ebf_error_recover("literal string in double-quotes", token_text);
 
-        assign_symbol(i, compile_string(token_text, TRUE, TRUE), CONSTANT_T);
+        assign_symbol(i, compile_string(token_text, STRCTX_LOWSTRING), CONSTANT_T);
         break;
 
     /* --------------------------------------------------------------------- */

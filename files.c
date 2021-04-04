@@ -1301,10 +1301,18 @@ extern void write_to_transcript_file(char *text, int linetype)
                 ch = 'G'; break;
             case STRCTX_VENEER:
                 ch = 'V'; break;
+            case STRCTX_LOWSTRING:
+                ch = 'L'; break;
+            case STRCTX_ABBREV:
+                ch = 'A'; break;
             case STRCTX_DICT:
                 ch = 'D'; break;
             case STRCTX_OBJNAME:
                 ch = 'O'; break;
+            case STRCTX_SYMBOL:
+                ch = 'S'; break;
+            case STRCTX_INFIX:
+                ch = 'X'; break;
         }
         fputc(ch, transcript_file_handle);
         fputs(": ", transcript_file_handle);

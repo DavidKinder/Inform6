@@ -1942,11 +1942,15 @@ typedef struct operator_s
 /*   written to the transcript file (gametext.txt).                          */
 /* ------------------------------------------------------------------------- */
 
-#define STRCTX_INFO    0
-#define STRCTX_GAME    1
-#define STRCTX_VENEER  2
-#define STRCTX_DICT    3
-#define STRCTX_OBJNAME 4
+#define STRCTX_INFO      0
+#define STRCTX_GAME      1
+#define STRCTX_VENEER    2
+#define STRCTX_LOWSTRING 3
+#define STRCTX_ABBREV    4
+#define STRCTX_DICT      5
+#define STRCTX_OBJNAME   6
+#define STRCTX_SYMBOL    7
+#define STRCTX_INFIX     8
 
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
@@ -2791,7 +2795,7 @@ extern void  compress_game_text(void);
 /* end of the Glulx string compression stuff */
 
 extern void  ao_free_arrays(void);
-extern int32 compile_string(char *b, int in_low_memory, int is_abbrev);
+extern int32 compile_string(char *b, int strctx);
 extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int is_abbrev);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);

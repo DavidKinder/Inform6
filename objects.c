@@ -989,7 +989,7 @@ static void manufacture_object_g(void)
     }
 
     objectsg[no_objects].shortname = compile_string(shortname_buffer,
-      FALSE, FALSE);
+      STRCTX_OBJNAME);
 
         /*  The properties table consists simply of a sequence of property
             blocks, one for each object in order of definition, exactly as
