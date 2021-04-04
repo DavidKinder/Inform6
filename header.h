@@ -1938,14 +1938,15 @@ typedef struct operator_s
                                         to find the opmode byte to modify. */
 
 /* ------------------------------------------------------------------------- */
-/*   "Line types", used for the transcript file (gametext.txt)               */
+/*   "String contexts"; the purpose for a given string. This info gets       */
+/*   written to the transcript file (gametext.txt).                          */
 /* ------------------------------------------------------------------------- */
 
-#define TRLN_INFO    0
-#define TRLN_GAME    1
-#define TRLN_VENEER  2
-#define TRLN_DICT    3
-#define TRLN_OBJNAME 4
+#define STRCTX_INFO    0
+#define STRCTX_GAME    1
+#define STRCTX_VENEER  2
+#define STRCTX_DICT    3
+#define STRCTX_OBJNAME 4
 
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */

@@ -1295,15 +1295,15 @@ extern void write_to_transcript_file(char *text, int linetype)
     if (TRANSCRIPT_FORMAT == 1) {
         char ch = '?';
         switch (linetype) {
-            case TRLN_INFO:
+            case STRCTX_INFO:
                 ch = 'I'; break;
-            case TRLN_GAME:
+            case STRCTX_GAME:
                 ch = 'G'; break;
-            case TRLN_VENEER:
+            case STRCTX_VENEER:
                 ch = 'V'; break;
-            case TRLN_DICT:
+            case STRCTX_DICT:
                 ch = 'D'; break;
-            case TRLN_OBJNAME:
+            case STRCTX_OBJNAME:
                 ch = 'O'; break;
         }
         fputc(ch, transcript_file_handle);
@@ -1324,12 +1324,12 @@ extern void open_transcript_file(char *what_of)
     transcript_open = TRUE;
 
     sprintf(topline_buffer, "Transcript of the text of \"%s\"", what_of);
-    write_to_transcript_file(topline_buffer, TRLN_INFO);
+    write_to_transcript_file(topline_buffer, STRCTX_INFO);
     sprintf(topline_buffer, "[From %s]", banner_line);
-    write_to_transcript_file(topline_buffer, TRLN_INFO);
+    write_to_transcript_file(topline_buffer, STRCTX_INFO);
     if (TRANSCRIPT_FORMAT == 1)
-        write_to_transcript_file("[I:info, G:game text, V:veneer text, D:dict word, O:object name]", TRLN_INFO);
-    write_to_transcript_file("",  TRLN_INFO);
+        write_to_transcript_file("[I:info, G:game text, V:veneer text, D:dict word, O:object name]", STRCTX_INFO);
+    write_to_transcript_file("",  STRCTX_INFO);
 }
 
 extern void abort_transcript_file(void)
@@ -1345,9 +1345,9 @@ extern void close_transcript_file(void)
     write_serial_number(sn_buffer);
     sprintf(botline_buffer, "[End of transcript: release %d, serial %s]",
         release_number, sn_buffer);
-    write_to_transcript_file("",  TRLN_INFO);
-    write_to_transcript_file(botline_buffer, TRLN_INFO);
-    write_to_transcript_file("",  TRLN_INFO);
+    write_to_transcript_file("",  STRCTX_INFO);
+    write_to_transcript_file(botline_buffer, STRCTX_INFO);
+    write_to_transcript_file("",  STRCTX_INFO);
 
     if (ferror(transcript_file_handle))
         fatalerror("I/O failure: couldn't write to transcript file");
