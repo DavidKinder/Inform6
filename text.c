@@ -409,7 +409,10 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
     }
 
     if (transcript_switch && (!veneer_mode))
-        write_to_transcript_file(s_text);
+        write_to_transcript_file(s_text, TRLN_GAME);
+    /* We only write veneer strings in the new format. */
+    if (transcript_switch && veneer_mode && TRANSCRIPT_FORMAT == 1)
+        write_to_transcript_file(s_text, TRLN_VENEER);
 
   if (!glulx_mode) {
 
@@ -2142,9 +2145,10 @@ static void recursively_show_z(int node)
         printf("\n");
     }
 
-    if (d_show_len >= 64)
+    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
+    if (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        write_to_transcript_file(d_show_buf);
+        write_to_transcript_file(d_show_buf, TRLN_DICT);
         d_show_len = 0;
     }
 
@@ -2186,9 +2190,10 @@ static void recursively_show_g(int node)
         printf("\n");
     }
 
-    if (d_show_len >= 64)
+    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
+    if (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        write_to_transcript_file(d_show_buf);
+        write_to_transcript_file(d_show_buf, TRLN_DICT);
         d_show_len = 0;
     }
 
@@ -2232,8 +2237,9 @@ extern void write_dictionary_to_transcript(void)
     d_show_size = 80; /* initial size */
     d_show_buf = my_malloc(d_show_size, "dictionary display buffer");
 
+    write_to_transcript_file("", TRLN_INFO);
     sprintf(d_show_buf, "[Dictionary contains %d entries:]", dict_entries);
-    write_to_transcript_file(d_show_buf);
+    write_to_transcript_file(d_show_buf, TRLN_INFO);
     
     d_show_len = 0;
 
@@ -2244,7 +2250,7 @@ extern void write_dictionary_to_transcript(void)
         else
             recursively_show_g(root);
     }
-    if (d_show_len != 0) write_to_transcript_file(d_show_buf);
+    if (d_show_len != 0) write_to_transcript_file(d_show_buf, TRLN_DICT);
 
     my_free(&d_show_buf, "dictionary display buffer");
 }

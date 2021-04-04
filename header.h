@@ -1937,6 +1937,16 @@ typedef struct operator_s
                                         how far back from the label to go
                                         to find the opmode byte to modify. */
 
+/* ------------------------------------------------------------------------- */
+/*   "Line types", used for the transcript file (gametext.txt)               */
+/* ------------------------------------------------------------------------- */
+
+#define TRLN_INFO    0
+#define TRLN_GAME    1
+#define TRLN_VENEER  2
+#define TRLN_DICT    3
+#define TRLN_OBJNAME 4
+
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
 /*                                                                           */
@@ -2349,7 +2359,7 @@ extern void check_temp_files(void);
 extern void remove_temp_files(void);
 
 extern void open_transcript_file(char *what_of);
-extern void write_to_transcript_file(char *text);
+extern void write_to_transcript_file(char *text, int linetype);
 extern void close_transcript_file(void);
 extern void abort_transcript_file(void);
 
@@ -2543,6 +2553,7 @@ extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
+extern int TRANSCRIPT_FORMAT;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
    (Meaningful only for Glulx.) */

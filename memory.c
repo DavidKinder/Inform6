@@ -275,6 +275,7 @@ int32 MEMORY_MAP_EXTENSION;
 int ALLOC_CHUNK_SIZE;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
+int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
 /* The way memory sizes are set causes great nuisance for those parameters
    which have different defaults under Z-code and Glulx. We have to get
@@ -542,6 +543,7 @@ extern void set_memory_sizes(int size_flag)
     MAX_STACK_SIZE = 4096;
     OMIT_UNUSED_ROUTINES = 0;
     WARN_UNUSED_ROUTINES = 0;
+    TRANSCRIPT_FORMAT = 0;
 
     adjust_memory_sizes();
 }
