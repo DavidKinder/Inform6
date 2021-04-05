@@ -416,8 +416,12 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         /* Omit veneer strings, unless we're using the new transcript format, which includes everything. */
         if ((!veneer_mode) || TRANSCRIPT_FORMAT == 1) {
             int label = strctx;
-            if (veneer_mode && label == STRCTX_GAME)
-                label = STRCTX_VENEER;
+            if (veneer_mode) {
+                if (label == STRCTX_GAME)
+                    label = STRCTX_VENEER;
+                else if (label == STRCTX_GAMEOPC)
+                    label = STRCTX_VENEEROPC;
+            }
             write_to_transcript_file(s_text, label);
         }
     }

@@ -1299,8 +1299,12 @@ extern void write_to_transcript_file(char *text, int linetype)
                 ch = 'I'; break;
             case STRCTX_GAME:
                 ch = 'G'; break;
+            case STRCTX_GAMEOPC:
+                ch = 'H'; break;
             case STRCTX_VENEER:
                 ch = 'V'; break;
+            case STRCTX_VENEEROPC:
+                ch = 'W'; break;
             case STRCTX_LOWSTRING:
                 ch = 'L'; break;
             case STRCTX_ABBREV:

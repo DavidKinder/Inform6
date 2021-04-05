@@ -1942,15 +1942,17 @@ typedef struct operator_s
 /*   written to the transcript file (gametext.txt).                          */
 /* ------------------------------------------------------------------------- */
 
-#define STRCTX_INFO      0
-#define STRCTX_GAME      1
-#define STRCTX_VENEER    2
-#define STRCTX_LOWSTRING 3
-#define STRCTX_ABBREV    4
-#define STRCTX_DICT      5
-#define STRCTX_OBJNAME   6
-#define STRCTX_SYMBOL    7
-#define STRCTX_INFIX     8
+#define STRCTX_INFO      0  /* comment; not stored in game file */
+#define STRCTX_GAME      1  /* strings area */
+#define STRCTX_GAMEOPC   2  /* inline text in opcode (Z-code only) */
+#define STRCTX_VENEER    3  /* strings area, from veneer code */
+#define STRCTX_VENEEROPC 4  /* inline text, veneer code (Z-code only) */
+#define STRCTX_LOWSTRING 5  /* lowmem (Z-code); also dynamic-str literals */
+#define STRCTX_ABBREV    6  /* abbreviation */
+#define STRCTX_DICT      7  /* dictionary word */
+#define STRCTX_OBJNAME   8  /* object "hardware name" */
+#define STRCTX_SYMBOL    9  /* prop/attr/etc names */
+#define STRCTX_INFIX    10  /* text printed in asterisk traces */
 
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
