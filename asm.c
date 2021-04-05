@@ -854,7 +854,8 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text, FALSE);
+        /* Should we use a different flag here, like STRCTX_INLINE, to distinguish text compiled inline in an opcode? We'd need INLINEVENEER too, I suppose. */
+        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text, STRCTX_GAME);
         if (!tmp)
             memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
         j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));

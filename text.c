@@ -220,15 +220,9 @@ extern int32 compile_string(char *b, int strctx)
        (In Glulx, the in_low_memory flag is ignored.) */
     int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
-    /* In theory, this flag should only be set for STRCTX_ABBREV. However,
-       the compiler has historically set it for the Lowstring directive
-       as well -- the in_low_memory and is_abbreviation flag were always
-       the same. I am preserving that convention. */
-    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
-
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, is_abbreviation);
+        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, strctx);
         if (!low_strings_top)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
         return(0x21+(j/2));
@@ -237,7 +231,7 @@ extern int32 compile_string(char *b, int strctx)
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, is_abbreviation);
+    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, strctx);
     if (!c)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
 
@@ -363,15 +357,22 @@ static void write_z_char_g(int i)
 /*   The return value will not exceed p_limit. If the translation tries to   */
 /*   overflow this boundary, the return value will be NULL (and you should   */
 /*   display an error).                                                      */
-/*   If is_abbreviation is TRUE, the string being translated is itself an    */
-/*   abbreviation string, so it can't make use of abbreviations.             */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int is_abbreviation)
+extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
     unsigned char *text_in;
+
+    /* For STRCTX_ABBREV, the string being translated is itself an
+       abbreviation string, so it can't make use of abbreviations. Set
+       the is_abbreviation flag to indicate this.
+       The compiler has historically set this flag for the Lowstring
+       directive as well -- the in_low_memory and is_abbreviation flag were
+       always the same. I am preserving that convention. */
+    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+
 
     /*  Cast the input and output streams to unsigned char: text_out_pc will
         advance as bytes of Z-coded text are written, but text_in doesn't    */
