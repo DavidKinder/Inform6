@@ -1336,7 +1336,7 @@ extern void open_transcript_file(char *what_of)
     sprintf(topline_buffer, "[From %s]", banner_line);
     write_to_transcript_file(topline_buffer, STRCTX_INFO);
     if (TRANSCRIPT_FORMAT == 1)
-        write_to_transcript_file("[I:info, G:game text, V:veneer text, D:dict word, O:object name]", STRCTX_INFO);
+        write_to_transcript_file("[I:info, G:game text, V:veneer text, L:lowmem string, A:abbreviation, D:dict word, O:object name, S:symbol, X:infix]", STRCTX_INFO);
     write_to_transcript_file("",  STRCTX_INFO);
 }
 
