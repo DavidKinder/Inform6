@@ -2115,6 +2115,7 @@ static void show_uchar(uint32 c)
         show_char(c);
         return;
     }
+    /* Supporting other character_set_setting is harder; not currently implemented. */
     
     /* Use the escaped form */
     sprintf(buf, "@{%x}", c);
