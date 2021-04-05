@@ -412,12 +412,16 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         all_text_top += strlen(all_text_top);
     }
 
-    if (transcript_switch && (!veneer_mode))
-        write_to_transcript_file(s_text, STRCTX_GAME);
-    /* We only write veneer strings in the new format. */
-    if (transcript_switch && veneer_mode && TRANSCRIPT_FORMAT == 1)
-        write_to_transcript_file(s_text, STRCTX_VENEER);
-
+    if (transcript_switch) {
+        /* Omit veneer strings, unless we're using the new transcript format. */
+        if ((!veneer_mode) || TRANSCRIPT_FORMAT == 1) {
+            int label = strctx;
+            if (veneer_mode && label == STRCTX_GAME)
+                label = STRCTX_VENEER;
+            write_to_transcript_file(s_text, label);
+        }
+    }
+    
   if (!glulx_mode) {
 
     /*  The empty string of Z-text is illegal, since it can't carry an end
