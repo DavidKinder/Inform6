@@ -2073,6 +2073,55 @@ static void show_char(char c)
     }
 }
 
+/* Display a Unicode character in user-readable form. This uses the same
+   character encoding as the source code. */
+static void show_uchar(uint32 c)
+{
+    char buf[16];
+    int ix;
+    
+    if (c < 0x80) {
+        /* ASCII always works */
+        show_char(c);
+        return;
+    }
+    if (character_set_unicode) {
+        /* UTF-8 the character */
+        if (c < 0x80) {
+            show_char(c);
+        }
+        else if (c < 0x800) {
+            show_char((0xC0 | ((c & 0x7C0) >> 6)));
+            show_char((0x80 |  (c & 0x03F)     ));
+        }
+        else if (c < 0x10000) {
+            show_char((0xE0 | ((c & 0xF000) >> 12)));
+            show_char((0x80 | ((c & 0x0FC0) >>  6)));
+            show_char((0x80 |  (c & 0x003F)      ));
+        }
+        else if (c < 0x200000) {
+            show_char((0xF0 | ((c & 0x1C0000) >> 18)));
+            show_char((0x80 | ((c & 0x03F000) >> 12)));
+            show_char((0x80 | ((c & 0x000FC0) >>  6)));
+            show_char((0x80 |  (c & 0x00003F)      ));
+        }
+        else {
+            show_char('?');
+        }
+        return;
+    }
+    if (character_set_setting == 1 && c < 0x100) {
+        /* Fits in Latin-1 */
+        show_char(c);
+        return;
+    }
+    
+    /* Use the escaped form */
+    sprintf(buf, "@{%x}", c);
+    for (ix=0; buf[ix]; ix++)
+        show_char(buf[ix]);
+}
+
 extern void word_to_ascii(uchar *p, char *results)
 {   int i, shift, cc, zchar; uchar encoded_word[9];
     encoded_word[0] = (((int) p[0])&0x7c)/4;
@@ -2173,10 +2222,17 @@ static void recursively_show_g(int node)
 
     p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
 
-    /*### this assumes DICT_CHAR_SIZE=1; doesn't work for 4 */
-    
-    for (cprinted = 0; cprinted<DICT_WORD_SIZE && p[1+cprinted]; cprinted++)
-        show_char(p[1+cprinted]);
+    for (cprinted = 0; cprinted<DICT_WORD_SIZE; cprinted++)
+    {
+        uint32 ch;
+        if (DICT_CHAR_SIZE == 1)
+            ch = p[1+cprinted];
+        else
+            ch = (p[4*cprinted+4] << 24) + (p[4*cprinted+5] << 16) + (p[4*cprinted+6] << 8) + (p[4*cprinted+7]);
+        if (!ch)
+            break;
+        show_uchar(ch);
+    }
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
