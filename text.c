@@ -217,8 +217,7 @@ extern int32 compile_string(char *b, int strctx)
 
     /* In Z-code, abbreviations go in the low memory pool (0x100). So
        do strings explicitly defined with the Lowstring directive.
-       (In Glulx, STRCTX_LOWSTRING is not used and the in_low_memory flag is
-       ignored.) */
+       (In Glulx, the in_low_memory flag is ignored.) */
     int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
     /* In theory, this flag should only be set for STRCTX_ABBREV. However,

@@ -1596,6 +1596,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, LONG_CONSTANT_OT);
+                     /* This string must be in low memory so that the
+                        dynamic string table can refer to it. */
                      AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                  }
                  else
@@ -2533,6 +2535,9 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, CONSTANT_OT);
+                     /* This is not actually placed in low memory; Glulx
+                        has no such concept. We use the LOWSTRING flag
+                        for compatibility with older compiler behavior. */
                      AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                      AO4.marker = STRING_MV;
                  }
