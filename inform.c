@@ -1333,13 +1333,15 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   f   frequencies mode: show how useful abbreviations are\n\
   g   traces calls to functions (except in the library)\n\
   g2  traces calls to all functions\n\
-  h   print this information\n");
+  h   print general help information\n\
+  h1  print help information on filenames and path options\n\
+  h2  print help information on switches (this page)\n");
 
    printf("\
   i   ignore default switches set within the file\n\
   j   list objects as constructed\n\
   k   output Infix debugging information to \"%s\" (and switch -D on)\n\
-  l   list every statement run through Inform\n\
+  l   list every statement run through Inform (not implemented)\n\
   m   say how much memory has been allocated\n\
   n   print numbers of properties, attributes and actions\n",
           Debugging_Name);
