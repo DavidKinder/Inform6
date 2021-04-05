@@ -413,7 +413,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     }
 
     if (transcript_switch) {
-        /* Omit veneer strings, unless we're using the new transcript format. */
+        /* Omit veneer strings, unless we're using the new transcript format, which includes everything. */
         if ((!veneer_mode) || TRANSCRIPT_FORMAT == 1) {
             int label = strctx;
             if (veneer_mode && label == STRCTX_GAME)
@@ -2234,10 +2234,13 @@ extern void show_dictionary(void)
         else
             recursively_show_g(root);
     }
-    printf("\nZ-machine alphabet entries:\n");
-    show_alphabet(0);
-    show_alphabet(1);
-    show_alphabet(2);
+    if (!glulx_mode)
+    {
+        printf("\nZ-machine alphabet entries:\n");
+        show_alphabet(0);
+        show_alphabet(1);
+        show_alphabet(2);
+    }
 }
 
 extern void write_dictionary_to_transcript(void)
