@@ -3,7 +3,7 @@
 /*              (For "memoryerror", see "errors.c")                          */
 /*                                                                           */
 /*   Part of Inform 6.35                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -242,6 +242,7 @@ int MAX_DICT_ENTRIES;
 int MAX_STATIC_DATA;
 int MAX_PROP_TABLE_SIZE;
 int MAX_ABBREVS;
+int MAX_DYNAMIC_STRINGS;
 int MAX_EXPRESSION_NODES;
 int MAX_VERBS;
 int MAX_VERBSPACE;
@@ -286,6 +287,7 @@ static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int ALLOC_CHUNK_SIZE_z, ALLOC_CHUNK_SIZE_g;
+static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
@@ -306,6 +308,7 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
+    printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
     printf("|  %25s = %-7d |\n","MAX_EXPRESSION_NODES",MAX_EXPRESSION_NODES);
     printf("|  %25s = %-7d |\n","MAX_GLOBAL_VARIABLES",MAX_GLOBAL_VARIABLES);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
@@ -383,8 +386,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_PROP_TABLE_SIZE_z = 30000;
         MAX_PROP_TABLE_SIZE_g = 60000;
 
-        MAX_ABBREVS = 64;
-
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 200;
         MAX_VERBSPACE = 4096;
@@ -432,8 +433,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_PROP_TABLE_SIZE_z = 15000;
         MAX_PROP_TABLE_SIZE_g = 30000;
-
-        MAX_ABBREVS = 64;
 
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 140;
@@ -483,8 +482,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_PROP_TABLE_SIZE_z = 8000;
         MAX_PROP_TABLE_SIZE_g = 16000;
 
-        MAX_ABBREVS = 64;
-
         MAX_EXPRESSION_NODES = 40;
         MAX_VERBS = 110;
         MAX_VERBSPACE = 2048;
@@ -526,6 +523,9 @@ extern void set_memory_sizes(int size_flag)
     DICT_WORD_SIZE_g = 9;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
+    MAX_ABBREVS = 64;
+    MAX_DYNAMIC_STRINGS_z = 32;
+    MAX_DYNAMIC_STRINGS_g = 64;
     /* Backwards-compatible behavior: allow for a unicode table
        whether we need one or not. The user can set this to zero if
        there's no unicode table. */
@@ -556,6 +556,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_z;
+    MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_z;
     INDIV_PROP_START = 64;
   }
   else {
@@ -566,6 +567,7 @@ extern void adjust_memory_sizes()
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
     ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_g;
+    MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_g;
     INDIV_PROP_START = 256;
   }
 }
@@ -683,7 +685,13 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_ABBREVS")==0)
     {   printf(
 "  MAX_ABBREVS is the maximum number of declared abbreviations.  It is not \n\
-  allowed to exceed 64.\n");
+  allowed to exceed 96 in Z-code.\n");
+        return;
+    }
+    if (strcmp(command,"MAX_DYNAMIC_STRINGS")==0)
+    {   printf(
+"  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
+  (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
         return;
     }
     if (strcmp(command,"MAX_ARRAYS")==0)
@@ -1020,6 +1028,10 @@ extern void memory_command(char *command)
                 flag=2;
             if (strcmp(command,"MAX_ABBREVS")==0)
                 MAX_ABBREVS=j, flag=1;
+            if (strcmp(command,"MAX_DYNAMIC_STRINGS")==0)
+            {   MAX_DYNAMIC_STRINGS=j, flag=1;
+                MAX_DYNAMIC_STRINGS_g=MAX_DYNAMIC_STRINGS_z=j;
+            }
             if (strcmp(command,"MAX_ARRAYS")==0)
                 MAX_ARRAYS=j, flag=1;
             if (strcmp(command,"MAX_EXPRESSION_NODES")==0)

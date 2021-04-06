@@ -3,7 +3,7 @@
 /*               conventions, ICL (Inform Command Line) files, main          */
 /*                                                                           */
 /*   Part of Inform 6.35                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -204,6 +204,34 @@ static void select_target(int targ)
     else {
       DICT_ENTRY_BYTE_LENGTH = (12+DICT_WORD_BYTES);
       DICT_ENTRY_FLAG_POS = (4+DICT_WORD_BYTES);
+    }
+  }
+
+  if (!targ) {
+    /* Z-machine */
+    /* The Z-machine's 96 abbreviations are used for these two purposes.
+       Make sure they are set consistently. If exactly one has been
+       set non-default, set the other to match. */
+    if (MAX_DYNAMIC_STRINGS == 32 && MAX_ABBREVS != 64) {
+        MAX_DYNAMIC_STRINGS = 96 - MAX_ABBREVS;
+    }
+    if (MAX_ABBREVS == 64 && MAX_DYNAMIC_STRINGS != 32) {
+        MAX_ABBREVS = 96 - MAX_DYNAMIC_STRINGS;
+    }
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
+        || MAX_ABBREVS < 0
+        || MAX_DYNAMIC_STRINGS < 0) {
+      warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting both");
+      MAX_DYNAMIC_STRINGS = 32;
+      MAX_ABBREVS = 64;
+    }
+  }
+  else {
+    if (MAX_DYNAMIC_STRINGS > 100) {
+      MAX_DYNAMIC_STRINGS = 100;
+      warning("MAX_DYNAMIC_STRINGS cannot exceed 100; resetting to 100");
+      /* This is because they are specified in text literals like "@00",
+         with two digits. */
     }
   }
 }
@@ -1225,7 +1253,7 @@ static void cli_print_help(int help_level)
     printf(
 "\nThis program is a compiler of Infocom format (also called \"Z-machine\")\n\
 story files, as well as \"Glulx\" story files:\n\
-Copyright (c) Graham Nelson 1993 - 2020.\n\n");
+Copyright (c) Graham Nelson 1993 - 2021.\n\n");
 
    /* For people typing just "inform", a summary only: */
 
@@ -1305,13 +1333,15 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   f   frequencies mode: show how useful abbreviations are\n\
   g   traces calls to functions (except in the library)\n\
   g2  traces calls to all functions\n\
-  h   print this information\n");
+  h   print general help information\n\
+  h1  print help information on filenames and path options\n\
+  h2  print help information on switches (this page)\n");
 
    printf("\
   i   ignore default switches set within the file\n\
   j   list objects as constructed\n\
   k   output Infix debugging information to \"%s\" (and switch -D on)\n\
-  l   list every statement run through Inform\n\
+  l   list every statement run through Inform (not implemented)\n\
   m   say how much memory has been allocated\n\
   n   print numbers of properties, attributes and actions\n",
           Debugging_Name);

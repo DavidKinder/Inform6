@@ -2,7 +2,7 @@
 /*   "text" : Text translation, the abbreviations optimiser, the dictionary  */
 /*                                                                           */
 /*   Part of Inform 6.35                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -25,10 +25,7 @@ char *all_text, *all_text_top;         /* Start and next byte free in (large)
                                           text buffer holding the entire text
                                           of the game, when it is being
                                           recorded                           */
-int put_strings_in_low_memory,         /* When TRUE, put static strings in
-                                          the low strings pool at 0x100 rather
-                                          than in the static strings area    */
-    is_abbreviation,                   /* When TRUE, the string being trans
+int is_abbreviation,                   /* When TRUE, the string being trans
                                           is itself an abbreviation string
                                           so can't make use of abbreviations */
     abbrevs_lookup_table_made,         /* The abbreviations lookup table is
@@ -446,8 +443,9 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
         if ((economy_switch) && (!is_abbreviation)
             && ((k=abbrevs_lookup[text_in[i]])!=-1))
         {   if ((j=try_abbreviations_from(text_in, i, k))!=-1)
-            {   if (j<32) { write_z_char_z(2); write_z_char_z(j); }
-                else { write_z_char_z(3); write_z_char_z(j-32); }
+            {   /* abbreviations run from MAX_DYNAMIC_STRINGS to 96 */
+                j += MAX_DYNAMIC_STRINGS;
+                write_z_char_z(j/32+1); write_z_char_z(j%32);
             }
         }
 
@@ -503,15 +501,25 @@ advance as part of 'Zcharacter table':", unicode);
             else if (isdigit(text_in[i+1])!=0)
             {   int d1, d2;
 
-                /*   @..   */
+                /*   @.. (dynamic string)   */
 
                 d1 = character_digit_value[text_in[i+1]];
                 d2 = character_digit_value[text_in[i+2]];
                 if ((d1 == 127) || (d1 >= 10) || (d2 == 127) || (d2 >= 10))
                     error("'@..' must have two decimal digits");
                 else
-                {   i+=2;
-                    write_z_char_z(1); write_z_char_z(d1*10 + d2);
+                {
+                    j = d1*10 + d2;
+                    if (!glulx_mode && j >= 96)
+                    {   error("Z-machine dynamic strings are limited to 96");
+                        j = 0;
+                    }
+                    if (j >= MAX_DYNAMIC_STRINGS) {
+                        memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+                        j = 0;
+                    }
+                    i+=2;
+                    write_z_char_z(j/32+1); write_z_char_z(j%32);
                 }
             }
             else
@@ -2198,7 +2206,6 @@ extern void init_text_vars(void)
     grandflags = NULL;
     no_chars_transcribed = 0;
     is_abbreviation = FALSE;
-    put_strings_in_low_memory = FALSE;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 

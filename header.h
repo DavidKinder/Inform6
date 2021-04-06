@@ -4,7 +4,7 @@
 /*                              Inform 6.35                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   http://www.ifarchive.org/                                               */
@@ -2530,7 +2530,7 @@ extern int MAX_QTEXT_SIZE,  MAX_SYMBOLS,    HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
            MAX_LOW_STRINGS,      MAX_CLASSES,           MAX_VERBS,
            MAX_VERBSPACE,        MAX_ARRAYS,            MAX_INCLUSION_DEPTH,
-           MAX_SOURCE_FILES;
+           MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
            MAX_TRANSCRIPT_SIZE,  MAX_INDIV_PROP_TABLE_SIZE,
@@ -2736,8 +2736,6 @@ extern int32 static_strings_extent;
 
 extern int32 no_strings, no_dynamic_strings;
 extern int no_unicode_chars;
-
-#define MAX_DYNAMIC_STRINGS (64)
 
 typedef struct unicode_usage_s unicode_usage_t;
 struct unicode_usage_s {

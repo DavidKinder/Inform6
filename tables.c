@@ -4,7 +4,7 @@
 /*               tables.                                                     */
 /*                                                                           */
 /*   Part of Inform 6.35                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2020                                 */
+/*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -282,13 +282,23 @@ static void construct_storyfile_z(void)
         p[0x42+i]=low_strings[i];
 
     abbrevs_at = mark;
-    for (i=0; i<3*32; i++)                       /* Initially all 96 entries */
-    {   p[mark++]=0; p[mark++]=0x20;                     /* are set to "   " */
+    
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96)
+        fatalerror("MAX_ABBREVS + MAX_DYNAMIC_STRINGS is not 96");
+    
+    /* Initially all 96 entries are set to "   ". (We store half of 0x40,
+       the address of the "   " we wrote above.) */
+    for (i=0; i<3*32; i++)
+    {   p[mark++]=0; p[mark++]=0x20;
     }
-    for (i=0; i<no_abbreviations; i++)            /* Write any abbreviations */
-    {   j=abbrev_values[i];                            /* into banks 2 and 3 */
-        p[abbrevs_at+64+2*i]=j/256;               /* (bank 1 is reserved for */
-        p[abbrevs_at+65+2*i]=j%256;                   /* "variable strings") */
+    
+    /* Entries from 0 to MAX_DYNAMIC_STRINGS (default 32) are "variable 
+       strings". Write the abbreviations after these. */
+    k = abbrevs_at+2*MAX_DYNAMIC_STRINGS;
+    for (i=0; i<no_abbreviations; i++)
+    {   j=abbrev_values[i];
+        p[k++]=j/256;
+        p[k++]=j%256;
     }
 
     /*  ------------------- Header extension table ------------------------- */
