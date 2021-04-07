@@ -1937,6 +1937,23 @@ typedef struct operator_s
                                         how far back from the label to go
                                         to find the opmode byte to modify. */
 
+/* ------------------------------------------------------------------------- */
+/*   "String contexts"; the purpose for a given string. This info gets       */
+/*   written to the transcript file (gametext.txt).                          */
+/* ------------------------------------------------------------------------- */
+
+#define STRCTX_INFO      0  /* comment; not stored in game file */
+#define STRCTX_GAME      1  /* strings area */
+#define STRCTX_GAMEOPC   2  /* inline text in opcode (Z-code only) */
+#define STRCTX_VENEER    3  /* strings area, from veneer code */
+#define STRCTX_VENEEROPC 4  /* inline text, veneer code (Z-code only) */
+#define STRCTX_LOWSTRING 5  /* lowmem (Z-code); also dynamic-str literals */
+#define STRCTX_ABBREV    6  /* abbreviation */
+#define STRCTX_DICT      7  /* dictionary word */
+#define STRCTX_OBJNAME   8  /* object "hardware name" */
+#define STRCTX_SYMBOL    9  /* prop/attr/etc names */
+#define STRCTX_INFIX    10  /* text printed in asterisk traces */
+
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
 /*                                                                           */
@@ -2349,7 +2366,7 @@ extern void check_temp_files(void);
 extern void remove_temp_files(void);
 
 extern void open_transcript_file(char *what_of);
-extern void write_to_transcript_file(char *text);
+extern void write_to_transcript_file(char *text, int linetype);
 extern void close_transcript_file(void);
 extern void abort_transcript_file(void);
 
@@ -2543,6 +2560,7 @@ extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
+extern int TRANSCRIPT_FORMAT;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
    (Meaningful only for Glulx.) */
@@ -2779,8 +2797,8 @@ extern void  compress_game_text(void);
 /* end of the Glulx string compression stuff */
 
 extern void  ao_free_arrays(void);
-extern int32 compile_string(char *b, int in_low_memory, int is_abbrev);
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text);
+extern int32 compile_string(char *b, int strctx);
+extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern void  show_dictionary(void);

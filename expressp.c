@@ -803,7 +803,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = compile_string(t.text, FALSE, FALSE);
+             o->value = compile_string(t.text, STRCTX_GAME);
              return(TRUE);
         case VARIABLE_TT:
              if (!glulx_mode) {

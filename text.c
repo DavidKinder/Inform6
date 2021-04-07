@@ -25,10 +25,7 @@ char *all_text, *all_text_top;         /* Start and next byte free in (large)
                                           text buffer holding the entire text
                                           of the game, when it is being
                                           recorded                           */
-int is_abbreviation,                   /* When TRUE, the string being trans
-                                          is itself an abbreviation string
-                                          so can't make use of abbreviations */
-    abbrevs_lookup_table_made,         /* The abbreviations lookup table is
+int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           constructed when the first non-
                                           abbreviation string is translated:
                                           this flag is TRUE after that       */
@@ -200,9 +197,7 @@ extern void make_abbreviation(char *text)
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
-    is_abbreviation = TRUE;
-    abbrev_values[no_abbreviations] = compile_string(text, TRUE, TRUE);
-    is_abbreviation = FALSE;
+    abbrev_values[no_abbreviations] = compile_string(text, STRCTX_ABBREV);
 
     /*   The quality is the number of Z-chars saved by using this            */
     /*   abbreviation: note that it takes 2 Z-chars to print it.             */
@@ -211,30 +206,32 @@ extern void make_abbreviation(char *text)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   The front end routine for text translation                              */
+/*   The front end routine for text translation.                             */
+/*   strctx indicates the purpose of the string. This is mostly used for     */
+/*   informational output (gametext.txt), but we treat some string contexts  */
+/*   specially during compilation.                                           */
 /* ------------------------------------------------------------------------- */
 
-extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
+extern int32 compile_string(char *b, int strctx)
 {   int i, j; uchar *c;
 
-    is_abbreviation = is_abbrev;
-
-    /* Put into the low memory pool (at 0x100 in the Z-machine) of strings   */
-    /* which may be wanted as possible entries in the abbreviations table    */
+    /* In Z-code, abbreviations go in the low memory pool (0x100). So
+       do strings explicitly defined with the Lowstring directive.
+       (In Glulx, the in_low_memory flag is ignored.) */
+    int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b);
+        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, strctx);
         if (!low_strings_top)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
-        is_abbreviation = FALSE;
         return(0x21+(j/2));
     }
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b);
+    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, strctx);
     if (!c)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
 
@@ -268,8 +265,6 @@ extern int32 compile_string(char *b, int in_low_memory, int is_abbrev)
              c++, static_strings_extent++)
             write_byte_to_memory_block(&static_strings_area,
                 static_strings_extent, *c);
-
-    is_abbreviation = FALSE;
 
     if (!glulx_mode) {
         return(j/scale_factor);
@@ -365,10 +360,19 @@ static void write_z_char_g(int i)
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
+extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
     unsigned char *text_in;
+
+    /* For STRCTX_ABBREV, the string being translated is itself an
+       abbreviation string, so it can't make use of abbreviations. Set
+       the is_abbreviation flag to indicate this.
+       The compiler has historically set this flag for the Lowstring
+       directive as well -- the in_low_memory and is_abbreviation flag were
+       always the same. I am preserving that convention. */
+    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+
 
     /*  Cast the input and output streams to unsigned char: text_out_pc will
         advance as bytes of Z-coded text are written, but text_in doesn't    */
@@ -408,9 +412,20 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text)
         all_text_top += strlen(all_text_top);
     }
 
-    if (transcript_switch && (!veneer_mode))
-        write_to_transcript_file(s_text);
-
+    if (transcript_switch) {
+        /* Omit veneer strings, unless we're using the new transcript format, which includes everything. */
+        if ((!veneer_mode) || TRANSCRIPT_FORMAT == 1) {
+            int label = strctx;
+            if (veneer_mode) {
+                if (label == STRCTX_GAME)
+                    label = STRCTX_VENEER;
+                else if (label == STRCTX_GAMEOPC)
+                    label = STRCTX_VENEEROPC;
+            }
+            write_to_transcript_file(s_text, label);
+        }
+    }
+    
   if (!glulx_mode) {
 
     /*  The empty string of Z-text is illegal, since it can't carry an end
@@ -1482,8 +1497,8 @@ extern void optimise_abbreviations(void)
 /*   For Glulx, the form is instead: (But see below about Unicode-valued     */
 /*   dictionaries and my heinie.)                                            */
 /*                                                                           */
-/*        <plain text>      <flags>   <verbnumber>     <adjectivenumber>     */
-/*        DICT_WORD_SIZE     short       short            short              */
+/*        <tag>  <plain text>    <flags>  <verbnumber>   <adjectivenumber>   */
+/*         $60    DICT_WORD_SIZE  short    short          short              */
 /*                                                                           */
 /*   These records are stored in "accession order" (i.e. in order of their   */
 /*   first being received by these routines) and only alphabetically sorted  */
@@ -2037,15 +2052,79 @@ extern void dictionary_set_verb_number(char *dword, int to)
 /*   by the linker.                                                          */
 /* ------------------------------------------------------------------------- */
 
-static char *d_show_to;
-static int d_show_total;
+/* In the dictionary-showing code, if d_show_buf is NULL, the text is
+   printed directly. (The "Trace dictionary" directive does this.)
+   If d_show_buf is not NULL, we add words to it (reallocing if necessary)
+   until it's a page-width. 
+*/
+static char *d_show_buf = NULL;
+static int d_show_size; /* allocated size */
+static int d_show_len;  /* current length */
 
 static void show_char(char c)
-{   if (d_show_to == NULL) printf("%c", c);
-    else
-    {   int i = strlen(d_show_to);
-        d_show_to[i] = c; d_show_to[i+1] = 0;
+{
+    if (d_show_buf == NULL) {
+        printf("%c", c);
     }
+    else {
+        if (d_show_len+2 >= d_show_size) {
+            int newsize = 2 * d_show_len + 16;
+            my_realloc(&d_show_buf, d_show_size, newsize, "dictionary display buffer");
+            d_show_size = newsize;
+        }
+        d_show_buf[d_show_len++] = c;
+        d_show_buf[d_show_len] = '\0';
+    }
+}
+
+/* Display a Unicode character in user-readable form. This uses the same
+   character encoding as the source code. */
+static void show_uchar(uint32 c)
+{
+    char buf[16];
+    int ix;
+    
+    if (c < 0x80) {
+        /* ASCII always works */
+        show_char(c);
+        return;
+    }
+    if (character_set_unicode) {
+        /* UTF-8 the character */
+        if (c < 0x80) {
+            show_char(c);
+        }
+        else if (c < 0x800) {
+            show_char((0xC0 | ((c & 0x7C0) >> 6)));
+            show_char((0x80 |  (c & 0x03F)     ));
+        }
+        else if (c < 0x10000) {
+            show_char((0xE0 | ((c & 0xF000) >> 12)));
+            show_char((0x80 | ((c & 0x0FC0) >>  6)));
+            show_char((0x80 |  (c & 0x003F)      ));
+        }
+        else if (c < 0x200000) {
+            show_char((0xF0 | ((c & 0x1C0000) >> 18)));
+            show_char((0x80 | ((c & 0x03F000) >> 12)));
+            show_char((0x80 | ((c & 0x000FC0) >>  6)));
+            show_char((0x80 |  (c & 0x00003F)      ));
+        }
+        else {
+            show_char('?');
+        }
+        return;
+    }
+    if (character_set_setting == 1 && c < 0x100) {
+        /* Fits in Latin-1 */
+        show_char(c);
+        return;
+    }
+    /* Supporting other character_set_setting is harder; not currently implemented. */
+    
+    /* Use the escaped form */
+    sprintf(buf, "@{%x}", c);
+    for (ix=0; buf[ix]; ix++)
+        show_char(buf[ix]);
 }
 
 extern void word_to_ascii(uchar *p, char *results)
@@ -2093,7 +2172,7 @@ extern void word_to_ascii(uchar *p, char *results)
 static void recursively_show_z(int node)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[32];
-    int res = (version_number == 3)?4:6;
+    int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
         recursively_show_z(dtree[node].branch[0]);
@@ -2107,7 +2186,7 @@ static void recursively_show_z(int node)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
-    if (d_show_to == NULL)
+    if (d_show_buf == NULL)
     {   for (i=0; i<3+res; i++) printf("%02x ",p[i]);
 
         flags = (int) p[res];
@@ -2128,12 +2207,11 @@ static void recursively_show_z(int node)
         printf("\n");
     }
 
-    if (d_show_total++ == 5)
-    {   d_show_total = 0;
-        if (d_show_to != NULL)
-        {   write_to_transcript_file(d_show_to);
-            d_show_to[0] = 0;
-        }
+    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
+    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    {
+        write_to_transcript_file(d_show_buf, STRCTX_DICT);
+        d_show_len = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2141,8 +2219,56 @@ static void recursively_show_z(int node)
 }
 
 static void recursively_show_g(int node)
-{
-  warning("### Glulx dictionary-show not yet implemented.\n");
+{   int i, cprinted;
+    uchar *p;
+
+    if (dtree[node].branch[0] != VACANT)
+        recursively_show_g(dtree[node].branch[0]);
+
+    p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
+
+    for (cprinted = 0; cprinted<DICT_WORD_SIZE; cprinted++)
+    {
+        uint32 ch;
+        if (DICT_CHAR_SIZE == 1)
+            ch = p[1+cprinted];
+        else
+            ch = (p[4*cprinted+4] << 24) + (p[4*cprinted+5] << 16) + (p[4*cprinted+6] << 8) + (p[4*cprinted+7]);
+        if (!ch)
+            break;
+        show_uchar(ch);
+    }
+    for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
+        show_char(' ');
+
+    if (d_show_buf == NULL)
+    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+        int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
+        int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
+        if (flags & 128)
+        {   printf("noun ");
+            if (flags & 4)  printf("p"); else printf(" ");
+            printf(" ");
+        }
+        else printf("       ");
+        if (flags & 8)
+        {   printf("preposition    ");
+        }
+        if ((flags & 3) == 3) printf("metaverb:%d  ", verbnum);
+        else if ((flags & 3) == 1) printf("verb:%d  ", verbnum);
+        printf("\n");
+    }
+
+    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
+    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    {
+        write_to_transcript_file(d_show_buf, STRCTX_DICT);
+        d_show_len = 0;
+    }
+
+    if (dtree[node].branch[1] != VACANT)
+        recursively_show_g(dtree[node].branch[1]);
 }
 
 static void show_alphabet(int i)
@@ -2164,33 +2290,43 @@ static void show_alphabet(int i)
 extern void show_dictionary(void)
 {   printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
-    {   d_show_total = 0; d_show_to = NULL; 
+    {   d_show_len = 0; d_show_buf = NULL; 
         if (!glulx_mode)    
             recursively_show_z(root);
         else
             recursively_show_g(root);
     }
-    printf("\nZ-machine alphabet entries:\n");
-    show_alphabet(0);
-    show_alphabet(1);
-    show_alphabet(2);
+    if (!glulx_mode)
+    {
+        printf("\nZ-machine alphabet entries:\n");
+        show_alphabet(0);
+        show_alphabet(1);
+        show_alphabet(2);
+    }
 }
 
 extern void write_dictionary_to_transcript(void)
-{   char d_buffer[81];
+{
+    d_show_size = 80; /* initial size */
+    d_show_buf = my_malloc(d_show_size, "dictionary display buffer");
 
-    sprintf(d_buffer, "\n[Dictionary contains %d entries:]\n", dict_entries);
-
-    d_buffer[0] = 0; write_to_transcript_file(d_buffer);
+    write_to_transcript_file("", STRCTX_INFO);
+    sprintf(d_show_buf, "[Dictionary contains %d entries:]", dict_entries);
+    write_to_transcript_file(d_show_buf, STRCTX_INFO);
+    
+    d_show_len = 0;
 
     if (dict_entries != 0)
-    {   d_show_total = 0; d_show_to = d_buffer; 
+    {
         if (!glulx_mode)    
             recursively_show_z(root);
         else
             recursively_show_g(root);
     }
-    if (d_show_total != 0) write_to_transcript_file(d_buffer);
+    if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
+
+    my_free(&d_show_buf, "dictionary display buffer");
+    d_show_len = 0; d_show_buf = NULL;
 }
 
 /* ========================================================================= */
@@ -2205,7 +2341,6 @@ extern void init_text_vars(void)
     grandtable = NULL;
     grandflags = NULL;
     no_chars_transcribed = 0;
-    is_abbreviation = FALSE;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
@@ -2259,6 +2394,10 @@ extern void text_allocate_arrays(void)
     strings_holding_area
          = my_malloc(MAX_STATIC_STRINGS,"static strings holding area");
     low_strings = my_malloc(MAX_LOW_STRINGS,"low (abbreviation) strings");
+
+    d_show_buf = NULL;
+    d_show_size = 0;
+    d_show_len = 0;
 
     huff_entities = NULL;
     hufflist = NULL;

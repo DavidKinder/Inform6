@@ -796,7 +796,7 @@ static int write_property_block_z(char *shortname)
     {   uchar *tmp;
         if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
             memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-        tmp = translate_text(p+mark+1,p+mark+1+510,shortname);
+        tmp = translate_text(p+mark+1,p+mark+1+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
         i = subtract_pointers(tmp,(p+mark+1));
         p[mark] = i/2;
@@ -989,7 +989,7 @@ static void manufacture_object_g(void)
     }
 
     objectsg[no_objects].shortname = compile_string(shortname_buffer,
-      FALSE, FALSE);
+      STRCTX_OBJNAME);
 
         /*  The properties table consists simply of a sequence of property
             blocks, one for each object in order of definition, exactly as

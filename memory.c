@@ -275,6 +275,7 @@ int32 MEMORY_MAP_EXTENSION;
 int ALLOC_CHUNK_SIZE;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
+int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
 /* The way memory sizes are set causes great nuisance for those parameters
    which have different defaults under Z-code and Glulx. We have to get
@@ -352,6 +353,7 @@ static void list_memory_sizes(void)
            (long int) MAX_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","MAX_SYMBOLS",MAX_SYMBOLS);
     printf("|  %25s = %-7d |\n","SYMBOLS_CHUNK_SIZE",SYMBOLS_CHUNK_SIZE);
+    printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
            (long int) MAX_TRANSCRIPT_SIZE);
     if (glulx_mode)
@@ -542,6 +544,7 @@ extern void set_memory_sizes(int size_flag)
     MAX_STACK_SIZE = 4096;
     OMIT_UNUSED_ROUTINES = 0;
     WARN_UNUSED_ROUTINES = 0;
+    TRANSCRIPT_FORMAT = 0;
 
     adjust_memory_sizes();
 }
@@ -865,6 +868,13 @@ static void explain_parameter(char *command)
   memory after the game file. (Glulx only)\n");
         return;
     }
+    if (strcmp(command,"TRANSCRIPT_FORMAT")==0)
+    {
+        printf(
+"  TRANSCRIPT_FORMAT, if set to 1, adjusts the gametext.txt transcript for \n\
+  easier machine processing; each line will be prefixed by its context.\n");
+        return;
+    }
     if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
     {
         printf(
@@ -1100,6 +1110,12 @@ extern void memory_command(char *command)
                 MEMORY_MAP_EXTENSION=j, flag=1;
                 /* Adjust up to a 256-byte boundary. */
                 MEMORY_MAP_EXTENSION = (MEMORY_MAP_EXTENSION + 0xFF) & (~0xFF);
+            }
+            if (strcmp(command,"TRANSCRIPT_FORMAT")==0)
+            {
+                TRANSCRIPT_FORMAT=j, flag=1;
+                if (TRANSCRIPT_FORMAT > 1 || TRANSCRIPT_FORMAT < 0)
+                    TRANSCRIPT_FORMAT = 1;
             }
             if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
             {

@@ -378,7 +378,7 @@ extern void write_the_identifier_names(void)
 
     veneer_mode = TRUE;
 
-    null_value = compile_string(unknown_attribute, FALSE, FALSE);
+    null_value = compile_string(unknown_attribute, STRCTX_SYMBOL);
     for (i=0; i<NUM_ATTR_BYTES*8; i++) attribute_name_strings[i] = null_value;
 
     for (i=0; i<no_symbols; i++)
@@ -398,14 +398,14 @@ extern void write_the_identifier_names(void)
                     }
 
                     individual_name_strings[svals[i]]
-                        = compile_string(idname_string, FALSE, FALSE);
+                        = compile_string(idname_string, STRCTX_SYMBOL);
                 }
             }
             else
             {   sprintf(idname_string, "%s", (char *) symbs[i]);
 
                 individual_name_strings[svals[i]]
-                    = compile_string(idname_string, FALSE, FALSE);
+                    = compile_string(idname_string, STRCTX_SYMBOL);
             }
         }
         if (t == ATTRIBUTE_T)
@@ -423,14 +423,14 @@ extern void write_the_identifier_names(void)
                     }
 
                     attribute_name_strings[svals[i]]
-                        = compile_string(idname_string, FALSE, FALSE);
+                        = compile_string(idname_string, STRCTX_SYMBOL);
                 }
             }
             else
             {   sprintf(idname_string, "%s", (char *) symbs[i]);
 
                 attribute_name_strings[svals[i]]
-                    = compile_string(idname_string, FALSE, FALSE);
+                    = compile_string(idname_string, STRCTX_SYMBOL);
             }
         }
         if (sflags[i] & ACTION_SFLAG)
@@ -446,7 +446,7 @@ extern void write_the_identifier_names(void)
             }
 
             action_name_strings[svals[i]]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
@@ -457,7 +457,7 @@ extern void write_the_identifier_names(void)
 
             action_name_strings[svals[i]
                     - ((grammar_version_number==1)?256:4096) + no_actions]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
@@ -466,21 +466,21 @@ extern void write_the_identifier_names(void)
         sprintf(idname_string, "%s", (char *) symbs[i]);
 
         array_name_strings[j]
-            = compile_string(idname_string, FALSE, FALSE);
+            = compile_string(idname_string, STRCTX_SYMBOL);
     }
   if (define_INFIX_switch)
   { for (i=0; i<no_symbols; i++)
     {   if (stypes[i] == GLOBAL_VARIABLE_T)
         {   sprintf(idname_string, "%s", (char *) symbs[i]);
             array_name_strings[no_arrays + svals[i] -16]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
     for (i=0; i<no_named_routines; i++)
     {   sprintf(idname_string, "%s", (char *) symbs[named_routine_symbols[i]]);
             array_name_strings[no_arrays + no_globals + i]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
     }
 
     for (i=0, no_named_constants=0; i<no_symbols; i++)
@@ -490,7 +490,7 @@ extern void write_the_identifier_names(void)
         {   sprintf(idname_string, "%s", (char *) symbs[i]);
             array_name_strings[no_arrays + no_globals + no_named_routines
                 + no_named_constants++]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
   }
