@@ -43,6 +43,7 @@ static void print_preamble(void)
 
             if (!(ErrorReport.main_flag)) printf("\"%s\", ", p);
             printf("line %d: ", ErrorReport.line_number);
+            
             if (ErrorReport.orig_file) {
                 char *op;
                 if (ErrorReport.orig_file <= 0 || ErrorReport.orig_file > total_files)
@@ -68,12 +69,48 @@ static void print_preamble(void)
             }
             printf("%s", p);
             if (with_extension_flag) printf("%s", Source_Extension);
-            printf("(%d): ", ErrorReport.line_number);
+            printf("(%d)", ErrorReport.line_number);
+            
+            if (ErrorReport.orig_file) {
+                char *op;
+                if (ErrorReport.orig_file <= 0 || ErrorReport.orig_file > total_files)
+                    op = ErrorReport.orig_source;
+                else
+                    op = InputFiles[ErrorReport.orig_file-1].filename;
+                printf("|%s", op);
+                if (ErrorReport.orig_line) {
+                    printf("(%d", ErrorReport.orig_line);
+                    if (ErrorReport.orig_char) {
+                        printf(":%d", ErrorReport.orig_char);
+                    }
+                    printf(")");
+                }
+            }
+            
+            printf(": ");
             break;
 
         case 2:  /* Macintosh Programmer's Workshop error message format */
 
-            printf("File \"%s\"; Line %d\t# ", p, ErrorReport.line_number);
+            printf("File \"%s\"; Line %d", p, ErrorReport.line_number);
+            
+            if (ErrorReport.orig_file) {
+                char *op;
+                if (ErrorReport.orig_file <= 0 || ErrorReport.orig_file > total_files)
+                    op = ErrorReport.orig_source;
+                else
+                    op = InputFiles[ErrorReport.orig_file-1].filename;
+                printf(": (\"%s\"", op);
+                if (ErrorReport.orig_line) {
+                    printf("; Line %d", ErrorReport.orig_line);
+                    if (ErrorReport.orig_char) {
+                        printf("; Char %d", ErrorReport.orig_char);
+                    }
+                }
+                printf(")");
+            }
+
+            printf("\t# ");
             break;
     }
 }
