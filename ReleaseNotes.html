@@ -65,6 +65,8 @@ both use the same 96 Z-code abbreviations that are available.
 <li><p>The setting <tt>$TRANSCRIPT_FORMAT</tt> controls the output format of the <tt>-r</tt> option. The default
 is still the same format as before, (and can be explicitly selected with <tt>$TRANSCRIPT_FORMAT=0</tt>), but
 <tt>$TRANSCRIPT_FORMAT=1</tt> enables the new, more informative and machine-readable format.
+<li><p>The <tt>Origsource</tt> directive, added in version 6.34, is now used in error reporting, regardless of
+the error format selected. (Previously it only appeared with the default error message format, E0.)
 <li><p>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
 what the error is and where the symbol was previously defined.
 </ul>
