@@ -1451,11 +1451,15 @@ static void check_property_operator(int from_node)
     if ((below != -1) && (ET[below].right != -1))
     {   int n = ET[below].right, flag = FALSE;
 
+        /* Can we handle this dot operator as a native @get_prop (etc)
+           opcode? Only if we recognize the property value as a declared
+           common property constant. */
         if ((ET[n].down == -1)
                 && ((ET[n].value.type == LONG_CONSTANT_OT)
                     || (ET[n].value.type == SHORT_CONSTANT_OT))
                 && ((ET[n].value.value > 0) && (ET[n].value.value < 64))
-                && ((!module_switch) || (ET[n].value.marker == 0)))
+                && (!module_switch)
+                && (ET[n].value.marker == 0))
             flag = TRUE;
 
         if (!flag)
