@@ -98,8 +98,6 @@ longer gives a spurious error.
 </pre>
 <li><p>If a common property array overflows when compiling to Z-code version 3, the object is no longer
 corrupted.
-<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
-(instead of 9).
 <li><p>The incorrect code
 <pre>
   Object foo with name 'x';
@@ -110,6 +108,10 @@ now correctly causes the warning
 </pre>
 when compiled to either Glulx or Z-code: previously the warning only appeared when compiling to Z-code.
 <li><p>The compiler now correctly handles <tt>#If</tt> directives around <tt>if</tt> and <tt>else</tt> clauses.
+<li><p>Forward declared properties (that is, properties that are used before they are defined in the game
+source code) now work correctly.
+<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
+(instead of 9).
 </ul>
 
 <h2>Compiler 6.34</h2>
