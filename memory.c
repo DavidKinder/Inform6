@@ -957,6 +957,38 @@ static int parse_memory_setting(char *str, char *label, int32 *result)
     return 1;
 }
 
+static void add_predefined_symbol(char *command)
+{
+    int ix;
+    
+    int value = 0;
+    char *valpos = NULL;
+    
+    for (ix=0; command[ix]; ix++) {
+        if (command[ix] == '=') {
+            valpos = command+(ix+1);
+            command[ix] = '\0';
+            break;
+        }
+    }
+    
+    for (ix=0; command[ix]; ix++) {
+        if ((ix == 0 && isdigit(command[ix]))
+            || !(isalnum(command[ix]) || command[ix] == '_')) {
+            printf("Attempt to define invalid symbol: %s\n", command);
+            return;
+        }
+    }
+
+    if (valpos) {
+        if (!parse_memory_setting(valpos, command, &value)) {
+            return;
+        };
+    }
+
+    printf("### %s = %d\n", command, value);
+}
+
 extern void memory_command(char *command)
 {   int i, k, flag=0; int32 j;
 
@@ -964,6 +996,7 @@ extern void memory_command(char *command)
         if (islower(command[k])) command[k]=toupper(command[k]);
 
     if (command[0]=='?') { explain_parameter(command+1); return; }
+    if (command[0]=='#') { add_predefined_symbol(command+1); return; }
 
     if (strcmp(command, "HUGE")==0) { set_memory_sizes(HUGE_SIZE); return; }
     if (strcmp(command, "LARGE")==0) { set_memory_sizes(LARGE_SIZE); return; }
