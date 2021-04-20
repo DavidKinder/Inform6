@@ -1341,7 +1341,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
    printf("\
   i   ignore default switches set within the file\n\
   j   list objects as constructed\n\
-  k   output Infix debugging information to \"%s\" (and switch -D on)\n\
+  k   output debugging information to \"%s\"\n\
   l   list every statement run through Inform (not implemented)\n\
   m   say how much memory has been allocated\n\
   n   print numbers of properties, attributes and actions\n",
@@ -1457,9 +1457,7 @@ extern void switches(char *p, int cmode)
         case 'k': if (cmode == 0)
                       error("The switch '-k' can't be set with 'Switches'");
                   else
-                  {   debugfile_switch = state;
-                      if (state) define_DEBUG_switch = TRUE;
-                  }
+                      debugfile_switch = state;
                   break;
         case 'l': listing_switch = state; break;
         case 'm': memout_switch = state; break;
