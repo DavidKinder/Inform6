@@ -1279,10 +1279,10 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   ++dir         add this directory to Include_Path\n\
   +PATH=dir     change the PATH to this directory\n\
   ++PATH=dir    add this directory to the PATH\n\n\
-  $...          one of the following memory commands:\n");
+  $...          one of the following configuration commands:\n");
   
   printf(
-"     $list            list current memory allocation settings\n\
+"     $list            list current settings\n\
      $huge            make standard \"huge game\" settings %s\n\
      $large           make standard \"large game\" settings %s\n\
      $small           make standard \"small game\" settings %s\n\
