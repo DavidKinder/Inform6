@@ -989,6 +989,16 @@ static void add_predefined_symbol(char *command)
     printf("### %s = %d\n", command, value);
 }
 
+/* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
+   The option may come from the command line, an ICL file, or a header
+   comment.
+
+   (Unix-style command-line options are converted to dollar-sign format
+   before being sent here.)
+
+   The name of this function is outdated. Many of these settings are not
+   really about memory allocation.
+*/
 extern void memory_command(char *command)
 {   int i, k, flag=0; int32 j;
 
