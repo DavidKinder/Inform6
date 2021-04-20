@@ -986,7 +986,7 @@ static void add_predefined_symbol(char *command)
         };
     }
 
-    printf("### %s = %d\n", command, value);
+    add_config_symbol_definition(command, value);
 }
 
 /* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
