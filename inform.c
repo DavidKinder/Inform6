@@ -1331,8 +1331,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   f   frequencies mode: show how useful abbreviations are\n\
-  g   traces calls to functions (except in the library)\n\
-  g2  traces calls to all functions\n\
+  g   traces calls to all game functions\n\
+  g2  traces calls to all game and library functions\n\
+  g3  traces calls to all functions (including veneer)\n\
   h   print general help information\n\
   h1  print help information on filenames and path options\n\
   h2  print help information on switches (this page)\n");
@@ -1440,6 +1441,7 @@ extern void switches(char *p, int cmode)
         case 'g': switch(p[i+1])
                   {   case '1': trace_fns_setting=1; s=2; break;
                       case '2': trace_fns_setting=2; s=2; break;
+                      case '3': trace_fns_setting=3; s=2; break;
                       default: trace_fns_setting=1; break;
                   }
                   break;
