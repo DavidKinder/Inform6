@@ -620,6 +620,18 @@ static void emit_debug_information_for_predefined_symbol
 
 static void create_symbol(char *p, int32 value, int type)
 {   int i = symbol_index(p, -1);
+    if (!(sflags[i] & UNKNOWN_SFLAG)) {
+        /* Symbol already defined! */
+        if (svals[i] == value && stypes[i] == type) {
+            /* Special case: the symbol was already defined with this same
+               value. We allow it. */
+            return;
+        }
+        else {
+            ebf_symbol_error("new symbol", p, typename(stypes[i]), slines[i]);
+            return;
+        }
+    }
     svals[i] = value; stypes[i] = type; slines[i] = blank_brief_location;
     sflags[i] = USED_SFLAG + SYSTEM_SFLAG;
     emit_debug_information_for_predefined_symbol(p, i, value, type);
