@@ -620,11 +620,11 @@ static void emit_debug_information_for_predefined_symbol
 
 static void create_symbol(char *p, int32 value, int type)
 {   int i = symbol_index(p, -1);
-    if (!(sflags[i] & UNKNOWN_SFLAG)) {
+    if (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))) {
         /* Symbol already defined! */
         if (svals[i] == value && stypes[i] == type) {
             /* Special case: the symbol was already defined with this same
-               value. We allow it. */
+               value. We let it pass. */
             return;
         }
         else {
@@ -633,12 +633,15 @@ static void create_symbol(char *p, int32 value, int type)
         }
     }
     svals[i] = value; stypes[i] = type; slines[i] = blank_brief_location;
-    sflags[i] = USED_SFLAG + SYSTEM_SFLAG;
+    /* If the symbol already existed with REDEFINABLE_SFLAG, we keep that. */
+    sflags[i] = USED_SFLAG + SYSTEM_SFLAG + (sflags[i] & REDEFINABLE_SFLAG);
     emit_debug_information_for_predefined_symbol(p, i, value, type);
 }
 
 static void create_rsymbol(char *p, int value, int type)
 {   int i = symbol_index(p, -1);
+    /* This is only called for a few symbols with known names.
+       They will not collide. */
     svals[i] = value; stypes[i] = type; slines[i] = blank_brief_location;
     sflags[i] = USED_SFLAG + SYSTEM_SFLAG + REDEFINABLE_SFLAG;
     emit_debug_information_for_predefined_symbol(p, i, value, type);
@@ -789,8 +792,6 @@ static void stockup_symbols(void)
         for (ix=0; ix<symbol_definitions_count; ix++) {
             char *str = symbol_definitions[ix].symbol;
             int32 val = symbol_definitions[ix].value;
-            printf("### %s = %d\n", str, val);
-            //### check collision
             create_symbol(str, val, CONSTANT_T);
         }
     }
