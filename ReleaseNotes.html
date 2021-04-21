@@ -69,6 +69,10 @@ is still the same format as before, (and can be explicitly selected with <tt>$TR
 the error format selected. (Previously it only appeared with the default error message format, E0.)
 <li><p>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
 what the error is and where the symbol was previously defined.
+<li><p><tt>-g3</tt> is now a valid option: it enables tracing for all routines, including the veneer. This
+functionality was added back in Inform 6.21, but the code to check the actual option was omitted.
+<li><p>Using the option <tt>-k</tt> (which turns on the generation of debugging information) no longer implies
+<tt>-D</tt> (which turns on debug mode).
 </ul>
 
 <h3>Bugs fixed</h3>
