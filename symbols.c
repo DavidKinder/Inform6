@@ -185,7 +185,7 @@ extern void add_config_symbol_definition(char *symbol, int32 value)
             symbol_definitions_size, "symbol definition table");
     }
 
-    char *str = my_malloc(strlen(symbol+1), "symbol name");
+    char *str = my_malloc(strlen(symbol)+1, "symbol name");
     strcpy(str, symbol);
     
     symbol_definitions[symbol_definitions_count].symbol = str;
