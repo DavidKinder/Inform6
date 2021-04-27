@@ -2822,6 +2822,7 @@ extern int32 veneer_routine_address[];
 
 extern void compile_initial_routine(void);
 extern assembly_operand veneer_routine(int code);
+extern char *veneer_routine_name(int code);
 extern void compile_veneer(void);
 
 /* ------------------------------------------------------------------------- */

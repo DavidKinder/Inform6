@@ -221,13 +221,16 @@ static void print_operand_z(const assembly_operand *o)
     printf("%d", o->value);
 
   if (o->symindex >= 0 && o->symindex < no_symbols) {
-    if (o->marker)
-      printf(" (%s: %s)", (char *)symbs[o->symindex], describe_mv(o->marker));
-    else
-      printf(" (%s: const)", (char *)symbs[o->symindex]);
+    printf(" (%s)", (char *)symbs[o->symindex]);
   }
-  else if (o->marker) {
-    printf(" (%s)", describe_mv(o->marker));
+  if (o->marker) {
+    printf(" (%s", describe_mv(o->marker));
+    switch (o->marker) {
+    case VROUTINE_MV:
+      printf(" %s", veneer_routine_name(o->value));
+      break;
+    }
+    printf(")");       
   }
 }
 
@@ -261,13 +264,16 @@ static void print_operand_g(const assembly_operand *o)
   printf("%d", o->value);
 
   if (o->symindex >= 0 && o->symindex < no_symbols) {
-    if (o->marker)
-      printf(" (%s: %s)", (char *)symbs[o->symindex], describe_mv(o->marker));
-    else
-      printf(" (%s: const)", (char *)symbs[o->symindex]);
+    printf(" (%s)", (char *)symbs[o->symindex]);
   }
-  else if (o->marker) {
-    printf(" (%s)", describe_mv(o->marker));
+  if (o->marker) {
+    printf(" (%s", describe_mv(o->marker));
+    switch (o->marker) {
+    case VROUTINE_MV:
+      printf(" %s", veneer_routine_name(o->value));
+      break;
+    }
+    printf(")");       
   }
 }
 

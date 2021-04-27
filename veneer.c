@@ -2169,6 +2169,19 @@ extern assembly_operand veneer_routine(int code)
     return(AO);
 }
 
+extern char *veneer_routine_name(int code)
+{
+    if (code < 0 || code >= VENEER_ROUTINES) {
+        return "???";
+    }
+    if (!glulx_mode) {
+        return VRs_z[code].name;
+    }
+    else {
+        return VRs_g[code].name;
+    }
+}
+
 static void compile_symbol_table_routine(void)
 {   int32 j, nl, arrays_l, routines_l, constants_l;
     assembly_operand AO, AO2, AO3;
