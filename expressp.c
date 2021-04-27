@@ -72,6 +72,7 @@ static int get_next_etoken(void)
         current_token.value = token_value;
         current_token.type = token_type;
         current_token.marker = 0;
+        current_token.symindex = -1;
         current_token.symtype = 0;
         current_token.symflags = -1;
     }
@@ -124,6 +125,7 @@ but not used as a value:", unicode);
 
             v = svals[symbol];
 
+            current_token.symindex = symbol;
             current_token.symtype = stypes[symbol];
             current_token.symflags = sflags[symbol];
             switch(stypes[symbol])
@@ -761,6 +763,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
     int32 v;
 
     o->marker = t.marker;
+    o->symindex = t.symindex;
     o->symtype = t.symtype;
     o->symflags = t.symflags;
 

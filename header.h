@@ -721,12 +721,13 @@ static int32 unique_task_id(void)
 typedef struct assembly_operand_t
 {   int   type;
     int32 value;
-    int   symtype;   /* 6.30 */
-    int   symflags;  /* 6.30 */
+    int   symindex;
+    int   symtype;
+    int   symflags;
     int   marker;
 } assembly_operand;
 
-#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symtype=0, (aop)->symflags=0)
+#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1, (aop)->symtype=0, (aop)->symflags=0)
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
@@ -833,8 +834,9 @@ typedef struct token_data_s
 {   char *text;
     int32 value; /* ###-long */
     int type;
-    int symtype;  /* 6.30 */
-    int symflags;   /* 6.30 */
+    int symindex;
+    int symtype;
+    int symflags;
     int marker;
     debug_location location;
 } token_data;
