@@ -219,6 +219,16 @@ static void print_operand_z(assembly_operand o)
         case OMITTED_OT: printf("<no value>"); return;
     }
     printf("%d", o.value);
+
+  if (o.symindex >= 0 && o.symindex < no_symbols) {
+    if (o.marker)
+      printf(" (%s: %s)", (char *)symbs[o.symindex], describe_mv(o.marker));
+    else
+      printf(" (%s: const)", (char *)symbs[o.symindex]);
+  }
+  else if (o.marker) {
+    printf(" (%s)", describe_mv(o.marker));
+  }
 }
 
 static void print_operand_g(assembly_operand o)
@@ -231,13 +241,13 @@ static void print_operand_g(assembly_operand o)
   case ZEROCONSTANT_OT: printf("zero_"); return;
   case DEREFERENCE_OT: printf("*"); break;
   case GLOBALVAR_OT: 
-    printf("%s (global_%d)", variable_name(o.value), o.value); 
+    printf("global_%d (%s)", o.value, variable_name(o.value)); 
     return;
   case LOCALVAR_OT: 
     if (o.value == 0)
       printf("stackptr"); 
     else
-      printf("%s (local_%d)", variable_name(o.value), o.value-1); 
+      printf("local_%d (%s)", o.value-1, variable_name(o.value)); 
     return;
   case SYSFUN_OT:
     if (o.value >= 0 && o.value < NUMBER_SYSTEM_FUNCTIONS)
@@ -249,14 +259,15 @@ static void print_operand_g(assembly_operand o)
   default: printf("???_"); break; 
   }
   printf("%d", o.value);
+
   if (o.symindex >= 0 && o.symindex < no_symbols) {
-      if (o.marker)
-          printf(" (%s \"%s\")", describe_mv(o.marker), (char *)symbs[o.symindex]);
-      else
-          printf(" (const \"%s\")", (char *)symbs[o.symindex]);
+    if (o.marker)
+      printf(" (%s: %s)", (char *)symbs[o.symindex], describe_mv(o.marker));
+    else
+      printf(" (%s: const)", (char *)symbs[o.symindex]);
   }
   else if (o.marker) {
-      printf(" (%s)", describe_mv(o.marker));
+    printf(" (%s)", describe_mv(o.marker));
   }
 }
 
