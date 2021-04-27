@@ -2118,7 +2118,7 @@ extern int32 *variable_tokens;
 extern assembly_instruction AI;
 extern int32 *named_routine_symbols;
 
-extern void print_operand(assembly_operand o);
+extern void print_operand(const assembly_operand *o);
 extern char *variable_name(int32 i);
 extern void set_constant_ot(assembly_operand *AO);
 extern int  is_constant_ot(int otval);

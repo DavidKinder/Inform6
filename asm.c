@@ -208,32 +208,32 @@ extern char *variable_name(int32 i)
     return ((char *) symbs[variable_tokens[i]]);
 }
 
-static void print_operand_z(assembly_operand o)
-{   switch(o.type)
+static void print_operand_z(const assembly_operand *o)
+{   switch(o->type)
     {   case EXPRESSION_OT: printf("expr_"); break;
         case LONG_CONSTANT_OT: printf("long_"); break;
         case SHORT_CONSTANT_OT: printf("short_"); break;
         case VARIABLE_OT:
-             if (o.value==0) { printf("sp"); return; }
-             printf("%s", variable_name(o.value)); return;
+             if (o->value==0) { printf("sp"); return; }
+             printf("%s", variable_name(o->value)); return;
         case OMITTED_OT: printf("<no value>"); return;
     }
-    printf("%d", o.value);
+    printf("%d", o->value);
 
-  if (o.symindex >= 0 && o.symindex < no_symbols) {
-    if (o.marker)
-      printf(" (%s: %s)", (char *)symbs[o.symindex], describe_mv(o.marker));
+  if (o->symindex >= 0 && o->symindex < no_symbols) {
+    if (o->marker)
+      printf(" (%s: %s)", (char *)symbs[o->symindex], describe_mv(o->marker));
     else
-      printf(" (%s: const)", (char *)symbs[o.symindex]);
+      printf(" (%s: const)", (char *)symbs[o->symindex]);
   }
-  else if (o.marker) {
-    printf(" (%s)", describe_mv(o.marker));
+  else if (o->marker) {
+    printf(" (%s)", describe_mv(o->marker));
   }
 }
 
-static void print_operand_g(assembly_operand o)
+static void print_operand_g(const assembly_operand *o)
 {
-  switch (o.type) {
+  switch (o->type) {
   case EXPRESSION_OT: printf("expr_"); break;
   case CONSTANT_OT: printf("long_"); break;
   case HALFCONSTANT_OT: printf("short_"); break;
@@ -241,37 +241,37 @@ static void print_operand_g(assembly_operand o)
   case ZEROCONSTANT_OT: printf("zero_"); return;
   case DEREFERENCE_OT: printf("*"); break;
   case GLOBALVAR_OT: 
-    printf("global_%d (%s)", o.value, variable_name(o.value)); 
+    printf("global_%d (%s)", o->value, variable_name(o->value)); 
     return;
   case LOCALVAR_OT: 
-    if (o.value == 0)
+    if (o->value == 0)
       printf("stackptr"); 
     else
-      printf("local_%d (%s)", o.value-1, variable_name(o.value)); 
+      printf("local_%d (%s)", o->value-1, variable_name(o->value)); 
     return;
   case SYSFUN_OT:
-    if (o.value >= 0 && o.value < NUMBER_SYSTEM_FUNCTIONS)
-      printf("%s", system_functions.keywords[o.value]);
+    if (o->value >= 0 && o->value < NUMBER_SYSTEM_FUNCTIONS)
+      printf("%s", system_functions.keywords[o->value]);
     else
       printf("<unnamed system function>");
     return;
   case OMITTED_OT: printf("<no value>"); return;
   default: printf("???_"); break; 
   }
-  printf("%d", o.value);
+  printf("%d", o->value);
 
-  if (o.symindex >= 0 && o.symindex < no_symbols) {
-    if (o.marker)
-      printf(" (%s: %s)", (char *)symbs[o.symindex], describe_mv(o.marker));
+  if (o->symindex >= 0 && o->symindex < no_symbols) {
+    if (o->marker)
+      printf(" (%s: %s)", (char *)symbs[o->symindex], describe_mv(o->marker));
     else
-      printf(" (%s: const)", (char *)symbs[o.symindex]);
+      printf(" (%s: const)", (char *)symbs[o->symindex]);
   }
-  else if (o.marker) {
-    printf(" (%s)", describe_mv(o.marker));
+  else if (o->marker) {
+    printf(" (%s)", describe_mv(o->marker));
   }
 }
 
-extern void print_operand(assembly_operand o)
+extern void print_operand(const assembly_operand *o)
 {
   if (!glulx_mode)
     print_operand_z(o);
@@ -1001,7 +1001,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
         for (i=0; i<AI->operand_count; i++)
         {   if ((i==0) && (opco.op_rules == VARIAB))
             {   if ((AI->operand[0]).type == VARIABLE_OT)
-                {   printf("["); print_operand_z(AI->operand[i]); }
+                {   printf("["); print_operand_z(&AI->operand[i]); }
                 else
                     printf("%s", variable_name((AI->operand[0]).value));
             }
@@ -1009,14 +1009,14 @@ extern void assemblez_instruction(assembly_instruction *AI)
             if ((i==0) && (opco.op_rules == LABEL))
             {   printf("L%d", AI->operand[0].value);
             }
-            else print_operand_z(AI->operand[i]);
+            else print_operand_z(&AI->operand[i]);
             printf(" ");
         }
         if (AI->store_variable_number != -1)
         {   assembly_operand AO;
             printf("-> ");
             AO.type = VARIABLE_OT; AO.value = AI->store_variable_number;
-            print_operand_z(AO); printf(" ");
+            print_operand_z(&AO); printf(" ");
         }
 
         switch(AI->branch_label_number)
@@ -1366,7 +1366,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
                 printf("to L%d", AI->operand[i].value);
             }
           else {
-            print_operand_g(AI->operand[i]);
+            print_operand_g(&AI->operand[i]);
           }
           printf(" ");
       }

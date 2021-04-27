@@ -974,7 +974,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
     }
     if (expr_trace_level >= 2)
     {   printf("Marking top of emitter stack (which is ");
-        print_operand(emitter_stack[emitter_sp-1]);
+        print_operand(&emitter_stack[emitter_sp-1]);
         printf(") as ");
         switch(marker)
         {
@@ -1038,7 +1038,7 @@ static void emit_token(token_data t)
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
         for (i=0; i<emitter_sp; i++)
-        {   print_operand(emitter_stack[i]); printf(" ");
+        {   print_operand(&emitter_stack[i]); printf(" ");
             if (emitter_markers[i] == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
             if (emitter_markers[i] == ARGUMENT_VALUE_MARKER) printf(":ARGUMENT ");
             if (emitter_markers[i] == OR_VALUE_MARKER) printf(":OR ");
@@ -1392,7 +1392,7 @@ the range -32768 to +32767:", folding_error);
 
     if (expr_trace_level >= 2)
     {   printf("Folding constant to: ");
-        print_operand(emitter_stack[emitter_sp - 1]);
+        print_operand(&emitter_stack[emitter_sp - 1]);
         printf("\n");
     }
 
@@ -1408,7 +1408,7 @@ static void show_node(int n, int depth, int annotate)
     for (j=0; j<2*depth+2; j++) printf(" ");
 
     if (ET[n].down == -1)
-    {   print_operand(ET[n].value);
+    {   print_operand(&ET[n].value);
         if (annotate && (ET[n].value.marker != 0))
             printf(" [%s]", describe_mv(ET[n].value.marker));
         printf("\n");
@@ -1432,7 +1432,7 @@ static void show_node(int n, int depth, int annotate)
 extern void show_tree(assembly_operand AO, int annotate)
 {   if (AO.type == EXPRESSION_OT) show_node(AO.value, 0, annotate);
     else
-    {   printf("Constant: "); print_operand(AO);
+    {   printf("Constant: "); print_operand(&AO);
         if (annotate && (AO.marker != 0))
             printf(" [%s]", describe_mv(AO.marker));
         printf("\n");
