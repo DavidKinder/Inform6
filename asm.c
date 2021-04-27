@@ -249,6 +249,15 @@ static void print_operand_g(assembly_operand o)
   default: printf("???_"); break; 
   }
   printf("%d", o.value);
+  if (o.symindex >= 0 && o.symindex < no_symbols) {
+      if (o.marker)
+          printf(" (%s \"%s\")", describe_mv(o.marker), (char *)symbs[o.symindex]);
+      else
+          printf(" (const \"%s\")", (char *)symbs[o.symindex]);
+  }
+  else if (o.marker) {
+      printf(" (%s)", describe_mv(o.marker));
+  }
 }
 
 extern void print_operand(assembly_operand o)
