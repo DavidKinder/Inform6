@@ -210,11 +210,11 @@ extern char *variable_name(int32 i)
 
 static void print_operand_annotation(const assembly_operand *o)
 {
-    if (o->symindex >= 0 && o->symindex < no_symbols) {
-        printf(" (%s)", (char *)symbs[o->symindex]);
-    }
+    int any = FALSE;
     if (o->marker) {
-        printf(" (%s", describe_mv(o->marker));
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", describe_mv(o->marker));
         switch (o->marker) {
         case VROUTINE_MV:
             printf(": %s", veneer_routine_name(o->value));
@@ -222,9 +222,15 @@ static void print_operand_annotation(const assembly_operand *o)
         case INCON_MV:
             printf(": %s", name_of_system_constant(o->value));
             break;
+        /* DWORD_MV: Could print out dict word */
         }
-        printf(")");       
     }
+    if (o->symindex >= 0 && o->symindex < no_symbols) {
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", (char *)symbs[o->symindex]);
+    }
+    if (any) printf(")");       
 }
 
 static void print_operand_z(const assembly_operand *o, int annotate)
