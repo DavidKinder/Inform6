@@ -1065,6 +1065,7 @@ extern void translate_temp_filename(int i)
     {   case 1: p=Temp1_Name; break;
         case 2: p=Temp2_Name; break;
         case 3: p=Temp3_Name; break;
+        default: return;
     }
     if (strlen(Temporary_Path)+strlen(Temporary_File)+6 >= PATHLEN) {
         printf ("Temporary_Path is too long.\n");

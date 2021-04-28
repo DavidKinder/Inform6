@@ -1039,8 +1039,10 @@ extern void locate_dead_functions(void)
        mark them as used. */
 
     func = df_functions_head;
-    if (!func || func->address != DF_NOT_IN_FUNCTION)
+    if (!func || func->address != DF_NOT_IN_FUNCTION) {
         compiler_error("DF: Global namespace entry is not at the head of the chain.");
+        return;
+    }
 
     for (ent = func->refs; ent; ent=ent->refsnext) {
         uint32 addr;
