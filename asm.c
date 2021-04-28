@@ -208,7 +208,26 @@ extern char *variable_name(int32 i)
     return ((char *) symbs[variable_tokens[i]]);
 }
 
-static void print_operand_z(const assembly_operand *o)
+static void print_operand_annotation(const assembly_operand *o)
+{
+    if (o->symindex >= 0 && o->symindex < no_symbols) {
+        printf(" (%s)", (char *)symbs[o->symindex]);
+    }
+    if (o->marker) {
+        printf(" (%s", describe_mv(o->marker));
+        switch (o->marker) {
+        case VROUTINE_MV:
+            printf(": %s", veneer_routine_name(o->value));
+            break;
+        case INCON_MV:
+            printf(": %s", name_of_system_constant(o->value));
+            break;
+        }
+        printf(")");       
+    }
+}
+
+static void print_operand_z(const assembly_operand *o, int annotate)
 {   switch(o->type)
     {   case EXPRESSION_OT: printf("expr_"); break;
         case LONG_CONSTANT_OT: printf("long_"); break;
@@ -219,25 +238,11 @@ static void print_operand_z(const assembly_operand *o)
         case OMITTED_OT: printf("<no value>"); return;
     }
     printf("%d", o->value);
-
-  if (o->symindex >= 0 && o->symindex < no_symbols) {
-    printf(" (%s)", (char *)symbs[o->symindex]);
-  }
-  if (o->marker) {
-    printf(" (%s", describe_mv(o->marker));
-    switch (o->marker) {
-    case VROUTINE_MV:
-      printf(": %s", veneer_routine_name(o->value));
-      break;
-    case INCON_MV:
-      printf(": %s", name_of_system_constant(o->value));
-      break;
-    }
-    printf(")");       
-  }
+    if (annotate)
+        print_operand_annotation(o);
 }
 
-static void print_operand_g(const assembly_operand *o)
+static void print_operand_g(const assembly_operand *o, int annotate)
 {
   switch (o->type) {
   case EXPRESSION_OT: printf("expr_"); break;
@@ -265,30 +270,16 @@ static void print_operand_g(const assembly_operand *o)
   default: printf("???_"); break; 
   }
   printf("%d", o->value);
-
-  if (o->symindex >= 0 && o->symindex < no_symbols) {
-    printf(" (%s)", (char *)symbs[o->symindex]);
-  }
-  if (o->marker) {
-    printf(" (%s", describe_mv(o->marker));
-    switch (o->marker) {
-    case VROUTINE_MV:
-      printf(": %s", veneer_routine_name(o->value));
-      break;
-    case INCON_MV:
-      printf(": %s", name_of_system_constant(o->value));
-      break;
-    }
-    printf(")");       
-  }
+  if (annotate)
+    print_operand_annotation(o);
 }
 
-extern void print_operand(const assembly_operand *o)
+extern void print_operand(const assembly_operand *o, int annotate)
 {
   if (!glulx_mode)
-    print_operand_z(o);
+    print_operand_z(o, annotate);
   else
-    print_operand_g(o);
+    print_operand_g(o, annotate);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1013,7 +1004,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
         for (i=0; i<AI->operand_count; i++)
         {   if ((i==0) && (opco.op_rules == VARIAB))
             {   if ((AI->operand[0]).type == VARIABLE_OT)
-                {   printf("["); print_operand_z(&AI->operand[i]); }
+                {   printf("["); print_operand_z(&AI->operand[i], TRUE); }
                 else
                     printf("%s", variable_name((AI->operand[0]).value));
             }
@@ -1021,14 +1012,14 @@ extern void assemblez_instruction(assembly_instruction *AI)
             if ((i==0) && (opco.op_rules == LABEL))
             {   printf("L%d", AI->operand[0].value);
             }
-            else print_operand_z(&AI->operand[i]);
+            else print_operand_z(&AI->operand[i], TRUE);
             printf(" ");
         }
         if (AI->store_variable_number != -1)
         {   assembly_operand AO;
             printf("-> ");
             AO.type = VARIABLE_OT; AO.value = AI->store_variable_number;
-            print_operand_z(&AO); printf(" ");
+            print_operand_z(&AO, TRUE); printf(" ");
         }
 
         switch(AI->branch_label_number)
@@ -1378,7 +1369,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
                 printf("to L%d", AI->operand[i].value);
             }
           else {
-            print_operand_g(&AI->operand[i]);
+            print_operand_g(&AI->operand[i], TRUE);
           }
           printf(" ");
       }
