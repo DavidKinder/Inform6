@@ -753,6 +753,14 @@ extern int32 value_of_system_constant(int t)
     return value_of_system_constant_g(t);    
 }
 
+extern char *name_of_system_constant(int t)
+{
+  if (t < 0 || t >= NO_SYSTEM_CONSTANTS) {
+    return "???";
+  }
+  return system_constants.keywords[t];
+}
+
 static int evaluate_term(token_data t, assembly_operand *o)
 {
     /*  If the given token is a constant, evaluate it into the operand.

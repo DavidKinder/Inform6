@@ -2345,6 +2345,7 @@ extern int z_system_constant_list[];
 extern int glulx_system_constant_list[];
 
 extern int32 value_of_system_constant(int t);
+extern char *name_of_system_constant(int t);
 extern void clear_expression_space(void);
 extern void show_tree(assembly_operand AO, int annotate);
 extern assembly_operand parse_expression(int context);

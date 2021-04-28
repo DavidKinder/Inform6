@@ -227,7 +227,10 @@ static void print_operand_z(const assembly_operand *o)
     printf(" (%s", describe_mv(o->marker));
     switch (o->marker) {
     case VROUTINE_MV:
-      printf(" %s", veneer_routine_name(o->value));
+      printf(": %s", veneer_routine_name(o->value));
+      break;
+    case INCON_MV:
+      printf(": %s", name_of_system_constant(o->value));
       break;
     }
     printf(")");       
@@ -270,7 +273,10 @@ static void print_operand_g(const assembly_operand *o)
     printf(" (%s", describe_mv(o->marker));
     switch (o->marker) {
     case VROUTINE_MV:
-      printf(" %s", veneer_routine_name(o->value));
+      printf(": %s", veneer_routine_name(o->value));
+      break;
+    case INCON_MV:
+      printf(": %s", name_of_system_constant(o->value));
       break;
     }
     printf(")");       
