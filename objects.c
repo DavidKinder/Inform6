@@ -1743,7 +1743,6 @@ extern void make_class(char * metaclass_name)
 {   int n, duplicates_to_make = 0, class_number = no_objects+1,
         metaclass_flag = (metaclass_name != NULL);
     char duplicate_name[128];
-    int class_symbol;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -1833,8 +1832,6 @@ inconvenience, please contact the maintainers.");
       full_object_g.propdata[0].type   = CONSTANT_OT;
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
-
-    class_symbol = token_value;
 
     if (!metaclass_flag)
     {   get_next_token();
