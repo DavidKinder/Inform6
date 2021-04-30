@@ -1294,7 +1294,8 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
      $large           make standard \"large game\" settings %s\n\
      $small           make standard \"small game\" settings %s\n\
      $?SETTING        explain briefly what SETTING is for\n\
-     $SETTING=number  change SETTING to given number\n\n",
+     $SETTING=number  change SETTING to given number\n\
+     $#SYMBOL=number  define SYMBOL as a constant in the story\n\n",
     (DEFAULT_MEMORY_SIZE==HUGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==LARGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==SMALL_SIZE)?"(default)":"");
@@ -1311,6 +1312,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --size huge, --size large, --size small\n\
   --helpopt SETTING\n\
   --opt SETTING=number\n\
+  --define SETTING=number\n\
   --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
@@ -1855,6 +1857,15 @@ static int execute_dashdash_command(char *p, char *p2)
             return consumed2;
         }
         strcpy(cli_buff, "$?");
+        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+    }
+    else if (!strcmp(p, "define")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--define must be followed by \"symbol=number\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$#");
         strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
     else if (!strcmp(p, "path")) {

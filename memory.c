@@ -957,6 +957,48 @@ static int parse_memory_setting(char *str, char *label, int32 *result)
     return 1;
 }
 
+static void add_predefined_symbol(char *command)
+{
+    int ix;
+    
+    int value = 0;
+    char *valpos = NULL;
+    
+    for (ix=0; command[ix]; ix++) {
+        if (command[ix] == '=') {
+            valpos = command+(ix+1);
+            command[ix] = '\0';
+            break;
+        }
+    }
+    
+    for (ix=0; command[ix]; ix++) {
+        if ((ix == 0 && isdigit(command[ix]))
+            || !(isalnum(command[ix]) || command[ix] == '_')) {
+            printf("Attempt to define invalid symbol: %s\n", command);
+            return;
+        }
+    }
+
+    if (valpos) {
+        if (!parse_memory_setting(valpos, command, &value)) {
+            return;
+        };
+    }
+
+    add_config_symbol_definition(command, value);
+}
+
+/* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
+   The option may come from the command line, an ICL file, or a header
+   comment.
+
+   (Unix-style command-line options are converted to dollar-sign format
+   before being sent here.)
+
+   The name of this function is outdated. Many of these settings are not
+   really about memory allocation.
+*/
 extern void memory_command(char *command)
 {   int i, k, flag=0; int32 j;
 
@@ -964,6 +1006,7 @@ extern void memory_command(char *command)
         if (islower(command[k])) command[k]=toupper(command[k]);
 
     if (command[0]=='?') { explain_parameter(command+1); return; }
+    if (command[0]=='#') { add_predefined_symbol(command+1); return; }
 
     if (strcmp(command, "HUGE")==0) { set_memory_sizes(HUGE_SIZE); return; }
     if (strcmp(command, "LARGE")==0) { set_memory_sizes(LARGE_SIZE); return; }

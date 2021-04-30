@@ -2659,6 +2659,7 @@ extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);
 extern void assign_symbol(int index, int32 value, int type);
 extern void issue_unused_warnings(void);
+extern void add_config_symbol_definition(char *symbol, int32 value);
 extern void add_symbol_replacement_mapping(int original, int renamed);
 extern int find_symbol_replacement(int *value);
 extern void df_note_function_start(char *name, uint32 address, 

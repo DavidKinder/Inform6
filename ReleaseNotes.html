@@ -59,6 +59,18 @@ lines (although the old syntax is still supported). The new syntax for these opt
   --opt SETTING=number
   --config filename
 </pre>
+<li><p>Numeric constants can be declared as command line options, either like a setting:
+<pre>
+  $#SYMBOL
+  $#SYMBOL=NUM
+</pre>
+Or as a new Unix-style command line option:
+<pre>
+  --define SYMBOL
+  --define SYMBOL=NUM
+</pre>
+This defines SYMBOL as a constant, just like the <tt>Constant</tt> directive. Like that directive, if no value
+is supplied, it defaults to zero.
 <li><p>The settings <tt>$MAX_ABBREVS</tt> and <tt>MAX_DYNAMIC_STRINGS</tt> control the number of abbreviations
 and the number of dynamic strings, respectively. When compiling to Z-code these settings are linked, as they
 both use the same 96 Z-code abbreviations that are available.
