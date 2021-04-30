@@ -137,6 +137,12 @@ static char *location_text(brief_location report_line)
     if (j <= 0 || j > total_files) p = errpos.source;
     else p = InputFiles[j-1].filename;
     
+    if (!p && errpos.line_number == 0) {
+        /* Special case */
+        strcpy(other_pos_buff, "compiler setup");
+        return other_pos_buff;
+    }
+    
     if (!p) p = "";
 
     len = 0;
