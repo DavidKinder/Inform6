@@ -97,10 +97,80 @@ static int English_verb_list_size;     /* Size of the list in bytes
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
 
+static char *find_verb_by_number(int num);
+
 extern void list_verb_table(void)
-{   int i;
-    for (i=0; i<no_Inform_verbs; i++)
-        printf("Verb %2d has %d lines\n", i, Inform_verbs[i].lines);
+{
+    int verb, lx, ix, len;
+    char *str;
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        char *verbword = find_verb_by_number(verb);
+        printf("Verb '%s'\n", verbword);
+        for (lx=0; lx<Inform_verbs[verb].lines; lx++) {
+            //### assumes glulx:
+            int mark = Inform_verbs[verb].l[lx];
+            int action, flags, actsym;
+            action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+            actsym = action_symbol[action];
+            mark += 2;
+            flags = grammar_lines[mark++];
+            printf("  *");
+            while (grammar_lines[mark] != 15) {
+                int toktype = grammar_lines[mark] & 0x0F;
+                int tokalt = (grammar_lines[mark] >> 4) & 0x03;
+                mark += 1;
+                int tokdat = (grammar_lines[mark] << 24) | (grammar_lines[mark+1] << 16) | (grammar_lines[mark+2] << 8) | (grammar_lines[mark+3]);
+                mark += 4;
+
+                if (tokalt == 3 || tokalt == 1)
+                    printf(" /");
+                
+                switch (toktype) {
+                case 1:
+                    switch (tokdat) {
+                    case 0: printf(" noun"); break;
+                    case 1: printf(" held"); break;
+                    case 2: printf(" multi"); break;
+                    case 3: printf(" multiheld"); break;
+                    case 4: printf(" multiexcept"); break;
+                    case 5: printf(" multiinside"); break;
+                    case 6: printf(" creature"); break;
+                    case 7: printf(" special"); break;
+                    case 8: printf(" number"); break;
+                    case 9: printf(" topic"); break;
+                    default: printf(" ???"); break;
+                    }
+                    break;
+                case 2:
+                    printf(" '");
+                    print_dict_word(tokdat);
+                    printf("'");
+                    break;
+                case 3:
+                    printf(" noun=%d", tokdat);
+                    break;
+                case 4:
+                    printf(" attr=%d", tokdat);
+                    break;
+                case 5:
+                    printf(" scope=%d", tokdat);
+                    break;
+                case 6:
+                    printf(" routine=%d", tokdat);
+                    break;
+                default:
+                    printf(" ???%d:%d", toktype, tokdat);
+                    break;
+                }
+            }
+            printf(" -> ");
+            str = (char *)(symbs[actsym]);
+            len = strlen(str) - 3;   /* remove "__A" */
+            for (ix=0; ix<len; ix++) putchar(str[ix]);
+            if (flags) printf(" (reversed)");
+            printf("\n");
+        }
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -321,6 +391,21 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
         p=p+(uchar)p[0];
     }
     return(-1);
+}
+
+static char *find_verb_by_number(int num)
+{
+    char *p;
+    p=English_verb_list;
+    while (p < English_verb_list_top)
+    {
+        int val = (p[1] << 8) | p[2];
+        if (val == num) {
+            return p+3;
+        }
+        p=p+(uchar)p[0];
+    }
+    return "???";
 }
 
 static void register_verb(char *English_verb, int number)
