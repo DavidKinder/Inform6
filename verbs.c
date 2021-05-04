@@ -107,20 +107,36 @@ extern void list_verb_table(void)
         char *verbword = find_verb_by_number(verb);
         printf("Verb '%s'\n", verbword);
         for (lx=0; lx<Inform_verbs[verb].lines; lx++) {
-            //### assumes glulx:
             int mark = Inform_verbs[verb].l[lx];
             int action, flags, actsym;
-            action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
-            actsym = action_symbol[action];
-            mark += 2;
-            flags = grammar_lines[mark++];
+            if (!glulx_mode) {
+                action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+                flags = (action & 0x400);
+                action &= 0x3FF;
+                mark += 2;
+            }
+            else {
+                action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+                mark += 2;
+                flags = grammar_lines[mark++];
+            }
             printf("  *");
             while (grammar_lines[mark] != 15) {
-                int toktype = grammar_lines[mark] & 0x0F;
-                int tokalt = (grammar_lines[mark] >> 4) & 0x03;
-                mark += 1;
-                int tokdat = (grammar_lines[mark] << 24) | (grammar_lines[mark+1] << 16) | (grammar_lines[mark+2] << 8) | (grammar_lines[mark+3]);
-                mark += 4;
+                int toktype, tokdat, tokalt;
+                if (!glulx_mode) {
+                    toktype = grammar_lines[mark] & 0x0F;
+                    tokalt = (grammar_lines[mark] >> 4) & 0x03;
+                    mark += 1;
+                    tokdat = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+                    mark += 2;
+                }
+                else {
+                    toktype = grammar_lines[mark] & 0x0F;
+                    tokalt = (grammar_lines[mark] >> 4) & 0x03;
+                    mark += 1;
+                    tokdat = (grammar_lines[mark] << 24) | (grammar_lines[mark+1] << 16) | (grammar_lines[mark+2] << 8) | (grammar_lines[mark+3]);
+                    mark += 4;
+                }
 
                 if (tokalt == 3 || tokalt == 1)
                     printf(" /");
@@ -164,6 +180,7 @@ extern void list_verb_table(void)
                 }
             }
             printf(" -> ");
+            actsym = action_symbol[action];
             str = (char *)(symbs[actsym]);
             len = strlen(str) - 3;   /* remove "__A" */
             for (ix=0; ix<len; ix++) putchar(str[ix]);
