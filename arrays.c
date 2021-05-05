@@ -281,7 +281,6 @@ extern void make_global(int array_flag, int name_only)
     assembly_operand AO;
     
     int extraspace;
-    int orig_area_size;
 
     int32 global_symbol;
     const char *global_name;
@@ -522,12 +521,10 @@ extern void make_global(int array_flag, int name_only)
         extraspace += WORDSIZE;
     
     if (!is_static) {
-        orig_area_size = dynamic_array_area_size;
         array_base = dynamic_array_area_size;
         dynamic_array_area_size += extraspace;
     }
     else {
-        orig_area_size = static_array_area_size;
         array_base = static_array_area_size;
         static_array_area_size += extraspace;
     }

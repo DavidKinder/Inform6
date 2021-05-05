@@ -54,6 +54,7 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
 
 extern int *variable_usage;
 
+/* Must be at least as many as keyword_group system_functions (currently 12) */
 int system_function_usage[32];
 
 static int get_next_etoken(void)

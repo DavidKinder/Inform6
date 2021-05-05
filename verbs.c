@@ -48,6 +48,8 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*           for example the English verbs "take" and "drop" both normally   */
 /*           correspond in a game's dictionary to the same Inform verb.  An  */
 /*           Inform verb is essentially a list of grammar lines.             */
+/*           (Calling them "English verbs" is of course out of date. Read    */
+/*           this as jargon for "dict words which are verbs".                */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
@@ -77,6 +79,9 @@ static char *English_verb_list,        /* First byte of first record         */
 
 static int English_verb_list_size;     /* Size of the list in bytes
                                           (redundant but convenient)         */
+
+/* Maximum synonyms in a single Verb/Extend directive */
+#define MAX_VERB_SYNONYMS (32)
 
 /* ------------------------------------------------------------------------- */
 /*   Arrays used by this file                                                */
@@ -713,7 +718,8 @@ extern void make_verb(void)
 
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
 
-    char *English_verbs_given[32]; int no_given = 0, i;
+    char *English_verbs_given[MAX_VERB_SYNONYMS];
+    int no_given = 0, i;
 
     directive_keywords.enabled = TRUE;
 
@@ -725,7 +731,12 @@ extern void make_verb(void)
     }
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   English_verbs_given[no_given++] = token_text;
+    {
+        if (no_given >= MAX_VERB_SYNONYMS) {
+            error("Too many synonyms in a Verb directive.");
+            panic_mode_error_recovery(); return;
+        }
+        English_verbs_given[no_given++] = token_text;
         get_next_token();
     }
 
