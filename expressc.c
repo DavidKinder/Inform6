@@ -437,10 +437,12 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         index_ao;
     int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE, from_module = FALSE;
 
+    INITAO(&zero_ao);
+    INITAO(&size_ao);
+    INITAO(&type_ao);
+
     if (AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV)
     {   
-        INITAO(&zero_ao);
-
         if ((oc == loadb_zc) || (oc == storeb_zc)) byte_flag=TRUE;
         else byte_flag = FALSE;
         if ((oc == loadb_zc) || (oc == loadw_zc)) read_flag=TRUE;
@@ -808,10 +810,12 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     else 
       read_flag = FALSE;
 
+    INITAO(&zero_ao);
+    INITAO(&size_ao);
+    INITAO(&type_ao);
+    
     if (AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV)
     {   
-        INITAO(&zero_ao);
-
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
         {   if (((AO1.marker == ARRAY_MV) == (!array_locs[x]))

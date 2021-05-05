@@ -182,6 +182,12 @@ static void select_target(int targ)
     /* MAX_NUM_ATTR_BYTES can be increased in header.h without fear. */
   }
 
+  if (MAX_ADJECTIVES > 255) {
+    MAX_ADJECTIVES = 255;
+    warning("MAX_ADJECTIVES cannot exceed 255; resetting to 255");
+    /* Only used under Grammar__Version 1, which is obsolete. */
+  }
+    
   /* Set up a few more variables that depend on the above values */
 
   if (!targ) {
@@ -1065,6 +1071,7 @@ extern void translate_temp_filename(int i)
     {   case 1: p=Temp1_Name; break;
         case 2: p=Temp2_Name; break;
         case 3: p=Temp3_Name; break;
+        default: return;
     }
     if (strlen(Temporary_Path)+strlen(Temporary_File)+6 >= PATHLEN) {
         printf ("Temporary_Path is too long.\n");

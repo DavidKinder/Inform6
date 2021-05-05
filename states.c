@@ -973,6 +973,10 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -995,7 +999,6 @@ static void parse_statement_z(int break_label, int continue_label)
                              assemble_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -1003,7 +1006,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1013,7 +1015,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
@@ -1933,6 +1934,10 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -1955,7 +1960,6 @@ static void parse_statement_g(int break_label, int continue_label)
                              assemble_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -1963,7 +1967,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1973,7 +1976,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
