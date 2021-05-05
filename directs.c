@@ -21,7 +21,8 @@ brief_location routine_starts_line; /* Source code location where the current
 
 static int constant_made_yet;      /* Have any constants been defined yet?   */
 
-static int ifdef_stack[32], ifdef_sp;
+#define MAX_IFDEF_STACK (32)
+static int ifdef_stack[MAX_IFDEF_STACK], ifdef_sp;
 
 /* ------------------------------------------------------------------------- */
 
@@ -483,6 +484,11 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
             return ebf_error_recover("semicolon after 'If...' condition", token_text);
 
+        if (ifdef_sp >= MAX_IFDEF_STACK) {
+            error("'If' directives nested too deeply");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        
         if (flag)
         {   ifdef_stack[ifdef_sp++] = TRUE; return FALSE; }
         else
