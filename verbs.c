@@ -48,6 +48,8 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*           for example the English verbs "take" and "drop" both normally   */
 /*           correspond in a game's dictionary to the same Inform verb.  An  */
 /*           Inform verb is essentially a list of grammar lines.             */
+/*           (Calling them "English verbs" is of course out of date. Read    */
+/*           this as jargon for "dict words which are verbs".                */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
