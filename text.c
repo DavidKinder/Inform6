@@ -1648,7 +1648,7 @@ apostrophe in", dword);
 
     for (; i<9; i++) wd[i]=5;
 
-    /* The array of Z-chars is converted to three 2-byte blocks              */
+    /* The array of Z-chars is converted to two or three 2-byte blocks       */
 
     tot = wd[2] + wd[1]*(1<<5) + wd[0]*(1<<10);
     prepared_sort[1]=tot%0x100;
