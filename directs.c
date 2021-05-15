@@ -460,7 +460,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFTRUE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 0;
             }
@@ -471,7 +471,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFFALSE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 1;
             }
