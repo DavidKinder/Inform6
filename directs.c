@@ -303,7 +303,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 assembly_operand AO;
                 put_token_back();
                 AO = parse_expression(CONSTANT_CONTEXT);
-                if (module_switch && (AO.marker != 0))
+                if (AO.marker != 0)
                     error("A definite value must be given as a Dictionary flag");
                 else
                     val1 = AO.value;
@@ -316,7 +316,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                     assembly_operand AO;
                     put_token_back();
                     AO = parse_expression(CONSTANT_CONTEXT);
-                    if (module_switch && (AO.marker != 0))
+                    if (AO.marker != 0)
                         error("A definite value must be given as a Dictionary flag");
                     else
                         val3 = AO.value;
