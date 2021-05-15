@@ -126,6 +126,8 @@ when compiled to either Glulx or Z-code: previously the warning only appeared wh
 <li><p>The compiler now correctly handles <tt>#If</tt> directives around <tt>if</tt> and <tt>else</tt> clauses.
 <li><p>Forward declared properties (that is, properties that are used before they are defined in the game
 source code) now work correctly.
+<li><p>Where directives allow a constant to be used (<tt>Release</tt>, <tt>Version</tt>, <tt>Dictionary</tt>,
+<tt>Iftrue</tt> and <tt>Iffalse</tt>), the compiler now reports an error if the constant is not defined.
 <li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
 (instead of 9).
 <li><p>When compiling to Z-code version 3, two dictionary words that differed only in Z-characters 7-9 would
