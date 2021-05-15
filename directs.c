@@ -1074,7 +1074,7 @@ the first constant definition");
               break;
             }
 
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
                 error("A definite value must be given as version number");
             else 
             if (glulx_mode) 
