@@ -303,7 +303,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 assembly_operand AO;
                 put_token_back();
                 AO = parse_expression(CONSTANT_CONTEXT);
-                if (module_switch && (AO.marker != 0))
+                if (AO.marker != 0)
                     error("A definite value must be given as a Dictionary flag");
                 else
                     val1 = AO.value;
@@ -316,7 +316,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                     assembly_operand AO;
                     put_token_back();
                     AO = parse_expression(CONSTANT_CONTEXT);
-                    if (module_switch && (AO.marker != 0))
+                    if (AO.marker != 0)
                         error("A definite value must be given as a Dictionary flag");
                     else
                         val3 = AO.value;
@@ -460,7 +460,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFTRUE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 0;
             }
@@ -471,7 +471,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFFALSE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 1;
             }
@@ -760,7 +760,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case RELEASE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
                 error("A definite value must be given as release number");
             else
                 release_number = AO.value;
@@ -1074,7 +1074,7 @@ the first constant definition");
               break;
             }
 
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
                 error("A definite value must be given as version number");
             else 
             if (glulx_mode) 

@@ -1648,7 +1648,7 @@ apostrophe in", dword);
 
     for (; i<9; i++) wd[i]=5;
 
-    /* The array of Z-chars is converted to three 2-byte blocks              */
+    /* The array of Z-chars is converted to two or three 2-byte blocks       */
 
     tot = wd[2] + wd[1]*(1<<5) + wd[0]*(1<<10);
     prepared_sort[1]=tot%0x100;
@@ -1656,7 +1656,10 @@ apostrophe in", dword);
     tot = wd[5] + wd[4]*(1<<5) + wd[3]*(1<<10);
     prepared_sort[3]=tot%0x100;
     prepared_sort[2]=(tot/0x100)%0x100;
-    tot = wd[8] + wd[7]*(1<<5) + wd[6]*(1<<10);
+    if (version_number==3)
+        tot = 0;
+    else
+        tot = wd[8] + wd[7]*(1<<5) + wd[6]*(1<<10);
     prepared_sort[5]=tot%0x100;
     prepared_sort[4]=(tot/0x100)%0x100;
 
