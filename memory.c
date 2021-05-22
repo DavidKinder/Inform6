@@ -181,10 +181,7 @@ static char *chunk_name(memory_block *MB, int no)
 
 extern void initialise_memory_block(memory_block *MB)
 {   int i;
-    MB->chunks = 0;
     for (i=0; i<72; i++) MB->chunk[i] = NULL;
-    MB->extent_of_last = 0;
-    MB->write_pos = 0;
 }
 
 extern void deallocate_memory_block(memory_block *MB)
@@ -192,8 +189,6 @@ extern void deallocate_memory_block(memory_block *MB)
     for (i=0; i<72; i++)
         if (MB->chunk[i] != NULL)
             my_free(&(MB->chunk[i]), chunk_name(MB, i));
-    MB->chunks = 0;
-    MB->extent_of_last = 0;
 }
 
 extern int read_byte_from_memory_block(memory_block *MB, int32 index)

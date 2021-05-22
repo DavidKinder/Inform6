@@ -865,10 +865,8 @@ typedef struct ErrorPosition_s
 extern int ALLOC_CHUNK_SIZE;
 
 typedef struct memory_block_s
-{   int chunks;
-    int extent_of_last;
+{
     uchar *chunk[72];
-    int write_pos;
 } memory_block;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
