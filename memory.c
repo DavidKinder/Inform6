@@ -155,69 +155,89 @@ extern void my_free(void *pointer, char *whatitwas)
 
 /* ------------------------------------------------------------------------- */
 /*   Extensible blocks of memory, providing a kind of RAM disc as an         */
-/*   alternative to the temporary files option                               */
+/*   alternative to the temporary files option.                              */
 /*                                                                           */
-/*   The allocation is slightly confusing. A block can store up to 72        */
+/*   The allocation is slightly confusing. A block can store any number of   */
 /*   chunks, which are allocated as needed when data is written. (Data does  */
 /*   not have to be written in order, but you should not try to read a byte  */
 /*   before writing it.) The size of a chunk is defined by ALLOC_CHUNK_SIZE. */
-/*   So any block can store any amount of data, but you increase the limit   */
-/*   (for all blocks) by increasing ALLOC_CHUNK_SIZE, not the number of      */
-/*   chunks.                                                                 */
+/*                                                                           */
+/*   (ALLOC_CHUNK_SIZE used to be a compile-time setting. But we are no      */
+/*   longer limited to 72 chunks, so ALLOC_CHUNK_SIZE is just a #define      */
+/*   now.)                                                                   */
 /* ------------------------------------------------------------------------- */
 
-static char chunk_name_buffer[60];
+static char chunk_name_buffer[80];
 static char *chunk_name(memory_block *MB, int no)
 {   char *p = "(unknown)";
     if (MB == &static_strings_area) p = "static strings area";
-    if (MB == &zcode_area)          p = "Z-code area";
+    if (MB == &zcode_area)          p = "code area";
     if (MB == &link_data_area)      p = "link data area";
-    if (MB == &zcode_backpatch_table) p = "Z-code backpatch table";
-    if (MB == &staticarray_backpatch_table) p = "Static array backpatch table";
-    if (MB == &zmachine_backpatch_table) p = "Z-machine backpatch table";
+    if (MB == &zcode_backpatch_table) p = "code backpatch table";
+    if (MB == &staticarray_backpatch_table) p = "static array backpatch table";
+    if (MB == &zmachine_backpatch_table) p = "machine backpatch table";
     sprintf(chunk_name_buffer, "%s chunk %d", p, no);
     return(chunk_name_buffer);
 }
 
 extern void initialise_memory_block(memory_block *MB)
 {   int i;
-    for (i=0; i<72; i++) MB->chunk[i] = NULL;
+    MB->count = 64;
+    MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, 0));
+    for (i=0; i<MB->count; i++) MB->chunks[i] = NULL;
 }
 
 extern void deallocate_memory_block(memory_block *MB)
 {   int i;
-    for (i=0; i<72; i++)
-        if (MB->chunk[i] != NULL)
-            my_free(&(MB->chunk[i]), chunk_name(MB, i));
+    for (i=0; i<MB->count; i++)
+    {
+        if (MB->chunks[i] != NULL)
+            my_free(&(MB->chunks[i]), chunk_name(MB, i));
+    }
+    my_free(&(MB->chunks), chunk_name(MB, i));
+    MB->chunks = NULL;
 }
 
 extern int read_byte_from_memory_block(memory_block *MB, int32 index)
-{   uchar *p;
-    p = MB->chunk[index/ALLOC_CHUNK_SIZE];
+{   uchar *p = NULL;
+    int ch = index/ALLOC_CHUNK_SIZE;
+    if (ch >= 0 && ch < MB->count)
+        p = MB->chunks[ch];
     if (p == NULL)
-    {   compiler_error_named("memory: read from unwritten byte in",
-            chunk_name(MB, index/ALLOC_CHUNK_SIZE));
+    {
+        compiler_error_named("memory: read from unwritten byte in",
+            chunk_name(MB, ch));
         return 0;
     }
     return p[index % ALLOC_CHUNK_SIZE];
 }
 
 extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
-{   uchar *p; int ch = index/ALLOC_CHUNK_SIZE;
+{   uchar *p;
+    int ch = index/ALLOC_CHUNK_SIZE;
     if (ch < 0)
-    {   compiler_error_named("memory: negative index to", chunk_name(MB, 0));
+    {
+        compiler_error_named("memory: negative index to", chunk_name(MB, 0));
         return;
     }
-    if (ch >= 72) memoryerror("ALLOC_CHUNK_SIZE", ALLOC_CHUNK_SIZE);
+    if (ch >= MB->count)
+    {
+        int i;
+        int newcount = ((MB->count | 15) + 1) + 16;
+        my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, ch));
+        for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
+        MB->count = newcount;
+    }
 
-    if (MB->chunk[ch] == NULL)
-    {   int i;
-        MB->chunk[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
-        p = MB->chunk[ch];
+    if (MB->chunks[ch] == NULL)
+    {
+        int i;
+        MB->chunks[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
+        p = MB->chunks[ch];
         for (i=0; i<ALLOC_CHUNK_SIZE; i++) p[i] = 255;
     }
 
-    p = MB->chunk[ch];
+    p = MB->chunks[ch];
     p[index % ALLOC_CHUNK_SIZE] = value;
 }
 

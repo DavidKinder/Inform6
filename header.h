@@ -860,13 +860,15 @@ typedef struct ErrorPosition_s
     int32 orig_char;
 } ErrorPosition;
 
-/*  A memory block can hold at most ALLOC_CHUNK_SIZE * 72:  */
+/*  A memory block is a sparse array of chunks. Chunks are allocated
+    as needed on write. */
 
 extern int ALLOC_CHUNK_SIZE;
 
 typedef struct memory_block_s
 {
-    uchar *chunk[72];
+    int count;
+    uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
 } memory_block;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
