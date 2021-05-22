@@ -31,7 +31,7 @@
 /* ------------------------------------------------------------------------- */
 
 /* For releases, set to the release date in the form "1st January 2000" */
-#define RELEASE_DATE "in development"
+#define RELEASE_DATE "22nd May 2021"
 #define RELEASE_NUMBER 1635
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
