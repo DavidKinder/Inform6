@@ -178,14 +178,20 @@ static char *chunk_name(memory_block *MB, int no)
     if (MB == &zcode_backpatch_table) p = "code backpatch table";
     if (MB == &staticarray_backpatch_table) p = "static array backpatch table";
     if (MB == &zmachine_backpatch_table) p = "machine backpatch table";
-    sprintf(chunk_name_buffer, "%s chunk %d", p, no);
+    if (no < 0)
+        sprintf(chunk_name_buffer, "%s chunk array", p);
+    else
+        sprintf(chunk_name_buffer, "%s chunk %d", p, no);
     return(chunk_name_buffer);
 }
 
 extern void initialise_memory_block(memory_block *MB)
 {   int i;
+    /* Begin with space for 64 chunks of ALLOC_BLOCK_SIZE (130kb total).
+       We can increase that later if needed. In any case, we don't allocate
+       the chunks themselves yet. */
     MB->count = 64;
-    MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, 0));
+    MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, -1));
     for (i=0; i<MB->count; i++) MB->chunks[i] = NULL;
 }
 
@@ -196,8 +202,7 @@ extern void deallocate_memory_block(memory_block *MB)
         if (MB->chunks[i] != NULL)
             my_free(&(MB->chunks[i]), chunk_name(MB, i));
     }
-    my_free(&(MB->chunks), chunk_name(MB, i));
-    MB->chunks = NULL;
+    my_free(&(MB->chunks), chunk_name(MB, -1));
 }
 
 extern int read_byte_from_memory_block(memory_block *MB, int32 index)
@@ -219,7 +224,7 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
     int ch = index/ALLOC_CHUNK_SIZE;
     if (ch < 0)
     {
-        compiler_error_named("memory: negative index to", chunk_name(MB, 0));
+        compiler_error_named("memory: negative index to", chunk_name(MB, -1));
         return;
     }
     if (ch >= MB->count)
@@ -229,7 +234,7 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
         int i;
         /* Bump up the chunk count to the next higher multiple of 16. */
         int newcount = ((MB->count | 15) + 1) + 16;
-        my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, ch));
+        my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, -1));
         for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
         MB->count = newcount;
     }
