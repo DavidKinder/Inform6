@@ -167,6 +167,8 @@ extern void my_free(void *pointer, char *whatitwas)
 /*   now.)                                                                   */
 /* ------------------------------------------------------------------------- */
 
+#define ALLOC_CHUNK_SIZE (2048)
+
 static char chunk_name_buffer[80];
 static char *chunk_name(memory_block *MB, int no)
 {   char *p = "(unknown)";
@@ -222,7 +224,10 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
     }
     if (ch >= MB->count)
     {
+        /* We need to extend the chunks array. Note that we don't allocate
+           new chunks yet; the extended array contains NULLs. */
         int i;
+        /* Bump up the chunk count to the next higher multiple of 16. */
         int newcount = ((MB->count | 15) + 1) + 16;
         my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, ch));
         for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
@@ -287,7 +292,6 @@ int32 MAX_NUM_STATIC_STRINGS;
 int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
-int ALLOC_CHUNK_SIZE;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
@@ -302,7 +306,6 @@ static int MAX_GLOBAL_VARIABLES_z, MAX_GLOBAL_VARIABLES_g;
 static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
-static int ALLOC_CHUNK_SIZE_z, ALLOC_CHUNK_SIZE_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
 
 /* ------------------------------------------------------------------------- */
@@ -316,7 +319,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
     printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
-    printf("|  %25s = %-7d |\n","ALLOC_CHUNK_SIZE",ALLOC_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","MAX_ARRAYS",MAX_ARRAYS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_CLASSES",MAX_CLASSES);
@@ -429,9 +431,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 32768;
     }
     if (size_flag == LARGE_SIZE)
     {
@@ -477,9 +476,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 16384;
     }
     if (size_flag == SMALL_SIZE)
     {
@@ -525,9 +521,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 8192;
     }
 
     /* Regardless of size_flag... */
@@ -573,7 +566,6 @@ extern void adjust_memory_sizes()
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
-    ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_z;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_z;
     INDIV_PROP_START = 64;
   }
@@ -584,7 +576,6 @@ extern void adjust_memory_sizes()
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
-    ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_g;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_g;
     INDIV_PROP_START = 256;
   }
@@ -860,13 +851,6 @@ static void explain_parameter(char *command)
 "  MAX_UNICODE_CHARS is the maximum number of different Unicode characters \n\
   (beyond the Latin-1 range, $00..$FF) which the game text can use. \n\
   (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
-    {
-        printf(
-"  ALLOC_CHUNK_SIZE is a base unit of Inform's internal memory allocation \n\
-  for various structures.\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -1152,8 +1136,7 @@ extern void memory_command(char *command)
                 MAX_GLOBAL_VARIABLES_g=MAX_GLOBAL_VARIABLES_z=j;
             }
             if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
-            {   ALLOC_CHUNK_SIZE=j, flag=1;
-                ALLOC_CHUNK_SIZE_g=ALLOC_CHUNK_SIZE_z=j;
+            {   flag=3;
             }
             if (strcmp(command,"MAX_UNICODE_CHARS")==0)
                 MAX_UNICODE_CHARS=j, flag=1;
@@ -1202,6 +1185,8 @@ extern void memory_command(char *command)
             if (flag==2)
             printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n\
 It should be safe to omit it (putting nothing in its place).\n", command);
+            if (flag==3)
+            printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
             return;
         }
     }

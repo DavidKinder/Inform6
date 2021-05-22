@@ -863,8 +863,6 @@ typedef struct ErrorPosition_s
 /*  A memory block is a sparse array of chunks. Chunks are allocated
     as needed on write. */
 
-extern int ALLOC_CHUNK_SIZE;
-
 typedef struct memory_block_s
 {
     int count;
