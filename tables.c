@@ -981,9 +981,9 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  (long int) k_long, k_str);
 
             printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
+%6d classes                      %6d objects (maximum %3d)\n\
 %6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
+                 no_classes,
                  no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
                  no_globals,
                  dynamic_array_area_size, MAX_STATIC_DATA);
@@ -1671,9 +1671,9 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
             } 
 
             printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
+%6d classes                      %6d objects (maximum %3d)\n\
 %6d global vars (maximum %3d)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
+                 no_classes,
                  no_objects, MAX_OBJECTS,
                  no_globals, MAX_GLOBAL_VARIABLES,
                  dynamic_array_area_size, MAX_STATIC_DATA);
