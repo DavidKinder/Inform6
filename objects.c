@@ -357,7 +357,9 @@ objecttz     *objectsz;                /* Z-code only                        */
 objecttg     *objectsg;                /* Glulx only                         */
 uchar        *objectatts;              /* Glulx only                         */
 static int   *classes_to_inherit_from;
+static memory_list classes_to_inherit_from_memlist;
 classinfo    *class_info;
+memory_list   class_info_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
@@ -800,6 +802,7 @@ static int write_property_block_z(char *shortname)
     {   mark = write_properties_between(p,mark,3,3);
         for (i=0;i<6;i++)
             p[mark++] = full_object.atts[i];
+        ensure_memory_list_available(&class_info_memlist, no_classes+1);
         class_info[no_classes++].begins_at = mark;
     }
 
@@ -845,6 +848,7 @@ static int32 write_property_block_g(void)
   if (current_defn_is_class) {
     for (i=0;i<NUM_ATTR_BYTES;i++)
       p[mark++] = full_object_g.atts[i];
+    ensure_memory_list_available(&class_info_memlist, no_classes+1);
     class_info[no_classes++].begins_at = mark;
   }
 
@@ -1612,6 +1616,8 @@ static void add_class_to_inheritance_list(int class_number)
     /*  Remember the inheritance list so that property inheritance can
         be sorted out later on, when the definition has been finished:       */
 
+    ensure_memory_list_available(&classes_to_inherit_from_memlist, no_classes_to_inherit_from+1);
+
     classes_to_inherit_from[no_classes_to_inherit_from++] = class_number;
 
     /*  Inheriting attributes from the class at once:                        */
@@ -1743,8 +1749,7 @@ extern void make_class(char * metaclass_name)
     current_defn_is_class = TRUE; no_classes_to_inherit_from = 0;
     individual_prop_table_size = 0;
 
-    if (no_classes==MAX_CLASSES)
-        memoryerror("MAX_CLASSES", MAX_CLASSES);
+    ensure_memory_list_available(&class_info_memlist, no_classes+1);
 
     if (no_classes==VENEER_CONSTRAINT_ON_CLASSES)
         fatalerror("Inform's maximum possible number of classes (whatever \
@@ -2199,10 +2204,12 @@ extern void objects_allocate_arrays(void)
     prop_is_additive      = my_calloc(sizeof(int), INDIV_PROP_START,
                                 "property-is-additive flags");
 
-    classes_to_inherit_from = my_calloc(sizeof(int), MAX_CLASSES,
-                                "inherited classes list");
-    class_info              = my_calloc(sizeof(classinfo), MAX_CLASSES,
-                                "class info");
+    initialise_memory_list(&class_info_memlist,
+        sizeof(classinfo), 64, (void**)&class_info,
+        "class info");
+    initialise_memory_list(&classes_to_inherit_from_memlist,
+        sizeof(int),       64, (void**)&classes_to_inherit_from,
+        "inherited classes list");
 
     properties_table      = my_malloc(MAX_PROP_TABLE_SIZE,"properties table");
     individuals_table     = my_malloc(MAX_INDIV_PROP_TABLE_SIZE,
@@ -2238,8 +2245,8 @@ extern void objects_free_arrays(void)
     my_free(&objectsz,         "z-objects");
     my_free(&objectsg,         "g-objects");
     my_free(&objectatts,       "g-attributes");
-    my_free(&class_info,       "class info");
-    my_free(&classes_to_inherit_from, "inherited classes list");
+    deallocate_memory_list(&class_info_memlist);
+    deallocate_memory_list(&classes_to_inherit_from_memlist);
 
     my_free(&properties_table, "properties table");
     my_free(&individuals_table,"individual properties table");

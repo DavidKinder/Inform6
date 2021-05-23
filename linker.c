@@ -862,6 +862,8 @@ at strings offset %04x (+%04x)\n",
     {   j = p[i]*256 + p[i+1]; i+=2;
         if (j == 0) break;
 
+        ensure_memory_list_available(&class_info_memlist, no_classes+1);
+        
         class_info[no_classes].object_number = j + no_objects;
         j = p[i]*256 + p[i+1]; i+=2;
         class_info[no_classes++].begins_at = j + properties_table_size;

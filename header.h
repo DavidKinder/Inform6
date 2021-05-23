@@ -2640,6 +2640,7 @@ extern objecttz *objectsz;
 extern objecttg *objectsg;
 extern uchar *objectatts;
 extern classinfo *class_info;
+extern memory_list class_info_memlist;
 
 extern int32 *prop_default_value;
 extern int *prop_is_long;
