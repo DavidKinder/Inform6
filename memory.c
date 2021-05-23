@@ -197,17 +197,26 @@ extern void initialise_memory_block(memory_block *MB)
 
 extern void deallocate_memory_block(memory_block *MB)
 {   int i;
+    if (MB->chunks == NULL)
+        return;
     for (i=0; i<MB->count; i++)
     {
         if (MB->chunks[i] != NULL)
             my_free(&(MB->chunks[i]), chunk_name(MB, i));
     }
     my_free(&(MB->chunks), chunk_name(MB, -1));
+    MB->count = 0;
 }
 
 extern int read_byte_from_memory_block(memory_block *MB, int32 index)
 {   uchar *p = NULL;
-    int ch = index/ALLOC_CHUNK_SIZE;
+    int ch;
+    if (MB->chunks == NULL) {
+        compiler_error_named("memory: read from uninitialized block",
+            chunk_name(MB, -1));
+        return 0;
+    }
+    ch = index/ALLOC_CHUNK_SIZE;
     if (ch >= 0 && ch < MB->count)
         p = MB->chunks[ch];
     if (p == NULL)
@@ -220,8 +229,14 @@ extern int read_byte_from_memory_block(memory_block *MB, int32 index)
 }
 
 extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
-{   uchar *p;
-    int ch = index/ALLOC_CHUNK_SIZE;
+{   uchar *p = NULL;
+    int ch;
+    if (MB->chunks == NULL) {
+        compiler_error_named("memory: write to uninitialized block",
+            chunk_name(MB, -1));
+        return;
+    }
+    ch = index/ALLOC_CHUNK_SIZE;
     if (ch < 0)
     {
         compiler_error_named("memory: negative index to", chunk_name(MB, -1));
