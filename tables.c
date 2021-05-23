@@ -415,11 +415,11 @@ static void construct_storyfile_z(void)
 
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++)
-    {   p[mark++] = class_object_numbers[i]/256;
-        p[mark++] = class_object_numbers[i]%256;
+    {   p[mark++] = class_info[i].object_number/256;
+        p[mark++] = class_info[i].object_number%256;
         if (module_switch)
-        {   p[mark++] = class_begins_at[i]/256;
-            p[mark++] = class_begins_at[i]%256;
+        {   p[mark++] = class_info[i].begins_at/256;
+            p[mark++] = class_info[i].begins_at%256;
         }
     }
     p[mark++] = 0;
@@ -1405,7 +1405,7 @@ static void construct_storyfile_g(void)
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++) {
       j = Write_RAM_At + object_tree_at +
-        (OBJECT_BYTE_LENGTH*(class_object_numbers[i]-1));
+        (OBJECT_BYTE_LENGTH*(class_info[i].object_number-1));
       WriteInt32(p+mark, j);
       mark += 4;
     }

@@ -736,6 +736,14 @@ typedef struct verbt {
     int l[MAX_LINES_PER_VERB];
 } verbt;
 
+/* Information about an object class. */
+typedef struct classinfo_s {
+    /* The number of the prototype-object for this class */
+    int object_number;
+    /* The offset of properties block for this class (always an offset inside the properties table) */
+    int32 begins_at;
+} classinfo;
+
 /* Property entry record (Z). */
 typedef struct prop {
     uchar l, num;
@@ -2631,8 +2639,7 @@ extern int no_classes, no_objects;
 extern objecttz *objectsz;
 extern objecttg *objectsg;
 extern uchar *objectatts;
-extern int *class_object_numbers;
-extern int32 *class_begins_at;
+extern classinfo *class_info;
 
 extern int32 *prop_default_value;
 extern int *prop_is_long;

@@ -50,14 +50,10 @@ static char *classname_text, *objectname_text;
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
-/*    int32 class_begins_at[n]            offset of properties block for     */
-/*                                        nth class (always an offset        */
-/*                                        inside the properties_table)       */
+/*    classinfo class_info[]              Object number and prop offset      */
 /*    int   classes_to_inherit_from[]     The list of classes to inherit     */
 /*                                        from as taken from the current     */
 /*                                        Nearby/Object/Class definition     */
-/*    int   class_object_numbers[n]       The number of the prototype-object */
-/*                                        for the nth class                  */
 /* ------------------------------------------------------------------------- */
 
 int        no_classes;                 /* Number of class defns made so far  */
@@ -361,9 +357,7 @@ objecttz     *objectsz;                /* Z-code only                        */
 objecttg     *objectsg;                /* Glulx only                         */
 uchar        *objectatts;              /* Glulx only                         */
 static int   *classes_to_inherit_from;
-int          *class_object_numbers;
-int32        *class_begins_at;
-
+classinfo    *class_info;
 
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
@@ -424,7 +418,7 @@ static void property_inheritance_z(void)
     for (class=0; class<no_classes_to_inherit_from; class++)
     {
         j=0;
-        mark = class_begins_at[classes_to_inherit_from[class]-1];
+        mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
         class_prop_block = (uchar *) (properties_table + mark);
 
         while (class_prop_block[j]!=0)
@@ -628,7 +622,7 @@ static void property_inheritance_g(void)
   ASSERT_GLULX();
 
   for (class=0; class<no_classes_to_inherit_from; class++) {
-    mark = class_begins_at[classes_to_inherit_from[class]-1];
+    mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
     cpb = (uchar *) (properties_table + mark);
     /* This now points to the compiled property-table for the class.
        We'll have to go through and decompile it. (For our sins.) */
@@ -806,7 +800,7 @@ static int write_property_block_z(char *shortname)
     {   mark = write_properties_between(p,mark,3,3);
         for (i=0;i<6;i++)
             p[mark++] = full_object.atts[i];
-        class_begins_at[no_classes++] = mark;
+        class_info[no_classes++].begins_at = mark;
     }
 
     mark = write_properties_between(p, mark, 1, (version_number==3)?31:63);
@@ -851,7 +845,7 @@ static int32 write_property_block_g(void)
   if (current_defn_is_class) {
     for (i=0;i<NUM_ATTR_BYTES;i++)
       p[mark++] = full_object_g.atts[i];
-    class_begins_at[no_classes++] = mark;
+    class_info[no_classes++].begins_at = mark;
   }
 
   qsort(full_object_g.props, full_object_g.numprops, sizeof(propg), 
@@ -1610,7 +1604,7 @@ static void add_class_to_inheritance_list(int class_number)
         to be translated into its actual class number:                       */
 
     for (i=0;i<no_classes;i++)
-        if (class_number == class_object_numbers[i])
+        if (class_number == class_info[i].object_number)
         {   class_number = i+1;
             break;
         }
@@ -1625,12 +1619,12 @@ static void add_class_to_inheritance_list(int class_number)
     if (!glulx_mode) {
         for (i=0; i<6; i++)
             full_object.atts[i]
-                |= properties_table[class_begins_at[class_number-1] - 6 + i];
+                |= properties_table[class_info[class_number-1].begins_at - 6 + i];
     }
     else {
         for (i=0; i<NUM_ATTR_BYTES; i++)
             full_object_g.atts[i]
-                |= properties_table[class_begins_at[class_number-1] 
+                |= properties_table[class_info[class_number-1].begins_at 
                     - NUM_ATTR_BYTES + i];
     }
 }
@@ -1803,7 +1797,7 @@ inconvenience, please contact the maintainers.");
     if (metaclass_flag) parent_of_this_obj = 0;
     else parent_of_this_obj = (module_switch)?MAXINTWORD:1;
 
-    class_object_numbers[no_classes] = class_number;
+    class_info[no_classes].object_number = class_number;
 
     initialise_full_object();
 
@@ -2146,7 +2140,7 @@ extern void init_objects_vars(void)
     objectsg = NULL;
     objectatts = NULL;
     classes_to_inherit_from = NULL;
-    class_begins_at = NULL;
+    class_info = NULL;
 }
 
 extern void objects_begin_pass(void)
@@ -2207,10 +2201,8 @@ extern void objects_allocate_arrays(void)
 
     classes_to_inherit_from = my_calloc(sizeof(int), MAX_CLASSES,
                                 "inherited classes list");
-    class_begins_at       = my_calloc(sizeof(int32), MAX_CLASSES,
-                                "pointers to classes");
-    class_object_numbers  = my_calloc(sizeof(int),     MAX_CLASSES,
-                                "class object numbers");
+    class_info              = my_calloc(sizeof(classinfo), MAX_CLASSES,
+                                "class info");
 
     properties_table      = my_malloc(MAX_PROP_TABLE_SIZE,"properties table");
     individuals_table     = my_malloc(MAX_INDIV_PROP_TABLE_SIZE,
@@ -2246,9 +2238,8 @@ extern void objects_free_arrays(void)
     my_free(&objectsz,         "z-objects");
     my_free(&objectsg,         "g-objects");
     my_free(&objectatts,       "g-attributes");
-    my_free(&class_object_numbers,"class object numbers");
+    my_free(&class_info,       "class info");
     my_free(&classes_to_inherit_from, "inherited classes list");
-    my_free(&class_begins_at,  "pointers to classes");
 
     my_free(&properties_table, "properties table");
     my_free(&individuals_table,"individual properties table");

@@ -862,9 +862,9 @@ at strings offset %04x (+%04x)\n",
     {   j = p[i]*256 + p[i+1]; i+=2;
         if (j == 0) break;
 
-        class_object_numbers[no_classes] = j + no_objects;
+        class_info[no_classes].object_number = j + no_objects;
         j = p[i]*256 + p[i+1]; i+=2;
-        class_begins_at[no_classes++] = j + properties_table_size;
+        class_info[no_classes++].begins_at = j + properties_table_size;
 
     } while (TRUE);
 
