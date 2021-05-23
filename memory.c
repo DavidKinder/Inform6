@@ -267,6 +267,76 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
 }
 
 /* ------------------------------------------------------------------------- */
+/*   A dynamic memory array. This grows as needed (but never shrinks).       */
+/*   Call ensure_memory_list_available(N) before accessing array item N-1.   */
+/*                                                                           */
+/*   whatfor must be a static string describing the list. initalloc is       */
+/*   (optionally) the number of items to allocate right away.                */
+/*                                                                           */
+/*   You typically initialise this with extpointer referring to an array of  */
+/*   structs or whatever type you need. Whenever the memory list grows, the  */
+/*   external array will be updated to refer to the new data.                */
+/* ------------------------------------------------------------------------- */
+
+void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor)
+{
+    ML->whatfor = whatfor;
+    ML->itemsize = itemsize;
+    ML->count = 0;
+    ML->data = NULL;
+    ML->extpointer = extpointer;
+
+    if (initalloc) {
+        ML->count = initalloc;
+        ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
+    }
+
+    if (ML->extpointer)
+        *(ML->extpointer) = ML->data;
+}
+
+void deallocate_memory_list(memory_list *ML)
+{
+    ML->itemsize = 0;
+    ML->count = 0;
+    
+    if (ML->data)
+        my_free(&(ML->data), ML->whatfor);
+
+    if (ML->extpointer)
+        *(ML->extpointer) = NULL;
+    ML->extpointer = NULL;
+}
+
+/* After this is called, at least count items will be available in the list.
+   That is, you can freely access array[0] through array[count-1]. */
+void ensure_memory_list_available(memory_list *ML, int count)
+{
+    int oldcount;
+    
+    if (ML->itemsize == 0) {
+        /* whatfor is also null! */
+        compiler_error("memory: attempt to access uninitialized memory_list");
+        return;
+    }
+
+    if (ML->count >= count) {
+        return;
+    }
+
+    oldcount = ML->count;
+    ML->count = 2*count+8;  /* Allow headroom for future growth */
+    
+    if (ML->data == NULL)
+        ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
+    else
+        my_recalloc(&(ML->data), ML->itemsize, oldcount, ML->count, ML->whatfor);
+
+    if (ML->extpointer)
+        *(ML->extpointer) = ML->data;
+}
+
+/* ------------------------------------------------------------------------- */
 /*   Where the memory settings are declared as variables                     */
 /* ------------------------------------------------------------------------- */
 

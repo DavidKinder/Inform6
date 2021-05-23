@@ -874,12 +874,26 @@ typedef struct ErrorPosition_s
 
 /*  A memory block is a sparse array of chunks. Chunks are allocated
     as needed on write. */
-
 typedef struct memory_block_s
 {
     int count;
     uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
 } memory_block;
+
+/*  A memory list is a sequential array of items. The list grows as
+    necessary, but it is *not* sparse.
+    This can optionally maintain an external pointer (of any type) which 
+    also refers to the allocated array. The external pointer will always
+    have the same value as data.
+*/
+typedef struct memory_list_s
+{
+    char *whatfor;   /* must be a static string */
+    void *data;      /* allocated array of count*itemsize bytes */
+    void **extpointer;  /* pointer to keep in sync */
+    int itemsize;    /* item size in bytes */
+    int count;       /* number of items allocated */
+} memory_list;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
    the text, store_variable_number, branch_label_number, or branch_flag
@@ -2600,6 +2614,10 @@ extern void deallocate_memory_block(memory_block *MB);
 extern int  read_byte_from_memory_block(memory_block *MB, int32 index);
 extern void write_byte_to_memory_block(memory_block *MB,
     int32 index, int value);
+
+extern void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor);
+extern void deallocate_memory_list(memory_list *ML);
+extern void ensure_memory_list_available(memory_list *ML, int count);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "objects"                                        */
