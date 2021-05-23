@@ -49,7 +49,6 @@ int no_dynamic_strings;                /* No. of @.. string escapes used
 int no_unicode_chars;                  /* Number of distinct Unicode chars
                                           used. (Beyond 0xFF.)               */
 
-static int MAX_CHARACTER_SET;          /* Number of possible entities */
 huffentity_t *huff_entities;           /* The list of entities (characters,
                                           abbreviations, @.. escapes, and 
                                           the terminator)                    */
@@ -829,9 +828,17 @@ void compress_game_text()
   int jx;
   int ch;
   int32 ix;
+  int max_char_set;
   huffbitlist_t bits;
 
   if (compression_switch) {
+
+    max_char_set = 257 + MAX_ABBREVS + MAX_DYNAMIC_STRINGS + MAX_UNICODE_CHARS;
+
+    huff_entities = my_calloc(sizeof(huffentity_t), max_char_set*2+1, 
+      "huffman entities");
+    hufflist = my_calloc(sizeof(huffentity_t *), max_char_set, 
+      "huffman node list");
 
     /* How many entities have we currently got? Well, 256 plus the
        string-terminator plus Unicode chars plus abbrevations plus
@@ -845,8 +852,8 @@ void compress_game_text()
     huff_dynam_start = entities;
     entities += no_dynamic_strings;
 
-    if (entities > MAX_CHARACTER_SET)
-      memoryerror("MAX_CHARACTER_SET",MAX_CHARACTER_SET);
+    if (entities > max_char_set)
+      compiler_error("Too many entities for max_char_set");
 
     /* Characters */
     for (jx=0; jx<256; jx++) {
@@ -2408,17 +2415,10 @@ extern void text_allocate_arrays(void)
     compression_table_size = 0;
     compressed_offsets = NULL;
 
-    MAX_CHARACTER_SET = 0;
-
     if (glulx_mode) {
       if (compression_switch) {
         int ix;
-        MAX_CHARACTER_SET = 257 + MAX_ABBREVS + MAX_DYNAMIC_STRINGS 
-          + MAX_UNICODE_CHARS;
-        huff_entities = my_calloc(sizeof(huffentity_t), MAX_CHARACTER_SET*2+1, 
-          "huffman entities");
-        hufflist = my_calloc(sizeof(huffentity_t *), MAX_CHARACTER_SET, 
-          "huffman node list");
+        /* hufflist and huff_entities will be allocated at compress_game_text() time. */
         unicode_usage_entries = my_calloc(sizeof(unicode_usage_t), 
           MAX_UNICODE_CHARS, "unicode entity entries");
         for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
