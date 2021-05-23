@@ -736,11 +736,13 @@ typedef struct verbt {
     int l[MAX_LINES_PER_VERB];
 } verbt;
 
+/* Property entry record (Z). */
 typedef struct prop {
     uchar l, num;
     assembly_operand ao[32];
 } prop;
 
+/* Properties and attributes of the object currently being constructed (Z). */
 /* Only one of this object. */
 typedef struct fpropt {
     uchar atts[6];
@@ -748,12 +750,14 @@ typedef struct fpropt {
     prop pp[64];
 } fpropt;
 
+/* Constructed object (Z). */
 typedef struct objecttz {
     uchar atts[6];
     int parent, next, child;
     int propsize;
 } objecttz;
 
+/* Property entry record (G). */
 typedef struct propg {
     int num;
     int continuation; 
@@ -762,6 +766,7 @@ typedef struct propg {
     int32 datalen;
 } propg;
 
+/* Properties and attributes of the object currently being constructed (G). */
 /* Only one of this object. */
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
@@ -772,6 +777,7 @@ typedef struct fproptg {
     int32 finalpropaddr;
 } fproptg;
 
+/* Constructed object (G). */
 typedef struct objecttg {
     /* attributes are stored in a separate array */
     int32 shortname;
