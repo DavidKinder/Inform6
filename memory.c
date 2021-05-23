@@ -362,7 +362,6 @@ int32 MAX_STATIC_STRINGS;
 int32 MAX_ZCODE_SIZE;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
-int MAX_CLASSES;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
 int MAX_SOURCE_FILES;
@@ -411,7 +410,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
     printf("|  %25s = %-7d |\n","MAX_ARRAYS",MAX_ARRAYS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
-    printf("|  %25s = %-7d |\n","MAX_CLASSES",MAX_CLASSES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
@@ -511,8 +509,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_CLASSES = 64;
-
         MAX_OBJ_PROP_COUNT = 128;
         MAX_OBJ_PROP_TABLE_SIZE = 4096;
 
@@ -556,8 +552,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_CLASSES = 64;
-
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 2048;
 
@@ -600,8 +594,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_TRANSCRIPT_SIZE = 100000;
         MAX_NUM_STATIC_STRINGS = 10000;
-
-        MAX_CLASSES = 32;
 
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 1024;
@@ -873,12 +865,6 @@ static void explain_parameter(char *command)
 "  MAX_TRANSCRIPT_SIZE is only allocated for the abbreviations optimisation \n\
   switch, and has the size in bytes of a buffer to hold the entire text of\n\
   the game being compiled: it has to be enormous, say 100000 to 200000.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_CLASSES")==0)
-    {   printf(
-"  MAX_CLASSES maximum number of object classes which can be defined.  This\n\
-  is cheap to increase.\n");
         return;
     }
     if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
@@ -1204,7 +1190,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
                 MAX_TRANSCRIPT_SIZE=j, flag=1;
             if (strcmp(command,"MAX_CLASSES")==0)
-                MAX_CLASSES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
                 MAX_INCLUSION_DEPTH=j, flag=1;
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
