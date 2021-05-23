@@ -296,7 +296,7 @@ static void construct_storyfile_z(void)
        strings". Write the abbreviations after these. */
     k = abbrevs_at+2*MAX_DYNAMIC_STRINGS;
     for (i=0; i<no_abbreviations; i++)
-    {   j=abbrev_values[i];
+    {   j=abbreviations[i].value;
         p[k++]=j/256;
         p[k++]=j%256;
     }
@@ -1192,8 +1192,8 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
                     if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
+                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
+                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
                 if ((i%3)==2) printf("\n");
             }
             if ((i%3)!=0) printf("\n");
@@ -1892,8 +1892,8 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
                     if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
+                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
+                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
                 if ((i%3)==2) printf("\n");
             }
             if ((i%3)!=0) printf("\n");

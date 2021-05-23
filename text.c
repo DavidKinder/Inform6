@@ -86,9 +86,7 @@ static int unicode_entity_index(int32 unicode);
 /*   Abbreviation arrays                                                     */
 /* ------------------------------------------------------------------------- */
 
-int *abbrev_values;
-int *abbrev_quality;
-int *abbrev_freqs;
+abbreviation *abbreviations;
 
 /* ------------------------------------------------------------------------- */
 
@@ -141,10 +139,10 @@ static void make_abbrevs_lookup(void)
                 p2=(char *)abbreviations_at+k*MAX_ABBREV_LENGTH;
                 if (strcmp(p1,p2)<0)
                 {   strcpy(p,p1); strcpy(p1,p2); strcpy(p2,p);
-                    l=abbrev_values[j]; abbrev_values[j]=abbrev_values[k];
-                    abbrev_values[k]=l;
-                    l=abbrev_quality[j]; abbrev_quality[j]=abbrev_quality[k];
-                    abbrev_quality[k]=l;
+                    l=abbreviations[j].value; abbreviations[j].value=abbreviations[k].value;
+                    abbreviations[k].value=l;
+                    l=abbreviations[j].quality; abbreviations[j].quality=abbreviations[k].quality;
+                    abbreviations[k].quality=l;
                     bubble_sort = TRUE;
                 }
             }
@@ -153,7 +151,7 @@ static void make_abbrevs_lookup(void)
     for (j=no_abbreviations-1; j>=0; j--)
     {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
         abbrevs_lookup[(uchar)p1[0]]=j;
-        abbrev_freqs[j]=0;
+        abbreviations[j].freq=0;
     }
     abbrevs_lookup_table_made = TRUE;
 }
@@ -184,7 +182,7 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
             if (!glulx_mode) {
                 for (k=0; p[k]!=0; k++) text[i+k]=1;
             }
-            abbrev_freqs[j]++;
+            abbreviations[j].freq++;
             return(j);
             NotMatched: ;
         }
@@ -197,12 +195,15 @@ extern void make_abbreviation(char *text)
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
-    abbrev_values[no_abbreviations] = compile_string(text, STRCTX_ABBREV);
+    abbreviations[no_abbreviations].value = compile_string(text, STRCTX_ABBREV);
+    abbreviations[no_abbreviations].freq = 0;
 
     /*   The quality is the number of Z-chars saved by using this            */
     /*   abbreviation: note that it takes 2 Z-chars to print it.             */
 
-    abbrev_quality[no_abbreviations++] = zchars_trans_in_last_string - 2;
+    abbreviations[no_abbreviations].quality = zchars_trans_in_last_string - 2;
+
+    no_abbreviations++;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2375,10 +2376,8 @@ extern void text_begin_pass(void)
 
 extern void text_allocate_arrays(void)
 {   abbreviations_at = my_malloc(MAX_ABBREVS*MAX_ABBREV_LENGTH,
-        "abbreviations");
-    abbrev_values    = my_calloc(sizeof(int), MAX_ABBREVS, "abbrev values");
-    abbrev_quality   = my_calloc(sizeof(int), MAX_ABBREVS, "abbrev quality");
-    abbrev_freqs     = my_calloc(sizeof(int),   MAX_ABBREVS, "abbrev freqs");
+        "abbreviation text");
+    abbreviations    = my_calloc(sizeof(abbreviation), MAX_ABBREVS, "abbreviations");
 
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
@@ -2434,10 +2433,8 @@ extern void text_free_arrays(void)
 {
     my_free(&strings_holding_area, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
-    my_free(&abbreviations_at, "abbreviations");
-    my_free(&abbrev_values,    "abbrev values");
-    my_free(&abbrev_quality,   "abbrev quality");
-    my_free(&abbrev_freqs,     "abbrev freqs");
+    my_free(&abbreviations_at, "abbreviation text");
+    my_free(&abbreviations,    "abbreviations");
 
     my_free(&dtree,            "red-black tree for dictionary");
     my_free(&final_dict_order, "final dictionary ordering table");

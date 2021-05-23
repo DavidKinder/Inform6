@@ -786,6 +786,12 @@ typedef struct objecttg {
     int32 propsize;
 } objecttg;
 
+typedef struct abbreviation_s {
+    int value;
+    int quality;
+    int freq;
+} abbreviation;
+
 typedef struct maybe_file_position_S
 {   int valid;
     fpos_t position;
@@ -2740,9 +2746,7 @@ extern char  *all_text,    *all_text_top;
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
 extern uchar *abbreviations_at;
-extern int  *abbrev_values;
-extern int  *abbrev_quality;
-extern int  *abbrev_freqs;
+extern abbreviation *abbreviations;
 
 extern int32 total_chars_trans, total_bytes_trans,
              zchars_trans_in_last_string;
