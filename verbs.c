@@ -508,6 +508,7 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 
 static char *find_verb_by_number(int num)
 {
+    /*  Find the English verb string with the given verb number. */
     char *p;
     p=English_verb_list;
     while (p < English_verb_list_top)
