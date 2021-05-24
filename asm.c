@@ -208,6 +208,7 @@ extern char *variable_name(int32 i)
     return ((char *) symbs[variable_tokens[i]]);
 }
 
+/* Print symbolic information about the AO, if there is any. */
 static void print_operand_annotation(const assembly_operand *o)
 {
     int any = FALSE;
@@ -302,7 +303,7 @@ static void byteout(int32 i, int mv)
 
 /* ------------------------------------------------------------------------- */
 /*   A database of the 115 canonical Infocom opcodes in Versions 3 to 6      */
-/*   And of the however-many-there-are Glulx opcode                          */
+/*   And of the however-many-there-are Glulx opcodes                         */
 /* ------------------------------------------------------------------------- */
 
 typedef struct opcodez
