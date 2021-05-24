@@ -223,7 +223,11 @@ static void print_operand_annotation(const assembly_operand *o)
         case INCON_MV:
             printf(": %s", name_of_system_constant(o->value));
             break;
-        /* DWORD_MV: Could print out dict word */
+        case DWORD_MV:
+            printf(": '");
+            print_dict_word(o->value);
+            printf("'");
+            break;
         }
     }
     if (o->symindex >= 0 && o->symindex < no_symbols) {
