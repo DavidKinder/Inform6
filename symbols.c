@@ -76,6 +76,8 @@ static char** symbol_name_space_chunks; /* For chunks of memory used to hold
                                            the name strings of symbols       */
 static int no_symbol_name_space_chunks;
 
+/* Symbol replacements (used by the "Replace X Y" directive). */
+
 typedef struct value_pair_struct {
     int original_symbol;
     int renamed_symbol;
@@ -83,6 +85,18 @@ typedef struct value_pair_struct {
 static value_pair_t *symbol_replacements;
 static int symbol_replacements_count;
 static int symbol_replacements_size; /* calloced size */
+
+/* Symbol definitions requested at compile time. (There may not be any.)
+   These are set up at command-line parse time, not in init_symbols_vars().
+   Similarly, they are not cleaned up by symbols_free_arrays(). */
+
+typedef struct keyvalue_pair_struct {
+    char *symbol;
+    int32 value;
+} keyvalue_pair_t;
+static keyvalue_pair_t *symbol_definitions = NULL;
+static int symbol_definitions_count = 0;
+static int symbol_definitions_size = 0; /* calloced size */
 
 /* ------------------------------------------------------------------------- */
 /*   The symbols table is "hash-coded" into a disjoint union of linked       */
@@ -155,6 +169,28 @@ extern int strcmpcis(char *p, char *q)
     }
     qc = q[i]; if (isupper(qc)) qc = tolower(qc);
     return -qc;
+}
+
+/* ------------------------------------------------------------------------- */
+
+extern void add_config_symbol_definition(char *symbol, int32 value)
+{
+    if (symbol_definitions_count == symbol_definitions_size) {
+        int oldsize = symbol_definitions_size;
+        if (symbol_definitions_size == 0) 
+            symbol_definitions_size = 4;
+        else
+            symbol_definitions_size *= 2;
+        my_recalloc(&symbol_definitions, sizeof(keyvalue_pair_t), oldsize,
+            symbol_definitions_size, "symbol definition table");
+    }
+
+    char *str = my_malloc(strlen(symbol)+1, "symbol name");
+    strcpy(str, symbol);
+    
+    symbol_definitions[symbol_definitions_count].symbol = str;
+    symbol_definitions[symbol_definitions_count].value = value;
+    symbol_definitions_count++;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -378,7 +414,7 @@ extern void write_the_identifier_names(void)
 
     veneer_mode = TRUE;
 
-    null_value = compile_string(unknown_attribute, FALSE, FALSE);
+    null_value = compile_string(unknown_attribute, STRCTX_SYMBOL);
     for (i=0; i<NUM_ATTR_BYTES*8; i++) attribute_name_strings[i] = null_value;
 
     for (i=0; i<no_symbols; i++)
@@ -398,14 +434,14 @@ extern void write_the_identifier_names(void)
                     }
 
                     individual_name_strings[svals[i]]
-                        = compile_string(idname_string, FALSE, FALSE);
+                        = compile_string(idname_string, STRCTX_SYMBOL);
                 }
             }
             else
             {   sprintf(idname_string, "%s", (char *) symbs[i]);
 
                 individual_name_strings[svals[i]]
-                    = compile_string(idname_string, FALSE, FALSE);
+                    = compile_string(idname_string, STRCTX_SYMBOL);
             }
         }
         if (t == ATTRIBUTE_T)
@@ -423,14 +459,14 @@ extern void write_the_identifier_names(void)
                     }
 
                     attribute_name_strings[svals[i]]
-                        = compile_string(idname_string, FALSE, FALSE);
+                        = compile_string(idname_string, STRCTX_SYMBOL);
                 }
             }
             else
             {   sprintf(idname_string, "%s", (char *) symbs[i]);
 
                 attribute_name_strings[svals[i]]
-                    = compile_string(idname_string, FALSE, FALSE);
+                    = compile_string(idname_string, STRCTX_SYMBOL);
             }
         }
         if (sflags[i] & ACTION_SFLAG)
@@ -446,7 +482,7 @@ extern void write_the_identifier_names(void)
             }
 
             action_name_strings[svals[i]]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
@@ -457,7 +493,7 @@ extern void write_the_identifier_names(void)
 
             action_name_strings[svals[i]
                     - ((grammar_version_number==1)?256:4096) + no_actions]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
@@ -466,21 +502,21 @@ extern void write_the_identifier_names(void)
         sprintf(idname_string, "%s", (char *) symbs[i]);
 
         array_name_strings[j]
-            = compile_string(idname_string, FALSE, FALSE);
+            = compile_string(idname_string, STRCTX_SYMBOL);
     }
   if (define_INFIX_switch)
   { for (i=0; i<no_symbols; i++)
     {   if (stypes[i] == GLOBAL_VARIABLE_T)
         {   sprintf(idname_string, "%s", (char *) symbs[i]);
             array_name_strings[no_arrays + svals[i] -16]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
     for (i=0; i<no_named_routines; i++)
     {   sprintf(idname_string, "%s", (char *) symbs[named_routine_symbols[i]]);
             array_name_strings[no_arrays + no_globals + i]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
     }
 
     for (i=0, no_named_constants=0; i<no_symbols; i++)
@@ -490,7 +526,7 @@ extern void write_the_identifier_names(void)
         {   sprintf(idname_string, "%s", (char *) symbs[i]);
             array_name_strings[no_arrays + no_globals + no_named_routines
                 + no_named_constants++]
-                = compile_string(idname_string, FALSE, FALSE);
+                = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
   }
@@ -584,13 +620,28 @@ static void emit_debug_information_for_predefined_symbol
 
 static void create_symbol(char *p, int32 value, int type)
 {   int i = symbol_index(p, -1);
+    if (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))) {
+        /* Symbol already defined! */
+        if (svals[i] == value && stypes[i] == type) {
+            /* Special case: the symbol was already defined with this same
+               value. We let it pass. */
+            return;
+        }
+        else {
+            ebf_symbol_error("new symbol", p, typename(stypes[i]), slines[i]);
+            return;
+        }
+    }
     svals[i] = value; stypes[i] = type; slines[i] = blank_brief_location;
-    sflags[i] = USED_SFLAG + SYSTEM_SFLAG;
+    /* If the symbol already existed with REDEFINABLE_SFLAG, we keep that. */
+    sflags[i] = USED_SFLAG + SYSTEM_SFLAG + (sflags[i] & REDEFINABLE_SFLAG);
     emit_debug_information_for_predefined_symbol(p, i, value, type);
 }
 
 static void create_rsymbol(char *p, int value, int type)
 {   int i = symbol_index(p, -1);
+    /* This is only called for a few symbols with known names.
+       They will not collide. */
     svals[i] = value; stypes[i] = type; slines[i] = blank_brief_location;
     sflags[i] = USED_SFLAG + SYSTEM_SFLAG + REDEFINABLE_SFLAG;
     emit_debug_information_for_predefined_symbol(p, i, value, type);
@@ -734,6 +785,15 @@ static void stockup_symbols(void)
         create_symbol("FLOAT_INFINITY",  0x7F800000, CONSTANT_T);
         create_symbol("FLOAT_NINFINITY", 0xFF800000, CONSTANT_T);
         create_symbol("FLOAT_NAN",       0x7FC00000, CONSTANT_T);
+    }
+
+    if (symbol_definitions && symbol_definitions_count) {
+        int ix;
+        for (ix=0; ix<symbol_definitions_count; ix++) {
+            char *str = symbol_definitions[ix].symbol;
+            int32 val = symbol_definitions[ix].value;
+            create_symbol(str, val, CONSTANT_T);
+        }
     }
 }
 
@@ -1039,8 +1099,10 @@ extern void locate_dead_functions(void)
        mark them as used. */
 
     func = df_functions_head;
-    if (!func || func->address != DF_NOT_IN_FUNCTION)
+    if (!func || func->address != DF_NOT_IN_FUNCTION) {
         compiler_error("DF: Global namespace entry is not at the head of the chain.");
+        return;
+    }
 
     for (ent = func->refs; ent; ent=ent->refsnext) {
         uint32 addr;

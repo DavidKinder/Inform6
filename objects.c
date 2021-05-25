@@ -796,7 +796,7 @@ static int write_property_block_z(char *shortname)
     {   uchar *tmp;
         if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
             memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-        tmp = translate_text(p+mark+1,p+mark+1+510,shortname);
+        tmp = translate_text(p+mark+1,p+mark+1+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
         i = subtract_pointers(tmp,(p+mark+1));
         p[mark] = i/2;
@@ -989,7 +989,7 @@ static void manufacture_object_g(void)
     }
 
     objectsg[no_objects].shortname = compile_string(shortname_buffer,
-      FALSE, FALSE);
+      STRCTX_OBJNAME);
 
         /*  The properties table consists simply of a sequence of property
             blocks, one for each object in order of definition, exactly as
@@ -1743,7 +1743,6 @@ extern void make_class(char * metaclass_name)
 {   int n, duplicates_to_make = 0, class_number = no_objects+1,
         metaclass_flag = (metaclass_name != NULL);
     char duplicate_name[128];
-    int class_symbol;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -1833,8 +1832,6 @@ inconvenience, please contact the maintainers.");
       full_object_g.propdata[0].type   = CONSTANT_OT;
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
-
-    class_symbol = token_value;
 
     if (!metaclass_flag)
     {   get_next_token();

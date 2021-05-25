@@ -59,11 +59,32 @@ lines (although the old syntax is still supported). The new syntax for these opt
   --opt SETTING=number
   --config filename
 </pre>
-<li>The settings <tt>$MAX_ABBREVS</tt> and <tt>MAX_DYNAMIC_STRINGS</tt> control the number of abbreviations
+<li><p>Numeric constants can be declared as command line options, either like a setting:
+<pre>
+  $#SYMBOL
+  $#SYMBOL=NUM
+</pre>
+Or as a new Unix-style command line option:
+<pre>
+  --define SYMBOL
+  --define SYMBOL=NUM
+</pre>
+This defines SYMBOL as a constant, just like the <tt>Constant</tt> directive. Like that directive, if no value
+is supplied, it defaults to zero.
+<li><p>The settings <tt>$MAX_ABBREVS</tt> and <tt>MAX_DYNAMIC_STRINGS</tt> control the number of abbreviations
 and the number of dynamic strings, respectively. When compiling to Z-code these settings are linked, as they
 both use the same 96 Z-code abbreviations that are available.
-<li>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
+<li><p>The setting <tt>$TRANSCRIPT_FORMAT</tt> controls the output format of the <tt>-r</tt> option. The default
+is still the same format as before, (and can be explicitly selected with <tt>$TRANSCRIPT_FORMAT=0</tt>), but
+<tt>$TRANSCRIPT_FORMAT=1</tt> enables the new, more informative and machine-readable format.
+<li><p>The <tt>Origsource</tt> directive, added in version 6.34, is now used in error reporting, regardless of
+the error format selected. (Previously it only appeared with the default error message format, E0.)
+<li><p>If an attempt is made to redefine an existing symbol, there is now a clearer error message, explaining
 what the error is and where the symbol was previously defined.
+<li><p><tt>-g3</tt> is now a valid option: it enables tracing for all routines, including the veneer. This
+functionality was added back in Inform 6.21, but the code to check the actual option was omitted.
+<li><p>Using the option <tt>-k</tt> (which turns on the generation of debugging information) no longer implies
+<tt>-D</tt> (which turns on debug mode).
 </ul>
 
 <h3>Bugs fixed</h3>
@@ -93,8 +114,6 @@ longer gives a spurious error.
 </pre>
 <li><p>If a common property array overflows when compiling to Z-code version 3, the object is no longer
 corrupted.
-<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
-(instead of 9).
 <li><p>The incorrect code
 <pre>
   Object foo with name 'x';
@@ -105,6 +124,14 @@ now correctly causes the warning
 </pre>
 when compiled to either Glulx or Z-code: previously the warning only appeared when compiling to Z-code.
 <li><p>The compiler now correctly handles <tt>#If</tt> directives around <tt>if</tt> and <tt>else</tt> clauses.
+<li><p>Forward declared properties (that is, properties that are used before they are defined in the game
+source code) now work correctly.
+<li><p>Where directives allow a constant to be used (<tt>Release</tt>, <tt>Version</tt>, <tt>Dictionary</tt>,
+<tt>Iftrue</tt> and <tt>Iffalse</tt>), the compiler now reports an error if the constant is not defined.
+<li><p>When compiling to Z-code version 3, dictionary words are now correctly truncated at 6 Z-characters
+(instead of 9).
+<li><p>When compiling to Z-code version 3, two dictionary words that differed only in Z-characters 7-9 would
+lead to two identical dictionary entries: now there will only be one entry.
 </ul>
 
 <h2>Compiler 6.34</h2>

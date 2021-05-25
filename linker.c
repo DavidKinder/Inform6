@@ -632,7 +632,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
             filename, module_size/1024);
         if (linker_trace_level >= 1) printf("%s\n", link_banner);
         if (transcript_switch)
-            write_to_transcript_file(link_banner);
+            write_to_transcript_file(link_banner, STRCTX_INFO);
     }
 
     /* (4) Merge in the dictionary */

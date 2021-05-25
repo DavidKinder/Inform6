@@ -307,6 +307,7 @@ static int32 backpatch_value_g(int32 value)
                       break;
                     case CONSTANT_T:
                     case INDIVIDUAL_PROPERTY_T:
+                    case PROPERTY_T:
                       /* value is unchanged */
                       break;
                     default:

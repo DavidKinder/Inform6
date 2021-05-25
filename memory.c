@@ -275,6 +275,7 @@ int32 MEMORY_MAP_EXTENSION;
 int ALLOC_CHUNK_SIZE;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
+int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
 /* The way memory sizes are set causes great nuisance for those parameters
    which have different defaults under Z-code and Glulx. We have to get
@@ -352,6 +353,7 @@ static void list_memory_sizes(void)
            (long int) MAX_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","MAX_SYMBOLS",MAX_SYMBOLS);
     printf("|  %25s = %-7d |\n","SYMBOLS_CHUNK_SIZE",SYMBOLS_CHUNK_SIZE);
+    printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
            (long int) MAX_TRANSCRIPT_SIZE);
     if (glulx_mode)
@@ -542,6 +544,7 @@ extern void set_memory_sizes(int size_flag)
     MAX_STACK_SIZE = 4096;
     OMIT_UNUSED_ROUTINES = 0;
     WARN_UNUSED_ROUTINES = 0;
+    TRANSCRIPT_FORMAT = 0;
 
     adjust_memory_sizes();
 }
@@ -865,6 +868,13 @@ static void explain_parameter(char *command)
   memory after the game file. (Glulx only)\n");
         return;
     }
+    if (strcmp(command,"TRANSCRIPT_FORMAT")==0)
+    {
+        printf(
+"  TRANSCRIPT_FORMAT, if set to 1, adjusts the gametext.txt transcript for \n\
+  easier machine processing; each line will be prefixed by its context.\n");
+        return;
+    }
     if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
     {
         printf(
@@ -947,6 +957,48 @@ static int parse_memory_setting(char *str, char *label, int32 *result)
     return 1;
 }
 
+static void add_predefined_symbol(char *command)
+{
+    int ix;
+    
+    int value = 0;
+    char *valpos = NULL;
+    
+    for (ix=0; command[ix]; ix++) {
+        if (command[ix] == '=') {
+            valpos = command+(ix+1);
+            command[ix] = '\0';
+            break;
+        }
+    }
+    
+    for (ix=0; command[ix]; ix++) {
+        if ((ix == 0 && isdigit(command[ix]))
+            || !(isalnum(command[ix]) || command[ix] == '_')) {
+            printf("Attempt to define invalid symbol: %s\n", command);
+            return;
+        }
+    }
+
+    if (valpos) {
+        if (!parse_memory_setting(valpos, command, &value)) {
+            return;
+        };
+    }
+
+    add_config_symbol_definition(command, value);
+}
+
+/* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
+   The option may come from the command line, an ICL file, or a header
+   comment.
+
+   (Unix-style command-line options are converted to dollar-sign format
+   before being sent here.)
+
+   The name of this function is outdated. Many of these settings are not
+   really about memory allocation.
+*/
 extern void memory_command(char *command)
 {   int i, k, flag=0; int32 j;
 
@@ -954,6 +1006,7 @@ extern void memory_command(char *command)
         if (islower(command[k])) command[k]=toupper(command[k]);
 
     if (command[0]=='?') { explain_parameter(command+1); return; }
+    if (command[0]=='#') { add_predefined_symbol(command+1); return; }
 
     if (strcmp(command, "HUGE")==0) { set_memory_sizes(HUGE_SIZE); return; }
     if (strcmp(command, "LARGE")==0) { set_memory_sizes(LARGE_SIZE); return; }
@@ -1100,6 +1153,12 @@ extern void memory_command(char *command)
                 MEMORY_MAP_EXTENSION=j, flag=1;
                 /* Adjust up to a 256-byte boundary. */
                 MEMORY_MAP_EXTENSION = (MEMORY_MAP_EXTENSION + 0xFF) & (~0xFF);
+            }
+            if (strcmp(command,"TRANSCRIPT_FORMAT")==0)
+            {
+                TRANSCRIPT_FORMAT=j, flag=1;
+                if (TRANSCRIPT_FORMAT > 1 || TRANSCRIPT_FORMAT < 0)
+                    TRANSCRIPT_FORMAT = 1;
             }
             if (strcmp(command,"WARN_UNUSED_ROUTINES")==0)
             {

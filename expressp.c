@@ -54,6 +54,7 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
 
 extern int *variable_usage;
 
+/* Must be at least as many as keyword_group system_functions (currently 12) */
 int system_function_usage[32];
 
 static int get_next_etoken(void)
@@ -803,7 +804,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = compile_string(t.text, FALSE, FALSE);
+             o->value = compile_string(t.text, STRCTX_GAME);
              return(TRUE);
         case VARIABLE_TT:
              if (!glulx_mode) {
@@ -1451,11 +1452,15 @@ static void check_property_operator(int from_node)
     if ((below != -1) && (ET[below].right != -1))
     {   int n = ET[below].right, flag = FALSE;
 
+        /* Can we handle this dot operator as a native @get_prop (etc)
+           opcode? Only if we recognize the property value as a declared
+           common property constant. */
         if ((ET[n].down == -1)
                 && ((ET[n].value.type == LONG_CONSTANT_OT)
                     || (ET[n].value.type == SHORT_CONSTANT_OT))
                 && ((ET[n].value.value > 0) && (ET[n].value.value < 64))
-                && ((!module_switch) || (ET[n].value.marker == 0)))
+                && (!module_switch)
+                && (ET[n].value.marker == 0))
             flag = TRUE;
 
         if (!flag)

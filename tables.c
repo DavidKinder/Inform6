@@ -1229,7 +1229,7 @@ static void construct_storyfile_g(void)
             "array name strings");
 
     write_the_identifier_names();
-    threespaces = compile_string("   ", FALSE, FALSE);
+    threespaces = compile_string("   ", STRCTX_GAME);
 
     compress_game_text();
 

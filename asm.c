@@ -854,7 +854,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text);
+        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text, STRCTX_GAMEOPC);
         if (!tmp)
             memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
         j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));
@@ -1562,7 +1562,7 @@ extern int32 assemble_routine_header(int no_locals,
         sprintf(fnt, "[ %s(", name);
         AO.marker = STRING_MV;
         AO.type   = CONSTANT_OT;
-        AO.value  = compile_string(fnt, FALSE, FALSE);
+        AO.value  = compile_string(fnt, STRCTX_INFIX);
         assembleg_1(streamstr_gc, AO);
 
         if (!stackargs) {
@@ -1570,7 +1570,7 @@ extern int32 assemble_routine_header(int no_locals,
             sprintf(fnt, "%s%s = ", (ix==1)?"":", ", variable_name(ix));
             AO.marker = STRING_MV;
             AO.type   = CONSTANT_OT;
-            AO.value  = compile_string(fnt, FALSE, FALSE);
+            AO.value  = compile_string(fnt, STRCTX_INFIX);
             assembleg_1(streamstr_gc, AO);
             AO.marker = 0;
             AO.type = LOCALVAR_OT;
@@ -1583,7 +1583,7 @@ extern int32 assemble_routine_header(int no_locals,
           sprintf(fnt, "%s = ", variable_name(1));
           AO.marker = STRING_MV;
           AO.type   = CONSTANT_OT;
-          AO.value  = compile_string(fnt, FALSE, FALSE);
+          AO.value  = compile_string(fnt, STRCTX_INFIX);
           assembleg_1(streamstr_gc, AO);
           AO.marker = 0;
           AO.type = LOCALVAR_OT;
@@ -1617,7 +1617,7 @@ extern int32 assemble_routine_header(int no_locals,
 
         AO.marker = STRING_MV;
         AO.type   = CONSTANT_OT;
-        AO.value  = compile_string(") ]^", FALSE, FALSE);
+        AO.value  = compile_string(") ]^", STRCTX_INFIX);
         assembleg_1(streamstr_gc, AO);
       }
     }

@@ -295,7 +295,7 @@ static void parse_print_z(int finally_return)
               if (strlen(token_text) > 32)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
                   AO.marker = STRING_MV;
-                  AO.value  = compile_string(token_text, FALSE, FALSE);
+                  AO.value  = compile_string(token_text, STRCTX_GAME);
                   assemblez_1(print_paddr_zc, AO);
                   if (finally_return)
                   {   get_next_token();
@@ -524,7 +524,7 @@ static void parse_print_g(int finally_return)
                  so this always goes into the string area. */
               {   INITAOT(&AO, CONSTANT_OT);
                   AO.marker = STRING_MV;
-                  AO.value  = compile_string(token_text, FALSE, FALSE);
+                  AO.value  = compile_string(token_text, STRCTX_GAME);
                   assembleg_1(streamstr_gc, AO);
                   if (finally_return)
                   {   get_next_token();
@@ -961,6 +961,10 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -983,7 +987,6 @@ static void parse_statement_z(int break_label, int continue_label)
                              assemble_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -991,7 +994,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1001,7 +1003,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
@@ -1596,7 +1597,9 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, LONG_CONSTANT_OT);
-                     AO4.value = compile_string(token_text, TRUE, TRUE);
+                     /* This string must be in low memory so that the
+                        dynamic string table can refer to it. */
+                     AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                  }
                  else
                  {   put_token_back();
@@ -1919,6 +1922,10 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -1941,7 +1948,6 @@ static void parse_statement_g(int break_label, int continue_label)
                              assemble_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -1949,7 +1955,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1959,7 +1964,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
@@ -2533,7 +2537,10 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, CONSTANT_OT);
-                     AO4.value = compile_string(token_text, TRUE, TRUE);
+                     /* This is not actually placed in low memory; Glulx
+                        has no such concept. We use the LOWSTRING flag
+                        for compatibility with older compiler behavior. */
+                     AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                      AO4.marker = STRING_MV;
                  }
                  else

@@ -182,6 +182,12 @@ static void select_target(int targ)
     /* MAX_NUM_ATTR_BYTES can be increased in header.h without fear. */
   }
 
+  if (MAX_ADJECTIVES > 255) {
+    MAX_ADJECTIVES = 255;
+    warning("MAX_ADJECTIVES cannot exceed 255; resetting to 255");
+    /* Only used under Grammar__Version 1, which is obsolete. */
+  }
+    
   /* Set up a few more variables that depend on the above values */
 
   if (!targ) {
@@ -1065,6 +1071,7 @@ extern void translate_temp_filename(int i)
     {   case 1: p=Temp1_Name; break;
         case 2: p=Temp2_Name; break;
         case 3: p=Temp3_Name; break;
+        default: return;
     }
     if (strlen(Temporary_Path)+strlen(Temporary_File)+6 >= PATHLEN) {
         printf ("Temporary_Path is too long.\n");
@@ -1279,15 +1286,16 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   ++dir         add this directory to Include_Path\n\
   +PATH=dir     change the PATH to this directory\n\
   ++PATH=dir    add this directory to the PATH\n\n\
-  $...          one of the following memory commands:\n");
+  $...          one of the following configuration commands:\n");
   
   printf(
-"     $list            list current memory allocation settings\n\
+"     $list            list current settings\n\
      $huge            make standard \"huge game\" settings %s\n\
      $large           make standard \"large game\" settings %s\n\
      $small           make standard \"small game\" settings %s\n\
      $?SETTING        explain briefly what SETTING is for\n\
-     $SETTING=number  change SETTING to given number\n\n",
+     $SETTING=number  change SETTING to given number\n\
+     $#SYMBOL=number  define SYMBOL as a constant in the story\n\n",
     (DEFAULT_MEMORY_SIZE==HUGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==LARGE_SIZE)?"(default)":"",
     (DEFAULT_MEMORY_SIZE==SMALL_SIZE)?"(default)":"");
@@ -1304,6 +1312,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --size huge, --size large, --size small\n\
   --helpopt SETTING\n\
   --opt SETTING=number\n\
+  --define SETTING=number\n\
   --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
@@ -1331,8 +1340,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   f   frequencies mode: show how useful abbreviations are\n\
-  g   traces calls to functions (except in the library)\n\
-  g2  traces calls to all functions\n\
+  g   traces calls to all game functions\n\
+  g2  traces calls to all game and library functions\n\
+  g3  traces calls to all functions (including veneer)\n\
   h   print general help information\n\
   h1  print help information on filenames and path options\n\
   h2  print help information on switches (this page)\n");
@@ -1340,7 +1350,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
    printf("\
   i   ignore default switches set within the file\n\
   j   list objects as constructed\n\
-  k   output Infix debugging information to \"%s\" (and switch -D on)\n\
+  k   output debugging information to \"%s\"\n\
   l   list every statement run through Inform (not implemented)\n\
   m   say how much memory has been allocated\n\
   n   print numbers of properties, attributes and actions\n",
@@ -1356,10 +1366,11 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   u   work out most useful abbreviations (very very slowly)\n\
-  v3  compile to version-3 (\"Standard\") story file\n\
-  v4  compile to version-4 (\"Plus\") story file\n\
-  v5  compile to version-5 (\"Advanced\") story file: the default\n\
-  v6  compile to version-6 (graphical) story file\n\
+  v3  compile to version-3 (\"Standard\"/\"ZIP\") story file\n\
+  v4  compile to version-4 (\"Plus\"/\"EZIP\") story file\n\
+  v5  compile to version-5 (\"Advanced\"/\"XZIP\") story file: the default\n\
+  v6  compile to version-6 (graphical/\"YZIP\") story file\n\
+  v7  compile to version-7 (expanded \"Advanced\") story file\n\
   v8  compile to version-8 (expanded \"Advanced\") story file\n\
   w   disable warning messages\n\
   x   print # for every 100 lines compiled\n\
@@ -1439,6 +1450,7 @@ extern void switches(char *p, int cmode)
         case 'g': switch(p[i+1])
                   {   case '1': trace_fns_setting=1; s=2; break;
                       case '2': trace_fns_setting=2; s=2; break;
+                      case '3': trace_fns_setting=3; s=2; break;
                       default: trace_fns_setting=1; break;
                   }
                   break;
@@ -1454,9 +1466,7 @@ extern void switches(char *p, int cmode)
         case 'k': if (cmode == 0)
                       error("The switch '-k' can't be set with 'Switches'");
                   else
-                  {   debugfile_switch = state;
-                      if (state) define_DEBUG_switch = TRUE;
-                  }
+                      debugfile_switch = state;
                   break;
         case 'l': listing_switch = state; break;
         case 'm': memout_switch = state; break;
@@ -1847,6 +1857,15 @@ static int execute_dashdash_command(char *p, char *p2)
             return consumed2;
         }
         strcpy(cli_buff, "$?");
+        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+    }
+    else if (!strcmp(p, "define")) {
+        consumed2 = TRUE;
+        if (!p2) {
+            printf("--define must be followed by \"symbol=number\"\n");
+            return consumed2;
+        }
+        strcpy(cli_buff, "$#");
         strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
     else if (!strcmp(p, "path")) {

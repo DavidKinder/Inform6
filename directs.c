@@ -21,7 +21,8 @@ brief_location routine_starts_line; /* Source code location where the current
 
 static int constant_made_yet;      /* Have any constants been defined yet?   */
 
-static int ifdef_stack[32], ifdef_sp;
+#define MAX_IFDEF_STACK (32)
+static int ifdef_stack[MAX_IFDEF_STACK], ifdef_sp;
 
 /* ------------------------------------------------------------------------- */
 
@@ -302,7 +303,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 assembly_operand AO;
                 put_token_back();
                 AO = parse_expression(CONSTANT_CONTEXT);
-                if (module_switch && (AO.marker != 0))
+                if (AO.marker != 0)
                     error("A definite value must be given as a Dictionary flag");
                 else
                     val1 = AO.value;
@@ -315,7 +316,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                     assembly_operand AO;
                     put_token_back();
                     AO = parse_expression(CONSTANT_CONTEXT);
-                    if (module_switch && (AO.marker != 0))
+                    if (AO.marker != 0)
                         error("A definite value must be given as a Dictionary flag");
                     else
                         val3 = AO.value;
@@ -459,7 +460,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFTRUE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 0;
             }
@@ -470,7 +471,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case IFFALSE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
             {   error("This condition can't be determined");
                 flag = 1;
             }
@@ -483,6 +484,11 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
             return ebf_error_recover("semicolon after 'If...' condition", token_text);
 
+        if (ifdef_sp >= MAX_IFDEF_STACK) {
+            error("'If' directives nested too deeply");
+            panic_mode_error_recovery(); return FALSE;
+        }
+        
         if (flag)
         {   ifdef_stack[ifdef_sp++] = TRUE; return FALSE; }
         else
@@ -608,7 +614,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != DQ_TT)
             return ebf_error_recover("literal string in double-quotes", token_text);
 
-        assign_symbol(i, compile_string(token_text, TRUE, TRUE), CONSTANT_T);
+        assign_symbol(i, compile_string(token_text, STRCTX_LOWSTRING), CONSTANT_T);
         break;
 
     /* --------------------------------------------------------------------- */
@@ -754,7 +760,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     case RELEASE_CODE:
         {   assembly_operand AO;
             AO = parse_expression(CONSTANT_CONTEXT);
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
                 error("A definite value must be given as release number");
             else
                 release_number = AO.value;
@@ -1068,7 +1074,7 @@ the first constant definition");
               break;
             }
 
-            if (module_switch && (AO.marker != 0))
+            if (AO.marker != 0)
                 error("A definite value must be given as version number");
             else 
             if (glulx_mode) 
