@@ -2182,11 +2182,14 @@ extern void objects_begin_pass(void)
     else no_attributes = 0;
 
     no_objects = 0;
+    /* Setting the info for object zero is probably a relic of very old code, but we do it. */
     if (!glulx_mode) {
+        ensure_memory_list_available(&objectsz_memlist, 1);
         objectsz[0].parent = 0; objectsz[0].child = 0; objectsz[0].next = 0;
         no_individual_properties=72;
     }
     else {
+        ensure_memory_list_available(&objectsg_memlist, 1);
         objectsg[0].parent = 0; objectsg[0].child = 0; objectsg[0].next = 0;
         no_individual_properties = INDIV_PROP_START+8;
     }
