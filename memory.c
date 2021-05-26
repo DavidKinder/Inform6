@@ -344,7 +344,6 @@ int MAX_QTEXT_SIZE;
 int MAX_SYMBOLS;
 int SYMBOLS_CHUNK_SIZE;
 int HASH_TAB_SIZE;
-int MAX_OBJECTS;
 int MAX_ARRAYS;
 int MAX_ACTIONS;
 int MAX_ADJECTIVES;
@@ -437,7 +436,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_NUM_STATIC_STRINGS",
         MAX_NUM_STATIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_OBJECTS",MAX_OBJECTS);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
@@ -483,8 +481,6 @@ extern void set_memory_sizes(int size_flag)
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
-        MAX_OBJECTS = 640;
-
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 2000;
@@ -526,8 +522,6 @@ extern void set_memory_sizes(int size_flag)
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
-        MAX_OBJECTS = 512;
-
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 1300;
@@ -568,8 +562,6 @@ extern void set_memory_sizes(int size_flag)
 
         SYMBOLS_CHUNK_SIZE = 2500;
         HASH_TAB_SIZE      = 512;
-
-        MAX_OBJECTS = 300;
 
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
@@ -688,12 +680,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
   symbols banks.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_OBJECTS")==0)
-    {   printf(
-"  MAX_OBJECTS is the maximum number of objects.  (If compiling a version-3 \n\
-  game, 255 is an absolute maximum in any event.)\n");
         return;
     }
     if (strcmp(command,"MAX_ACTIONS")==0)
@@ -1111,7 +1097,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"HASH_TAB_SIZE")==0)
                 HASH_TAB_SIZE=j, flag=1;
             if (strcmp(command,"MAX_OBJECTS")==0)
-                MAX_OBJECTS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_ACTIONS")==0)
                 MAX_ACTIONS=j, flag=1;
             if (strcmp(command,"MAX_ADJECTIVES")==0)
