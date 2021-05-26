@@ -2637,6 +2637,7 @@ extern int individuals_length;
 extern uchar *individuals_table;
 extern int no_classes, no_objects;
 extern objecttz *objectsz;
+extern memory_list objectsz_memlist;
 extern objecttg *objectsg;
 extern uchar *objectatts;
 extern classinfo *class_info;

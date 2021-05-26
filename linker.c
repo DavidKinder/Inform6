@@ -876,7 +876,9 @@ at strings offset %04x (+%04x)\n",
         printf("Joining on object tree of size %d\n", m_no_objects);
 
     for (i=0, k=no_objects, last=m_props_offset;i<m_no_objects;i++)
-    {   objectsz[no_objects].atts[0]=p[m_objs_offset+14*i];
+    {
+        ensure_memory_list_available(&objectsz_memlist, no_objects+1);
+        objectsz[no_objects].atts[0]=p[m_objs_offset+14*i];
         objectsz[no_objects].atts[1]=p[m_objs_offset+14*i+1];
         objectsz[no_objects].atts[2]=p[m_objs_offset+14*i+2];
         objectsz[no_objects].atts[3]=p[m_objs_offset+14*i+3];

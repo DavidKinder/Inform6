@@ -354,7 +354,7 @@ static int individual_prop_table_size; /* Size of the table of individual
 /* ------------------------------------------------------------------------- */
 
 objecttz     *objectsz;                /* Z-code only                        */
-static memory_list objectsz_memlist;
+memory_list objectsz_memlist;
 objecttg     *objectsg;                /* Glulx only                         */
 static memory_list objectsg_memlist;
 uchar        *objectatts;              /* Glulx only                         */
@@ -932,6 +932,8 @@ static void manufacture_object_z(void)
     segment_markers.enabled = FALSE;
     directives.enabled = TRUE;
 
+    ensure_memory_list_available(&objectsz_memlist, no_objects+1);
+    
     property_inheritance_z();
 
     objectsz[no_objects].parent = parent_of_this_obj;
@@ -973,6 +975,9 @@ static void manufacture_object_g(void)
     segment_markers.enabled = FALSE;
     directives.enabled = TRUE;
 
+    ensure_memory_list_available(&objectsg_memlist, no_objects+1);
+    ensure_memory_list_available(&objectatts_memlist, no_objects+1);
+    
     property_inheritance_g();
 
     objectsg[no_objects].parent = parent_of_this_obj;
@@ -1930,8 +1935,6 @@ extern void make_object(int nearby_flag,
         get_token_location_beginning();
 
     directives.enabled = FALSE;
-
-    if (no_objects==MAX_OBJECTS) memoryerror("MAX_OBJECTS", MAX_OBJECTS);
 
     sprintf(internal_name, "nameless_obj__%d", no_objects+1);
     objectname_text = internal_name;
