@@ -354,8 +354,11 @@ static int individual_prop_table_size; /* Size of the table of individual
 /* ------------------------------------------------------------------------- */
 
 objecttz     *objectsz;                /* Z-code only                        */
+static memory_list objectsz_memlist;
 objecttg     *objectsg;                /* Glulx only                         */
+static memory_list objectsg_memlist;
 uchar        *objectatts;              /* Glulx only                         */
+static memory_list objectatts_memlist;
 static int   *classes_to_inherit_from;
 static memory_list classes_to_inherit_from_memlist;
 classinfo    *class_info;
@@ -2220,14 +2223,17 @@ extern void objects_allocate_arrays(void)
                                 "defined this segment table");
 
     if (!glulx_mode) {
-      objectsz            = my_calloc(sizeof(objecttz), MAX_OBJECTS, 
-                                "z-objects");
+      initialise_memory_list(&objectsz_memlist,
+          sizeof(objecttz), 256, (void**)&objectsz,
+          "z-objects");
     }
     else {
-      objectsg            = my_calloc(sizeof(objecttg), MAX_OBJECTS, 
-                                "g-objects");
-      objectatts          = my_calloc(NUM_ATTR_BYTES, MAX_OBJECTS, 
-                                "g-attributes");
+      initialise_memory_list(&objectsg_memlist,
+          sizeof(objecttg), 256, (void**)&objectsg,
+          "g-objects");
+      initialise_memory_list(&objectatts_memlist,
+          NUM_ATTR_BYTES, 256, (void**)&objectatts,
+          "g-attributes");
       full_object_g.props = my_calloc(sizeof(propg), MAX_OBJ_PROP_COUNT,
                               "object property list");
       full_object_g.propdata = my_calloc(sizeof(assembly_operand),
@@ -2242,9 +2248,9 @@ extern void objects_free_arrays(void)
     my_free(&prop_is_long,     "property-is-long flags");
     my_free(&prop_is_additive, "property-is-additive flags");
 
-    my_free(&objectsz,         "z-objects");
-    my_free(&objectsg,         "g-objects");
-    my_free(&objectatts,       "g-attributes");
+    deallocate_memory_list(&objectsz_memlist);
+    deallocate_memory_list(&objectsg_memlist);
+    deallocate_memory_list(&objectatts_memlist);
     deallocate_memory_list(&class_info_memlist);
     deallocate_memory_list(&classes_to_inherit_from_memlist);
 
