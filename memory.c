@@ -762,7 +762,8 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_ABBREVS")==0)
     {   printf(
 "  MAX_ABBREVS is the maximum number of declared abbreviations.  It is not \n\
-  allowed to exceed 96 in Z-code.\n");
+  allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
+  there is no limit on abbreviations.)\n");
         return;
     }
     if (strcmp(command,"MAX_DYNAMIC_STRINGS")==0)
