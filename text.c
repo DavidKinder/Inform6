@@ -35,8 +35,6 @@ int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           with ASCII character n, or -1
                                           if none of the abbreviations do    */
 int no_abbreviations;                  /* No of abbreviations defined so far */
-uchar *abbreviations_at;                 /* Memory to hold the text of any
-                                          abbreviation strings declared      */
 /* ------------------------------------------------------------------------- */
 /*   Glulx string compression storage                                        */
 /* ------------------------------------------------------------------------- */
@@ -86,6 +84,10 @@ static int unicode_entity_index(int32 unicode);
 /* ------------------------------------------------------------------------- */
 
 abbreviation *abbreviations;
+static memory_list abbreviations_memlist;
+uchar *abbreviations_at;                 /* Memory to hold the text of any
+                                          abbreviation strings declared      */
+static memory_list abbreviations_at_memlist;
 
 /* ------------------------------------------------------------------------- */
 
@@ -191,6 +193,9 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
 
 extern void make_abbreviation(char *text)
 {
+    ensure_memory_list_available(&abbreviations_memlist, no_abbreviations+1);
+    ensure_memory_list_available(&abbreviations_at_memlist, no_abbreviations+1);
+    
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
@@ -2381,9 +2386,14 @@ extern void text_begin_pass(void)
 /*  Note: for allocation and deallocation of all_the_text, see inform.c      */
 
 extern void text_allocate_arrays(void)
-{   abbreviations_at = my_malloc(MAX_ABBREVS*MAX_ABBREV_LENGTH,
+{
+    initialise_memory_list(&abbreviations_at_memlist,
+        MAX_ABBREV_LENGTH, 64, (void**)&abbreviations_at,
         "abbreviation text");
-    abbreviations    = my_calloc(sizeof(abbreviation), MAX_ABBREVS, "abbreviations");
+
+    initialise_memory_list(&abbreviations_memlist,
+        sizeof(abbreviation), 64, (void**)&abbreviations,
+        "abbreviations");
 
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
@@ -2432,8 +2442,8 @@ extern void text_free_arrays(void)
 {
     my_free(&strings_holding_area, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
-    my_free(&abbreviations_at, "abbreviation text");
-    my_free(&abbreviations,    "abbreviations");
+    deallocate_memory_list(&abbreviations_at_memlist);
+    deallocate_memory_list(&abbreviations_memlist);
 
     my_free(&dtree,            "red-black tree for dictionary");
     my_free(&final_dict_order, "final dictionary ordering table");
