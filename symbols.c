@@ -175,7 +175,7 @@ extern int strcmpcis(char *p, char *q)
 
 extern void add_config_symbol_definition(char *symbol, int32 value)
 {
-	char *str;
+    char *str;
 
     if (symbol_definitions_count == symbol_definitions_size) {
         int oldsize = symbol_definitions_size;
@@ -187,9 +187,9 @@ extern void add_config_symbol_definition(char *symbol, int32 value)
             symbol_definitions_size, "symbol definition table");
     }
 
-	str = my_malloc(strlen(symbol)+1, "symbol name");
+    str = my_malloc(strlen(symbol)+1, "symbol name");
     strcpy(str, symbol);
-    
+
     symbol_definitions[symbol_definitions_count].symbol = str;
     symbol_definitions[symbol_definitions_count].value = value;
     symbol_definitions_count++;

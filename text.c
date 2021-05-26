@@ -2246,10 +2246,10 @@ static void recursively_show_g(int node)
 
     if (d_show_buf == NULL)
     {   int flagpos;
-		int flags;
-		int verbnum;
-		
-		for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        int flags;
+        int verbnum;
+
+        for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
