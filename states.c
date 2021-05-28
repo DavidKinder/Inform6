@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "states" :  Statement translator                                        */
 /*                                                                           */
-/*   Part of Inform 6.35                                                     */
+/*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -420,11 +420,17 @@ static void parse_print_z(int finally_return)
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
+                              AO.symindex = token_value;
+                              AO.symtype = stypes[token_value];
+                              AO.symflags = sflags[token_value];
                           }
                           else
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = svals[token_value];
                               AO.marker = IROUTINE_MV;
+                              AO.symindex = token_value;
+                              AO.symtype = stypes[token_value];
+                              AO.symflags = sflags[token_value];
                               if (stypes[token_value] != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
@@ -655,11 +661,17 @@ static void parse_print_g(int finally_return)
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
+                              AO.symindex = token_value;
+                              AO.symtype = stypes[token_value];
+                              AO.symflags = sflags[token_value];
                           }
                           else
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = svals[token_value];
                               AO.marker = IROUTINE_MV;
+                              AO.symindex = token_value;
+                              AO.symtype = stypes[token_value];
+                              AO.symflags = sflags[token_value];
                               if (stypes[token_value] != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }

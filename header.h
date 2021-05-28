@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   Header file for Inform:  Z-machine ("Infocom" format) compiler          */
 /*                                                                           */
-/*                              Inform 6.35                                  */
+/*                              Inform 6.36                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
@@ -31,8 +31,8 @@
 /* ------------------------------------------------------------------------- */
 
 /* For releases, set to the release date in the form "1st January 2000" */
-#define RELEASE_DATE "22nd May 2021"
-#define RELEASE_NUMBER 1635
+#define RELEASE_DATE "in development"
+#define RELEASE_NUMBER 1636
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
@@ -721,12 +721,13 @@ static int32 unique_task_id(void)
 typedef struct assembly_operand_t
 {   int   type;
     int32 value;
-    int   symtype;   /* 6.30 */
-    int   symflags;  /* 6.30 */
+    int   symindex;
+    int   symtype;
+    int   symflags;
     int   marker;
 } assembly_operand;
 
-#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symtype=0, (aop)->symflags=0)
+#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1, (aop)->symtype=0, (aop)->symflags=0)
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
@@ -853,8 +854,9 @@ typedef struct token_data_s
 {   char *text;
     int32 value; /* ###-long */
     int type;
-    int symtype;  /* 6.30 */
-    int symflags;   /* 6.30 */
+    int symindex;
+    int symtype;
+    int symflags;
     int marker;
     debug_location location;
 } token_data;
@@ -2148,7 +2150,7 @@ extern int32 *variable_tokens;
 extern assembly_instruction AI;
 extern int32 *named_routine_symbols;
 
-extern void print_operand(assembly_operand o);
+extern void print_operand(const assembly_operand *o, int annotate);
 extern char *variable_name(int32 i);
 extern void set_constant_ot(assembly_operand *AO);
 extern int  is_constant_ot(int otval);
@@ -2375,6 +2377,7 @@ extern int z_system_constant_list[];
 extern int glulx_system_constant_list[];
 
 extern int32 value_of_system_constant(int t);
+extern char *name_of_system_constant(int t);
 extern void clear_expression_space(void);
 extern void show_tree(assembly_operand AO, int annotate);
 extern assembly_operand parse_expression(int context);
@@ -2839,6 +2842,7 @@ extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern void  show_dictionary(void);
 extern void  word_to_ascii(uchar *p, char *result);
+extern void  print_dict_word(int node);
 extern void  write_dictionary_to_transcript(void);
 extern void  sort_dictionary(void);
 extern void  dictionary_prepare(char *dword, uchar *optresult);
@@ -2856,6 +2860,7 @@ extern int32 veneer_routine_address[];
 
 extern void compile_initial_routine(void);
 extern assembly_operand veneer_routine(int code);
+extern char *veneer_routine_name(int code);
 extern void compile_veneer(void);
 
 /* ------------------------------------------------------------------------- */

@@ -3,7 +3,7 @@
 /*              by the compiler (e.g. DefArt) which the program doesn't      */
 /*              provide                                                      */
 /*                                                                           */
-/*   Part of Inform 6.35                                                     */
+/*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -2167,6 +2167,19 @@ extern assembly_operand veneer_routine(int code)
         mark_as_needed_g(code);
     }
     return(AO);
+}
+
+extern char *veneer_routine_name(int code)
+{
+    if (code < 0 || code >= VENEER_ROUTINES) {
+        return "???";
+    }
+    if (!glulx_mode) {
+        return VRs_z[code].name;
+    }
+    else {
+        return VRs_g[code].name;
+    }
 }
 
 static void compile_symbol_table_routine(void)

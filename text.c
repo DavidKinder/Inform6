@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "text" : Text translation, the abbreviations optimiser, the dictionary  */
 /*                                                                           */
-/*   Part of Inform 6.35                                                     */
+/*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -2184,6 +2184,41 @@ extern void word_to_ascii(uchar *p, char *results)
     results[cc] = 0;
 }
 
+/* Print a dictionary word to stdout. 
+   (This assumes that d_show_buf is null.)
+ */
+void print_dict_word(int node)
+{
+    uchar *p;
+    int cprinted;
+    
+    if (!glulx_mode) {
+        char textual_form[32];
+        int res = (version_number == 3)?4:6; /* byte length of encoded text */
+        p = (uchar *)dictionary + 7 + (3+res)*node;
+        
+        word_to_ascii(p, textual_form);
+        
+        for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
+            show_char(textual_form[cprinted]);
+    }
+    else {
+        p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
+        
+        for (cprinted = 0; cprinted<DICT_WORD_SIZE; cprinted++)
+        {
+            uint32 ch;
+            if (DICT_CHAR_SIZE == 1)
+                ch = p[1+cprinted];
+            else
+                ch = (p[4*cprinted+4] << 24) + (p[4*cprinted+5] << 16) + (p[4*cprinted+6] << 8) + (p[4*cprinted+7]);
+            if (!ch)
+                break;
+            show_uchar(ch);
+        }
+    }
+}
+
 static void recursively_show_z(int node)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[32];
@@ -2257,10 +2292,10 @@ static void recursively_show_g(int node)
         show_char(' ');
 
     if (d_show_buf == NULL)
-    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
-        int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+    {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
+        for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         if (flags & 128)
         {   printf("noun ");
             if (flags & 4)  printf("p"); else printf(" ");

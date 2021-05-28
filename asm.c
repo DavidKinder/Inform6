@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "asm" : The Inform assembler                                            */
 /*                                                                           */
-/*   Part of Inform 6.35                                                     */
+/*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -208,22 +208,54 @@ extern char *variable_name(int32 i)
     return ((char *) symbs[variable_tokens[i]]);
 }
 
-static void print_operand_z(assembly_operand o)
-{   switch(o.type)
+/* Print symbolic information about the AO, if there is any. */
+static void print_operand_annotation(const assembly_operand *o)
+{
+    int any = FALSE;
+    if (o->marker) {
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", describe_mv(o->marker));
+        switch (o->marker) {
+        case VROUTINE_MV:
+            printf(": %s", veneer_routine_name(o->value));
+            break;
+        case INCON_MV:
+            printf(": %s", name_of_system_constant(o->value));
+            break;
+        case DWORD_MV:
+            printf(": '");
+            print_dict_word(o->value);
+            printf("'");
+            break;
+        }
+    }
+    if (o->symindex >= 0 && o->symindex < no_symbols) {
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", (char *)symbs[o->symindex]);
+    }
+    if (any) printf(")");       
+}
+
+static void print_operand_z(const assembly_operand *o, int annotate)
+{   switch(o->type)
     {   case EXPRESSION_OT: printf("expr_"); break;
         case LONG_CONSTANT_OT: printf("long_"); break;
         case SHORT_CONSTANT_OT: printf("short_"); break;
         case VARIABLE_OT:
-             if (o.value==0) { printf("sp"); return; }
-             printf("%s", variable_name(o.value)); return;
+             if (o->value==0) { printf("sp"); return; }
+             printf("%s", variable_name(o->value)); return;
         case OMITTED_OT: printf("<no value>"); return;
     }
-    printf("%d", o.value);
+    printf("%d", o->value);
+    if (annotate)
+        print_operand_annotation(o);
 }
 
-static void print_operand_g(assembly_operand o)
+static void print_operand_g(const assembly_operand *o, int annotate)
 {
-  switch (o.type) {
+  switch (o->type) {
   case EXPRESSION_OT: printf("expr_"); break;
   case CONSTANT_OT: printf("long_"); break;
   case HALFCONSTANT_OT: printf("short_"); break;
@@ -231,32 +263,34 @@ static void print_operand_g(assembly_operand o)
   case ZEROCONSTANT_OT: printf("zero_"); return;
   case DEREFERENCE_OT: printf("*"); break;
   case GLOBALVAR_OT: 
-    printf("%s (global_%d)", variable_name(o.value), o.value); 
+    printf("global_%d (%s)", o->value, variable_name(o->value)); 
     return;
   case LOCALVAR_OT: 
-    if (o.value == 0)
+    if (o->value == 0)
       printf("stackptr"); 
     else
-      printf("%s (local_%d)", variable_name(o.value), o.value-1); 
+      printf("local_%d (%s)", o->value-1, variable_name(o->value)); 
     return;
   case SYSFUN_OT:
-    if (o.value >= 0 && o.value < NUMBER_SYSTEM_FUNCTIONS)
-      printf("%s", system_functions.keywords[o.value]);
+    if (o->value >= 0 && o->value < NUMBER_SYSTEM_FUNCTIONS)
+      printf("%s", system_functions.keywords[o->value]);
     else
       printf("<unnamed system function>");
     return;
   case OMITTED_OT: printf("<no value>"); return;
   default: printf("???_"); break; 
   }
-  printf("%d", o.value);
+  printf("%d", o->value);
+  if (annotate)
+    print_operand_annotation(o);
 }
 
-extern void print_operand(assembly_operand o)
+extern void print_operand(const assembly_operand *o, int annotate)
 {
   if (!glulx_mode)
-    print_operand_z(o);
+    print_operand_z(o, annotate);
   else
-    print_operand_g(o);
+    print_operand_g(o, annotate);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -273,7 +307,7 @@ static void byteout(int32 i, int mv)
 
 /* ------------------------------------------------------------------------- */
 /*   A database of the 115 canonical Infocom opcodes in Versions 3 to 6      */
-/*   And of the however-many-there-are Glulx opcode                          */
+/*   And of the however-many-there-are Glulx opcodes                         */
 /* ------------------------------------------------------------------------- */
 
 typedef struct opcodez
@@ -981,7 +1015,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
         for (i=0; i<AI->operand_count; i++)
         {   if ((i==0) && (opco.op_rules == VARIAB))
             {   if ((AI->operand[0]).type == VARIABLE_OT)
-                {   printf("["); print_operand_z(AI->operand[i]); }
+                {   printf("["); print_operand_z(&AI->operand[i], TRUE); }
                 else
                     printf("%s", variable_name((AI->operand[0]).value));
             }
@@ -989,14 +1023,14 @@ extern void assemblez_instruction(assembly_instruction *AI)
             if ((i==0) && (opco.op_rules == LABEL))
             {   printf("L%d", AI->operand[0].value);
             }
-            else print_operand_z(AI->operand[i]);
+            else print_operand_z(&AI->operand[i], TRUE);
             printf(" ");
         }
         if (AI->store_variable_number != -1)
         {   assembly_operand AO;
             printf("-> ");
             AO.type = VARIABLE_OT; AO.value = AI->store_variable_number;
-            print_operand_z(AO); printf(" ");
+            print_operand_z(&AO, TRUE); printf(" ");
         }
 
         switch(AI->branch_label_number)
@@ -1346,7 +1380,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
                 printf("to L%d", AI->operand[i].value);
             }
           else {
-            print_operand_g(AI->operand[i]);
+            print_operand_g(&AI->operand[i], TRUE);
           }
           printf(" ");
       }

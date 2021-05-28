@@ -2,7 +2,7 @@
 /*   "verbs" :  Manages actions and grammar tables; parses the directives    */
 /*              Verb and Extend.                                             */
 /*                                                                           */
-/*   Part of Inform 6.35                                                     */
+/*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -102,10 +102,188 @@ static int English_verb_list_size;     /* Size of the list in bytes
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
 
+static char *find_verb_by_number(int num);
+
+static void list_grammar_line_v1(int mark)
+{
+    int action, actsym;
+    int ix, len;
+    char *str;
+
+    /* There is no GV1 for Glulx. */
+    if (glulx_mode)
+        return;
+    
+    action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+    mark += 2;
+    
+    printf("  *");
+    while (grammar_lines[mark] != 15) {
+        uchar tok = grammar_lines[mark];
+        mark += 3;
+        
+        switch (tok) {
+        case 0:
+            printf(" noun");
+            break;
+        case 1:
+            printf(" held");
+            break;
+        case 2:
+            printf(" multi");
+            break;
+        case 3:
+            printf(" multiheld");
+            break;
+        case 4:
+            printf(" multiexcept");
+            break;
+        case 5:
+            printf(" multiinside");
+            break;
+        case 6:
+            printf(" creature");
+            break;
+        case 7:
+            printf(" special");
+            break;
+        case 8:
+            printf(" number");
+            break;
+        default:
+            if (tok >= 16 && tok < 48) {
+                printf(" noun=%d", tok-16);
+            }
+            else if (tok >= 48 && tok < 80) {
+                printf(" routine=%d", tok-48);
+            }
+            else if (tok >= 80 && tok < 128) {
+                printf(" scope=%d", tok-80);
+            }
+            else if (tok >= 128 && tok < 160) {
+                printf(" attr=%d", tok-128);
+            }
+            else if (tok >= 160) {
+                printf(" prep=%d", tok);
+            }
+            else {
+                printf(" ???");
+            }
+        }
+    }
+
+    printf(" -> ");
+    actsym = action_symbol[action];
+    str = (char *)(symbs[actsym]);
+    len = strlen(str) - 3;   /* remove "__A" */
+    for (ix=0; ix<len; ix++) putchar(str[ix]);
+    printf("\n");
+}
+
+static void list_grammar_line_v2(int mark)
+{
+    int action, flags, actsym;
+    int ix, len;
+    char *str;
+    
+    if (!glulx_mode) {
+        action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+        flags = (action & 0x400);
+        action &= 0x3FF;
+        mark += 2;
+    }
+    else {
+        action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+        mark += 2;
+        flags = grammar_lines[mark++];
+    }
+    
+    printf("  *");
+    while (grammar_lines[mark] != 15) {
+        int toktype, tokdat, tokalt;
+        if (!glulx_mode) {
+            toktype = grammar_lines[mark] & 0x0F;
+            tokalt = (grammar_lines[mark] >> 4) & 0x03;
+            mark += 1;
+            tokdat = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+            mark += 2;
+        }
+        else {
+            toktype = grammar_lines[mark] & 0x0F;
+            tokalt = (grammar_lines[mark] >> 4) & 0x03;
+            mark += 1;
+            tokdat = (grammar_lines[mark] << 24) | (grammar_lines[mark+1] << 16) | (grammar_lines[mark+2] << 8) | (grammar_lines[mark+3]);
+            mark += 4;
+        }
+
+        if (tokalt == 3 || tokalt == 1)
+            printf(" /");
+                
+        switch (toktype) {
+        case 1:
+            switch (tokdat) {
+            case 0: printf(" noun"); break;
+            case 1: printf(" held"); break;
+            case 2: printf(" multi"); break;
+            case 3: printf(" multiheld"); break;
+            case 4: printf(" multiexcept"); break;
+            case 5: printf(" multiinside"); break;
+            case 6: printf(" creature"); break;
+            case 7: printf(" special"); break;
+            case 8: printf(" number"); break;
+            case 9: printf(" topic"); break;
+            default: printf(" ???"); break;
+            }
+            break;
+        case 2:
+            printf(" '");
+            print_dict_word(tokdat);
+            printf("'");
+            break;
+        case 3:
+            printf(" noun=%d", tokdat);
+            break;
+        case 4:
+            printf(" attr=%d", tokdat);
+            break;
+        case 5:
+            printf(" scope=%d", tokdat);
+            break;
+        case 6:
+            printf(" routine=%d", tokdat);
+            break;
+        default:
+            printf(" ???%d:%d", toktype, tokdat);
+            break;
+        }
+    }
+    printf(" -> ");
+    actsym = action_symbol[action];
+    str = (char *)(symbs[actsym]);
+    len = strlen(str) - 3;   /* remove "__A" */
+    for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (flags) printf(" (reversed)");
+    printf("\n");
+}
+
 extern void list_verb_table(void)
-{   int i;
-    for (i=0; i<no_Inform_verbs; i++)
-        printf("Verb %2d has %d lines\n", i, Inform_verbs[i].lines);
+{
+    int verb, lx;
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        char *verbword = find_verb_by_number(verb);
+        printf("Verb '%s'\n", verbword);
+        for (lx=0; lx<Inform_verbs[verb].lines; lx++) {
+            int mark = Inform_verbs[verb].l[lx];
+            switch (grammar_version_number) {
+            case 1:
+                list_grammar_line_v1(mark);
+                break;
+            case 2:
+                list_grammar_line_v2(mark);
+                break;
+            }
+        }
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -326,6 +504,22 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
         p=p+(uchar)p[0];
     }
     return(-1);
+}
+
+static char *find_verb_by_number(int num)
+{
+    /*  Find the English verb string with the given verb number. */
+    char *p;
+    p=English_verb_list;
+    while (p < English_verb_list_top)
+    {
+        int val = (p[1] << 8) | p[2];
+        if (val == num) {
+            return p+3;
+        }
+        p=p+(uchar)p[0];
+    }
+    return "???";
 }
 
 static void register_verb(char *English_verb, int number)
