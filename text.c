@@ -2280,10 +2280,10 @@ static void recursively_show_g(int node)
         show_char(' ');
 
     if (d_show_buf == NULL)
-    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
-        int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+    {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
+        for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         if (flags & 128)
         {   printf("noun ");
             if (flags & 4)  printf("p"); else printf(" ");
