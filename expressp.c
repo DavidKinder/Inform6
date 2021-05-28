@@ -73,6 +73,7 @@ static int get_next_etoken(void)
         current_token.value = token_value;
         current_token.type = token_type;
         current_token.marker = 0;
+        current_token.symindex = -1;
         current_token.symtype = 0;
         current_token.symflags = -1;
     }
@@ -125,6 +126,7 @@ but not used as a value:", unicode);
 
             v = svals[symbol];
 
+            current_token.symindex = symbol;
             current_token.symtype = stypes[symbol];
             current_token.symflags = sflags[symbol];
             switch(stypes[symbol])
@@ -752,6 +754,14 @@ extern int32 value_of_system_constant(int t)
     return value_of_system_constant_g(t);    
 }
 
+extern char *name_of_system_constant(int t)
+{
+  if (t < 0 || t >= NO_SYSTEM_CONSTANTS) {
+    return "???";
+  }
+  return system_constants.keywords[t];
+}
+
 static int evaluate_term(token_data t, assembly_operand *o)
 {
     /*  If the given token is a constant, evaluate it into the operand.
@@ -762,6 +772,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
     int32 v;
 
     o->marker = t.marker;
+    o->symindex = t.symindex;
     o->symtype = t.symtype;
     o->symflags = t.symflags;
 
@@ -972,7 +983,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
     }
     if (expr_trace_level >= 2)
     {   printf("Marking top of emitter stack (which is ");
-        print_operand(emitter_stack[emitter_sp-1]);
+        print_operand(&emitter_stack[emitter_sp-1], FALSE);
         printf(") as ");
         switch(marker)
         {
@@ -1036,7 +1047,7 @@ static void emit_token(token_data t)
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
         for (i=0; i<emitter_sp; i++)
-        {   print_operand(emitter_stack[i]); printf(" ");
+        {   print_operand(&emitter_stack[i], FALSE); printf(" ");
             if (emitter_markers[i] == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
             if (emitter_markers[i] == ARGUMENT_VALUE_MARKER) printf(":ARGUMENT ");
             if (emitter_markers[i] == OR_VALUE_MARKER) printf(":OR ");
@@ -1390,7 +1401,7 @@ the range -32768 to +32767:", folding_error);
 
     if (expr_trace_level >= 2)
     {   printf("Folding constant to: ");
-        print_operand(emitter_stack[emitter_sp - 1]);
+        print_operand(&emitter_stack[emitter_sp - 1], FALSE);
         printf("\n");
     }
 
@@ -1406,9 +1417,7 @@ static void show_node(int n, int depth, int annotate)
     for (j=0; j<2*depth+2; j++) printf(" ");
 
     if (ET[n].down == -1)
-    {   print_operand(ET[n].value);
-        if (annotate && (ET[n].value.marker != 0))
-            printf(" [%s]", describe_mv(ET[n].value.marker));
+    {   print_operand(&ET[n].value, annotate);
         printf("\n");
     }
     else
@@ -1430,9 +1439,7 @@ static void show_node(int n, int depth, int annotate)
 extern void show_tree(assembly_operand AO, int annotate)
 {   if (AO.type == EXPRESSION_OT) show_node(AO.value, 0, annotate);
     else
-    {   printf("Constant: "); print_operand(AO);
-        if (annotate && (AO.marker != 0))
-            printf(" [%s]", describe_mv(AO.marker));
+    {   printf("Constant: "); print_operand(&AO, annotate);
         printf("\n");
     }
 }
