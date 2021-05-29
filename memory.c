@@ -165,6 +165,10 @@ extern void my_free(void *pointer, char *whatitwas)
 /*   (ALLOC_CHUNK_SIZE used to be a compile-time setting. But we are no      */
 /*   longer limited to 72 chunks, so ALLOC_CHUNK_SIZE is just a #define      */
 /*   now.)                                                                   */
+/*                                                                           */
+/*   TODO: This is not really an efficient data structure. (Except for       */
+/*   sparse arrays. But we use only memory_blocks from zero up, never        */
+/*   sparsely.) So we should replace all memory_blocks with memory_lists.    */
 /* ------------------------------------------------------------------------- */
 
 #define ALLOC_CHUNK_SIZE (2048)
