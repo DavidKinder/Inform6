@@ -11,6 +11,13 @@
 
 int32 malloced_bytes=0;                /* Total amount of memory allocated   */
 
+/* Wrappers for malloc(), realloc(), etc.
+
+   Note that all of these functions call memory_out_error() on failure.
+   This is a fatal error and does not return. However, we check my_malloc()
+   return values anyway as a matter of good habit.
+ */
+
 #ifdef PC_QUICKC
 
 extern void *my_malloc(int32 size, char *whatfor)
@@ -196,6 +203,7 @@ extern void initialise_memory_block(memory_block *MB)
        the chunks themselves yet. */
     MB->count = 64;
     MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, -1));
+    if (MB->chunks == NULL) return;
     for (i=0; i<MB->count; i++) MB->chunks[i] = NULL;
 }
 
@@ -254,6 +262,7 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
         /* Bump up the chunk count to the next higher multiple of 16. */
         int newcount = ((MB->count | 15) + 1) + 16;
         my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, -1));
+        if (MB->chunks == NULL) return;
         for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
         MB->count = newcount;
     }
@@ -262,6 +271,7 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
     {
         int i;
         MB->chunks[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
+        if (MB->chunks[ch] == NULL) return;
         p = MB->chunks[ch];
         for (i=0; i<ALLOC_CHUNK_SIZE; i++) p[i] = 255;
     }
@@ -293,6 +303,7 @@ void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void *
     if (initalloc) {
         ML->count = initalloc;
         ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
+        if (ML->data == NULL) return;
     }
 
     if (ML->extpointer)
@@ -335,6 +346,7 @@ void ensure_memory_list_available(memory_list *ML, int count)
         ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
     else
         my_recalloc(&(ML->data), ML->itemsize, oldcount, ML->count, ML->whatfor);
+    if (ML->data == NULL) return;
 
     if (ML->extpointer)
         *(ML->extpointer) = ML->data;
