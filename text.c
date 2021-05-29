@@ -2155,6 +2155,10 @@ extern void word_to_ascii(uchar *p, char *results)
         encoded_word[7] = 8*(((int) p[4])&0x3) + (((int) p[5])&0xe0)/32;
         encoded_word[8] = ((int) p[5])&0x1f;
     }
+    else
+    {
+        encoded_word[6] = encoded_word[7] = encoded_word[8] = 0;
+    }
 
     shift = 0; cc = 0;
     for (i=0; i< ((version_number==3)?6:9); i++)
