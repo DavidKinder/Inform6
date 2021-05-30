@@ -970,9 +970,9 @@ or less.");
             }
 
             printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
+%6d symbols                    %8ld bytes of memory\n\
 Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
+                 no_symbols,
                  (long int) malloced_bytes,
                  version_number,
                  version_name(version_number),
@@ -1658,9 +1658,9 @@ table format requested (producing number 2 format instead)");
             {char serialnum[8];
             write_serial_number(serialnum);
             printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
+%6d symbols                    %8ld bytes of memory\n\
 Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
+                 no_symbols,
                  (long int) malloced_bytes,
                  version_name(version_number),
                  output_called,
