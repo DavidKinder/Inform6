@@ -79,7 +79,8 @@ static int routine_locals;         /* The number of local variables used by
 
 static int32 routine_start_pc;
 
-int32 *named_routine_symbols;
+int32 *named_routine_symbols;      /* Allocated up to no_named_routines      */
+static memory_list named_routine_symbols_memlist;
 
 static void transfer_routine_z(void);
 static void transfer_routine_g(void);
@@ -1516,7 +1517,8 @@ extern int32 assemble_routine_header(int no_locals,
             }
             else
             {   i = no_named_routines++;
-                  named_routine_symbols[i] = the_symbol;
+                ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
+                named_routine_symbols[i] = the_symbol;
                 CON.value = i/8; CON.type = LONG_CONSTANT_OT; CON.marker = 0;
                 RFA.value = routine_flags_array_SC;
                 RFA.type = LONG_CONSTANT_OT; RFA.marker = INCON_MV;
@@ -1590,6 +1592,7 @@ extern int32 assemble_routine_header(int no_locals,
           }
           else {
             i = no_named_routines++;
+            ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
             named_routine_symbols[i] = the_symbol;
           }
         }
@@ -3182,8 +3185,9 @@ extern void asm_allocate_arrays(void)
     zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
     zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
 
-    named_routine_symbols
-        = my_calloc(sizeof(int32), MAX_SYMBOLS, "named routine symbols");
+    initialise_memory_list(&named_routine_symbols_memlist,
+        sizeof(int32), 1000, (void**)&named_routine_symbols,
+        "named routine symbols");
 }
 
 extern void asm_free_arrays(void)
@@ -3201,7 +3205,7 @@ extern void asm_free_arrays(void)
     my_free(&zcode_holding_area, "compiled routine code area");
     my_free(&zcode_markers, "compiled routine code markers");
 
-    my_free(&named_routine_symbols, "named routine symbols");
+    deallocate_memory_list(&named_routine_symbols_memlist);
     deallocate_memory_block(&zcode_area);
 }
 

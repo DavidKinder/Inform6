@@ -52,9 +52,9 @@ int no_named_constants;                         /* Copied into story file    */
 /*   as their numbers and scope are too limited for this to be efficient.    */
 /* ------------------------------------------------------------------------- */
 
-symbolinfo *symbols;
+symbolinfo *symbols;                           /* Allocated up to no_symbols */
 static memory_list symbols_memlist;
-symboldebuginfo *symbol_debug_info;
+symboldebuginfo *symbol_debug_info;            /* Allocated up to no_symbols */
 static memory_list symbol_debug_info_memlist;
 
 /* ------------------------------------------------------------------------- */
