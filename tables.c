@@ -467,7 +467,7 @@ static void construct_storyfile_z(void)
 
     if (define_INFIX_switch)
     {   for (i=0, k=1, l=0; i<no_named_routines; i++)
-        {   if (sflags[named_routine_symbols[i]] & STAR_SFLAG) l=l+k;
+        {   if (symbols[named_routine_symbols[i]].flags & STAR_SFLAG) l=l+k;
             k=k*2;
             if (k==256) { p[mark++] = l; k=1; l=0; }
         }

@@ -92,10 +92,10 @@ static int32 backpatch_value_z(int32 value)
             break;
         case MAIN_MV:
             value = symbol_index("Main", -1);
-            if (stypes[value] != ROUTINE_T)
+            if (symbols[value].type != ROUTINE_T)
                 error("No 'Main' routine has been defined");
-            sflags[value] |= USED_SFLAG;
-            value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)
                 value = df_stripped_address_for_address(value);
             value += code_offset/scale_factor;
@@ -110,34 +110,34 @@ static int32 backpatch_value_z(int32 value)
                 value = 0;
                 break;
             }
-            if (sflags[value] & UNKNOWN_SFLAG)
-            {   if (!(sflags[value] & UERROR_SFLAG))
-                {   sflags[value] |= UERROR_SFLAG;
+            if (symbols[value].flags & UNKNOWN_SFLAG)
+            {   if (!(symbols[value].flags & UERROR_SFLAG))
+                {   symbols[value].flags |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        symbs[value], slines[value]);
+                        symbols[value].name, symbols[value].line);
                 }
             }
             else
-            if (sflags[value] & CHANGE_SFLAG)
-            {   sflags[value] &= (~(CHANGE_SFLAG));
-                backpatch_marker = (svals[value]/0x10000);
+            if (symbols[value].flags & CHANGE_SFLAG)
+            {   symbols[value].flags &= (~(CHANGE_SFLAG));
+                backpatch_marker = (symbols[value].value/0x10000);
                 if ((backpatch_marker < 0)
                     || (backpatch_marker > LARGEST_BPATCH_MV))
                 {
                     if (no_link_errors == 0)
                     {   compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        symbs[value]);
+                        symbols[value].name);
                         backpatch_error_flag = TRUE;
                     }
                 }
                 else
-                    svals[value] = backpatch_value_z((svals[value]) % 0x10000);
+                    symbols[value].value = backpatch_value_z((symbols[value].value) % 0x10000);
             }
 
-            sflags[value] |= USED_SFLAG;
-            {   int t = stypes[value];
-                value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            {   int t = symbols[value].type;
+                value = symbols[value].value;
                 switch(t)
                 {   case ROUTINE_T: 
                         if (OMIT_UNUSED_ROUTINES)
@@ -242,10 +242,10 @@ static int32 backpatch_value_g(int32 value)
             break;
         case MAIN_MV:
             value = symbol_index("Main", -1);
-            if (stypes[value] != ROUTINE_T)
+            if (symbols[value].type != ROUTINE_T)
                 error("No 'Main' routine has been defined");
-            sflags[value] |= USED_SFLAG;
-            value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)
                 value = df_stripped_address_for_address(value);
             value += code_offset;
@@ -260,34 +260,34 @@ static int32 backpatch_value_g(int32 value)
                 value = 0;
                 break;
             }
-            if (sflags[value] & UNKNOWN_SFLAG)
-            {   if (!(sflags[value] & UERROR_SFLAG))
-                {   sflags[value] |= UERROR_SFLAG;
+            if (symbols[value].flags & UNKNOWN_SFLAG)
+            {   if (!(symbols[value].flags & UERROR_SFLAG))
+                {   symbols[value].flags |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        symbs[value], slines[value]);
+                        symbols[value].name, symbols[value].line);
                 }
             }
             else
-            if (sflags[value] & CHANGE_SFLAG)
-            {   sflags[value] &= (~(CHANGE_SFLAG));
-                backpatch_marker = smarks[value];
+            if (symbols[value].flags & CHANGE_SFLAG)
+            {   symbols[value].flags &= (~(CHANGE_SFLAG));
+                backpatch_marker = symbols[value].marker;
                 if ((backpatch_marker < 0)
                     || (backpatch_marker > LARGEST_BPATCH_MV))
                 {
                     if (no_link_errors == 0)
                     {   compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        symbs[value]);
+                        symbols[value].name);
                         backpatch_error_flag = TRUE;
                     }
                 }
                 else
-                    svals[value] = backpatch_value_g(svals[value]);
+                    symbols[value].value = backpatch_value_g(symbols[value].value);
             }
 
-            sflags[value] |= USED_SFLAG;
-            {   int t = stypes[value];
-                value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            {   int t = symbols[value].type;
+                value = symbols[value].value;
                 switch(t)
                 {
                     case ROUTINE_T:

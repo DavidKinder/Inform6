@@ -160,9 +160,9 @@ extern int parse_given_directive(int internal_flag)
             return ebf_error_recover("new constant name", token_text);
         }
 
-        if (!(sflags[i] & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG)))
+        if (!(symbols[i].flags & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG)))
         {   discard_token_location(beginning_debug_location);
-            return ebf_symbol_error_recover("new constant name", token_text, typename(stypes[i]), slines[i]);
+            return ebf_symbol_error_recover("new constant name", token_text, typename(symbols[i].type), symbols[i].line);
         }
 
         assign_symbol(i, 0, CONSTANT_T);
@@ -171,7 +171,7 @@ extern int parse_given_directive(int internal_flag)
         get_next_token();
 
         if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
-        {   if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+        {   if (debugfile_switch && !(symbols[i].flags & REDEFINABLE_SFLAG))
             {   debug_file_printf("<constant>");
                 debug_file_printf("<identifier>%s</identifier>", constant_name);
                 write_debug_symbol_optional_backpatch(i);
@@ -182,7 +182,7 @@ extern int parse_given_directive(int internal_flag)
         }
 
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
-        {   if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+        {   if (debugfile_switch && !(symbols[i].flags & REDEFINABLE_SFLAG))
             {   debug_file_printf("<constant>");
                 debug_file_printf("<identifier>%s</identifier>", constant_name);
                 write_debug_symbol_optional_backpatch(i);
@@ -199,7 +199,7 @@ extern int parse_given_directive(int internal_flag)
             if (AO.marker != 0)
             {   assign_marked_symbol(i, AO.marker, AO.value,
                     CONSTANT_T);
-                sflags[i] |= CHANGE_SFLAG;
+                symbols[i].flags |= CHANGE_SFLAG;
                 if (i == grammar_version_symbol)
                     error(
                 "Grammar__Version must be given an explicit constant value");
@@ -218,7 +218,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             }
         }
 
-        if (debugfile_switch && !(sflags[i] & REDEFINABLE_SFLAG))
+        if (debugfile_switch && !(symbols[i].flags & REDEFINABLE_SFLAG))
         {   debug_file_printf("<constant>");
             debug_file_printf("<identifier>%s</identifier>", constant_name);
             write_debug_symbol_optional_backpatch(i);
@@ -248,9 +248,9 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             return ebf_error_recover("name", token_text);
 
         i = -1;
-        if (sflags[token_value] & UNKNOWN_SFLAG)
+        if (symbols[token_value].flags & UNKNOWN_SFLAG)
         {   i = token_value;
-            sflags[i] |= DEFCON_SFLAG;
+            symbols[i].flags |= DEFCON_SFLAG;
         }
 
         get_next_token();
@@ -263,7 +263,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             {   if (AO.marker != 0)
                 {   assign_marked_symbol(i, AO.marker, AO.value,
                         CONSTANT_T);
-                    sflags[i] |= CHANGE_SFLAG;
+                    symbols[i].flags |= CHANGE_SFLAG;
                 }
                 else assign_symbol(i, AO.value, CONSTANT_T);
             }
@@ -404,8 +404,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             goto HashIfCondition;
         }
 
-        if (sflags[token_value] & UNKNOWN_SFLAG) flag = (flag)?FALSE:TRUE;
-        else sflags[token_value] |= USED_SFLAG;
+        if (symbols[token_value].flags & UNKNOWN_SFLAG) flag = (flag)?FALSE:TRUE;
+        else symbols[token_value].flags |= USED_SFLAG;
         goto HashIfCondition;
 
     case IFNOT_CODE:
@@ -610,8 +610,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         get_next_token(); i = token_value;
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("new low string name", token_text);
-        if (!(sflags[i] & UNKNOWN_SFLAG))
-            return ebf_symbol_error_recover("new low string name", token_text, typename(stypes[i]), slines[i]);
+        if (!(symbols[i].flags & UNKNOWN_SFLAG))
+            return ebf_symbol_error_recover("new low string name", token_text, typename(symbols[i].type), symbols[i].line);
 
         get_next_token();
         if (token_type != DQ_TT)
@@ -802,10 +802,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("name of routine to replace", token_text);
-        if (!(sflags[token_value] & UNKNOWN_SFLAG))
+        if (!(symbols[token_value].flags & UNKNOWN_SFLAG))
             return ebf_error_recover("name of routine not yet defined", token_text);
 
-        sflags[token_value] |= REPLACE_SFLAG;
+        symbols[token_value].flags |= REPLACE_SFLAG;
 
         /* If a second symbol is provided, it will refer to the
            original (replaced) definition of the routine. */
@@ -819,7 +819,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {   return FALSE;
         }
 
-        if (token_type != SYMBOL_TT || !(sflags[token_value] & UNKNOWN_SFLAG))
+        if (token_type != SYMBOL_TT || !(symbols[token_value].flags & UNKNOWN_SFLAG))
             return ebf_error_recover("semicolon ';' or new routine name", token_text);
 
         /* Define the original-form symbol as a zero constant. Its
@@ -881,8 +881,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
         i = token_value; flag = FALSE;
 
-        if (sflags[i] & UNKNOWN_SFLAG)
-        {   sflags[i] |= STUB_SFLAG;
+        if (symbols[i].flags & UNKNOWN_SFLAG)
+        {   symbols[i].flags |= STUB_SFLAG;
             flag = TRUE;
         }
 
@@ -906,7 +906,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             local_variable_texts[3] = "dummy4";
 
             assign_symbol(i,
-                assemble_routine_header(k, FALSE, symbs[i], FALSE, i),
+                assemble_routine_header(k, FALSE, symbols[i].name, FALSE, i),
                 ROUTINE_T);
 
             /*  Ensure the return value of a stubbed routine is false,
@@ -1039,12 +1039,12 @@ the first constant definition");
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("symbol name", token_text);
 
-        if (sflags[token_value] & UNKNOWN_SFLAG)
+        if (symbols[token_value].flags & UNKNOWN_SFLAG)
         {   break; /* undef'ing an undefined constant is okay */
         }
 
-        if (stypes[token_value] != CONSTANT_T)
-        {   error_named("Cannot Undef a symbol which is not a defined constant:", symbs[token_value]);
+        if (symbols[token_value].type != CONSTANT_T)
+        {   error_named("Cannot Undef a symbol which is not a defined constant:", symbols[token_value].name);
             break;
         }
 
@@ -1052,7 +1052,7 @@ the first constant definition");
         {   write_debug_undef(token_value);
         }
         end_symbol_scope(token_value);
-        sflags[token_value] |= USED_SFLAG;
+        symbols[token_value].flags |= USED_SFLAG;
         break;
 
     /* --------------------------------------------------------------------- */

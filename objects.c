@@ -124,9 +124,9 @@ more than",
         put_token_back();
         return;
     }
-    if (!(sflags[i] & UNKNOWN_SFLAG))
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
-        ebf_symbol_error("new attribute name", token_text, typename(stypes[i]), slines[i]);
+        ebf_symbol_error("new attribute name", token_text, typename(symbols[i].type), symbols[i].line);
         panic_mode_error_recovery(); 
         put_token_back();
         return;
@@ -139,7 +139,7 @@ more than",
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   get_next_token();
         if (!((token_type == SYMBOL_TT)
-              && (stypes[token_value] == ATTRIBUTE_T)))
+              && (symbols[token_value].type == ATTRIBUTE_T)))
         {   discard_token_location(beginning_debug_location);
             ebf_error("an existing attribute name after 'alias'",
                 token_text);
@@ -147,9 +147,9 @@ more than",
             put_token_back();
             return;
         }
-        assign_symbol(i, svals[token_value], ATTRIBUTE_T);
-        sflags[token_value] |= ALIASED_SFLAG;
-        sflags[i] |= ALIASED_SFLAG;
+        assign_symbol(i, symbols[token_value].value, ATTRIBUTE_T);
+        symbols[token_value].flags |= ALIASED_SFLAG;
+        symbols[i].flags |= ALIASED_SFLAG;
     }
     else
     {   assign_symbol(i, no_attributes++, ATTRIBUTE_T);
@@ -159,12 +159,12 @@ more than",
     if (debugfile_switch)
     {   debug_file_printf("<attribute>");
         debug_file_printf("<identifier>%s</identifier>", name);
-        debug_file_printf("<value>%d</value>", svals[i]);
+        debug_file_printf("<value>%d</value>", symbols[i].value);
         write_debug_locations(get_token_location_end(beginning_debug_location));
         debug_file_printf("</attribute>");
     }
 
-    trace_s(name, svals[i], 0);
+    trace_s(name, symbols[i].value, 0);
     return;
 }
 
@@ -222,9 +222,9 @@ Advanced game to get an extra 62)");
         put_token_back();
         return;
     }
-    if (!(sflags[i] & UNKNOWN_SFLAG))
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
-        ebf_symbol_error("new property name", token_text, typename(stypes[i]), slines[i]);
+        ebf_symbol_error("new property name", token_text, typename(symbols[i].type), symbols[i].line);
         panic_mode_error_recovery();
         put_token_back();
         return;
@@ -234,7 +234,7 @@ Advanced game to get an extra 62)");
     get_next_token();
     directive_keywords.enabled = FALSE;
 
-    if (strcmp(name+strlen(name)-3, "_to") == 0) sflags[i] |= STAR_SFLAG;
+    if (strcmp(name+strlen(name)-3, "_to") == 0) symbols[i].flags |= STAR_SFLAG;
 
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   discard_token_location(beginning_debug_location);
@@ -246,7 +246,7 @@ Advanced game to get an extra 62)");
         }
         get_next_token();
         if (!((token_type == SYMBOL_TT)
-            && (stypes[token_value] == PROPERTY_T)))
+            && (symbols[token_value].type == PROPERTY_T)))
         {   ebf_error("an existing property name after 'alias'",
                 token_text);
             panic_mode_error_recovery();
@@ -254,10 +254,10 @@ Advanced game to get an extra 62)");
             return;
         }
 
-        assign_symbol(i, svals[token_value], PROPERTY_T);
-        trace_s(name, svals[i], 1);
-        sflags[token_value] |= ALIASED_SFLAG;
-        sflags[i] |= ALIASED_SFLAG;
+        assign_symbol(i, symbols[token_value].value, PROPERTY_T);
+        trace_s(name, symbols[i].value, 1);
+        symbols[token_value].flags |= ALIASED_SFLAG;
+        symbols[i].flags |= ALIASED_SFLAG;
         return;
     }
 
@@ -281,13 +281,13 @@ Advanced game to get an extra 62)");
     if (debugfile_switch)
     {   debug_file_printf("<property>");
         debug_file_printf("<identifier>%s</identifier>", name);
-        debug_file_printf("<value>%d</value>", svals[i]);
+        debug_file_printf("<value>%d</value>", symbols[i].value);
         write_debug_locations
             (get_token_location_end(beginning_debug_location));
         debug_file_printf("</property>");
     }
 
-    trace_s(name, svals[i], 1);
+    trace_s(name, symbols[i].value, 1);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1065,10 +1065,10 @@ static void properties_segment_z(int this_segment)
             return;
         }
 
-        individual_property = (stypes[token_value] != PROPERTY_T);
+        individual_property = (symbols[token_value].type != PROPERTY_T);
 
         if (individual_property)
-        {   if (sflags[token_value] & UNKNOWN_SFLAG)
+        {   if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   this_identifier_number = no_individual_properties++;
                 assign_symbol(token_value, this_identifier_number,
                     INDIVIDUAL_PROPERTY_T);
@@ -1084,10 +1084,10 @@ static void properties_segment_z(int this_segment)
 
             }
             else
-            {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
-                    this_identifier_number = svals[token_value];
+            {   if (symbols[token_value].type==INDIVIDUAL_PROPERTY_T)
+                    this_identifier_number = symbols[token_value].value;
                 else
-                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
+                {   ebf_symbol_error("property name", token_text, typename(symbols[token_value].type), symbols[token_value].line);
                     return;
                 }
             }
@@ -1116,7 +1116,7 @@ static void properties_segment_z(int this_segment)
             individuals_table[i_m+2] = 0;
         }
         else
-        {   if (sflags[token_value] & UNKNOWN_SFLAG)
+        {   if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   error_named("No such property name as", token_text);
                 return;
             }
@@ -1126,7 +1126,7 @@ not 'private':", token_text);
             if (def_t_s >= defined_this_segment_size)
                 ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
-            property_number = svals[token_value];
+            property_number = symbols[token_value].value;
 
             next_prop=full_object.l++;
             full_object.pp[next_prop].num = property_number;
@@ -1135,21 +1135,21 @@ not 'private':", token_text);
         for (i=0; i<(def_t_s-1); i++)
             if (defined_this_segment[i] == token_value)
             {   error_named("Property given twice in the same declaration:",
-                    symbs[token_value]);
+                    symbols[token_value].name);
             }
             else
-            if (svals[defined_this_segment[i]] == svals[token_value])
+            if (symbols[defined_this_segment[i]].value == symbols[token_value].value)
             {   char error_b[128];
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
-                    symbs[defined_this_segment[i]],
-                    symbs[token_value]);
+                    symbols[defined_this_segment[i]].name,
+                    symbols[token_value].name);
                 error(error_b);
             }
 
         property_name_symbol = token_value;
-        sflags[token_value] |= USED_SFLAG;
+        symbols[token_value].flags |= USED_SFLAG;
 
         length=0;
         do
@@ -1173,12 +1173,12 @@ the names '%s' and '%s' actually refer to the same property",
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
                         "%s::%s", classname_text,
-                        symbs[property_name_symbol]);
+                        symbols[property_name_symbol].name);
                 }
                 else
                 {   sprintf(embedded_name,
                         "%s.%s", objectname_text,
-                        symbs[property_name_symbol]);
+                        symbols[property_name_symbol].name);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
                 AO.type = LONG_CONSTANT_OT;
@@ -1210,7 +1210,7 @@ the names '%s' and '%s' actually refer to the same property",
             {   if (length!=0)
                 {
                     if ((token_type == SYMBOL_TT)
-                        && (stypes[token_value]==PROPERTY_T))
+                        && (symbols[token_value].type==PROPERTY_T))
                     {
                         /*  This is not necessarily an error: it's possible
                             to imagine a property whose value is a list
@@ -1232,7 +1232,7 @@ the names '%s' and '%s' actually refer to the same property",
 
             if (length == 64)
             {   error_named("Limit (of 32 values) exceeded for property",
-                    symbs[property_name_symbol]);
+                    symbols[property_name_symbol].name);
                 break;
             }
 
@@ -1276,7 +1276,7 @@ the names '%s' and '%s' actually refer to the same property",
             {
        warning_named("Version 3 limit of 4 values per property exceeded \
 (use -v5 to get 32), so truncating property",
-                    symbs[property_name_symbol]);
+                    symbols[property_name_symbol].name);
                 length = 8;
             }
         }
@@ -1329,10 +1329,10 @@ static void properties_segment_g(int this_segment)
             return;
         }
 
-        individual_property = (stypes[token_value] != PROPERTY_T);
+        individual_property = (symbols[token_value].type != PROPERTY_T);
 
         if (individual_property)
-        {   if (sflags[token_value] & UNKNOWN_SFLAG)
+        {   if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   this_identifier_number = no_individual_properties++;
                 assign_symbol(token_value, this_identifier_number,
                     INDIVIDUAL_PROPERTY_T);
@@ -1348,10 +1348,10 @@ static void properties_segment_g(int this_segment)
 
             }
             else
-            {   if (stypes[token_value]==INDIVIDUAL_PROPERTY_T)
-                    this_identifier_number = svals[token_value];
+            {   if (symbols[token_value].type==INDIVIDUAL_PROPERTY_T)
+                    this_identifier_number = symbols[token_value].value;
                 else
-                {   ebf_symbol_error("property name", token_text, typename(stypes[token_value]), slines[token_value]);
+                {   ebf_symbol_error("property name", token_text, typename(symbols[token_value].type), symbols[token_value].line);
                     return;
                 }
             }
@@ -1359,7 +1359,7 @@ static void properties_segment_g(int this_segment)
             if (def_t_s >= defined_this_segment_size)
                 ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
-            property_number = svals[token_value];
+            property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
             full_object_g.props[next_prop].num = property_number;
@@ -1370,7 +1370,7 @@ static void properties_segment_g(int this_segment)
             full_object_g.props[next_prop].datalen = 0;
         }
         else
-        {   if (sflags[token_value] & UNKNOWN_SFLAG)
+        {   if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   error_named("No such property name as", token_text);
                 return;
             }
@@ -1381,7 +1381,7 @@ not 'private':", token_text);
             if (def_t_s >= defined_this_segment_size)
                 ensure_defined_this_segment(def_t_s*2);
             defined_this_segment[def_t_s++] = token_value;
-            property_number = svals[token_value];
+            property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
             full_object_g.props[next_prop].num = property_number;
@@ -1394,16 +1394,16 @@ not 'private':", token_text);
         for (i=0; i<(def_t_s-1); i++)
             if (defined_this_segment[i] == token_value)
             {   error_named("Property given twice in the same declaration:",
-                    symbs[token_value]);
+                    symbols[token_value].name);
             }
             else
-            if (svals[defined_this_segment[i]] == svals[token_value])
+            if (symbols[defined_this_segment[i]].value == symbols[token_value].value)
             {   char error_b[128];
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
-                    symbs[defined_this_segment[i]],
-                    symbs[token_value]);
+                    symbols[defined_this_segment[i]].name,
+                    symbols[token_value].name);
                 error(error_b);
             }
 
@@ -1412,7 +1412,7 @@ the names '%s' and '%s' actually refer to the same property",
         }
 
         property_name_symbol = token_value;
-        sflags[token_value] |= USED_SFLAG;
+        symbols[token_value].flags |= USED_SFLAG;
 
         length=0;
         do
@@ -1436,12 +1436,12 @@ the names '%s' and '%s' actually refer to the same property",
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
                         "%s::%s", classname_text,
-                        symbs[property_name_symbol]);
+                        symbols[property_name_symbol].name);
                 }
                 else
                 {   sprintf(embedded_name,
                         "%s.%s", objectname_text,
-                        symbs[property_name_symbol]);
+                        symbols[property_name_symbol].name);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
                 AO.type = CONSTANT_OT; 
@@ -1473,7 +1473,7 @@ the names '%s' and '%s' actually refer to the same property",
             {   if (length!=0)
                 {
                     if ((token_type == SYMBOL_TT)
-                        && (stypes[token_value]==PROPERTY_T))
+                        && (symbols[token_value].type==PROPERTY_T))
                     {
                         /*  This is not necessarily an error: it's possible
                             to imagine a property whose value is a list
@@ -1495,7 +1495,7 @@ the names '%s' and '%s' actually refer to the same property",
 
             if (length == 32768) /* VENEER_CONSTRAINT_ON_PROP_TABLE_SIZE? */
             {   error_named("Limit (of 32768 values) exceeded for property",
-                    symbs[property_name_symbol]);
+                    symbols[property_name_symbol].name);
                 break;
             }
 
@@ -1576,13 +1576,13 @@ static void attributes_segment(void)
         }
 
         if ((token_type != SYMBOL_TT)
-            || (stypes[token_value] != ATTRIBUTE_T))
+            || (symbols[token_value].type != ATTRIBUTE_T))
         {   ebf_error("name of an already-declared attribute", token_text);
             return;
         }
 
-        attribute_number = svals[token_value];
-        sflags[token_value] |= USED_SFLAG;
+        attribute_number = symbols[token_value].value;
+        symbols[token_value].flags |= USED_SFLAG;
 
         if (!glulx_mode) {
             bitmask = (1 << (7-attribute_number%8));
@@ -1659,13 +1659,13 @@ static void classes_segment(void)
         if ((token_type == SEP_TT) && (token_value == COMMA_SEP)) return;
 
         if ((token_type != SYMBOL_TT)
-            || (stypes[token_value] != CLASS_T))
+            || (symbols[token_value].type != CLASS_T))
         {   ebf_error("name of an already-declared class", token_text);
             return;
         }
 
-        sflags[token_value] |= USED_SFLAG;
-        add_class_to_inheritance_list(svals[token_value]);
+        symbols[token_value].flags |= USED_SFLAG;
+        add_class_to_inheritance_list(symbols[token_value].value);
     } while (TRUE);
 }
 
@@ -1779,9 +1779,9 @@ inconvenience, please contact the maintainers.");
             panic_mode_error_recovery();
             return;
         }
-        if (!(sflags[token_value] & UNKNOWN_SFLAG))
+        if (!(symbols[token_value].flags & UNKNOWN_SFLAG))
         {   discard_token_location(beginning_debug_location);
-            ebf_symbol_error("new class name", token_text, typename(stypes[token_value]), slines[token_value]);
+            ebf_symbol_error("new class name", token_text, typename(symbols[token_value].type), symbols[token_value].line);
             panic_mode_error_recovery();
             return;
         }
@@ -1792,15 +1792,15 @@ inconvenience, please contact the maintainers.");
     strcpy(shortname_buffer, token_text);
 
     assign_symbol(token_value, class_number, CLASS_T);
-    classname_text = symbs[token_value];
+    classname_text = symbols[token_value].name;
 
     if (!glulx_mode) {
-        if (metaclass_flag) sflags[token_value] |= SYSTEM_SFLAG;
+        if (metaclass_flag) symbols[token_value].flags |= SYSTEM_SFLAG;
     }
     else {
         /*  In Glulx, metaclasses have to be backpatched too! So we can't 
             mark it as "system", but we should mark it "used". */
-        if (metaclass_flag) sflags[token_value] |= USED_SFLAG;
+        if (metaclass_flag) symbols[token_value].flags |= USED_SFLAG;
     }
 
     /*  "Class" (object 1) has no parent, whereas all other classes are
@@ -1978,8 +1978,8 @@ extern void make_object(int nearby_flag,
             ebf_error("name for new object or its textual short name",
                 token_text);
         }
-        else if (!(sflags[token_value] & UNKNOWN_SFLAG)) {
-            ebf_symbol_error("new object", token_text, typename(stypes[token_value]), slines[token_value]);
+        else if (!(symbols[token_value].flags & UNKNOWN_SFLAG)) {
+            ebf_symbol_error("new object", token_text, typename(symbols[token_value].type), symbols[token_value].line);
         }
         else
         {   internal_name_symbol = token_value;
@@ -2001,7 +2001,7 @@ extern void make_object(int nearby_flag,
     }
     else
     {   if ((token_type != SYMBOL_TT)
-            || (sflags[token_value] & UNKNOWN_SFLAG))
+            || (symbols[token_value].flags & UNKNOWN_SFLAG))
         {   if (textual_name == NULL)
                 ebf_error("parent object or the object's textual short name",
                     token_text);
@@ -2020,10 +2020,10 @@ extern void make_object(int nearby_flag,
         ebf_error("body of object definition", token_text);
     else
     {   SpecParent:
-        if ((stypes[token_value] == OBJECT_T)
-            || (stypes[token_value] == CLASS_T))
-        {   specified_parent = svals[token_value];
-            sflags[token_value] |= USED_SFLAG;
+        if ((symbols[token_value].type == OBJECT_T)
+            || (symbols[token_value].type == CLASS_T))
+        {   specified_parent = symbols[token_value].value;
+            symbols[token_value].flags |= USED_SFLAG;
         }
         else ebf_error("name of (the parent) object", token_text);
     }
@@ -2047,7 +2047,7 @@ extern void make_object(int nearby_flag,
     if (textual_name == NULL)
     {   if (internal_name_symbol > 0)
             sprintf(shortname_buffer, "(%s)",
-                symbs[internal_name_symbol]);
+                symbols[internal_name_symbol].name);
         else
             sprintf(shortname_buffer, "(%d)", no_objects+1);
     }

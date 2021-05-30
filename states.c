@@ -246,17 +246,17 @@ extern int parse_label(void)
     get_next_token();
 
     if ((token_type == SYMBOL_TT) &&
-        (stypes[token_value] == LABEL_T))
-    {   sflags[token_value] |= USED_SFLAG;
-        return(svals[token_value]);
+        (symbols[token_value].type == LABEL_T))
+    {   symbols[token_value].flags |= USED_SFLAG;
+        return(symbols[token_value].value);
     }
 
-    if ((token_type == SYMBOL_TT) && (sflags[token_value] & UNKNOWN_SFLAG))
+    if ((token_type == SYMBOL_TT) && (symbols[token_value].flags & UNKNOWN_SFLAG))
     {   assign_symbol(token_value, next_label, LABEL_T);
         define_symbol_label(token_value);
         next_label++;
-        sflags[token_value] |= CHANGE_SFLAG + USED_SFLAG;
-        return(svals[token_value]);
+        symbols[token_value].flags |= CHANGE_SFLAG + USED_SFLAG;
+        return(symbols[token_value].value);
     }
 
     ebf_error("label name", token_text);
@@ -416,25 +416,25 @@ static void parse_print_z(int finally_return)
                           break;
 
                         case SYMBOL_TT:
-                          if (sflags[token_value] & UNKNOWN_SFLAG)
+                          if (symbols[token_value].flags & UNKNOWN_SFLAG)
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = stypes[token_value];
-                              AO.symflags = sflags[token_value];
+                              AO.symtype = symbols[token_value].type;
+                              AO.symflags = symbols[token_value].flags;
                           }
                           else
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
-                              AO.value = svals[token_value];
+                              AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = stypes[token_value];
-                              AO.symflags = sflags[token_value];
-                              if (stypes[token_value] != ROUTINE_T)
+                              AO.symtype = symbols[token_value].type;
+                              AO.symflags = symbols[token_value].flags;
+                              if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
-                          sflags[token_value] |= USED_SFLAG;
+                          symbols[token_value].flags |= USED_SFLAG;
 
                           PrintByRoutine:
 
@@ -657,25 +657,25 @@ static void parse_print_g(int finally_return)
                           break;
 
                         case SYMBOL_TT:
-                          if (sflags[token_value] & UNKNOWN_SFLAG)
+                          if (symbols[token_value].flags & UNKNOWN_SFLAG)
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = stypes[token_value];
-                              AO.symflags = sflags[token_value];
+                              AO.symtype = symbols[token_value].type;
+                              AO.symflags = symbols[token_value].flags;
                           }
                           else
                           {   INITAOT(&AO, CONSTANT_OT);
-                              AO.value = svals[token_value];
+                              AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = stypes[token_value];
-                              AO.symflags = sflags[token_value];
-                              if (stypes[token_value] != ROUTINE_T)
+                              AO.symtype = symbols[token_value].type;
+                              AO.symflags = symbols[token_value].flags;
+                              if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
-                          sflags[token_value] |= USED_SFLAG;
+                          symbols[token_value].flags |= USED_SFLAG;
 
                           PrintByRoutine:
 
@@ -746,18 +746,18 @@ static void parse_statement_z(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
-            if (sflags[token_value] & UNKNOWN_SFLAG)
+            if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
-                sflags[token_value] |= USED_SFLAG;
+                symbols[token_value].flags |= USED_SFLAG;
                 assemble_label_no(next_label);
                 define_symbol_label(token_value);
                 next_label++;
             }
             else
-            {   if (stypes[token_value] != LABEL_T) goto LabelError;
-                if (sflags[token_value] & CHANGE_SFLAG)
-                {   sflags[token_value] &= (~(CHANGE_SFLAG));
-                    assemble_label_no(svals[token_value]);
+            {   if (symbols[token_value].type != LABEL_T) goto LabelError;
+                if (symbols[token_value].flags & CHANGE_SFLAG)
+                {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
+                    assemble_label_no(symbols[token_value].value);
                     define_symbol_label(token_value);
                 }
                 else error_named("Duplicate definition of label:", token_text);
@@ -1130,7 +1130,7 @@ static void parse_statement_z(int break_label, int continue_label)
                          ln = clear_attr_zc;
                      else
                      {   if ((token_type == SYMBOL_TT)
-                             && (stypes[token_value] != ATTRIBUTE_T))
+                             && (symbols[token_value].type != ATTRIBUTE_T))
                            warning_named("This is not a declared Attribute:",
                              token_text);
                          ln = set_attr_zc;
@@ -1302,8 +1302,8 @@ static void parse_statement_z(int break_label, int continue_label)
                      AO.value = token_value;
                  else
                  if ((token_type == SYMBOL_TT) &&
-                     (stypes[token_value] == GLOBAL_VARIABLE_T))
-                     AO.value = svals[token_value];
+                     (symbols[token_value].type == GLOBAL_VARIABLE_T))
+                     AO.value = symbols[token_value].value;
                  else
                  {   ebf_error("'objectloop' variable", token_text);
                      panic_mode_error_recovery(); break;
@@ -1726,18 +1726,18 @@ static void parse_statement_g(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
-            if (sflags[token_value] & UNKNOWN_SFLAG)
+            if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
-                sflags[token_value] |= USED_SFLAG;
+                symbols[token_value].flags |= USED_SFLAG;
                 assemble_label_no(next_label);
                 define_symbol_label(token_value);
                 next_label++;
             }
             else
-            {   if (stypes[token_value] != LABEL_T) goto LabelError;
-                if (sflags[token_value] & CHANGE_SFLAG)
-                {   sflags[token_value] &= (~(CHANGE_SFLAG));
-                    assemble_label_no(svals[token_value]);
+            {   if (symbols[token_value].type != LABEL_T) goto LabelError;
+                if (symbols[token_value].flags & CHANGE_SFLAG)
+                {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
+                    assemble_label_no(symbols[token_value].value);
                     define_symbol_label(token_value);
                 }
                 else error_named("Duplicate definition of label:", token_text);
@@ -2098,7 +2098,7 @@ static void parse_statement_g(int break_label, int continue_label)
                          ln = 0;
                      else
                      {   if ((token_type == SYMBOL_TT)
-                             && (stypes[token_value] != ATTRIBUTE_T))
+                             && (symbols[token_value].type != ATTRIBUTE_T))
                            warning_named("This is not a declared Attribute:",
                              token_text);
                          ln = 1;
@@ -2319,8 +2319,8 @@ static void parse_statement_g(int break_label, int continue_label)
                      INITAOTV(&AO, LOCALVAR_OT, token_value);
                  }
                  else if ((token_type == SYMBOL_TT) &&
-                   (stypes[token_value] == GLOBAL_VARIABLE_T)) {
-                     INITAOTV(&AO, GLOBALVAR_OT, svals[token_value]);
+                   (symbols[token_value].type == GLOBAL_VARIABLE_T)) {
+                     INITAOTV(&AO, GLOBALVAR_OT, symbols[token_value].value);
                  }
                  else {
                      ebf_error("'objectloop' variable", token_text);
@@ -2422,7 +2422,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  sequence_point_follows = TRUE;
                  ln = symbol_index("Class", -1);
                  INITAOT(&AO2, CONSTANT_OT);
-                 AO2.value = svals[ln];
+                 AO2.value = symbols[ln].value;
                  AO2.marker = OBJECT_MV;
                  assembleg_store(AO, AO2);
 

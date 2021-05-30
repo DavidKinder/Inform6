@@ -171,9 +171,9 @@ extern int parse_directive(int internal_flag)
         {   ebf_error("routine name", token_text);
             return(FALSE);
         }
-        if ((!(sflags[token_value] & UNKNOWN_SFLAG))
-            && (!(sflags[token_value] & REPLACE_SFLAG)))
-        {   ebf_symbol_error("routine name", token_text, typename(stypes[token_value]), slines[token_value]);
+        if ((!(symbols[token_value].flags & UNKNOWN_SFLAG))
+            && (!(symbols[token_value].flags & REPLACE_SFLAG)))
+        {   ebf_symbol_error("routine name", token_text, typename(symbols[token_value].type), symbols[token_value].line);
             return(FALSE);
         }
 
@@ -182,7 +182,7 @@ extern int parse_directive(int internal_flag)
         rep_symbol = routine_symbol;
         is_renamed = find_symbol_replacement(&rep_symbol);
 
-        if ((sflags[routine_symbol] & REPLACE_SFLAG) 
+        if ((symbols[routine_symbol].flags & REPLACE_SFLAG) 
             && !is_renamed && (is_systemfile()))
         {   /* The function is definitely being replaced (system_file
                always loses priority in a replacement) but is not
@@ -201,9 +201,9 @@ extern int parse_directive(int internal_flag)
         {   /* Parse the function definition and assign its symbol. */
             assign_symbol(routine_symbol,
                 parse_routine(lexical_source, FALSE,
-                    symbs[routine_symbol], FALSE, routine_symbol),
+                    symbols[routine_symbol].name, FALSE, routine_symbol),
                 ROUTINE_T);
-            slines[routine_symbol] = routine_starts_line;
+            symbols[routine_symbol].line = routine_starts_line;
         }
 
         if (is_renamed) {
@@ -211,8 +211,8 @@ extern int parse_directive(int internal_flag)
                The first time we see a definition for symbol X, we
                copy it to Y -- that's the "original" form of the
                function. */
-            if (svals[rep_symbol] == 0) {
-                assign_symbol(rep_symbol, svals[routine_symbol], ROUTINE_T);
+            if (symbols[rep_symbol].value == 0) {
+                assign_symbol(rep_symbol, symbols[routine_symbol].value, ROUTINE_T);
             }
         }
 
@@ -224,13 +224,13 @@ extern int parse_directive(int internal_flag)
         return TRUE;
     }
 
-    if ((token_type == SYMBOL_TT) && (stypes[token_value] == CLASS_T))
+    if ((token_type == SYMBOL_TT) && (symbols[token_value].type == CLASS_T))
     {   if (internal_flag)
         {   error("It is illegal to nest an object in a routine using '#classname'");
             return(TRUE);
         }
-        sflags[token_value] |= USED_SFLAG;
-        make_object(FALSE, NULL, -1, -1, svals[token_value]);
+        symbols[token_value].flags |= USED_SFLAG;
+        make_object(FALSE, NULL, -1, -1, symbols[token_value].value);
         return TRUE;
     }
 
@@ -477,7 +477,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         || ((trace_fns_setting==1) && (is_systemfile()==FALSE)))
         debug_flag = TRUE;
     if ((embedded_flag == FALSE) && (veneer_mode == FALSE) && debug_flag)
-        sflags[r_symbol] |= STAR_SFLAG;
+        symbols[r_symbol].flags |= STAR_SFLAG;
 
     packed_address = assemble_routine_header(no_locals, debug_flag,
         name, embedded_flag, r_symbol);

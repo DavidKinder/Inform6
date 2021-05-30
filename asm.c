@@ -205,7 +205,7 @@ extern char *variable_name(int32 i)
       }
     }
 
-    return (symbs[variable_tokens[i]]);
+    return (symbols[variable_tokens[i]].name);
 }
 
 /* Print symbolic information about the AO, if there is any. */
@@ -233,7 +233,7 @@ static void print_operand_annotation(const assembly_operand *o)
     if (o->symindex >= 0 && o->symindex < no_symbols) {
         printf((!any) ? " (" : ": ");
         any = TRUE;
-        printf("%s", symbs[o->symindex]);
+        printf("%s", symbols[o->symindex].name);
     }
     if (any) printf(")");       
 }
@@ -1424,7 +1424,7 @@ extern void assemble_label_no(int n)
 }
 
 extern void define_symbol_label(int symbol)
-{   label_symbols[svals[symbol]] = symbol;
+{   label_symbols[symbols[symbol].value] = symbol;
 }
 
 extern int32 assemble_routine_header(int no_locals,
@@ -1706,19 +1706,19 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
                 ("<identifier artificial=\"true\">%s</identifier>",
                  routine_name);
         }
-        else if (sflags[routine_symbol] & REPLACE_SFLAG)
+        else if (symbols[routine_symbol].flags & REPLACE_SFLAG)
         {   /* The symbol type will be set to ROUTINE_T once the replaced
                version has been given; if it is already set, we must be dealing
                with a replacement, and we can use the routine name as-is.
                Otherwise we look for a rename.  And if that doesn't work, we
                fall back to an artificial identifier. */
-            if (stypes[routine_symbol] == ROUTINE_T)
+            if (symbols[routine_symbol].type == ROUTINE_T)
             {   /* Optional because there may be further replacements. */
                 write_debug_optional_identifier(routine_symbol);
             }
             else if (find_symbol_replacement(&routine_symbol))
             {   debug_file_printf
-                    ("<identifier>%s</identifier>", symbs[routine_symbol]);
+                    ("<identifier>%s</identifier>", symbols[routine_symbol].name);
             }
             else
             {   debug_file_printf
@@ -1778,14 +1778,14 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     for (i=0; i<next_label; i++)
     {   int j = label_symbols[i];
         if (j != -1)
-        {   if (sflags[j] & CHANGE_SFLAG)
+        {   if (symbols[j].flags & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
-                    symbs[j], slines[j]);
+                    symbols[j].name, symbols[j].line);
             else
-                if ((sflags[j] & USED_SFLAG) == 0)
-                    dbnu_warning("Label", symbs[j], slines[j]);
-            stypes[j] = CONSTANT_T;
-            sflags[j] = UNKNOWN_SFLAG;
+                if ((symbols[j].flags & USED_SFLAG) == 0)
+                    dbnu_warning("Label", symbols[j].name, symbols[j].line);
+            symbols[j].type = CONSTANT_T;
+            symbols[j].flags = UNKNOWN_SFLAG;
         }
     }
     no_sequence_points += next_sequence_point;
@@ -2824,11 +2824,11 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             else
             {   if (strcmp(token_text, "sp") == 0) n = 0;
                 else
-                {   if (stypes[token_value] != GLOBAL_VARIABLE_T)
+                {   if (symbols[token_value].type != GLOBAL_VARIABLE_T)
                         error_named(
                             "Store '->' destination not 'sp' or a variable:",
                             token_text);
-                    else n = svals[token_value];
+                    else n = symbols[token_value].value;
                 }
             }
             AI.store_variable_number = n;

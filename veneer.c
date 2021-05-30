@@ -33,8 +33,8 @@ extern void compile_initial_routine(void)
     assign_symbol(j,
         assemble_routine_header(0, FALSE, "Main__", FALSE, j),
         ROUTINE_T);
-    sflags[j] |= SYSTEM_SFLAG + USED_SFLAG;
-    if (trace_fns_setting==3) sflags[j] |= STAR_SFLAG;
+    symbols[j].flags |= SYSTEM_SFLAG + USED_SFLAG;
+    if (trace_fns_setting==3) symbols[j].flags |= STAR_SFLAG;
 
     if (!glulx_mode) {
 
@@ -2195,8 +2195,8 @@ static void compile_symbol_table_routine(void)
     assign_symbol(j,
         assemble_routine_header(2, FALSE, "Symb__Tab", FALSE, j),
         ROUTINE_T);
-    sflags[j] |= SYSTEM_SFLAG + USED_SFLAG;
-    if (trace_fns_setting==3) sflags[j] |= STAR_SFLAG;
+    symbols[j].flags |= SYSTEM_SFLAG + USED_SFLAG;
+    if (trace_fns_setting==3) symbols[j].flags |= STAR_SFLAG;
 
   if (!glulx_mode) {
 
@@ -2242,11 +2242,11 @@ static void compile_symbol_table_routine(void)
             AO3.marker = 0;
             assemblez_store(temp_var2, AO3);
             AO3.value = array_types[j];
-            if (sflags[array_symbols[j]] & (INSF_SFLAG+SYSTEM_SFLAG))
+            if (symbols[array_symbols[j]].flags & (INSF_SFLAG+SYSTEM_SFLAG))
                 AO3.value = AO3.value + 16;
             AO3.marker = 0;
             assemblez_store(temp_var3, AO3);
-            AO3.value = svals[array_symbols[j]];
+            AO3.value = symbols[array_symbols[j]].value;
             AO3.marker = (!array_locs[j] ? ARRAY_MV : STATIC_ARRAY_MV);
             assemblez_1(ret_zc, AO3);
             assemble_label_no(nl);
@@ -2263,11 +2263,11 @@ static void compile_symbol_table_routine(void)
         sequence_point_follows = FALSE;
         assemblez_2_branch(je_zc, AO, AO2, nl, FALSE);
         AO3.value = 0;
-        if (sflags[named_routine_symbols[j]]
+        if (symbols[named_routine_symbols[j]].flags
             & (INSF_SFLAG+SYSTEM_SFLAG)) AO3.value = 16;
         AO3.marker = 0;
         assemblez_store(temp_var3, AO3);
-        AO3.value = svals[named_routine_symbols[j]];
+        AO3.value = symbols[named_routine_symbols[j]].value;
         AO3.marker = IROUTINE_MV;
         assemblez_1(ret_zc, AO3);
         assemble_label_no(nl);
@@ -2277,9 +2277,9 @@ static void compile_symbol_table_routine(void)
 
     assemble_label_no(constants_l);
     for (j=0, no_named_constants=0; j<no_symbols; j++)
-    {   if (((stypes[j] == OBJECT_T) || (stypes[j] == CLASS_T)
-            || (stypes[j] == CONSTANT_T))
-            && ((sflags[j] & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
+    {   if (((symbols[j].type == OBJECT_T) || (symbols[j].type == CLASS_T)
+            || (symbols[j].type == CONSTANT_T))
+            && ((symbols[j].flags & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
         {   AO2.value = no_named_constants++;
             if (AO2.value<256) AO2.type = SHORT_CONSTANT_OT;
             else AO2.type = LONG_CONSTANT_OT;
@@ -2287,9 +2287,9 @@ static void compile_symbol_table_routine(void)
             sequence_point_follows = FALSE;
             assemblez_2_branch(je_zc, AO, AO2, nl, FALSE);
             AO3.value = 0;
-            if (stypes[j] == OBJECT_T) AO3.value = 2;
-            if (stypes[j] == CLASS_T) AO3.value = 1;
-            if (sflags[j] & (INSF_SFLAG+SYSTEM_SFLAG))
+            if (symbols[j].type == OBJECT_T) AO3.value = 2;
+            if (symbols[j].type == CLASS_T) AO3.value = 1;
+            if (symbols[j].flags & (INSF_SFLAG+SYSTEM_SFLAG))
                 AO3.value = AO3.value + 16;
             AO3.marker = 0;
             assemblez_store(temp_var3, AO3);
@@ -2348,7 +2348,7 @@ extern void compile_veneer(void)
         for (i=0; i<VENEER_ROUTINES; i++)
         {   if (veneer_routine_needs_compilation[i] == VR_CALLED)
             {   j = symbol_index(VRs[i].name, -1);
-                if (sflags[j] & UNKNOWN_SFLAG)
+                if (symbols[j].flags & UNKNOWN_SFLAG)
                 {   veneer_mode = TRUE;
                     strcpy(veneer_source_area, VRs[i].source1);
                     strcat(veneer_source_area, VRs[i].source2);
@@ -2361,18 +2361,18 @@ extern void compile_veneer(void)
                             VRs[i].name, TRUE, j),
                         ROUTINE_T);
                     veneer_mode = FALSE;
-                    if (trace_fns_setting==3) sflags[j] |= STAR_SFLAG;
+                    if (trace_fns_setting==3) symbols[j].flags |= STAR_SFLAG;
                 }
                 else
-                {   if (stypes[j] != ROUTINE_T)
+                {   if (symbols[j].type != ROUTINE_T)
                 error_named("The following name is reserved by Inform for its \
 own use as a routine name; you can use it as a routine name yourself (to \
 override the standard definition) but cannot use it for anything else:",
                         VRs[i].name);
                     else
-                        sflags[j] |= USED_SFLAG;
+                        symbols[j].flags |= USED_SFLAG;
                 }
-                veneer_routine_address[i] = svals[j];
+                veneer_routine_address[i] = symbols[j].value;
                 veneer_routine_needs_compilation[i] = VR_COMPILED;
                 try_veneer_again = TRUE;
             }

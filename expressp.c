@@ -124,16 +124,16 @@ but not used as a value:", unicode);
 
             mark_symbol_as_used = TRUE;
 
-            v = svals[symbol];
+            v = symbols[symbol].value;
 
             current_token.symindex = symbol;
-            current_token.symtype = stypes[symbol];
-            current_token.symflags = sflags[symbol];
-            switch(stypes[symbol])
+            current_token.symtype = symbols[symbol].type;
+            current_token.symflags = symbols[symbol].flags;
+            switch(symbols[symbol].type)
             {   case ROUTINE_T:
                     /* Replaced functions must always be backpatched
                        because there could be another definition coming. */
-                    if (sflags[symbol] & REPLACE_SFLAG)
+                    if (symbols[symbol].flags & REPLACE_SFLAG)
                     {   current_token.marker = SYMBOL_MV;
                         if (module_switch) import_symbol(symbol);
                         v = symbol;
@@ -160,7 +160,7 @@ but not used as a value:", unicode);
                     if (module_switch) current_token.marker = IDENT_MV;
                     break;
                 case CONSTANT_T:
-                    if (sflags[symbol] & (UNKNOWN_SFLAG + CHANGE_SFLAG))
+                    if (symbols[symbol].flags & (UNKNOWN_SFLAG + CHANGE_SFLAG))
                     {   current_token.marker = SYMBOL_MV;
                         if (module_switch) import_symbol(symbol);
                         v = symbol;
@@ -174,7 +174,7 @@ but not used as a value:", unicode);
                     current_token.marker = 0;
                     break;
             }
-            if (sflags[symbol] & SYSTEM_SFLAG)
+            if (symbols[symbol].flags & SYSTEM_SFLAG)
                 current_token.marker = 0;
 
             current_token.value = v;
@@ -194,7 +194,7 @@ but not used as a value:", unicode);
                 else current_token.type = SMALL_NUMBER_TT;
             }
 
-            if (stypes[symbol] == GLOBAL_VARIABLE_T)
+            if (symbols[symbol].type == GLOBAL_VARIABLE_T)
             {   current_token.type = VARIABLE_TT;
                 variable_usage[current_token.value] = TRUE;
             }
@@ -318,7 +318,7 @@ but not used as a value:", unicode);
                     current_token.text += 3;
                     current_token.type = SYMBOL_TT;
                     symbol = symbol_index(current_token.text, -1);
-                    if (stypes[symbol] != GLOBAL_VARIABLE_T) {
+                    if (symbols[symbol].type != GLOBAL_VARIABLE_T) {
                         ebf_error(
                         "global variable name after '#g$'",
                         current_token.text);
@@ -328,7 +328,7 @@ but not used as a value:", unicode);
                         break;
                     }
                     mark_symbol_as_used = TRUE;
-                    current_token.value = svals[symbol] - MAX_LOCAL_VARIABLES;
+                    current_token.value = symbols[symbol].value - MAX_LOCAL_VARIABLES;
                     current_token.marker = 0;
                     if (!glulx_mode) {
                         if (current_token.value >= 0x100)
@@ -449,7 +449,7 @@ but not used as a value:", unicode);
         current_token.type = ENDEXP_TT;
     }
     else
-    {   if (mark_symbol_as_used) sflags[symbol] |= USED_SFLAG;
+    {   if (mark_symbol_as_used) symbols[symbol].flags |= USED_SFLAG;
         if (expr_trace_level >= 3)
         {   printf("Expr token = '%s' ", current_token.text);
             describe_token(current_token);

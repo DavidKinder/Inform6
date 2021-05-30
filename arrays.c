@@ -294,12 +294,12 @@ extern void make_global(int array_flag, int name_only)
     global_name = token_text;
 
     if (!glulx_mode) {
-        if ((token_type==SYMBOL_TT) && (stypes[i]==GLOBAL_VARIABLE_T)
-            && (svals[i] >= LOWEST_SYSTEM_VAR_NUMBER))
+        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
+            && (symbols[i].value >= LOWEST_SYSTEM_VAR_NUMBER))
             goto RedefinitionOfSystemVar;
     }
     else {
-        if ((token_type==SYMBOL_TT) && (stypes[i]==GLOBAL_VARIABLE_T))
+        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T))
             goto RedefinitionOfSystemVar;
     }
 
@@ -311,15 +311,15 @@ extern void make_global(int array_flag, int name_only)
         panic_mode_error_recovery(); return;
     }
 
-    if (!(sflags[i] & UNKNOWN_SFLAG))
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
         if (array_flag)
-            ebf_symbol_error("new array name", token_text, typename(stypes[i]), slines[i]);
-        else ebf_symbol_error("new global variable name", token_text, typename(stypes[i]), slines[i]);
+            ebf_symbol_error("new array name", token_text, typename(symbols[i].type), symbols[i].line);
+        else ebf_symbol_error("new global variable name", token_text, typename(symbols[i].type), symbols[i].line);
         panic_mode_error_recovery(); return;
     }
 
-    if ((!array_flag) && (sflags[i] & USED_SFLAG))
+    if ((!array_flag) && (symbols[i].flags & USED_SFLAG))
         error_named("Variable must be defined before use:", token_text);
 
     directive_keywords.enabled = TRUE;
@@ -368,7 +368,7 @@ extern void make_global(int array_flag, int name_only)
 
         variable_tokens[MAX_LOCAL_VARIABLES+no_globals] = i;
         assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
-        variable_tokens[svals[i]] = i;
+        variable_tokens[symbols[i].value] = i;
 
         if (name_only) import_symbol(i);
         else global_initial_value[no_globals++]=0;
@@ -395,7 +395,7 @@ extern void make_global(int array_flag, int name_only)
         {   debug_file_printf("<global-variable>");
             debug_file_printf("<identifier>%s</identifier>", global_name);
             debug_file_printf("<address>");
-            write_debug_global_backpatch(svals[global_symbol]);
+            write_debug_global_backpatch(symbols[global_symbol].value);
             debug_file_printf("</address>");
             write_debug_locations
                 (get_token_location_end(beginning_debug_location));
@@ -424,7 +424,7 @@ extern void make_global(int array_flag, int name_only)
             {   debug_file_printf("<global-variable>");
                 debug_file_printf("<identifier>%s</identifier>", global_name);
                 debug_file_printf("<address>");
-                write_debug_global_backpatch(svals[global_symbol]);
+                write_debug_global_backpatch(symbols[global_symbol].value);
                 debug_file_printf("</address>");
                 write_debug_locations
                     (get_token_location_end(beginning_debug_location));
@@ -683,7 +683,7 @@ advance as part of 'Zcharacter table':", unicode);
         debug_file_printf("<array>");
         debug_file_printf("<identifier>%s</identifier>", global_name);
         debug_file_printf("<value>");
-        write_debug_array_backpatch(svals[global_symbol]);
+        write_debug_array_backpatch(symbols[global_symbol].value);
         debug_file_printf("</value>");
         new_area_size = (!is_static ? dynamic_array_area_size : static_array_area_size);
         debug_file_printf

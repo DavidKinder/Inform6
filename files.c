@@ -1554,7 +1554,7 @@ extern void write_debug_locations(debug_locations locations)
 }
 
 extern void write_debug_optional_identifier(int32 symbol_index)
-{   if (stypes[symbol_index] != ROUTINE_T)
+{   if (symbols[symbol_index].type != ROUTINE_T)
     {   compiler_error
             ("Attempt to write a replaceable identifier for a non-routine");
     }
@@ -1567,7 +1567,7 @@ extern void write_debug_optional_identifier(int32 symbol_index)
         debug_file_printf
             ("<identifier artificial=\"true\">%s "
                  "(superseded replacement)</identifier>",
-             symbs[symbol_index]);
+             symbols[symbol_index].name);
         if (fseek(Debug_fp, 0L, SEEK_END))
         {   fatalerror("I/O failure: can't seek in debugging information file");
         }
@@ -1575,7 +1575,7 @@ extern void write_debug_optional_identifier(int32 symbol_index)
     fgetpos
       (Debug_fp, &symbol_debug_info[symbol_index].replacement_backpatch_pos.position);
     symbol_debug_info[symbol_index].replacement_backpatch_pos.valid = TRUE;
-    debug_file_printf("<identifier>%s</identifier>", symbs[symbol_index]);
+    debug_file_printf("<identifier>%s</identifier>", symbols[symbol_index].name);
     /* Space for:       artificial="true" (superseded replacement) */
     debug_file_printf("                                           ");
 }
@@ -1723,7 +1723,7 @@ extern void write_debug_undef(int32 symbol_index)
             ("Attempt to erase debugging information never written or since "
                 "erased");
     }
-    if (stypes[symbol_index] != CONSTANT_T)
+    if (symbols[symbol_index].type != CONSTANT_T)
     {   compiler_error
             ("Attempt to erase debugging information for a non-constant "
              "because of an #undef");
@@ -1776,7 +1776,7 @@ static void apply_debug_information_symbol_backpatches()
             {   fatalerror
                     ("I/O failure: can't seek in debugging information file");
             }
-            debug_file_printf("%11d", svals[backpatch_symbol]);
+            debug_file_printf("%11d", symbols[backpatch_symbol].value);
         }
     }
 }

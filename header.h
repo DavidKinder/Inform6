@@ -862,7 +862,7 @@ typedef struct token_data_s
 } token_data;
 
 typedef struct symbolinfo_s {
-    char *symbol; /* The name; points at a symbol_name_space_chunk */
+    char *name; /* Points into a symbol_name_space_chunk */
     /* In Z-code, the value field encodes value and marker (and the marker
        field is unused). In Glulx they're separate. */
     int32 value;
@@ -2685,12 +2685,6 @@ extern void write_the_identifier_names(void);
 
 extern int no_named_constants;
 extern int no_symbols;
-extern char **symbs;
-extern int32 *svals;
-extern int   *smarks;
-extern brief_location *slines;
-extern unsigned int   *sflags;
-extern uchar *stypes;
 extern symbolinfo *symbols;
 extern symboldebuginfo *symbol_debug_info;
 extern int32 *individual_name_strings;
