@@ -53,11 +53,7 @@ int no_named_constants;                         /* Copied into story file    */
   int    *smarks;            /* Glulx-only */
   brief_location  *slines;
   int    *sflags;
-#ifdef VAX
-  char   *stypes;            /* In VAX C, insanely, "signed char" is illegal */
-#else
-  signed char *stypes;
-#endif
+  uchar  *stypes;
   maybe_file_position  *symbol_debug_backpatch_positions;
   maybe_file_position  *replacement_debug_backpatch_positions;
 

@@ -861,6 +861,20 @@ typedef struct token_data_s
     debug_location location;
 } token_data;
 
+typedef struct symbolinfo_s {
+    char *symbol; /* the name; points at a symbol_name_space_chunk */
+    int32 value;
+    int mark; /* only used in Glulx */
+    brief_location line;
+    int flags;  /* ?_SFLAGS bitmask */
+    uchar type; /* ?_T value */
+} symbolinfo;
+
+typedef struct symboldebuginfo_s {
+    maybe_file_position symbol_backpatch_position;
+    maybe_file_position replacement_backpatch_position;
+} symboldebuginfo;
+
 typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
@@ -2673,11 +2687,7 @@ extern int32 *svals;
 extern int   *smarks;
 extern brief_location *slines;
 extern int   *sflags;
-#ifdef VAX
-  extern char *stypes;
-#else
-  extern signed char *stypes;
-#endif
+extern uchar *stypes;
 extern maybe_file_position *symbol_debug_backpatch_positions;
 extern maybe_file_position *replacement_debug_backpatch_positions;
 extern int32 *individual_name_strings;
