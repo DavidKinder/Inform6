@@ -52,8 +52,10 @@ int no_named_constants;                         /* Copied into story file    */
 /*   as their numbers and scope are too limited for this to be efficient.    */
 /* ------------------------------------------------------------------------- */
 
-  symbolinfo *symbols;
-  symboldebuginfo *symbol_debug_info;
+symbolinfo *symbols;
+static memory_list symbols_memlist;
+symboldebuginfo *symbol_debug_info;
+static memory_list symbol_debug_info_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory to hold the text of symbol names: note that this memory is       */
@@ -225,8 +227,9 @@ extern int symbol_index(char *p, int hashcode)
         this = symbols[this].next_entry;
     } while (this != -1);
 
-    if (no_symbols >= MAX_SYMBOLS)
-        memoryerror("MAX_SYMBOLS", MAX_SYMBOLS);
+    ensure_memory_list_available(&symbols_memlist, no_symbols+1);
+    if (debugfile_switch)
+        ensure_memory_list_available(&symbol_debug_info_memlist, no_symbols+1);
 
     if (last == -1)
     {   symbols[no_symbols].next_entry=start_of_list[hashcode];
@@ -1408,12 +1411,14 @@ extern void symbols_begin_pass(void)
 
 extern void symbols_allocate_arrays(void)
 {
-    symbols    = my_calloc(sizeof(symbolinfo),  MAX_SYMBOLS, "symbols");
+    initialise_memory_list(&symbols_memlist,
+        sizeof(symbolinfo), 6400, (void**)&symbols,
+        "symbols");
     if (debugfile_switch)
     {
-        symbol_debug_info =
-            my_calloc(sizeof(symboldebuginfo), MAX_SYMBOLS,
-                      "symbol debug backpatch info");
+        initialise_memory_list(&symbol_debug_info_memlist,
+            sizeof(symboldebuginfo), 6400, (void**)&symbol_debug_info,
+            "symbol debug backpatch info");
     }
     start_of_list = my_calloc(sizeof(int32), HASH_TAB_SIZE,
                      "hash code list beginnings");
@@ -1462,8 +1467,11 @@ extern void symbols_free_arrays(void)
 
     my_free(&symbol_name_space_chunks, "symbol names chunk addresses");
 
-    my_free(&symbols, "symbols");
-    my_free(&symbol_debug_info, "symbol debug backpatch info");
+    deallocate_memory_list(&symbols_memlist);
+    if (debugfile_switch)
+    {
+        deallocate_memory_list(&symbol_debug_info_memlist);
+    }
     my_free(&start_of_list, "hash code list beginnings");
 
     if (symbol_replacements)
