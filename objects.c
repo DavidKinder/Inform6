@@ -353,15 +353,15 @@ static int individual_prop_table_size; /* Size of the table of individual
 /*   Arrays used by this file                                                */
 /* ------------------------------------------------------------------------- */
 
-objecttz     *objectsz;                /* Z-code only                        */
+objecttz     *objectsz;              /* Allocated to no_objects; Z-code only */
 memory_list objectsz_memlist;
-objecttg     *objectsg;                /* Glulx only                         */
+objecttg     *objectsg;              /* Allocated to no_objects; Glulx only  */
 static memory_list objectsg_memlist;
-uchar        *objectatts;              /* Glulx only                         */
+uchar        *objectatts;            /* Allocated to no_objects; Glulx only  */
 static memory_list objectatts_memlist;
-static int   *classes_to_inherit_from;
+static int   *classes_to_inherit_from; /* Allocated to no_classes_to_inherit_from */
 static memory_list classes_to_inherit_from_memlist;
-classinfo    *class_info;
+classinfo    *class_info;            /* Allocated up to no_classes           */
 memory_list   class_info_memlist;
 
 /* ------------------------------------------------------------------------- */
