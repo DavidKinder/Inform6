@@ -83,10 +83,13 @@ static int unicode_entity_index(int32 unicode);
 /*   Abbreviation arrays                                                     */
 /* ------------------------------------------------------------------------- */
 
-abbreviation *abbreviations;
+abbreviation *abbreviations;             /* Allocated up to no_abbreviations */
 static memory_list abbreviations_memlist;
-uchar *abbreviations_at;                 /* Memory to hold the text of any
-                                          abbreviation strings declared      */
+
+/* Memory to hold the text of any abbreviation strings declared. This is
+   counted in units of MAX_ABBREV_LENGTH bytes. (An abbreviation must fit
+   in that many bytes, null included.)                                       */
+uchar *abbreviations_at;                 /* Allocated up to no_abbreviations */
 static memory_list abbreviations_at_memlist;
 
 /* ------------------------------------------------------------------------- */
