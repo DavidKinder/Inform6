@@ -868,7 +868,7 @@ typedef struct symbolinfo_s {
     int32 value;
     int marker;
     brief_location line;
-    int flags;  /* ?_SFLAGS bitmask */
+    unsigned int flags;  /* ?_SFLAGS bitmask */
     uchar type; /* ?_T value */
     int next_entry; /* Linked list for symbol hash table */
 } symbolinfo;
@@ -2691,6 +2691,7 @@ extern int   *smarks;
 extern brief_location *slines;
 extern unsigned int   *sflags;
 extern uchar *stypes;
+extern symbolinfo *symbols;
 extern symboldebuginfo *symbol_debug_info;
 extern int32 *individual_name_strings;
 extern int32 *attribute_name_strings;

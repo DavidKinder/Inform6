@@ -44,12 +44,7 @@ int no_named_constants;                         /* Copied into story file    */
 /*   as their numbers and scope are too limited for this to be efficient.    */
 /* ------------------------------------------------------------------------- */
 
-  char  **symbs;
-  int32  *svals;
-  int    *smarks;            /* Glulx-only */
-  brief_location  *slines;
-  unsigned int    *sflags;
-  uchar  *stypes;
+  symbolinfo *symbols;
   symboldebuginfo *symbol_debug_info;
 
 /* ------------------------------------------------------------------------- */
@@ -109,8 +104,8 @@ static int symbol_definitions_size = 0; /* calloced size */
 /*   idea to choose HASH_TAB_SIZE as large as conveniently possible.         */
 /* ------------------------------------------------------------------------- */
 
-static int   *next_entry;
-static int32 *start_of_list;
+static int32 *start_of_list; /* Allocated array of size HASH_TAB_SIZE */
+/* The next_entry field is part of the symbolinfo struct. */
 
 /* ------------------------------------------------------------------------- */
 /*   Initialisation.                                                         */
@@ -219,19 +214,19 @@ extern int symbol_index(char *p, int hashcode)
         if (new_entry > 0) break;
 
         last = this;
-        this = next_entry[this];
+        this = symbols[this].next_entry;
     } while (this != -1);
 
     if (no_symbols >= MAX_SYMBOLS)
         memoryerror("MAX_SYMBOLS", MAX_SYMBOLS);
 
     if (last == -1)
-    {   next_entry[no_symbols]=start_of_list[hashcode];
+    {   symbols[no_symbols].next_entry=start_of_list[hashcode];
         start_of_list[hashcode]=no_symbols;
     }
     else
-    {   next_entry[no_symbols]=this;
-        next_entry[last]=no_symbols;
+    {   symbols[no_symbols].next_entry=this;
+        symbols[last].next_entry=no_symbols;
     }
 
     if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
@@ -281,17 +276,17 @@ extern void end_symbol_scope(int k)
     int j;
     j = hash_code_from_string(symbs[k]);
     if (start_of_list[j] == k)
-    {   start_of_list[j] = next_entry[k];
+    {   start_of_list[j] = symbols[k].next_entry;
         return;
     }
     j = start_of_list[j];
     while (j != -1)
     {
-        if (next_entry[j] == k)
-        {   next_entry[j] = next_entry[k];
+        if (symbols[j].next_entry == k)
+        {   symbols[j].next_entry = symbols[k].next_entry;
             return;
         }
-        j = next_entry[j];
+        j = symbols[j].next_entry;
     }
 }
 
@@ -1367,12 +1362,7 @@ extern uint32 df_next_function_iterate(int *funcused)
 
 extern void init_symbols_vars(void)
 {
-    symbs = NULL;
-    svals = NULL;
-    smarks = NULL;
-    stypes = NULL;
-    sflags = NULL;
-    next_entry = NULL;
+    symbols = NULL;
     start_of_list = NULL;
     symbol_debug_info = NULL;
 
@@ -1410,20 +1400,13 @@ extern void symbols_begin_pass(void)
 
 extern void symbols_allocate_arrays(void)
 {
-    symbs      = my_calloc(sizeof(char *),  MAX_SYMBOLS, "symbols");
-    svals      = my_calloc(sizeof(int32),   MAX_SYMBOLS, "symbol values");
-    smarks     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol markers");
-    slines     = my_calloc(sizeof(brief_location), MAX_SYMBOLS, "symbol lines");
-    stypes     = my_calloc(sizeof(char),    MAX_SYMBOLS, "symbol types");
-    sflags     = my_calloc(sizeof(unsigned int),     MAX_SYMBOLS, "symbol flags");
+    symbols    = my_calloc(sizeof(symbolinfo),  MAX_SYMBOLS, "symbols");
     if (debugfile_switch)
     {
         symbol_debug_info =
             my_calloc(sizeof(symboldebuginfo), MAX_SYMBOLS,
                       "symbol debug backpatch info");
     }
-    next_entry = my_calloc(sizeof(int),     MAX_SYMBOLS,
-                     "symbol linked-list forward links");
     start_of_list = my_calloc(sizeof(int32), HASH_TAB_SIZE,
                      "hash code list beginnings");
 
@@ -1471,19 +1454,8 @@ extern void symbols_free_arrays(void)
 
     my_free(&symbol_name_space_chunks, "symbol names chunk addresses");
 
-    my_free(&symbs, "symbols");
-    my_free(&svals, "symbol values");
-    my_free(&smarks, "symbol markers");
-    my_free(&slines, "symbol lines");
-    my_free(&stypes, "symbol types");
-    my_free(&sflags, "symbol flags");
-    if (debugfile_switch)
-    {
-        my_free
-            (&symbol_debug_info,
-             "symbol debug backpatch info");
-    }
-    my_free(&next_entry, "symbol linked-list forward links");
+    my_free(&symbols, "symbols");
+    my_free(&symbol_debug_info, "symbol debug backpatch info");
     my_free(&start_of_list, "hash code list beginnings");
 
     if (symbol_replacements)
