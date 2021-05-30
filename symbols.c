@@ -17,24 +17,32 @@ int no_symbols;                        /* Total number of symbols defined    */
 int no_named_constants;                         /* Copied into story file    */
 
 /* ------------------------------------------------------------------------- */
-/*   Plus six arrays.  Each symbol has its own index n (an int32) and        */
+/*   Plus an array of symbolinfo.  Each symbol has its own index n (an       */
+/*   int32) in the array. The struct there contains:                         */
 /*                                                                           */
-/*       symbols[n].value   is its value (must be 32 bits wide, i.e. an int32, tho'  */
-/*                  it is used to hold an unsigned 16 bit Z-machine value)   */
-/*       symbols[n].flags  holds flags (see "header.h" for a list)                  */
-/*       symbols[n].type  is the "type", distinguishing between the data type of   */
+/*       value   is its value. In Z-code, this holds both the 16-bit value   */
+/*                  and the 16-bit backpatch marker, so it is an int32.      */
+/*       marker   is the backpatch marker in Glulx.                          */
+/*       flags  holds flags (see "header.h" for a list of ?_SFLAGS)          */
+/*       type  is the "type", distinguishing between the data type of        */
 /*                  different kinds of constants/variables.                  */
-/*                  (See the "typename()" below.)                            */
-/*       symbols[n].name   is the name of the symbol, in the same case form as      */
+/*                  (A ?_T constant; see the "typename()" below.)            */
+/*       name   is the name of the symbol, in the same case form as          */
 /*                  when created.                                            */
-/*       symbols[n].line  is the source line on which the symbol value was first   */
+/*       line  is the source line on which the symbol value was first        */
 /*                  assigned                                                 */
-/*       symbol_debug_backpatch_positions[n]                                 */
+/*       next_entry  is the forward link in the symbol hash table. (See      */
+/*                  start_of_list, below.)                                   */
+/*                                                                           */
+/*   When generating a debug file (-k switch), we also allocate an array     */
+/*   of symboldebuginfo, which contains:                                     */
+/*                                                                           */
+/*       backpatch_pos                                                       */
 /*                  is a file position in the debug information file where   */
 /*                  the symbol's value should be written after backpatching, */
 /*                  or else the null position if the value was known and     */
 /*                  written beforehand                                       */
-/*       replacement_debug_backpatch_positions[n]                            */
+/*       replacement_backpatch_pos                                           */
 /*                  is a file position in the debug information file where   */
 /*                  the symbol's name can be erased if it is replaced, or    */
 /*                  else null if the name will never need to be replaced     */
