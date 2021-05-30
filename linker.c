@@ -251,7 +251,7 @@ static void accept_export(void)
         {   IE.symbol_value = no_actions;
             action_symbol[no_actions++] = index;
             if (linker_trace_level >= 4)
-                printf("Creating action ##%s\n", (char *) symbs[index]);
+                printf("Creating action ##%s\n", symbs[index]);
         }
         else
         switch(IE.symbol_type)
@@ -310,7 +310,7 @@ static void accept_export(void)
     if (IE.module_value == EXPORTAC_MV)
     {   if (linker_trace_level >= 4)
             printf("Map %d '%s' to %d\n",
-                IE.symbol_value, (char *) (symbs[index]), svals[index]);
+                IE.symbol_value, (symbs[index]), svals[index]);
         actions_map[map_to] = svals[index];
     }
 }
@@ -693,7 +693,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
         for (i=0; i<module_map[6]; i++)
         {   if (xref_table[i] != -1)
                 printf("module %4d -> story file '%s'\n", i,
-                    (char *) symbs[xref_table[i]]);
+                    symbs[xref_table[i]]);
         }
     }
 
@@ -1051,7 +1051,7 @@ static void export_symbols(void)
                 IE.symbol_number = symbol_number;
                 IE.symbol_type = stypes[symbol_number];
                 IE.symbol_value = svals[symbol_number];
-                IE.symbol_name = (char *) (symbs[symbol_number]);
+                IE.symbol_name = (symbs[symbol_number]);
                 describe_importexport(&IE);
             }
 
@@ -1069,7 +1069,7 @@ static void export_symbols(void)
                  write_link_byte(svals[symbol_number] / 0x10000);
             else write_link_byte(0);
             write_link_word(svals[symbol_number] % 0x10000);
-            write_link_string((char *) (symbs[symbol_number]));
+            write_link_string((symbs[symbol_number]));
             flush_link_data();
         }
 
@@ -1079,7 +1079,7 @@ static void export_symbols(void)
                 IE.symbol_number = symbol_number;
                 IE.symbol_type = stypes[symbol_number];
                 IE.symbol_value = svals[symbol_number];
-                IE.symbol_name = (char *) (symbs[symbol_number]);
+                IE.symbol_name = (symbs[symbol_number]);
                 describe_importexport(&IE);
             }
 
@@ -1087,7 +1087,7 @@ static void export_symbols(void)
             write_link_word(symbol_number);
             write_link_byte(stypes[symbol_number]);
             write_link_word(svals[symbol_number]);
-            write_link_string((char *) (symbs[symbol_number]));
+            write_link_string((symbs[symbol_number]));
             flush_link_data();
         }
     }

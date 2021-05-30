@@ -205,7 +205,7 @@ extern char *variable_name(int32 i)
       }
     }
 
-    return ((char *) symbs[variable_tokens[i]]);
+    return (symbs[variable_tokens[i]]);
 }
 
 /* Print symbolic information about the AO, if there is any. */
@@ -233,7 +233,7 @@ static void print_operand_annotation(const assembly_operand *o)
     if (o->symindex >= 0 && o->symindex < no_symbols) {
         printf((!any) ? " (" : ": ");
         any = TRUE;
-        printf("%s", (char *)symbs[o->symindex]);
+        printf("%s", symbs[o->symindex]);
     }
     if (any) printf(")");       
 }
@@ -1780,10 +1780,10 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         if (j != -1)
         {   if (sflags[j] & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
-                    (char *) symbs[j], slines[j]);
+                    symbs[j], slines[j]);
             else
                 if ((sflags[j] & USED_SFLAG) == 0)
-                    dbnu_warning("Label", (char *) symbs[j], slines[j]);
+                    dbnu_warning("Label", symbs[j], slines[j]);
             stypes[j] = CONSTANT_T;
             sflags[j] = UNKNOWN_SFLAG;
         }

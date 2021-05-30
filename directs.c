@@ -906,7 +906,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
             local_variable_texts[3] = "dummy4";
 
             assign_symbol(i,
-                assemble_routine_header(k, FALSE, (char *) symbs[i], FALSE, i),
+                assemble_routine_header(k, FALSE, symbs[i], FALSE, i),
                 ROUTINE_T);
 
             /*  Ensure the return value of a stubbed routine is false,
@@ -1044,7 +1044,7 @@ the first constant definition");
         }
 
         if (stypes[token_value] != CONSTANT_T)
-        {   error_named("Cannot Undef a symbol which is not a defined constant:", (char *)symbs[token_value]);
+        {   error_named("Cannot Undef a symbol which is not a defined constant:", symbs[token_value]);
             break;
         }
 

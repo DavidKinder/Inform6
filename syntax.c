@@ -201,7 +201,7 @@ extern int parse_directive(int internal_flag)
         {   /* Parse the function definition and assign its symbol. */
             assign_symbol(routine_symbol,
                 parse_routine(lexical_source, FALSE,
-                    (char *) symbs[routine_symbol], FALSE, routine_symbol),
+                    symbs[routine_symbol], FALSE, routine_symbol),
                 ROUTINE_T);
             slines[routine_symbol] = routine_starts_line;
         }

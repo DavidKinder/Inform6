@@ -174,7 +174,7 @@ static void list_grammar_line_v1(int mark)
 
     printf(" -> ");
     actsym = action_symbol[action];
-    str = (char *)(symbs[actsym]);
+    str = (symbs[actsym]);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
     printf("\n");
@@ -259,7 +259,7 @@ static void list_grammar_line_v2(int mark)
     }
     printf(" -> ");
     actsym = action_symbol[action];
-    str = (char *)(symbs[actsym]);
+    str = (symbs[actsym]);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
     if (flags) printf(" (reversed)");
@@ -401,7 +401,7 @@ extern void find_the_actions(void)
         for (i=0; i<no_actions; i++) action_byte_offset[i] = 0;
     else
     for (i=0; i<no_actions; i++)
-    {   strcpy(action_name, (char *) symbs[action_symbol[i]]);
+    {   strcpy(action_name, symbs[action_symbol[i]]);
         action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");

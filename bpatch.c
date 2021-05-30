@@ -114,7 +114,7 @@ static int32 backpatch_value_z(int32 value)
             {   if (!(sflags[value] & UERROR_SFLAG))
                 {   sflags[value] |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        (char *) symbs[value], slines[value]);
+                        symbs[value], slines[value]);
                 }
             }
             else
@@ -127,7 +127,7 @@ static int32 backpatch_value_z(int32 value)
                     if (no_link_errors == 0)
                     {   compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        (char *) symbs[value]);
+                        symbs[value]);
                         backpatch_error_flag = TRUE;
                     }
                 }
@@ -264,7 +264,7 @@ static int32 backpatch_value_g(int32 value)
             {   if (!(sflags[value] & UERROR_SFLAG))
                 {   sflags[value] |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        (char *) symbs[value], slines[value]);
+                        symbs[value], slines[value]);
                 }
             }
             else
@@ -277,7 +277,7 @@ static int32 backpatch_value_g(int32 value)
                     if (no_link_errors == 0)
                     {   compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        (char *) symbs[value]);
+                        symbs[value]);
                         backpatch_error_flag = TRUE;
                     }
                 }

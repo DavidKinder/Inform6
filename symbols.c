@@ -25,8 +25,8 @@ int no_named_constants;                         /* Copied into story file    */
 /*       stypes[n]  is the "type", distinguishing between the data type of   */
 /*                  different kinds of constants/variables.                  */
 /*                  (See the "typename()" below.)                            */
-/*       symbs[n]   (needs to be cast to (char *) to be used) is the name    */
-/*                  of the symbol, in the same case form as when created.    */
+/*       symbs[n]   is the name of the symbol, in the same case form as      */
+/*                  when created.                                            */
 /*       slines[n]  is the source line on which the symbol value was first   */
 /*                  assigned                                                 */
 /*       symbol_debug_backpatch_positions[n]                                 */
@@ -42,10 +42,6 @@ int no_named_constants;                         /* Copied into story file    */
 /*   Comparison is case insensitive.                                         */
 /*   Note that local variable names are not entered into the symbols table,  */
 /*   as their numbers and scope are too limited for this to be efficient.    */
-/* ------------------------------------------------------------------------- */
-/*   Caveat editor: some array types are set up to work even on machines     */
-/*   where sizeof(int32 *) differs from, e.g., sizeof(char *): so do not     */
-/*   alter the types unless you understand what is going on!                 */
 /* ------------------------------------------------------------------------- */
 
   char  **symbs;
@@ -212,7 +208,7 @@ extern int symbol_index(char *p, int hashcode)
     do
     {   if (this == -1) break;
 
-        r = (char *)symbs[this];
+        r = symbs[this];
         new_entry = strcmpcis(r, p);
         if (new_entry == 0) 
         {
@@ -249,14 +245,14 @@ extern int symbol_index(char *p, int hashcode)
         if (no_symbol_name_space_chunks >= MAX_SYMBOL_CHUNKS)
             memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
         symbol_name_space_chunks[no_symbol_name_space_chunks++]
-            = (char *) symbols_free_space;
+            = symbols_free_space;
         if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
             memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
     }
 
-    strcpy((char *) symbols_free_space, p);
+    strcpy(symbols_free_space, p);
     symbs[no_symbols]   = symbols_free_space;
-    symbols_free_space += strlen((char *)symbols_free_space) + 1;
+    symbols_free_space += strlen(symbols_free_space) + 1;
 
     svals[no_symbols]   =  0x100; /* ###-wrong? Would this fix the
                                      unbound-symbol-causes-asm-error? */
@@ -283,7 +279,7 @@ extern void end_symbol_scope(int k)
     */
 
     int j;
-    j = hash_code_from_string((char *) symbs[k]);
+    j = hash_code_from_string(symbs[k]);
     if (start_of_list[j] == k)
     {   start_of_list[j] = next_entry[k];
         return;
@@ -347,7 +343,7 @@ static void describe_flags(int flags)
 
 extern void describe_symbol(int k)
 {   printf("%4d  %-16s  %2d:%04d  %04x  %s  ",
-        k, (char *) (symbs[k]), 
+        k, (symbs[k]), 
         (int)(slines[k].file_index),
         (int)(slines[k].line_number),
         svals[k], typename(stypes[k]));
@@ -383,7 +379,7 @@ extern void issue_unused_warnings(void)
              & (SYSTEM_SFLAG + UNKNOWN_SFLAG + EXPORT_SFLAG
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
              && (stypes[i] != OBJECT_T))
-            dbnu_warning(typename(stypes[i]), (char *) symbs[i], slines[i]);
+            dbnu_warning(typename(stypes[i]), symbs[i], slines[i]);
     }
 }
 
@@ -418,13 +414,13 @@ extern void write_the_identifier_names(void)
         if ((t == INDIVIDUAL_PROPERTY_T) || (t == PROPERTY_T))
         {   if (sflags[i] & ALIASED_SFLAG)
             {   if (individual_name_strings[svals[i]] == 0)
-                {   sprintf(idname_string, "%s", (char *) symbs[i]);
+                {   sprintf(idname_string, "%s", symbs[i]);
 
                     for (j=i+1, k=0; (j<no_symbols && k<3); j++)
                     {   if ((stypes[j] == stypes[i])
                             && (svals[j] == svals[i]))
                         {   sprintf(idname_string+strlen(idname_string),
-                                "/%s", (char *) symbs[j]);
+                                "/%s", symbs[j]);
                             k++;
                         }
                     }
@@ -434,7 +430,7 @@ extern void write_the_identifier_names(void)
                 }
             }
             else
-            {   sprintf(idname_string, "%s", (char *) symbs[i]);
+            {   sprintf(idname_string, "%s", symbs[i]);
 
                 individual_name_strings[svals[i]]
                     = compile_string(idname_string, STRCTX_SYMBOL);
@@ -443,13 +439,13 @@ extern void write_the_identifier_names(void)
         if (t == ATTRIBUTE_T)
         {   if (sflags[i] & ALIASED_SFLAG)
             {   if (attribute_name_strings[svals[i]] == null_value)
-                {   sprintf(idname_string, "%s", (char *) symbs[i]);
+                {   sprintf(idname_string, "%s", symbs[i]);
 
                     for (j=i+1, k=0; (j<no_symbols && k<3); j++)
                     {   if ((stypes[j] == stypes[i])
                             && (svals[j] == svals[i]))
                         {   sprintf(idname_string+strlen(idname_string),
-                                "/%s", (char *) symbs[j]);
+                                "/%s", symbs[j]);
                             k++;
                         }
                     }
@@ -459,14 +455,14 @@ extern void write_the_identifier_names(void)
                 }
             }
             else
-            {   sprintf(idname_string, "%s", (char *) symbs[i]);
+            {   sprintf(idname_string, "%s", symbs[i]);
 
                 attribute_name_strings[svals[i]]
                     = compile_string(idname_string, STRCTX_SYMBOL);
             }
         }
         if (sflags[i] & ACTION_SFLAG)
-        {   sprintf(idname_string, "%s", (char *) symbs[i]);
+        {   sprintf(idname_string, "%s", symbs[i]);
             idname_string[strlen(idname_string)-3] = 0;
 
             if (debugfile_switch)
@@ -484,7 +480,7 @@ extern void write_the_identifier_names(void)
 
     for (i=0; i<no_symbols; i++)
     {   if (stypes[i] == FAKE_ACTION_T)
-        {   sprintf(idname_string, "%s", (char *) symbs[i]);
+        {   sprintf(idname_string, "%s", symbs[i]);
             idname_string[strlen(idname_string)-3] = 0;
 
             action_name_strings[svals[i]
@@ -495,7 +491,7 @@ extern void write_the_identifier_names(void)
 
     for (j=0; j<no_arrays; j++)
     {   i = array_symbols[j];
-        sprintf(idname_string, "%s", (char *) symbs[i]);
+        sprintf(idname_string, "%s", symbs[i]);
 
         array_name_strings[j]
             = compile_string(idname_string, STRCTX_SYMBOL);
@@ -503,14 +499,14 @@ extern void write_the_identifier_names(void)
   if (define_INFIX_switch)
   { for (i=0; i<no_symbols; i++)
     {   if (stypes[i] == GLOBAL_VARIABLE_T)
-        {   sprintf(idname_string, "%s", (char *) symbs[i]);
+        {   sprintf(idname_string, "%s", symbs[i]);
             array_name_strings[no_arrays + svals[i] -16]
                 = compile_string(idname_string, STRCTX_SYMBOL);
         }
     }
 
     for (i=0; i<no_named_routines; i++)
-    {   sprintf(idname_string, "%s", (char *) symbs[named_routine_symbols[i]]);
+    {   sprintf(idname_string, "%s", symbs[named_routine_symbols[i]]);
             array_name_strings[no_arrays + no_globals + i]
                 = compile_string(idname_string, STRCTX_SYMBOL);
     }
@@ -519,7 +515,7 @@ extern void write_the_identifier_names(void)
     {   if (((stypes[i] == OBJECT_T) || (stypes[i] == CLASS_T)
             || (stypes[i] == CONSTANT_T))
             && ((sflags[i] & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
-        {   sprintf(idname_string, "%s", (char *) symbs[i]);
+        {   sprintf(idname_string, "%s", symbs[i]);
             array_name_strings[no_arrays + no_globals + no_named_routines
                 + no_named_constants++]
                 = compile_string(idname_string, STRCTX_SYMBOL);
@@ -800,7 +796,7 @@ extern void add_symbol_replacement_mapping(int original, int renamed)
     int ix;
 
     if (original == renamed) {
-        error_named("A routine cannot be 'Replace'd to itself:", (char *)symbs[original]);
+        error_named("A routine cannot be 'Replace'd to itself:", symbs[original]);
         return;        
     }
 
@@ -821,10 +817,10 @@ extern void add_symbol_replacement_mapping(int original, int renamed)
 
     for (ix=0; ix<symbol_replacements_count; ix++) {
         if (original == symbol_replacements[ix].original_symbol) {
-            error_named("A routine cannot be 'Replace'd to more than one new name:", (char *)symbs[original]);
+            error_named("A routine cannot be 'Replace'd to more than one new name:", symbs[original]);
         }
         if (renamed == symbol_replacements[ix].original_symbol) {
-            error_named("A routine cannot be 'Replace'd to a 'Replace'd name:", (char *)symbs[original]);
+            error_named("A routine cannot be 'Replace'd to a 'Replace'd name:", symbs[original]);
         }
     }
 
@@ -1105,7 +1101,7 @@ extern void locate_dead_functions(void)
         addr = svals[symbol] * (glulx_mode ? 1 : scale_factor);
         tofunc = df_function_for_address(addr);
         if (!tofunc) {
-            error_named("Internal error in stripping: global ROUTINE_T symbol is not found in df_function map:", (char *)symbs[symbol]);
+            error_named("Internal error in stripping: global ROUTINE_T symbol is not found in df_function map:", symbs[symbol]);
             continue;
         }
         /* A function may be marked here more than once. That's fine. */
@@ -1162,7 +1158,7 @@ extern void locate_dead_functions(void)
                 addr = svals[symbol] * (glulx_mode ? 1 : scale_factor);
                 tofunc = df_function_for_address(addr);
                 if (!tofunc) {
-                    error_named("Internal error in stripping: function ROUTINE_T symbol is not found in df_function map:", (char *)symbs[symbol]);
+                    error_named("Internal error in stripping: function ROUTINE_T symbol is not found in df_function map:", symbs[symbol]);
                     continue;
                 }
                 if (tofunc->usage)

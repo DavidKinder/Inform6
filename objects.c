@@ -1135,7 +1135,7 @@ not 'private':", token_text);
         for (i=0; i<(def_t_s-1); i++)
             if (defined_this_segment[i] == token_value)
             {   error_named("Property given twice in the same declaration:",
-                    (char *) symbs[token_value]);
+                    symbs[token_value]);
             }
             else
             if (svals[defined_this_segment[i]] == svals[token_value])
@@ -1143,8 +1143,8 @@ not 'private':", token_text);
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
-                    (char *) symbs[defined_this_segment[i]],
-                    (char *) symbs[token_value]);
+                    symbs[defined_this_segment[i]],
+                    symbs[token_value]);
                 error(error_b);
             }
 
@@ -1173,12 +1173,12 @@ the names '%s' and '%s' actually refer to the same property",
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
                         "%s::%s", classname_text,
-                        (char *) symbs[property_name_symbol]);
+                        symbs[property_name_symbol]);
                 }
                 else
                 {   sprintf(embedded_name,
                         "%s.%s", objectname_text,
-                        (char *) symbs[property_name_symbol]);
+                        symbs[property_name_symbol]);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
                 AO.type = LONG_CONSTANT_OT;
@@ -1232,7 +1232,7 @@ the names '%s' and '%s' actually refer to the same property",
 
             if (length == 64)
             {   error_named("Limit (of 32 values) exceeded for property",
-                    (char *) symbs[property_name_symbol]);
+                    symbs[property_name_symbol]);
                 break;
             }
 
@@ -1276,7 +1276,7 @@ the names '%s' and '%s' actually refer to the same property",
             {
        warning_named("Version 3 limit of 4 values per property exceeded \
 (use -v5 to get 32), so truncating property",
-                    (char *) symbs[property_name_symbol]);
+                    symbs[property_name_symbol]);
                 length = 8;
             }
         }
@@ -1394,7 +1394,7 @@ not 'private':", token_text);
         for (i=0; i<(def_t_s-1); i++)
             if (defined_this_segment[i] == token_value)
             {   error_named("Property given twice in the same declaration:",
-                    (char *) symbs[token_value]);
+                    symbs[token_value]);
             }
             else
             if (svals[defined_this_segment[i]] == svals[token_value])
@@ -1402,8 +1402,8 @@ not 'private':", token_text);
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
-                    (char *) symbs[defined_this_segment[i]],
-                    (char *) symbs[token_value]);
+                    symbs[defined_this_segment[i]],
+                    symbs[token_value]);
                 error(error_b);
             }
 
@@ -1436,12 +1436,12 @@ the names '%s' and '%s' actually refer to the same property",
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
                         "%s::%s", classname_text,
-                        (char *) symbs[property_name_symbol]);
+                        symbs[property_name_symbol]);
                 }
                 else
                 {   sprintf(embedded_name,
                         "%s.%s", objectname_text,
-                        (char *) symbs[property_name_symbol]);
+                        symbs[property_name_symbol]);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
                 AO.type = CONSTANT_OT; 
@@ -1495,7 +1495,7 @@ the names '%s' and '%s' actually refer to the same property",
 
             if (length == 32768) /* VENEER_CONSTRAINT_ON_PROP_TABLE_SIZE? */
             {   error_named("Limit (of 32768 values) exceeded for property",
-                    (char *) symbs[property_name_symbol]);
+                    symbs[property_name_symbol]);
                 break;
             }
 
@@ -1792,7 +1792,7 @@ inconvenience, please contact the maintainers.");
     strcpy(shortname_buffer, token_text);
 
     assign_symbol(token_value, class_number, CLASS_T);
-    classname_text = (char *) symbs[token_value];
+    classname_text = symbs[token_value];
 
     if (!glulx_mode) {
         if (metaclass_flag) sflags[token_value] |= SYSTEM_SFLAG;
@@ -2047,7 +2047,7 @@ extern void make_object(int nearby_flag,
     if (textual_name == NULL)
     {   if (internal_name_symbol > 0)
             sprintf(shortname_buffer, "(%s)",
-                (char *) symbs[internal_name_symbol]);
+                symbs[internal_name_symbol]);
         else
             sprintf(shortname_buffer, "(%d)", no_objects+1);
     }

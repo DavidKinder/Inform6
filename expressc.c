@@ -390,7 +390,7 @@ static void value_in_void_context_z(assembly_operand AO)
         case SHORT_CONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbs[AO.value]);
             break;
         case VARIABLE_OT:
             t = variable_name(AO.value);
@@ -772,7 +772,7 @@ static void value_in_void_context_g(assembly_operand AO)
         case ZEROCONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbs[AO.value]);
             break;
         case GLOBALVAR_OT:
         case LOCALVAR_OT:
