@@ -62,7 +62,7 @@ static memory_list symbol_debug_info_memlist;
 /*   allocated as needed in chunks of size SYMBOLS_CHUNK_SIZE.               */
 /* ------------------------------------------------------------------------- */
 
-#define MAX_SYMBOL_CHUNKS (100)
+#define MAX_SYMBOL_CHUNKS (100) /*### to do next*/
 
 static char *symbols_free_space,        /* Next byte free to hold new names  */
            *symbols_ceiling;            /* Pointer to the end of the current
