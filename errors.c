@@ -231,8 +231,6 @@ command line.",s,(long int) size,s);
 /*                                    indicate a bug in Inform)              */
 /* ------------------------------------------------------------------------- */
 
-static int errors[MAX_ERRORS];
-
 int no_errors, no_warnings, no_suppressed_warnings, no_link_errors,
     no_compiler_errors;
 
@@ -282,7 +280,6 @@ static void message(int style, char *s)
 extern void error(char *s)
 {   if (no_errors == MAX_ERRORS)
         fatalerror("Too many errors: giving up");
-    errors[no_errors] = no_syntax_lines;
     message(1,s);
 }
 
@@ -454,7 +451,6 @@ extern void obsolete_warning(char *s1)
 
 extern void link_error(char *s)
 {   if (no_errors==MAX_ERRORS) fatalerror("Too many errors: giving up");
-    errors[no_errors] = no_syntax_lines;
     message(3,s);
 }
 

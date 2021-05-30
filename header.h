@@ -737,11 +737,21 @@ typedef struct verbt {
     int l[MAX_LINES_PER_VERB];
 } verbt;
 
+/* Information about an object class. */
+typedef struct classinfo_s {
+    /* The number of the prototype-object for this class */
+    int object_number;
+    /* The offset of properties block for this class (always an offset inside the properties table) */
+    int32 begins_at;
+} classinfo;
+
+/* Property entry record (Z). */
 typedef struct prop {
     uchar l, num;
     assembly_operand ao[32];
 } prop;
 
+/* Properties and attributes of the object currently being constructed (Z). */
 /* Only one of this object. */
 typedef struct fpropt {
     uchar atts[6];
@@ -749,12 +759,14 @@ typedef struct fpropt {
     prop pp[64];
 } fpropt;
 
+/* Constructed object (Z). */
 typedef struct objecttz {
     uchar atts[6];
     int parent, next, child;
     int propsize;
 } objecttz;
 
+/* Property entry record (G). */
 typedef struct propg {
     int num;
     int continuation; 
@@ -763,6 +775,7 @@ typedef struct propg {
     int32 datalen;
 } propg;
 
+/* Properties and attributes of the object currently being constructed (G). */
 /* Only one of this object. */
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
@@ -773,6 +786,7 @@ typedef struct fproptg {
     int32 finalpropaddr;
 } fproptg;
 
+/* Constructed object (G). */
 typedef struct objecttg {
     /* attributes are stored in a separate array */
     int32 shortname;
@@ -780,6 +794,12 @@ typedef struct objecttg {
     int32 propaddr;
     int32 propsize;
 } objecttg;
+
+typedef struct abbreviation_s {
+    int value;
+    int quality;
+    int freq;
+} abbreviation;
 
 typedef struct maybe_file_position_S
 {   int valid;
@@ -862,16 +882,28 @@ typedef struct ErrorPosition_s
     int32 orig_char;
 } ErrorPosition;
 
-/*  A memory block can hold at most ALLOC_CHUNK_SIZE * 72:  */
-
-extern int ALLOC_CHUNK_SIZE;
-
+/*  A memory block is a sparse array of chunks. Chunks are allocated
+    as needed on write. */
 typedef struct memory_block_s
-{   int chunks;
-    int extent_of_last;
-    uchar *chunk[72];
-    int write_pos;
+{
+    int count;
+    uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
 } memory_block;
+
+/*  A memory list is a sequential array of items. The list grows as
+    necessary, but it is *not* sparse.
+    This can optionally maintain an external pointer (of any type) which 
+    also refers to the allocated array. The external pointer will always
+    have the same value as data.
+*/
+typedef struct memory_list_s
+{
+    char *whatfor;   /* must be a static string */
+    void *data;      /* allocated array of count*itemsize bytes */
+    void **extpointer;  /* pointer to keep in sync */
+    int itemsize;    /* item size in bytes */
+    int count;       /* number of items allocated */
+} memory_list;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
    the text, store_variable_number, branch_label_number, or branch_flag
@@ -2545,10 +2577,10 @@ extern void  link_module(char *filename);
 extern int32 malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,  MAX_SYMBOLS,    HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
-           MAX_OBJECTS,     MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
+           MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
            MAX_STATIC_DATA,      MAX_PROP_TABLE_SIZE,   SYMBOLS_CHUNK_SIZE,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
-           MAX_LOW_STRINGS,      MAX_CLASSES,           MAX_VERBS,
+           MAX_LOW_STRINGS,      MAX_VERBS,
            MAX_VERBSPACE,        MAX_ARRAYS,            MAX_INCLUSION_DEPTH,
            MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;
 
@@ -2594,6 +2626,10 @@ extern int  read_byte_from_memory_block(memory_block *MB, int32 index);
 extern void write_byte_to_memory_block(memory_block *MB,
     int32 index, int value);
 
+extern void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor);
+extern void deallocate_memory_list(memory_list *ML);
+extern void ensure_memory_list_available(memory_list *ML, int count);
+
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "objects"                                        */
 /* ------------------------------------------------------------------------- */
@@ -2604,10 +2640,11 @@ extern int individuals_length;
 extern uchar *individuals_table;
 extern int no_classes, no_objects;
 extern objecttz *objectsz;
+extern memory_list objectsz_memlist;
 extern objecttg *objectsg;
 extern uchar *objectatts;
-extern int *class_object_numbers;
-extern int32 *class_begins_at;
+extern classinfo *class_info;
+extern memory_list class_info_memlist;
 
 extern int32 *prop_default_value;
 extern int *prop_is_long;
@@ -2739,9 +2776,7 @@ extern char  *all_text,    *all_text_top;
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
 extern uchar *abbreviations_at;
-extern int  *abbrev_values;
-extern int  *abbrev_quality;
-extern int  *abbrev_freqs;
+extern abbreviation *abbreviations;
 
 extern int32 total_chars_trans, total_bytes_trans,
              zchars_trans_in_last_string;

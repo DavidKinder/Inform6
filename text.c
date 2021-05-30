@@ -35,8 +35,6 @@ int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           with ASCII character n, or -1
                                           if none of the abbreviations do    */
 int no_abbreviations;                  /* No of abbreviations defined so far */
-uchar *abbreviations_at;                 /* Memory to hold the text of any
-                                          abbreviation strings declared      */
 /* ------------------------------------------------------------------------- */
 /*   Glulx string compression storage                                        */
 /* ------------------------------------------------------------------------- */
@@ -49,7 +47,6 @@ int no_dynamic_strings;                /* No. of @.. string escapes used
 int no_unicode_chars;                  /* Number of distinct Unicode chars
                                           used. (Beyond 0xFF.)               */
 
-static int MAX_CHARACTER_SET;          /* Number of possible entities */
 huffentity_t *huff_entities;           /* The list of entities (characters,
                                           abbreviations, @.. escapes, and 
                                           the terminator)                    */
@@ -86,9 +83,11 @@ static int unicode_entity_index(int32 unicode);
 /*   Abbreviation arrays                                                     */
 /* ------------------------------------------------------------------------- */
 
-int *abbrev_values;
-int *abbrev_quality;
-int *abbrev_freqs;
+abbreviation *abbreviations;
+static memory_list abbreviations_memlist;
+uchar *abbreviations_at;                 /* Memory to hold the text of any
+                                          abbreviation strings declared      */
+static memory_list abbreviations_at_memlist;
 
 /* ------------------------------------------------------------------------- */
 
@@ -141,10 +140,10 @@ static void make_abbrevs_lookup(void)
                 p2=(char *)abbreviations_at+k*MAX_ABBREV_LENGTH;
                 if (strcmp(p1,p2)<0)
                 {   strcpy(p,p1); strcpy(p1,p2); strcpy(p2,p);
-                    l=abbrev_values[j]; abbrev_values[j]=abbrev_values[k];
-                    abbrev_values[k]=l;
-                    l=abbrev_quality[j]; abbrev_quality[j]=abbrev_quality[k];
-                    abbrev_quality[k]=l;
+                    l=abbreviations[j].value; abbreviations[j].value=abbreviations[k].value;
+                    abbreviations[k].value=l;
+                    l=abbreviations[j].quality; abbreviations[j].quality=abbreviations[k].quality;
+                    abbreviations[k].quality=l;
                     bubble_sort = TRUE;
                 }
             }
@@ -153,7 +152,7 @@ static void make_abbrevs_lookup(void)
     for (j=no_abbreviations-1; j>=0; j--)
     {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
         abbrevs_lookup[(uchar)p1[0]]=j;
-        abbrev_freqs[j]=0;
+        abbreviations[j].freq=0;
     }
     abbrevs_lookup_table_made = TRUE;
 }
@@ -184,7 +183,7 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
             if (!glulx_mode) {
                 for (k=0; p[k]!=0; k++) text[i+k]=1;
             }
-            abbrev_freqs[j]++;
+            abbreviations[j].freq++;
             return(j);
             NotMatched: ;
         }
@@ -194,15 +193,21 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
 
 extern void make_abbreviation(char *text)
 {
+    ensure_memory_list_available(&abbreviations_memlist, no_abbreviations+1);
+    ensure_memory_list_available(&abbreviations_at_memlist, no_abbreviations+1);
+    
     strcpy((char *)abbreviations_at
             + no_abbreviations*MAX_ABBREV_LENGTH, text);
 
-    abbrev_values[no_abbreviations] = compile_string(text, STRCTX_ABBREV);
+    abbreviations[no_abbreviations].value = compile_string(text, STRCTX_ABBREV);
+    abbreviations[no_abbreviations].freq = 0;
 
     /*   The quality is the number of Z-chars saved by using this            */
     /*   abbreviation: note that it takes 2 Z-chars to print it.             */
 
-    abbrev_quality[no_abbreviations++] = zchars_trans_in_last_string - 2;
+    abbreviations[no_abbreviations].quality = zchars_trans_in_last_string - 2;
+
+    no_abbreviations++;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -828,9 +833,16 @@ void compress_game_text()
   int jx;
   int ch;
   int32 ix;
+  int max_char_set;
   huffbitlist_t bits;
 
   if (compression_switch) {
+    max_char_set = 257 + no_abbreviations + MAX_DYNAMIC_STRINGS + MAX_UNICODE_CHARS;
+
+    huff_entities = my_calloc(sizeof(huffentity_t), max_char_set*2+1, 
+      "huffman entities");
+    hufflist = my_calloc(sizeof(huffentity_t *), max_char_set, 
+      "huffman node list");
 
     /* How many entities have we currently got? Well, 256 plus the
        string-terminator plus Unicode chars plus abbrevations plus
@@ -844,8 +856,8 @@ void compress_game_text()
     huff_dynam_start = entities;
     entities += no_dynamic_strings;
 
-    if (entities > MAX_CHARACTER_SET)
-      memoryerror("MAX_CHARACTER_SET",MAX_CHARACTER_SET);
+    if (entities > max_char_set)
+      compiler_error("Too many entities for max_char_set");
 
     /* Characters */
     for (jx=0; jx<256; jx++) {
@@ -880,7 +892,7 @@ void compress_game_text()
     no_huff_entities = 257;
     huff_unicode_start = 257;
     huff_abbrev_start = 257;
-    huff_dynam_start = 257+MAX_ABBREVS;
+    huff_dynam_start = 257+no_abbreviations;
     compression_table_size = 0;
   }
 
@@ -2143,6 +2155,10 @@ extern void word_to_ascii(uchar *p, char *results)
         encoded_word[7] = 8*(((int) p[4])&0x3) + (((int) p[5])&0xe0)/32;
         encoded_word[8] = ((int) p[5])&0x1f;
     }
+    else
+    {
+        encoded_word[6] = encoded_word[7] = encoded_word[8] = 0;
+    }
 
     shift = 0; cc = 0;
     for (i=0; i< ((version_number==3)?6:9); i++)
@@ -2409,11 +2425,14 @@ extern void text_begin_pass(void)
 /*  Note: for allocation and deallocation of all_the_text, see inform.c      */
 
 extern void text_allocate_arrays(void)
-{   abbreviations_at = my_malloc(MAX_ABBREVS*MAX_ABBREV_LENGTH,
+{
+    initialise_memory_list(&abbreviations_at_memlist,
+        MAX_ABBREV_LENGTH, 64, (void**)&abbreviations_at,
+        "abbreviation text");
+
+    initialise_memory_list(&abbreviations_memlist,
+        sizeof(abbreviation), 64, (void**)&abbreviations,
         "abbreviations");
-    abbrev_values    = my_calloc(sizeof(int), MAX_ABBREVS, "abbrev values");
-    abbrev_quality   = my_calloc(sizeof(int), MAX_ABBREVS, "abbrev quality");
-    abbrev_freqs     = my_calloc(sizeof(int),   MAX_ABBREVS, "abbrev freqs");
 
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
@@ -2444,17 +2463,10 @@ extern void text_allocate_arrays(void)
     compression_table_size = 0;
     compressed_offsets = NULL;
 
-    MAX_CHARACTER_SET = 0;
-
     if (glulx_mode) {
       if (compression_switch) {
         int ix;
-        MAX_CHARACTER_SET = 257 + MAX_ABBREVS + MAX_DYNAMIC_STRINGS 
-          + MAX_UNICODE_CHARS;
-        huff_entities = my_calloc(sizeof(huffentity_t), MAX_CHARACTER_SET*2+1, 
-          "huffman entities");
-        hufflist = my_calloc(sizeof(huffentity_t *), MAX_CHARACTER_SET, 
-          "huffman node list");
+        /* hufflist and huff_entities will be allocated at compress_game_text() time. */
         unicode_usage_entries = my_calloc(sizeof(unicode_usage_t), 
           MAX_UNICODE_CHARS, "unicode entity entries");
         for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
@@ -2469,10 +2481,8 @@ extern void text_free_arrays(void)
 {
     my_free(&strings_holding_area, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
-    my_free(&abbreviations_at, "abbreviations");
-    my_free(&abbrev_values,    "abbrev values");
-    my_free(&abbrev_quality,   "abbrev quality");
-    my_free(&abbrev_freqs,     "abbrev freqs");
+    deallocate_memory_list(&abbreviations_at_memlist);
+    deallocate_memory_list(&abbreviations_memlist);
 
     my_free(&dtree,            "red-black tree for dictionary");
     my_free(&final_dict_order, "final dictionary ordering table");

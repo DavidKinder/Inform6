@@ -862,9 +862,11 @@ at strings offset %04x (+%04x)\n",
     {   j = p[i]*256 + p[i+1]; i+=2;
         if (j == 0) break;
 
-        class_object_numbers[no_classes] = j + no_objects;
+        ensure_memory_list_available(&class_info_memlist, no_classes+1);
+        
+        class_info[no_classes].object_number = j + no_objects;
         j = p[i]*256 + p[i+1]; i+=2;
-        class_begins_at[no_classes++] = j + properties_table_size;
+        class_info[no_classes++].begins_at = j + properties_table_size;
 
     } while (TRUE);
 
@@ -874,7 +876,9 @@ at strings offset %04x (+%04x)\n",
         printf("Joining on object tree of size %d\n", m_no_objects);
 
     for (i=0, k=no_objects, last=m_props_offset;i<m_no_objects;i++)
-    {   objectsz[no_objects].atts[0]=p[m_objs_offset+14*i];
+    {
+        ensure_memory_list_available(&objectsz_memlist, no_objects+1);
+        objectsz[no_objects].atts[0]=p[m_objs_offset+14*i];
         objectsz[no_objects].atts[1]=p[m_objs_offset+14*i+1];
         objectsz[no_objects].atts[2]=p[m_objs_offset+14*i+2];
         objectsz[no_objects].atts[3]=p[m_objs_offset+14*i+3];

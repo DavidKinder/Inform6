@@ -11,6 +11,13 @@
 
 int32 malloced_bytes=0;                /* Total amount of memory allocated   */
 
+/* Wrappers for malloc(), realloc(), etc.
+
+   Note that all of these functions call memory_out_error() on failure.
+   This is a fatal error and does not return. However, we check my_malloc()
+   return values anyway as a matter of good habit.
+ */
+
 #ifdef PC_QUICKC
 
 extern void *my_malloc(int32 size, char *whatfor)
@@ -155,75 +162,194 @@ extern void my_free(void *pointer, char *whatitwas)
 
 /* ------------------------------------------------------------------------- */
 /*   Extensible blocks of memory, providing a kind of RAM disc as an         */
-/*   alternative to the temporary files option                               */
+/*   alternative to the temporary files option.                              */
 /*                                                                           */
-/*   The allocation is slightly confusing. A block can store up to 72        */
+/*   The allocation is slightly confusing. A block can store any number of   */
 /*   chunks, which are allocated as needed when data is written. (Data does  */
 /*   not have to be written in order, but you should not try to read a byte  */
 /*   before writing it.) The size of a chunk is defined by ALLOC_CHUNK_SIZE. */
-/*   So any block can store any amount of data, but you increase the limit   */
-/*   (for all blocks) by increasing ALLOC_CHUNK_SIZE, not the number of      */
-/*   chunks.                                                                 */
+/*                                                                           */
+/*   (ALLOC_CHUNK_SIZE used to be a compile-time setting. But we are no      */
+/*   longer limited to 72 chunks, so ALLOC_CHUNK_SIZE is just a #define      */
+/*   now.)                                                                   */
+/*                                                                           */
+/*   TODO: This is not really an efficient data structure. (Except for       */
+/*   sparse arrays. But we use only memory_blocks from zero up, never        */
+/*   sparsely.) So we should replace all memory_blocks with memory_lists.    */
 /* ------------------------------------------------------------------------- */
 
-static char chunk_name_buffer[60];
+#define ALLOC_CHUNK_SIZE (2048)
+
+static char chunk_name_buffer[80];
 static char *chunk_name(memory_block *MB, int no)
 {   char *p = "(unknown)";
     if (MB == &static_strings_area) p = "static strings area";
-    if (MB == &zcode_area)          p = "Z-code area";
+    if (MB == &zcode_area)          p = "code area";
     if (MB == &link_data_area)      p = "link data area";
-    if (MB == &zcode_backpatch_table) p = "Z-code backpatch table";
-    if (MB == &staticarray_backpatch_table) p = "Static array backpatch table";
-    if (MB == &zmachine_backpatch_table) p = "Z-machine backpatch table";
-    sprintf(chunk_name_buffer, "%s chunk %d", p, no);
+    if (MB == &zcode_backpatch_table) p = "code backpatch table";
+    if (MB == &staticarray_backpatch_table) p = "static array backpatch table";
+    if (MB == &zmachine_backpatch_table) p = "machine backpatch table";
+    if (no < 0)
+        sprintf(chunk_name_buffer, "%s chunk array", p);
+    else
+        sprintf(chunk_name_buffer, "%s chunk %d", p, no);
     return(chunk_name_buffer);
 }
 
 extern void initialise_memory_block(memory_block *MB)
 {   int i;
-    MB->chunks = 0;
-    for (i=0; i<72; i++) MB->chunk[i] = NULL;
-    MB->extent_of_last = 0;
-    MB->write_pos = 0;
+    /* Begin with space for 64 chunks of ALLOC_BLOCK_SIZE (130kb total).
+       We can increase that later if needed. In any case, we don't allocate
+       the chunks themselves yet. */
+    MB->count = 64;
+    MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, -1));
+    if (MB->chunks == NULL) return;
+    for (i=0; i<MB->count; i++) MB->chunks[i] = NULL;
 }
 
 extern void deallocate_memory_block(memory_block *MB)
 {   int i;
-    for (i=0; i<72; i++)
-        if (MB->chunk[i] != NULL)
-            my_free(&(MB->chunk[i]), chunk_name(MB, i));
-    MB->chunks = 0;
-    MB->extent_of_last = 0;
+    if (MB->chunks == NULL)
+        return;
+    for (i=0; i<MB->count; i++)
+    {
+        if (MB->chunks[i] != NULL)
+            my_free(&(MB->chunks[i]), chunk_name(MB, i));
+    }
+    my_free(&(MB->chunks), chunk_name(MB, -1));
+    MB->count = 0;
 }
 
 extern int read_byte_from_memory_block(memory_block *MB, int32 index)
-{   uchar *p;
-    p = MB->chunk[index/ALLOC_CHUNK_SIZE];
+{   uchar *p = NULL;
+    int ch;
+    if (MB->chunks == NULL) {
+        compiler_error_named("memory: read from uninitialized block",
+            chunk_name(MB, -1));
+        return 0;
+    }
+    ch = index/ALLOC_CHUNK_SIZE;
+    if (ch >= 0 && ch < MB->count)
+        p = MB->chunks[ch];
     if (p == NULL)
-    {   compiler_error_named("memory: read from unwritten byte in",
-            chunk_name(MB, index/ALLOC_CHUNK_SIZE));
+    {
+        compiler_error_named("memory: read from unwritten byte in",
+            chunk_name(MB, ch));
         return 0;
     }
     return p[index % ALLOC_CHUNK_SIZE];
 }
 
 extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
-{   uchar *p; int ch = index/ALLOC_CHUNK_SIZE;
-    if (ch < 0)
-    {   compiler_error_named("memory: negative index to", chunk_name(MB, 0));
+{   uchar *p = NULL;
+    int ch;
+    if (MB->chunks == NULL) {
+        compiler_error_named("memory: write to uninitialized block",
+            chunk_name(MB, -1));
         return;
     }
-    if (ch >= 72) memoryerror("ALLOC_CHUNK_SIZE", ALLOC_CHUNK_SIZE);
+    ch = index/ALLOC_CHUNK_SIZE;
+    if (ch < 0)
+    {
+        compiler_error_named("memory: negative index to", chunk_name(MB, -1));
+        return;
+    }
+    if (ch >= MB->count)
+    {
+        /* We need to extend the chunks array. Note that we don't allocate
+           new chunks yet; the extended array contains NULLs. */
+        int i;
+        /* Bump up the chunk count to the next higher multiple of 16. */
+        int newcount = ((MB->count | 15) + 1) + 16;
+        my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, -1));
+        if (MB->chunks == NULL) return;
+        for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
+        MB->count = newcount;
+    }
 
-    if (MB->chunk[ch] == NULL)
-    {   int i;
-        MB->chunk[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
-        p = MB->chunk[ch];
+    if (MB->chunks[ch] == NULL)
+    {
+        int i;
+        MB->chunks[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
+        if (MB->chunks[ch] == NULL) return;
+        p = MB->chunks[ch];
         for (i=0; i<ALLOC_CHUNK_SIZE; i++) p[i] = 255;
     }
 
-    p = MB->chunk[ch];
+    p = MB->chunks[ch];
     p[index % ALLOC_CHUNK_SIZE] = value;
+}
+
+/* ------------------------------------------------------------------------- */
+/*   A dynamic memory array. This grows as needed (but never shrinks).       */
+/*   Call ensure_memory_list_available(N) before accessing array item N-1.   */
+/*                                                                           */
+/*   whatfor must be a static string describing the list. initalloc is       */
+/*   (optionally) the number of items to allocate right away.                */
+/*                                                                           */
+/*   You typically initialise this with extpointer referring to an array of  */
+/*   structs or whatever type you need. Whenever the memory list grows, the  */
+/*   external array will be updated to refer to the new data.                */
+/* ------------------------------------------------------------------------- */
+
+void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor)
+{
+    ML->whatfor = whatfor;
+    ML->itemsize = itemsize;
+    ML->count = 0;
+    ML->data = NULL;
+    ML->extpointer = extpointer;
+
+    if (initalloc) {
+        ML->count = initalloc;
+        ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
+        if (ML->data == NULL) return;
+    }
+
+    if (ML->extpointer)
+        *(ML->extpointer) = ML->data;
+}
+
+void deallocate_memory_list(memory_list *ML)
+{
+    ML->itemsize = 0;
+    ML->count = 0;
+    
+    if (ML->data)
+        my_free(&(ML->data), ML->whatfor);
+
+    if (ML->extpointer)
+        *(ML->extpointer) = NULL;
+    ML->extpointer = NULL;
+}
+
+/* After this is called, at least count items will be available in the list.
+   That is, you can freely access array[0] through array[count-1]. */
+void ensure_memory_list_available(memory_list *ML, int count)
+{
+    int oldcount;
+    
+    if (ML->itemsize == 0) {
+        /* whatfor is also null! */
+        compiler_error("memory: attempt to access uninitialized memory_list");
+        return;
+    }
+
+    if (ML->count >= count) {
+        return;
+    }
+
+    oldcount = ML->count;
+    ML->count = 2*count+8;  /* Allow headroom for future growth */
+    
+    if (ML->data == NULL)
+        ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
+    else
+        my_recalloc(&(ML->data), ML->itemsize, oldcount, ML->count, ML->whatfor);
+    if (ML->data == NULL) return;
+
+    if (ML->extpointer)
+        *(ML->extpointer) = ML->data;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -234,7 +360,6 @@ int MAX_QTEXT_SIZE;
 int MAX_SYMBOLS;
 int SYMBOLS_CHUNK_SIZE;
 int HASH_TAB_SIZE;
-int MAX_OBJECTS;
 int MAX_ARRAYS;
 int MAX_ACTIONS;
 int MAX_ADJECTIVES;
@@ -252,7 +377,6 @@ int32 MAX_STATIC_STRINGS;
 int32 MAX_ZCODE_SIZE;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
-int MAX_CLASSES;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
 int MAX_SOURCE_FILES;
@@ -272,7 +396,6 @@ int32 MAX_NUM_STATIC_STRINGS;
 int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
-int ALLOC_CHUNK_SIZE;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
@@ -287,7 +410,6 @@ static int MAX_GLOBAL_VARIABLES_z, MAX_GLOBAL_VARIABLES_g;
 static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
-static int ALLOC_CHUNK_SIZE_z, ALLOC_CHUNK_SIZE_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
 
 /* ------------------------------------------------------------------------- */
@@ -301,10 +423,8 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
     printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
-    printf("|  %25s = %-7d |\n","ALLOC_CHUNK_SIZE",ALLOC_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","MAX_ARRAYS",MAX_ARRAYS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
-    printf("|  %25s = %-7d |\n","MAX_CLASSES",MAX_CLASSES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
@@ -332,7 +452,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_NUM_STATIC_STRINGS",
         MAX_NUM_STATIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_OBJECTS",MAX_OBJECTS);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
@@ -378,8 +497,6 @@ extern void set_memory_sizes(int size_flag)
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
-        MAX_OBJECTS = 640;
-
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 2000;
@@ -404,8 +521,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_CLASSES = 64;
-
         MAX_OBJ_PROP_COUNT = 128;
         MAX_OBJ_PROP_TABLE_SIZE = 4096;
 
@@ -414,9 +529,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 32768;
     }
     if (size_flag == LARGE_SIZE)
     {
@@ -425,8 +537,6 @@ extern void set_memory_sizes(int size_flag)
 
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
-
-        MAX_OBJECTS = 512;
 
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
@@ -452,8 +562,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_CLASSES = 64;
-
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 2048;
 
@@ -462,9 +570,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 16384;
     }
     if (size_flag == SMALL_SIZE)
     {
@@ -473,8 +578,6 @@ extern void set_memory_sizes(int size_flag)
 
         SYMBOLS_CHUNK_SIZE = 2500;
         HASH_TAB_SIZE      = 512;
-
-        MAX_OBJECTS = 300;
 
         MAX_ACTIONS      = 200;
         MAX_ADJECTIVES   = 50;
@@ -500,8 +603,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 100000;
         MAX_NUM_STATIC_STRINGS = 10000;
 
-        MAX_CLASSES = 32;
-
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 1024;
 
@@ -510,9 +611,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
-        
-        ALLOC_CHUNK_SIZE_z = 8192;
-        ALLOC_CHUNK_SIZE_g = 8192;
     }
 
     /* Regardless of size_flag... */
@@ -558,7 +656,6 @@ extern void adjust_memory_sizes()
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
-    ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_z;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_z;
     INDIV_PROP_START = 64;
   }
@@ -569,7 +666,6 @@ extern void adjust_memory_sizes()
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
-    ALLOC_CHUNK_SIZE = ALLOC_CHUNK_SIZE_g;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_g;
     INDIV_PROP_START = 256;
   }
@@ -600,12 +696,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
   symbols banks.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_OBJECTS")==0)
-    {   printf(
-"  MAX_OBJECTS is the maximum number of objects.  (If compiling a version-3 \n\
-  game, 255 is an absolute maximum in any event.)\n");
         return;
     }
     if (strcmp(command,"MAX_ACTIONS")==0)
@@ -688,7 +778,8 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_ABBREVS")==0)
     {   printf(
 "  MAX_ABBREVS is the maximum number of declared abbreviations.  It is not \n\
-  allowed to exceed 96 in Z-code.\n");
+  allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
+  there is no limit on abbreviations.)\n");
         return;
     }
     if (strcmp(command,"MAX_DYNAMIC_STRINGS")==0)
@@ -779,12 +870,6 @@ static void explain_parameter(char *command)
   the game being compiled: it has to be enormous, say 100000 to 200000.\n");
         return;
     }
-    if (strcmp(command,"MAX_CLASSES")==0)
-    {   printf(
-"  MAX_CLASSES maximum number of object classes which can be defined.  This\n\
-  is cheap to increase.\n");
-        return;
-    }
     if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
     {   printf(
 "  MAX_INCLUSION_DEPTH is the number of nested includes permitted.\n");
@@ -845,13 +930,6 @@ static void explain_parameter(char *command)
 "  MAX_UNICODE_CHARS is the maximum number of different Unicode characters \n\
   (beyond the Latin-1 range, $00..$FF) which the game text can use. \n\
   (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
-    {
-        printf(
-"  ALLOC_CHUNK_SIZE is a base unit of Inform's internal memory allocation \n\
-  for various structures.\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -1036,7 +1114,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"HASH_TAB_SIZE")==0)
                 HASH_TAB_SIZE=j, flag=1;
             if (strcmp(command,"MAX_OBJECTS")==0)
-                MAX_OBJECTS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_ACTIONS")==0)
                 MAX_ACTIONS=j, flag=1;
             if (strcmp(command,"MAX_ADJECTIVES")==0)
@@ -1115,7 +1193,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
                 MAX_TRANSCRIPT_SIZE=j, flag=1;
             if (strcmp(command,"MAX_CLASSES")==0)
-                MAX_CLASSES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
                 MAX_INCLUSION_DEPTH=j, flag=1;
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
@@ -1137,8 +1215,7 @@ extern void memory_command(char *command)
                 MAX_GLOBAL_VARIABLES_g=MAX_GLOBAL_VARIABLES_z=j;
             }
             if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
-            {   ALLOC_CHUNK_SIZE=j, flag=1;
-                ALLOC_CHUNK_SIZE_g=ALLOC_CHUNK_SIZE_z=j;
+            {   flag=3;
             }
             if (strcmp(command,"MAX_UNICODE_CHARS")==0)
                 MAX_UNICODE_CHARS=j, flag=1;
@@ -1187,6 +1264,8 @@ extern void memory_command(char *command)
             if (flag==2)
             printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n\
 It should be safe to omit it (putting nothing in its place).\n", command);
+            if (flag==3)
+            printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
             return;
         }
     }

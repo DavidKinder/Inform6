@@ -296,7 +296,7 @@ static void construct_storyfile_z(void)
        strings". Write the abbreviations after these. */
     k = abbrevs_at+2*MAX_DYNAMIC_STRINGS;
     for (i=0; i<no_abbreviations; i++)
-    {   j=abbrev_values[i];
+    {   j=abbreviations[i].value;
         p[k++]=j/256;
         p[k++]=j%256;
     }
@@ -415,11 +415,11 @@ static void construct_storyfile_z(void)
 
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++)
-    {   p[mark++] = class_object_numbers[i]/256;
-        p[mark++] = class_object_numbers[i]%256;
+    {   p[mark++] = class_info[i].object_number/256;
+        p[mark++] = class_info[i].object_number%256;
         if (module_switch)
-        {   p[mark++] = class_begins_at[i]/256;
-            p[mark++] = class_begins_at[i]%256;
+        {   p[mark++] = class_info[i].begins_at/256;
+            p[mark++] = class_info[i].begins_at%256;
         }
     }
     p[mark++] = 0;
@@ -981,10 +981,10 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  (long int) k_long, k_str);
 
             printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
+%6d classes                      %6d objects\n\
 %6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
-                 no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
+                 no_classes,
+                 no_objects,
                  no_globals,
                  dynamic_array_area_size, MAX_STATIC_DATA);
 
@@ -1192,8 +1192,8 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
                     if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
+                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
+                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
                 if ((i%3)==2) printf("\n");
             }
             if ((i%3)!=0) printf("\n");
@@ -1405,7 +1405,7 @@ static void construct_storyfile_g(void)
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++) {
       j = Write_RAM_At + object_tree_at +
-        (OBJECT_BYTE_LENGTH*(class_object_numbers[i]-1));
+        (OBJECT_BYTE_LENGTH*(class_info[i].object_number-1));
       WriteInt32(p+mark, j);
       mark += 4;
     }
@@ -1671,10 +1671,10 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
             } 
 
             printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
+%6d classes                      %6d objects\n\
 %6d global vars (maximum %3d)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
-                 no_objects, MAX_OBJECTS,
+                 no_classes,
+                 no_objects,
                  no_globals, MAX_GLOBAL_VARIABLES,
                  dynamic_array_area_size, MAX_STATIC_DATA);
 
@@ -1892,8 +1892,8 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
                     (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
                 for (j=0; abbrev_string[j]!=0; j++)
                     if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
+                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
+                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
                 if ((i%3)==2) printf("\n");
             }
             if ((i%3)!=0) printf("\n");
