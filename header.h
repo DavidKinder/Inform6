@@ -871,8 +871,8 @@ typedef struct symbolinfo_s {
 } symbolinfo;
 
 typedef struct symboldebuginfo_s {
-    maybe_file_position symbol_backpatch_position;
-    maybe_file_position replacement_backpatch_position;
+    maybe_file_position backpatch_pos;
+    maybe_file_position replacement_backpatch_pos;
 } symboldebuginfo;
 
 typedef struct FileId_s                 /*  Source code file identifier:     */
@@ -2688,8 +2688,7 @@ extern int   *smarks;
 extern brief_location *slines;
 extern int   *sflags;
 extern uchar *stypes;
-extern maybe_file_position *symbol_debug_backpatch_positions;
-extern maybe_file_position *replacement_debug_backpatch_positions;
+extern symboldebuginfo *symbol_debug_info;
 extern int32 *individual_name_strings;
 extern int32 *attribute_name_strings;
 extern int32 *action_name_strings;

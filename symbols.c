@@ -54,8 +54,7 @@ int no_named_constants;                         /* Copied into story file    */
   brief_location  *slines;
   int    *sflags;
   uchar  *stypes;
-  maybe_file_position  *symbol_debug_backpatch_positions;
-  maybe_file_position  *replacement_debug_backpatch_positions;
+  symboldebuginfo *symbol_debug_info;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory to hold the text of symbol names: note that this memory is       */
@@ -266,9 +265,9 @@ extern int symbol_index(char *p, int hashcode)
     slines[no_symbols]  =  get_brief_location(&ErrorReport);
     if (debugfile_switch)
     {   nullify_debug_file_position
-            (&symbol_debug_backpatch_positions[no_symbols]);
+            (&symbol_debug_info[no_symbols].backpatch_pos);
         nullify_debug_file_position
-            (&replacement_debug_backpatch_positions[no_symbols]);
+            (&symbol_debug_info[no_symbols].replacement_backpatch_pos);
     }
 
     if (track_unused_routines)
@@ -1382,6 +1381,7 @@ extern void init_symbols_vars(void)
     sflags = NULL;
     next_entry = NULL;
     start_of_list = NULL;
+    symbol_debug_info = NULL;
 
     symbol_name_space_chunks = NULL;
     no_symbol_name_space_chunks = 0;
@@ -1425,12 +1425,10 @@ extern void symbols_allocate_arrays(void)
     stypes     = my_calloc(sizeof(char),    MAX_SYMBOLS, "symbol types");
     sflags     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol flags");
     if (debugfile_switch)
-    {   symbol_debug_backpatch_positions =
-            my_calloc(sizeof(maybe_file_position), MAX_SYMBOLS,
-                      "symbol debug information backpatch positions");
-        replacement_debug_backpatch_positions =
-            my_calloc(sizeof(maybe_file_position), MAX_SYMBOLS,
-                      "replacement debug information backpatch positions");
+    {
+        symbol_debug_info =
+            my_calloc(sizeof(symboldebuginfo), MAX_SYMBOLS,
+                      "symbol debug backpatch info");
     }
     next_entry = my_calloc(sizeof(int),     MAX_SYMBOLS,
                      "symbol linked-list forward links");
@@ -1488,12 +1486,10 @@ extern void symbols_free_arrays(void)
     my_free(&stypes, "symbol types");
     my_free(&sflags, "symbol flags");
     if (debugfile_switch)
-    {   my_free
-            (&symbol_debug_backpatch_positions,
-             "symbol debug information backpatch positions");
+    {
         my_free
-            (&replacement_debug_backpatch_positions,
-             "replacement debug information backpatch positions");
+            (&symbol_debug_info,
+             "symbol debug backpatch info");
     }
     my_free(&next_entry, "symbol linked-list forward links");
     my_free(&start_of_list, "hash code list beginnings");
