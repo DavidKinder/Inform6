@@ -864,7 +864,7 @@ typedef struct token_data_s
 typedef struct symbolinfo_s {
     char *symbol; /* the name; points at a symbol_name_space_chunk */
     int32 value;
-    int mark; /* only used in Glulx */
+    int marker; /* only used in Glulx */
     brief_location line;
     int flags;  /* ?_SFLAGS bitmask */
     uchar type; /* ?_T value */

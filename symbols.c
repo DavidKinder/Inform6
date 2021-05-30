@@ -545,18 +545,15 @@ static void assign_symbol_base(int index, int32 value, int type)
 
 extern void assign_symbol(int index, int32 value, int type)
 {
-    if (!glulx_mode) {
-        assign_symbol_base(index, value, type);
-    }
-    else {
-        smarks[index] = 0;
-        assign_symbol_base(index, value, type);
-    }
+    smarks[index] = 0;
+    assign_symbol_base(index, value, type);
 }
 
 extern void assign_marked_symbol(int index, int marker, int32 value, int type)
 {
     if (!glulx_mode) {
+        /* In Z-code, marker is encoded into value */
+        smarks[index] = 0;
         assign_symbol_base(index, (int32)marker*0x10000 + (value % 0x10000),
             type);
     }
@@ -1419,8 +1416,7 @@ extern void symbols_allocate_arrays(void)
 {
     symbs      = my_calloc(sizeof(char *),  MAX_SYMBOLS, "symbols");
     svals      = my_calloc(sizeof(int32),   MAX_SYMBOLS, "symbol values");
-    if (glulx_mode)
-        smarks = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol markers");
+    smarks     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol markers");
     slines     = my_calloc(sizeof(brief_location), MAX_SYMBOLS, "symbol lines");
     stypes     = my_calloc(sizeof(char),    MAX_SYMBOLS, "symbol types");
     sflags     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol flags");
