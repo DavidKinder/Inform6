@@ -48,7 +48,7 @@ int no_named_constants;                         /* Copied into story file    */
   int32  *svals;
   int    *smarks;            /* Glulx-only */
   brief_location  *slines;
-  int    *sflags;
+  unsigned int    *sflags;
   uchar  *stypes;
   symboldebuginfo *symbol_debug_info;
 
@@ -1415,7 +1415,7 @@ extern void symbols_allocate_arrays(void)
     smarks     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol markers");
     slines     = my_calloc(sizeof(brief_location), MAX_SYMBOLS, "symbol lines");
     stypes     = my_calloc(sizeof(char),    MAX_SYMBOLS, "symbol types");
-    sflags     = my_calloc(sizeof(int),     MAX_SYMBOLS, "symbol flags");
+    sflags     = my_calloc(sizeof(unsigned int),     MAX_SYMBOLS, "symbol flags");
     if (debugfile_switch)
     {
         symbol_debug_info =
