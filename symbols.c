@@ -48,7 +48,7 @@ int no_named_constants;                         /* Copied into story file    */
 /*   alter the types unless you understand what is going on!                 */
 /* ------------------------------------------------------------------------- */
 
-  int32  **symbs;
+  char  **symbs;
   int32  *svals;
   int    *smarks;            /* Glulx-only */
   brief_location  *slines;
@@ -63,7 +63,7 @@ int no_named_constants;                         /* Copied into story file    */
 
 #define MAX_SYMBOL_CHUNKS (100)
 
-static uchar *symbols_free_space,       /* Next byte free to hold new names  */
+static char *symbols_free_space,        /* Next byte free to hold new names  */
            *symbols_ceiling;            /* Pointer to the end of the current
                                            allocation of memory for names    */
 
@@ -255,7 +255,7 @@ extern int symbol_index(char *p, int hashcode)
     }
 
     strcpy((char *) symbols_free_space, p);
-    symbs[no_symbols] = (int32 *) symbols_free_space;
+    symbs[no_symbols]   = symbols_free_space;
     symbols_free_space += strlen((char *)symbols_free_space) + 1;
 
     svals[no_symbols]   =  0x100; /* ###-wrong? Would this fix the

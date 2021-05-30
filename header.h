@@ -2682,7 +2682,7 @@ extern void write_the_identifier_names(void);
 
 extern int no_named_constants;
 extern int no_symbols;
-extern int32 **symbs;
+extern char **symbs;
 extern int32 *svals;
 extern int   *smarks;
 extern brief_location *slines;
