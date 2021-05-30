@@ -357,7 +357,6 @@ void ensure_memory_list_available(memory_list *ML, int count)
 /* ------------------------------------------------------------------------- */
 
 int MAX_QTEXT_SIZE;
-int MAX_SYMBOLS;
 int SYMBOLS_CHUNK_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ARRAYS;
@@ -470,7 +469,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_STATIC_DATA",MAX_STATIC_DATA);
     printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
            (long int) MAX_STATIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_SYMBOLS",MAX_SYMBOLS);
     printf("|  %25s = %-7d |\n","SYMBOLS_CHUNK_SIZE",SYMBOLS_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
@@ -492,7 +490,6 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == HUGE_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 10000;
 
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
@@ -533,7 +530,6 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == LARGE_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 6400;
 
         SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
@@ -574,7 +570,6 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == SMALL_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 3000;
 
         SYMBOLS_CHUNK_SIZE = 2500;
         HASH_TAB_SIZE      = 512;
@@ -678,12 +673,6 @@ static void explain_parameter(char *command)
 "  MAX_QTEXT_SIZE is the maximum length of a quoted string.  Increasing\n\
    by 1 costs 5 bytes (for lexical analysis memory).  Inform automatically\n\
    ensures that MAX_STATIC_STRINGS is at least twice the size of this.");
-        return;
-    }
-    if (strcmp(command,"MAX_SYMBOLS")==0)
-    {   printf(
-"  MAX_SYMBOLS is the maximum number of symbols - names of variables, \n\
-  objects, routines, the many internal Inform-generated names and so on.\n");
         return;
     }
     if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
@@ -1104,7 +1093,7 @@ extern void memory_command(char *command)
                     MAX_STATIC_STRINGS = 2*MAX_QTEXT_SIZE;
             }
             if (strcmp(command,"MAX_SYMBOLS")==0)
-                MAX_SYMBOLS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_BANK_SIZE")==0)
                 flag=2;
             if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
