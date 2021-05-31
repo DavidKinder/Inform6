@@ -903,7 +903,7 @@ typedef struct ErrorPosition_s
     as needed on write. */
 typedef struct memory_block_s
 {
-    int count;
+    size_t count;
     uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
 } memory_block;
 
@@ -918,8 +918,8 @@ typedef struct memory_list_s
     char *whatfor;   /* must be a static string */
     void *data;      /* allocated array of count*itemsize bytes */
     void **extpointer;  /* pointer to keep in sync */
-    int itemsize;    /* item size in bytes */
-    int count;       /* number of items allocated */
+    size_t itemsize;    /* item size in bytes */
+    size_t count;       /* number of items allocated */
 } memory_list;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
@@ -2624,12 +2624,12 @@ extern int TRANSCRIPT_FORMAT;
 #define GOBJFIELD_SIBLING()  (5+((NUM_ATTR_BYTES)/4))
 #define GOBJFIELD_CHILD()    (6+((NUM_ATTR_BYTES)/4))
 
-extern void *my_malloc(int32 size, char *whatfor);
-extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+extern void *my_malloc(size_t size, char *whatfor);
+extern void my_realloc(void *pointer, size_t oldsize, size_t size, 
     char *whatfor);
-extern void *my_calloc(int32 size, int32 howmany, char *whatfor);
-extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
-    int32 howmany, char *whatfor);
+extern void *my_calloc(size_t size, size_t howmany, char *whatfor);
+extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany, 
+    size_t howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
 extern void set_memory_sizes(int size_flag);
@@ -2639,13 +2639,13 @@ extern void print_memory_usage(void);
 
 extern void initialise_memory_block(memory_block *MB);
 extern void deallocate_memory_block(memory_block *MB);
-extern int  read_byte_from_memory_block(memory_block *MB, int32 index);
+extern int  read_byte_from_memory_block(memory_block *MB, size_t index);
 extern void write_byte_to_memory_block(memory_block *MB,
-    int32 index, int value);
+    size_t index, int value);
 
-extern void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor);
+extern void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor);
 extern void deallocate_memory_list(memory_list *ML);
-extern void ensure_memory_list_available(memory_list *ML, int count);
+extern void ensure_memory_list_available(memory_list *ML, size_t count);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "objects"                                        */
