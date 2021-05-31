@@ -1239,11 +1239,10 @@ extern void memory_command(char *command)
 
             if (flag==0)
                 printf("No such memory setting as \"%s\"\n", command);
-            if (flag==2)
-            printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n\
-It should be safe to omit it (putting nothing in its place).\n", command);
-            if (flag==3)
-            printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
+            if (flag==2 && !nowarnings_switch)
+                printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n", command);
+            if (flag==3 && !nowarnings_switch)
+                printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
             return;
         }
     }
