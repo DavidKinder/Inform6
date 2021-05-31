@@ -62,6 +62,8 @@ static memory_list symbol_debug_info_memlist;
 /*   allocated as needed in chunks of size SYMBOLS_CHUNK_SIZE.               */
 /* ------------------------------------------------------------------------- */
 
+#define SYMBOLS_CHUNK_SIZE (4096)
+
 static char *symbols_free_space,        /* Next byte free to hold new names  */
            *symbols_ceiling;            /* Pointer to the end of the current
                                            allocation of memory for names    */
@@ -203,7 +205,9 @@ extern int symbol_index(char *p, int hashcode)
 
         The string "p" is undamaged.                                         */
 
-    int32 new_entry, this, last; char *r;
+    int32 new_entry, this, last;
+    char *r;
+    int len;    
 
     if (hashcode == -1) hashcode = hash_code_from_string(p);
 
@@ -239,20 +243,27 @@ extern int symbol_index(char *p, int hashcode)
         symbols[last].next_entry=no_symbols;
     }
 
-    if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
+    len = strlen(p);
+    if (symbols_free_space+len+1 >= symbols_ceiling)
     {   symbols_free_space
             = my_malloc(SYMBOLS_CHUNK_SIZE, "symbol names chunk");
         symbols_ceiling = symbols_free_space + SYMBOLS_CHUNK_SIZE;
         ensure_memory_list_available(&symbol_name_space_chunks_memlist, no_symbol_name_space_chunks+1);
         symbol_name_space_chunks[no_symbol_name_space_chunks++]
             = symbols_free_space;
-        if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
-            memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
+        if (symbols_free_space+len+1 >= symbols_ceiling)
+        {
+            error_numbered("Symbol exceeds the maximum possible length, which is", SYMBOLS_CHUNK_SIZE);
+            /* Avoid an overrun in error recovery. This messes up the
+               hashcode, which will lead to further errors; too bad. */
+            p = "too_long";
+            len = strlen(p);
+        }
     }
 
     strcpy(symbols_free_space, p);
     symbols[no_symbols].name   = symbols_free_space;
-    symbols_free_space += strlen(symbols_free_space) + 1;
+    symbols_free_space += (len+1);
 
     symbols[no_symbols].value   =  0x100; /* ###-wrong? Would this fix the
                                      unbound-symbol-causes-asm-error? */

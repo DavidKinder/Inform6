@@ -357,7 +357,6 @@ void ensure_memory_list_available(memory_list *ML, int count)
 /* ------------------------------------------------------------------------- */
 
 int MAX_QTEXT_SIZE;
-int SYMBOLS_CHUNK_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ARRAYS;
 int MAX_ACTIONS;
@@ -469,7 +468,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_STATIC_DATA",MAX_STATIC_DATA);
     printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
            (long int) MAX_STATIC_STRINGS);
-    printf("|  %25s = %-7d |\n","SYMBOLS_CHUNK_SIZE",SYMBOLS_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
            (long int) MAX_TRANSCRIPT_SIZE);
@@ -491,7 +489,6 @@ extern void set_memory_sizes(int size_flag)
     {
         MAX_QTEXT_SIZE  = 4000;
 
-        SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -531,7 +528,6 @@ extern void set_memory_sizes(int size_flag)
     {
         MAX_QTEXT_SIZE  = 4000;
 
-        SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -571,7 +567,6 @@ extern void set_memory_sizes(int size_flag)
     {
         MAX_QTEXT_SIZE  = 4000;
 
-        SYMBOLS_CHUNK_SIZE = 2500;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -673,12 +668,6 @@ static void explain_parameter(char *command)
 "  MAX_QTEXT_SIZE is the maximum length of a quoted string.  Increasing\n\
    by 1 costs 5 bytes (for lexical analysis memory).  Inform automatically\n\
    ensures that MAX_STATIC_STRINGS is at least twice the size of this.");
-        return;
-    }
-    if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
-    {   printf(
-"  The symbols names are stored in memory which is allocated in chunks \n\
-  of size SYMBOLS_CHUNK_SIZE.\n");
         return;
     }
     if (strcmp(command,"HASH_TAB_SIZE")==0)
@@ -1097,7 +1086,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_BANK_SIZE")==0)
                 flag=2;
             if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
-                SYMBOLS_CHUNK_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"BANK_CHUNK_SIZE")==0)
                 flag=2;
             if (strcmp(command,"HASH_TAB_SIZE")==0)
