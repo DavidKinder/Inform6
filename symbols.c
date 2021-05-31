@@ -62,8 +62,6 @@ static memory_list symbol_debug_info_memlist;
 /*   allocated as needed in chunks of size SYMBOLS_CHUNK_SIZE.               */
 /* ------------------------------------------------------------------------- */
 
-#define MAX_SYMBOL_CHUNKS (100) /*### to do next*/
-
 static char *symbols_free_space,        /* Next byte free to hold new names  */
            *symbols_ceiling;            /* Pointer to the end of the current
                                            allocation of memory for names    */
@@ -71,6 +69,7 @@ static char *symbols_free_space,        /* Next byte free to hold new names  */
 static char** symbol_name_space_chunks; /* For chunks of memory used to hold
                                            the name strings of symbols       */
 static int no_symbol_name_space_chunks;
+static memory_list symbol_name_space_chunks_memlist;
 
 /* Symbol replacements (used by the "Replace X Y" directive). */
 
@@ -244,12 +243,7 @@ extern int symbol_index(char *p, int hashcode)
     {   symbols_free_space
             = my_malloc(SYMBOLS_CHUNK_SIZE, "symbol names chunk");
         symbols_ceiling = symbols_free_space + SYMBOLS_CHUNK_SIZE;
-        /* If we've passed MAX_SYMBOL_CHUNKS chunks, we print an error
-           message telling the user to increase SYMBOLS_CHUNK_SIZE.
-           That is the correct cure, even though the error comes out
-           worded inaccurately. */
-        if (no_symbol_name_space_chunks >= MAX_SYMBOL_CHUNKS)
-            memoryerror("SYMBOLS_CHUNK_SIZE", SYMBOLS_CHUNK_SIZE);
+        ensure_memory_list_available(&symbol_name_space_chunks_memlist, no_symbol_name_space_chunks+1);
         symbol_name_space_chunks[no_symbol_name_space_chunks++]
             = symbols_free_space;
         if (symbols_free_space+strlen(p)+1 >= symbols_ceiling)
@@ -1380,7 +1374,7 @@ extern void init_symbols_vars(void)
     symbol_name_space_chunks = NULL;
     no_symbol_name_space_chunks = 0;
     symbols_free_space=NULL;
-    symbols_ceiling=symbols_free_space;
+    symbols_ceiling=NULL;
 
     no_symbols = 0;
 
@@ -1423,8 +1417,9 @@ extern void symbols_allocate_arrays(void)
     start_of_list = my_calloc(sizeof(int32), HASH_TAB_SIZE,
                      "hash code list beginnings");
 
-    symbol_name_space_chunks
-        = my_calloc(sizeof(char *), MAX_SYMBOL_CHUNKS, "symbol names chunk addresses");
+    initialise_memory_list(&symbol_name_space_chunks_memlist,
+        sizeof(char *), 32, (void**)&symbol_name_space_chunks,
+        "symbol names chunk addresses");
 
     if (track_unused_routines) {
         df_tables_closed = FALSE;
@@ -1465,7 +1460,7 @@ extern void symbols_free_arrays(void)
         my_free(&(symbol_name_space_chunks[i]),
             "symbol names chunk");
 
-    my_free(&symbol_name_space_chunks, "symbol names chunk addresses");
+    deallocate_memory_list(&symbol_name_space_chunks_memlist);
 
     deallocate_memory_list(&symbols_memlist);
     if (debugfile_switch)
