@@ -253,11 +253,8 @@ extern int symbol_index(char *p, int hashcode)
             = symbols_free_space;
         if (symbols_free_space+len+1 >= symbols_ceiling)
         {
-            error_numbered("Symbol exceeds the maximum possible length, which is", SYMBOLS_CHUNK_SIZE);
-            /* Avoid an overrun in error recovery. This messes up the
-               hashcode, which will lead to further errors; too bad. */
-            p = "too_long";
-            len = strlen(p);
+            /* This should be impossible, since SYMBOLS_CHUNK_SIZE > MAX_IDENTIFIER_LENGTH. */
+            fatalerror("Symbol exceeds the maximum possible length");
         }
     }
 
