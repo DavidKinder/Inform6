@@ -2591,7 +2591,7 @@ extern void  link_module(char *filename);
 /*   Extern definitions for "memory"                                         */
 /* ------------------------------------------------------------------------- */
 
-extern int32 malloced_bytes;
+extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,

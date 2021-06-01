@@ -9,7 +9,7 @@
 
 #include "header.h"
 
-int32 malloced_bytes=0;                /* Total amount of memory allocated   */
+size_t malloced_bytes=0;               /* Total amount of memory allocated   */
 
 /* Wrappers for malloc(), realloc(), etc.
 
