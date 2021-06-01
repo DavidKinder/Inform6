@@ -48,9 +48,16 @@ These are the changes delivered in version 6.36 of the Inform compiler.
 <h3>Features added</h3>
 <ul>
 <li><p>A start has been made on refactoring Inform to use dynamic memory allocation rather than fixed size buffers.
-As a result, the settings <tt>MAX_CLASSES</tt>, <tt>MAX_OBJECTS</tt>, <tt>ALLOC_CHUNK_SIZE</tt>, and (for Glulx)
-<tt>MAX_ABBREVS</tt> are now removed: if the available space is filled, Inform will allocate more memory for them
-without requiring user intervention.
+As a result, the following settings are now removed: if the available space is filled, Inform will allocate more
+memory for them without requiring user intervention.
+ <ul>
+ <li>ALLOC_CHUNK_SIZE
+ <li>SYMBOLS_CHUNK_SIZE
+ <li>MAX_ABBREVS (removed only for Glulx)
+ <li>MAX_CLASSES
+ <li>MAX_OBJECTS
+ <li>MAX_SYMBOLS
+ </ul>
 <li><p>Assembly output (<tt>-a</tt> mode) now shows symbolic information for each assembly operand, if possible.
 <li><p>The <tt>Trace verbs</tt> directive now prints out the entire grammar table.
 </ul>
