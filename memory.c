@@ -9,7 +9,7 @@
 
 #include "header.h"
 
-int32 malloced_bytes=0;                /* Total amount of memory allocated   */
+size_t malloced_bytes=0;               /* Total amount of memory allocated   */
 
 /* Wrappers for malloc(), realloc(), etc.
 
@@ -20,7 +20,7 @@ int32 malloced_bytes=0;                /* Total amount of memory allocated   */
 
 #ifdef PC_QUICKC
 
-extern void *my_malloc(int32 size, char *whatfor)
+extern void *my_malloc(size_t size, char *whatfor)
 {   char _huge *c;
     if (memout_switch)
         printf("Allocating %ld bytes for %s\n",size,whatfor);
@@ -30,7 +30,7 @@ extern void *my_malloc(int32 size, char *whatfor)
     return(c);
 }
 
-extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+extern void my_realloc(void *pointer, size_t oldsize, size_t size, 
     char *whatfor)
 {   char _huge *c;
     if (size==0) {
@@ -49,7 +49,7 @@ now (%08lx)\n",
     *(int **)pointer = c;
 }
 
-extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
+extern void *my_calloc(size_t size, size_t howmany, char *whatfor)
 {   void _huge *c;
     if (memout_switch)
         printf("Allocating %d bytes: array (%ld entries size %ld) for %s\n",
@@ -60,7 +60,7 @@ extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
     return(c);
 }
 
-extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
+extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany, 
     int32 howmany, char *whatfor)
 {   void _huge *c;
     if (size*howmany==0) {
@@ -82,10 +82,10 @@ for %s was (%08lx) now (%08lx)\n",
 
 #else
 
-extern void *my_malloc(int32 size, char *whatfor)
+extern void *my_malloc(size_t size, char *whatfor)
 {   char *c;
     if (size==0) return(NULL);
-    c=malloc((size_t) size); malloced_bytes+=size;
+    c=malloc(size); malloced_bytes+=size;
     if (c==0) memory_out_error(size, 1, whatfor);
     if (memout_switch)
         printf("Allocating %ld bytes for %s at (%08lx)\n",
@@ -93,14 +93,14 @@ extern void *my_malloc(int32 size, char *whatfor)
     return(c);
 }
 
-extern void my_realloc(void *pointer, int32 oldsize, int32 size, 
+extern void my_realloc(void *pointer, size_t oldsize, size_t size, 
     char *whatfor)
 {   void *c;
     if (size==0) {
         my_free(pointer, whatfor);
         return;
     }
-    c=realloc(*(int **)pointer, (size_t) size); malloced_bytes+=size;
+    c=realloc(*(int **)pointer,  size); malloced_bytes+=size;
     if (c==0) memory_out_error(size, 1, whatfor);
     if (memout_switch)
         printf("Increasing allocation to %ld bytes for %s was (%08lx) \
@@ -110,10 +110,10 @@ now (%08lx)\n",
     *(int **)pointer = c;
 }
 
-extern void *my_calloc(int32 size, int32 howmany, char *whatfor)
+extern void *my_calloc(size_t size, size_t howmany, char *whatfor)
 {   void *c;
     if (size*howmany==0) return(NULL);
-    c=calloc(howmany,(size_t) size); malloced_bytes+=size*howmany;
+    c=calloc(howmany, size); malloced_bytes+=size*howmany;
     if (c==0) memory_out_error(size, howmany, whatfor);
     if (memout_switch)
         printf("Allocating %ld bytes: array (%ld entries size %ld) \
@@ -124,14 +124,14 @@ for %s at (%08lx)\n",
     return(c);
 }
 
-extern void my_recalloc(void *pointer, int32 size, int32 oldhowmany, 
-    int32 howmany, char *whatfor)
+extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany, 
+    size_t howmany, char *whatfor)
 {   void *c;
     if (size*howmany==0) {
         my_free(pointer, whatfor);
         return;
     }
-    c=realloc(*(int **)pointer, (size_t)size*(size_t)howmany); 
+    c=realloc(*(int **)pointer, size*howmany); 
     malloced_bytes+=size*howmany;
     if (c==0) memory_out_error(size, howmany, whatfor);
     if (memout_switch)
@@ -197,7 +197,7 @@ static char *chunk_name(memory_block *MB, int no)
 }
 
 extern void initialise_memory_block(memory_block *MB)
-{   int i;
+{   size_t i;
     /* Begin with space for 64 chunks of ALLOC_BLOCK_SIZE (130kb total).
        We can increase that later if needed. In any case, we don't allocate
        the chunks themselves yet. */
@@ -208,7 +208,7 @@ extern void initialise_memory_block(memory_block *MB)
 }
 
 extern void deallocate_memory_block(memory_block *MB)
-{   int i;
+{   size_t i;
     if (MB->chunks == NULL)
         return;
     for (i=0; i<MB->count; i++)
@@ -220,9 +220,9 @@ extern void deallocate_memory_block(memory_block *MB)
     MB->count = 0;
 }
 
-extern int read_byte_from_memory_block(memory_block *MB, int32 index)
+extern int read_byte_from_memory_block(memory_block *MB, size_t index)
 {   uchar *p = NULL;
-    int ch;
+    size_t ch;
     if (MB->chunks == NULL) {
         compiler_error_named("memory: read from uninitialized block",
             chunk_name(MB, -1));
@@ -240,9 +240,9 @@ extern int read_byte_from_memory_block(memory_block *MB, int32 index)
     return p[index % ALLOC_CHUNK_SIZE];
 }
 
-extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
+extern void write_byte_to_memory_block(memory_block *MB, size_t index, int value)
 {   uchar *p = NULL;
-    int ch;
+    size_t ch;
     if (MB->chunks == NULL) {
         compiler_error_named("memory: write to uninitialized block",
             chunk_name(MB, -1));
@@ -258,9 +258,9 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
     {
         /* We need to extend the chunks array. Note that we don't allocate
            new chunks yet; the extended array contains NULLs. */
-        int i;
+        size_t i;
         /* Bump up the chunk count to the next higher multiple of 16. */
-        int newcount = ((MB->count | 15) + 1) + 16;
+        size_t newcount = ((MB->count | 15) + 1) + 16;
         my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, -1));
         if (MB->chunks == NULL) return;
         for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
@@ -292,7 +292,7 @@ extern void write_byte_to_memory_block(memory_block *MB, int32 index, int value)
 /*   external array will be updated to refer to the new data.                */
 /* ------------------------------------------------------------------------- */
 
-void initialise_memory_list(memory_list *ML, int itemsize, int initalloc, void **extpointer, char *whatfor)
+void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor)
 {
     ML->whatfor = whatfor;
     ML->itemsize = itemsize;
@@ -325,9 +325,9 @@ void deallocate_memory_list(memory_list *ML)
 
 /* After this is called, at least count items will be available in the list.
    That is, you can freely access array[0] through array[count-1]. */
-void ensure_memory_list_available(memory_list *ML, int count)
+void ensure_memory_list_available(memory_list *ML, size_t count)
 {
-    int oldcount;
+    size_t oldcount;
     
     if (ML->itemsize == 0) {
         /* whatfor is also null! */
@@ -357,8 +357,6 @@ void ensure_memory_list_available(memory_list *ML, int count)
 /* ------------------------------------------------------------------------- */
 
 int MAX_QTEXT_SIZE;
-int MAX_SYMBOLS;
-int SYMBOLS_CHUNK_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ARRAYS;
 int MAX_ACTIONS;
@@ -470,8 +468,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_STATIC_DATA",MAX_STATIC_DATA);
     printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
            (long int) MAX_STATIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_SYMBOLS",MAX_SYMBOLS);
-    printf("|  %25s = %-7d |\n","SYMBOLS_CHUNK_SIZE",SYMBOLS_CHUNK_SIZE);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
            (long int) MAX_TRANSCRIPT_SIZE);
@@ -492,9 +488,7 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == HUGE_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 10000;
 
-        SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -533,9 +527,7 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == LARGE_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 6400;
 
-        SYMBOLS_CHUNK_SIZE = 5000;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -574,9 +566,7 @@ extern void set_memory_sizes(int size_flag)
     if (size_flag == SMALL_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
-        MAX_SYMBOLS     = 3000;
 
-        SYMBOLS_CHUNK_SIZE = 2500;
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
@@ -678,18 +668,6 @@ static void explain_parameter(char *command)
 "  MAX_QTEXT_SIZE is the maximum length of a quoted string.  Increasing\n\
    by 1 costs 5 bytes (for lexical analysis memory).  Inform automatically\n\
    ensures that MAX_STATIC_STRINGS is at least twice the size of this.");
-        return;
-    }
-    if (strcmp(command,"MAX_SYMBOLS")==0)
-    {   printf(
-"  MAX_SYMBOLS is the maximum number of symbols - names of variables, \n\
-  objects, routines, the many internal Inform-generated names and so on.\n");
-        return;
-    }
-    if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
-    {   printf(
-"  The symbols names are stored in memory which is allocated in chunks \n\
-  of size SYMBOLS_CHUNK_SIZE.\n");
         return;
     }
     if (strcmp(command,"HASH_TAB_SIZE")==0)
@@ -1104,11 +1082,11 @@ extern void memory_command(char *command)
                     MAX_STATIC_STRINGS = 2*MAX_QTEXT_SIZE;
             }
             if (strcmp(command,"MAX_SYMBOLS")==0)
-                MAX_SYMBOLS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_BANK_SIZE")==0)
                 flag=2;
             if (strcmp(command,"SYMBOLS_CHUNK_SIZE")==0)
-                SYMBOLS_CHUNK_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"BANK_CHUNK_SIZE")==0)
                 flag=2;
             if (strcmp(command,"HASH_TAB_SIZE")==0)
@@ -1261,11 +1239,10 @@ extern void memory_command(char *command)
 
             if (flag==0)
                 printf("No such memory setting as \"%s\"\n", command);
-            if (flag==2)
-            printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n\
-It should be safe to omit it (putting nothing in its place).\n", command);
-            if (flag==3)
-            printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
+            if (flag==2 && !nowarnings_switch)
+                printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n", command);
+            if (flag==3 && !nowarnings_switch)
+                printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
             return;
         }
     }

@@ -174,7 +174,7 @@ static void list_grammar_line_v1(int mark)
 
     printf(" -> ");
     actsym = action_symbol[action];
-    str = (char *)(symbs[actsym]);
+    str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
     printf("\n");
@@ -259,7 +259,7 @@ static void list_grammar_line_v2(int mark)
     }
     printf(" -> ");
     actsym = action_symbol[action];
-    str = (char *)(symbs[actsym]);
+    str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
     if (flags) printf(" (reversed)");
@@ -320,10 +320,10 @@ extern void make_fake_action(void)
     snprintf(action_sub, MAX_IDENTIFIER_LENGTH+4, "%s__A", token_text);
     i = symbol_index(action_sub, -1);
 
-    if (!(sflags[i] & UNKNOWN_SFLAG))
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
         /* The user didn't know they were defining FOO__A, but they were and it's a problem. */
-        ebf_symbol_error("new fake action name", action_sub, typename(stypes[i]), slines[i]);
+        ebf_symbol_error("new fake action name", action_sub, typename(symbols[i].type), symbols[i].line);
         panic_mode_error_recovery(); return;
     }
 
@@ -335,7 +335,7 @@ extern void make_fake_action(void)
     if (debugfile_switch)
     {   debug_file_printf("<fake-action>");
         debug_file_printf("<identifier>##%s</identifier>", token_text);
-        debug_file_printf("<value>%d</value>", svals[i]);
+        debug_file_printf("<value>%d</value>", symbols[i].value);
         get_next_token();
         write_debug_locations
             (get_token_location_end(beginning_debug_location));
@@ -358,33 +358,33 @@ extern assembly_operand action_of_name(char *name)
     snprintf(action_sub, MAX_IDENTIFIER_LENGTH+4, "%s__A", name);
     j = symbol_index(action_sub, -1);
 
-    if (stypes[j] == FAKE_ACTION_T)
+    if (symbols[j].type == FAKE_ACTION_T)
     {   INITAO(&AO);
-        AO.value = svals[j];
+        AO.value = symbols[j].value;
         if (!glulx_mode)
           AO.type = LONG_CONSTANT_OT;
         else
           set_constant_ot(&AO);
-        sflags[j] |= USED_SFLAG;
+        symbols[j].flags |= USED_SFLAG;
         return AO;
     }
 
-    if (sflags[j] & UNKNOWN_SFLAG)
+    if (symbols[j].flags & UNKNOWN_SFLAG)
     {
         if (no_actions>=MAX_ACTIONS) memoryerror("MAX_ACTIONS",MAX_ACTIONS);
         new_action(name, no_actions);
         action_symbol[no_actions] = j;
         assign_symbol(j, no_actions++, CONSTANT_T);
-        sflags[j] |= ACTION_SFLAG;
+        symbols[j].flags |= ACTION_SFLAG;
     }
-    sflags[j] |= USED_SFLAG;
+    symbols[j].flags |= USED_SFLAG;
 
     INITAO(&AO);
-    AO.value = svals[j];
+    AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
     if (!glulx_mode) {
       AO.type = (module_switch)?LONG_CONSTANT_OT:SHORT_CONSTANT_OT;
-      if (svals[j] >= 256) AO.type = LONG_CONSTANT_OT;
+      if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
     }
     else {
       AO.type = CONSTANT_OT;
@@ -401,24 +401,24 @@ extern void find_the_actions(void)
         for (i=0; i<no_actions; i++) action_byte_offset[i] = 0;
     else
     for (i=0; i<no_actions; i++)
-    {   strcpy(action_name, (char *) symbs[action_symbol[i]]);
+    {   strcpy(action_name, symbols[action_symbol[i]].name);
         action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");
         j = symbol_index(action_sub, -1);
-        if (sflags[j] & UNKNOWN_SFLAG)
+        if (symbols[j].flags & UNKNOWN_SFLAG)
         {
-            error_named_at("No ...Sub action routine found for action:", action_name, slines[action_symbol[i]]);
+            error_named_at("No ...Sub action routine found for action:", action_name, symbols[action_symbol[i]].line);
         }
         else
-        if (stypes[j] != ROUTINE_T)
+        if (symbols[j].type != ROUTINE_T)
         {
-            error_named_at("No ...Sub action routine found for action:", action_name, slines[action_symbol[i]]);
-            error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, slines[j]);
+            error_named_at("No ...Sub action routine found for action:", action_name, symbols[action_symbol[i]].line);
+            error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, symbols[j].line);
         }
         else
-        {   action_byte_offset[i] = svals[j];
-            sflags[j] |= USED_SFLAG;
+        {   action_byte_offset[i] = symbols[j].value;
+            symbols[j].flags |= USED_SFLAG;
         }
     }
 }
@@ -703,7 +703,7 @@ into Inform, so suggest rewriting grammar using general parsing routines");
 
                      get_next_token();
                      if ((token_type != SYMBOL_TT)
-                         || (stypes[token_value] != ROUTINE_T))
+                         || (symbols[token_value].type != ROUTINE_T))
                      {   discard_token_location(beginning_debug_location);
                          ebf_error("routine name after 'noun='", token_text);
                          panic_mode_error_recovery();
@@ -711,12 +711,12 @@ into Inform, so suggest rewriting grammar using general parsing routines");
                      }
                      if (grammar_version_number == 1)
                          bytecode
-                             = 16 + make_parsing_routine(svals[token_value]);
+                             = 16 + make_parsing_routine(symbols[token_value].value);
                      else
                      {   bytecode = 0x83;
-                         wordcode = svals[token_value];
+                         wordcode = symbols[token_value].value;
                      }
-                     sflags[token_value] |= USED_SFLAG;
+                     symbols[token_value].flags |= USED_SFLAG;
                  }
                  else
                  {   put_token_back();
@@ -767,7 +767,7 @@ are using Library 6/3 or later");
 
                  get_next_token();
                  if ((token_type != SYMBOL_TT)
-                     || (stypes[token_value] != ROUTINE_T))
+                     || (symbols[token_value].type != ROUTINE_T))
                  {   discard_token_location(beginning_debug_location);
                      ebf_error("routine name after 'scope='", token_text);
                      panic_mode_error_recovery();
@@ -776,9 +776,9 @@ are using Library 6/3 or later");
 
                  if (grammar_version_number == 1)
                      bytecode = 80 +
-                         make_parsing_routine(svals[token_value]);
-                 else { bytecode = 0x85; wordcode = svals[token_value]; }
-                 sflags[token_value] |= USED_SFLAG;
+                         make_parsing_routine(symbols[token_value].value);
+                 else { bytecode = 0x85; wordcode = symbols[token_value].value; }
+                 symbols[token_value].flags |= USED_SFLAG;
              }
         else if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
              {   discard_token_location(beginning_debug_location);
@@ -789,25 +789,25 @@ are using Library 6/3 or later");
         else {   /*  <attribute>  or  <general-parsing-routine>  tokens      */
 
                  if ((token_type != SYMBOL_TT)
-                     || ((stypes[token_value] != ATTRIBUTE_T)
-                         && (stypes[token_value] != ROUTINE_T)))
+                     || ((symbols[token_value].type != ATTRIBUTE_T)
+                         && (symbols[token_value].type != ROUTINE_T)))
                  {   discard_token_location(beginning_debug_location);
                      error_named("No such grammar token as", token_text);
                      panic_mode_error_recovery();
                      return FALSE;
                  }
-                 if (stypes[token_value]==ATTRIBUTE_T)
+                 if (symbols[token_value].type==ATTRIBUTE_T)
                  {   if (grammar_version_number == 1)
-                         bytecode = 128 + svals[token_value];
-                     else { bytecode = 4; wordcode = svals[token_value]; }
+                         bytecode = 128 + symbols[token_value].value;
+                     else { bytecode = 4; wordcode = symbols[token_value].value; }
                  }
                  else
                  {   if (grammar_version_number == 1)
                          bytecode = 48 +
-                             make_parsing_routine(svals[token_value]);
-                     else { bytecode = 0x86; wordcode = svals[token_value]; }
+                             make_parsing_routine(symbols[token_value].value);
+                     else { bytecode = 0x86; wordcode = symbols[token_value].value; }
                  }
-                 sflags[token_value] |= USED_SFLAG;
+                 symbols[token_value].flags |= USED_SFLAG;
              }
 
         grammar_token++; no_grammar_tokens++;

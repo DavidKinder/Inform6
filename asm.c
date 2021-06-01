@@ -79,7 +79,8 @@ static int routine_locals;         /* The number of local variables used by
 
 static int32 routine_start_pc;
 
-int32 *named_routine_symbols;
+int32 *named_routine_symbols;      /* Allocated up to no_named_routines      */
+static memory_list named_routine_symbols_memlist;
 
 static void transfer_routine_z(void);
 static void transfer_routine_g(void);
@@ -205,7 +206,7 @@ extern char *variable_name(int32 i)
       }
     }
 
-    return ((char *) symbs[variable_tokens[i]]);
+    return (symbols[variable_tokens[i]].name);
 }
 
 /* Print symbolic information about the AO, if there is any. */
@@ -233,7 +234,7 @@ static void print_operand_annotation(const assembly_operand *o)
     if (o->symindex >= 0 && o->symindex < no_symbols) {
         printf((!any) ? " (" : ": ");
         any = TRUE;
-        printf("%s", (char *)symbs[o->symindex]);
+        printf("%s", symbols[o->symindex].name);
     }
     if (any) printf(")");       
 }
@@ -1424,7 +1425,7 @@ extern void assemble_label_no(int n)
 }
 
 extern void define_symbol_label(int symbol)
-{   label_symbols[svals[symbol]] = symbol;
+{   label_symbols[symbols[symbol].value] = symbol;
 }
 
 extern int32 assemble_routine_header(int no_locals,
@@ -1516,7 +1517,8 @@ extern int32 assemble_routine_header(int no_locals,
             }
             else
             {   i = no_named_routines++;
-                  named_routine_symbols[i] = the_symbol;
+                ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
+                named_routine_symbols[i] = the_symbol;
                 CON.value = i/8; CON.type = LONG_CONSTANT_OT; CON.marker = 0;
                 RFA.value = routine_flags_array_SC;
                 RFA.type = LONG_CONSTANT_OT; RFA.marker = INCON_MV;
@@ -1590,6 +1592,7 @@ extern int32 assemble_routine_header(int no_locals,
           }
           else {
             i = no_named_routines++;
+            ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
             named_routine_symbols[i] = the_symbol;
           }
         }
@@ -1706,19 +1709,19 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
                 ("<identifier artificial=\"true\">%s</identifier>",
                  routine_name);
         }
-        else if (sflags[routine_symbol] & REPLACE_SFLAG)
+        else if (symbols[routine_symbol].flags & REPLACE_SFLAG)
         {   /* The symbol type will be set to ROUTINE_T once the replaced
                version has been given; if it is already set, we must be dealing
                with a replacement, and we can use the routine name as-is.
                Otherwise we look for a rename.  And if that doesn't work, we
                fall back to an artificial identifier. */
-            if (stypes[routine_symbol] == ROUTINE_T)
+            if (symbols[routine_symbol].type == ROUTINE_T)
             {   /* Optional because there may be further replacements. */
                 write_debug_optional_identifier(routine_symbol);
             }
             else if (find_symbol_replacement(&routine_symbol))
             {   debug_file_printf
-                    ("<identifier>%s</identifier>", symbs[routine_symbol]);
+                    ("<identifier>%s</identifier>", symbols[routine_symbol].name);
             }
             else
             {   debug_file_printf
@@ -1778,14 +1781,14 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     for (i=0; i<next_label; i++)
     {   int j = label_symbols[i];
         if (j != -1)
-        {   if (sflags[j] & CHANGE_SFLAG)
+        {   if (symbols[j].flags & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
-                    (char *) symbs[j], slines[j]);
+                    symbols[j].name, symbols[j].line);
             else
-                if ((sflags[j] & USED_SFLAG) == 0)
-                    dbnu_warning("Label", (char *) symbs[j], slines[j]);
-            stypes[j] = CONSTANT_T;
-            sflags[j] = UNKNOWN_SFLAG;
+                if ((symbols[j].flags & USED_SFLAG) == 0)
+                    dbnu_warning("Label", symbols[j].name, symbols[j].line);
+            symbols[j].type = CONSTANT_T;
+            symbols[j].flags = UNKNOWN_SFLAG;
         }
     }
     no_sequence_points += next_sequence_point;
@@ -2824,11 +2827,11 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             else
             {   if (strcmp(token_text, "sp") == 0) n = 0;
                 else
-                {   if (stypes[token_value] != GLOBAL_VARIABLE_T)
+                {   if (symbols[token_value].type != GLOBAL_VARIABLE_T)
                         error_named(
                             "Store '->' destination not 'sp' or a variable:",
                             token_text);
-                    else n = svals[token_value];
+                    else n = symbols[token_value].value;
                 }
             }
             AI.store_variable_number = n;
@@ -3182,8 +3185,9 @@ extern void asm_allocate_arrays(void)
     zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
     zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
 
-    named_routine_symbols
-        = my_calloc(sizeof(int32), MAX_SYMBOLS, "named routine symbols");
+    initialise_memory_list(&named_routine_symbols_memlist,
+        sizeof(int32), 1000, (void**)&named_routine_symbols,
+        "named routine symbols");
 }
 
 extern void asm_free_arrays(void)
@@ -3201,7 +3205,7 @@ extern void asm_free_arrays(void)
     my_free(&zcode_holding_area, "compiled routine code area");
     my_free(&zcode_markers, "compiled routine code markers");
 
-    my_free(&named_routine_symbols, "named routine symbols");
+    deallocate_memory_list(&named_routine_symbols_memlist);
     deallocate_memory_block(&zcode_area);
 }
 

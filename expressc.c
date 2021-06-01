@@ -390,7 +390,7 @@ static void value_in_void_context_z(assembly_operand AO)
         case SHORT_CONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbols[AO.value].name);
             break;
         case VARIABLE_OT:
             t = variable_name(AO.value);
@@ -454,7 +454,7 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
         {   if (((AO1.marker == ARRAY_MV) == (!array_locs[x]))
-                && (AO1.value == svals[array_symbols[x]]))
+                && (AO1.value == symbols[array_symbols[x]].value))
             {   size_ao.value = array_sizes[x]; y=x;
             }
         }
@@ -772,7 +772,7 @@ static void value_in_void_context_g(assembly_operand AO)
         case ZEROCONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbols[AO.value].name);
             break;
         case GLOBALVAR_OT:
         case LOCALVAR_OT:
@@ -819,7 +819,7 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
         {   if (((AO1.marker == ARRAY_MV) == (!array_locs[x]))
-                && (AO1.value == svals[array_symbols[x]]))
+                && (AO1.value == symbols[array_symbols[x]].value))
             {   size_ao.value = array_sizes[x]; y=x;
             }
         }
@@ -1044,7 +1044,7 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
     assembleg_3(aload_gc, AO, AO3, stack_pointer);
     ln = symbol_index("Class", -1);
-    AO3.value = svals[ln];
+    AO3.value = symbols[ln].value;
     AO3.marker = OBJECT_MV;
     AO3.type = CONSTANT_OT;
     assembleg_2_branch(jne_gc, stack_pointer, AO3, passed_label);
@@ -1065,7 +1065,7 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   else {
     /* Build the symbol for "Object" */
     ln = symbol_index("Object", -1);
-    AO2.value = svals[ln];
+    AO2.value = symbols[ln].value;
     AO2.marker = OBJECT_MV;
     AO2.type = CONSTANT_OT;
     if (check_sp) {

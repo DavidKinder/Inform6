@@ -1554,45 +1554,45 @@ extern void write_debug_locations(debug_locations locations)
 }
 
 extern void write_debug_optional_identifier(int32 symbol_index)
-{   if (stypes[symbol_index] != ROUTINE_T)
+{   if (symbols[symbol_index].type != ROUTINE_T)
     {   compiler_error
             ("Attempt to write a replaceable identifier for a non-routine");
     }
-    if (replacement_debug_backpatch_positions[symbol_index].valid)
+    if (symbol_debug_info[symbol_index].replacement_backpatch_pos.valid)
     {   if (fsetpos
                 (Debug_fp,
-                 &replacement_debug_backpatch_positions[symbol_index].position))
+                 &symbol_debug_info[symbol_index].replacement_backpatch_pos.position))
         {   fatalerror("I/O failure: can't seek in debugging information file");
         }
         debug_file_printf
             ("<identifier artificial=\"true\">%s "
                  "(superseded replacement)</identifier>",
-             symbs[symbol_index]);
+             symbols[symbol_index].name);
         if (fseek(Debug_fp, 0L, SEEK_END))
         {   fatalerror("I/O failure: can't seek in debugging information file");
         }
     }
     fgetpos
-      (Debug_fp, &replacement_debug_backpatch_positions[symbol_index].position);
-    replacement_debug_backpatch_positions[symbol_index].valid = TRUE;
-    debug_file_printf("<identifier>%s</identifier>", symbs[symbol_index]);
+      (Debug_fp, &symbol_debug_info[symbol_index].replacement_backpatch_pos.position);
+    symbol_debug_info[symbol_index].replacement_backpatch_pos.valid = TRUE;
+    debug_file_printf("<identifier>%s</identifier>", symbols[symbol_index].name);
     /* Space for:       artificial="true" (superseded replacement) */
     debug_file_printf("                                           ");
 }
 
 extern void write_debug_symbol_backpatch(int32 symbol_index)
-{   if (symbol_debug_backpatch_positions[symbol_index].valid) {
+{   if (symbol_debug_info[symbol_index].backpatch_pos.valid) {
         compiler_error("Symbol entry incorrectly reused in debug information "
                        "file backpatching");
     }
-    fgetpos(Debug_fp, &symbol_debug_backpatch_positions[symbol_index].position);
-    symbol_debug_backpatch_positions[symbol_index].valid = TRUE;
+    fgetpos(Debug_fp, &symbol_debug_info[symbol_index].backpatch_pos.position);
+    symbol_debug_info[symbol_index].backpatch_pos.valid = TRUE;
     /* Reserve space for up to 10 digits plus a negative sign. */
     debug_file_printf("*BACKPATCH*");
 }
 
 extern void write_debug_symbol_optional_backpatch(int32 symbol_index)
-{   if (symbol_debug_backpatch_positions[symbol_index].valid) {
+{   if (symbol_debug_info[symbol_index].backpatch_pos.valid) {
         compiler_error("Symbol entry incorrectly reused in debug information "
                        "file backpatching");
     }
@@ -1601,8 +1601,8 @@ extern void write_debug_symbol_optional_backpatch(int32 symbol_index)
        so that we'll be in the same case as above if the symbol is eventually
        defined. */
     debug_file_printf("<value>");
-    fgetpos(Debug_fp, &symbol_debug_backpatch_positions[symbol_index].position);
-    symbol_debug_backpatch_positions[symbol_index].valid = TRUE;
+    fgetpos(Debug_fp, &symbol_debug_info[symbol_index].backpatch_pos.position);
+    symbol_debug_info[symbol_index].backpatch_pos.valid = TRUE;
     debug_file_printf("*BACKPATCH*</value>");
 }
 
@@ -1718,18 +1718,18 @@ extern void end_writing_debug_sections(int32 end_address)
 }
 
 extern void write_debug_undef(int32 symbol_index)
-{   if (!symbol_debug_backpatch_positions[symbol_index].valid)
+{   if (!symbol_debug_info[symbol_index].backpatch_pos.valid)
     {   compiler_error
             ("Attempt to erase debugging information never written or since "
                 "erased");
     }
-    if (stypes[symbol_index] != CONSTANT_T)
+    if (symbols[symbol_index].type != CONSTANT_T)
     {   compiler_error
             ("Attempt to erase debugging information for a non-constant "
              "because of an #undef");
     }
     if (fsetpos
-         (Debug_fp, &symbol_debug_backpatch_positions[symbol_index].position))
+         (Debug_fp, &symbol_debug_info[symbol_index].backpatch_pos.position))
     {   fatalerror("I/O failure: can't seek in debugging information file");
     }
     /* There are 7 characters in ``<value>''. */
@@ -1739,7 +1739,7 @@ extern void write_debug_undef(int32 symbol_index)
     /* Overwrite:      <value>*BACKPATCH*</value> */
     debug_file_printf("                          ");
     nullify_debug_file_position
-        (&symbol_debug_backpatch_positions[symbol_index]);
+        (&symbol_debug_info[symbol_index].backpatch_pos);
     if (fseek(Debug_fp, 0L, SEEK_END))
     {   fatalerror("I/O failure: can't seek in debugging information file");
     }
@@ -1770,14 +1770,13 @@ static void apply_debug_information_backpatches
 static void apply_debug_information_symbol_backpatches()
 {   int backpatch_symbol;
     for (backpatch_symbol = no_symbols; backpatch_symbol--;)
-    {   if (symbol_debug_backpatch_positions[backpatch_symbol].valid)
+    {   if (symbol_debug_info[backpatch_symbol].backpatch_pos.valid)
         {   if (fsetpos(Debug_fp,
-                        &symbol_debug_backpatch_positions
-                            [backpatch_symbol].position))
+                        &symbol_debug_info[backpatch_symbol].backpatch_pos.position))
             {   fatalerror
                     ("I/O failure: can't seek in debugging information file");
             }
-            debug_file_printf("%11d", svals[backpatch_symbol]);
+            debug_file_printf("%11d", symbols[backpatch_symbol].value);
         }
     }
 }

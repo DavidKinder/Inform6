@@ -467,7 +467,7 @@ static void construct_storyfile_z(void)
 
     if (define_INFIX_switch)
     {   for (i=0, k=1, l=0; i<no_named_routines; i++)
-        {   if (sflags[named_routine_symbols[i]] & STAR_SFLAG) l=l+k;
+        {   if (symbols[named_routine_symbols[i]].flags & STAR_SFLAG) l=l+k;
             k=k*2;
             if (k==256) { p[mark++] = l; k=1; l=0; }
         }
@@ -970,9 +970,9 @@ or less.");
             }
 
             printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
+%6d symbols                    %8ld bytes of memory\n\
 Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
+                 no_symbols,
                  (long int) malloced_bytes,
                  version_number,
                  version_name(version_number),
@@ -1658,9 +1658,9 @@ table format requested (producing number 2 format instead)");
             {char serialnum[8];
             write_serial_number(serialnum);
             printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
+%6d symbols                    %8ld bytes of memory\n\
 Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
+                 no_symbols,
                  (long int) malloced_bytes,
                  version_name(version_number),
                  output_called,

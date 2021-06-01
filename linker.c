@@ -207,28 +207,28 @@ static void accept_export(void)
 
     xref_table[IE.symbol_number] = index;
 
-    if (!(sflags[index] & UNKNOWN_SFLAG))
+    if (!(symbols[index].flags & UNKNOWN_SFLAG))
     {   if (IE.module_value == EXPORTAC_MV)
-        {   if ((!(sflags[index] & ACTION_SFLAG))
-                && (stypes[index] != FAKE_ACTION_T))
+        {   if ((!(symbols[index].flags & ACTION_SFLAG))
+                && (symbols[index].type != FAKE_ACTION_T))
                 link_error_named(
 "action name clash with", IE.symbol_name);
         }
         else
-        if (stypes[index] == IE.symbol_type)
+        if (symbols[index].type == IE.symbol_type)
         {   switch(IE.symbol_type)
             {   case CONSTANT_T:
-                    if ((!(svals[index] == IE.symbol_value))
+                    if ((!(symbols[index].value == IE.symbol_value))
                         || (IE.backpatch != 0))
                         link_error_named(
 "program and module give differing values of", IE.symbol_name);
                     break;
                 case INDIVIDUAL_PROPERTY_T:
-                    property_identifier_map[IE.symbol_value] = svals[index];
+                    property_identifier_map[IE.symbol_value] = symbols[index].value;
                     break;
                 case ROUTINE_T:
                     if ((IE.module_value == EXPORTSF_MV)
-                        && (sflags[index] & REPLACE_SFLAG))
+                        && (symbols[index].flags & REPLACE_SFLAG))
                     break;
                 default:
                     sprintf(link_errorm,
@@ -241,7 +241,7 @@ static void accept_export(void)
         else
         {   sprintf(link_errorm,
                     "'%s' has type %s in program but type %s in module",
-                    IE.symbol_name, typename(stypes[index]),
+                    IE.symbol_name, typename(symbols[index].type),
                     typename(IE.symbol_type));
             link_error(link_errorm);
         }
@@ -251,13 +251,13 @@ static void accept_export(void)
         {   IE.symbol_value = no_actions;
             action_symbol[no_actions++] = index;
             if (linker_trace_level >= 4)
-                printf("Creating action ##%s\n", (char *) symbs[index]);
+                printf("Creating action ##%s\n", symbols[index].name);
         }
         else
         switch(IE.symbol_type)
         {   case ROUTINE_T:
                 if ((IE.module_value == EXPORTSF_MV)
-                    && (sflags[index] & REPLACE_SFLAG))
+                    && (symbols[index].flags & REPLACE_SFLAG))
                 {   routine_replace[no_rr] = IE.symbol_value;
                     routine_replace_with[no_rr++] = index;
                     return;
@@ -299,19 +299,19 @@ static void accept_export(void)
         }
         assign_symbol(index, IE.backpatch*0x10000 + IE.symbol_value,
             IE.symbol_type);
-        if (IE.backpatch != 0) sflags[index] |= CHANGE_SFLAG;
-        sflags[index] |= EXPORT_SFLAG;
+        if (IE.backpatch != 0) symbols[index].flags |= CHANGE_SFLAG;
+        symbols[index].flags |= EXPORT_SFLAG;
         if (IE.module_value == EXPORTSF_MV)
-            sflags[index] |= INSF_SFLAG;
+            symbols[index].flags |= INSF_SFLAG;
         if (IE.module_value == EXPORTAC_MV)
-            sflags[index] |= ACTION_SFLAG;
+            symbols[index].flags |= ACTION_SFLAG;
     }
 
     if (IE.module_value == EXPORTAC_MV)
     {   if (linker_trace_level >= 4)
             printf("Map %d '%s' to %d\n",
-                IE.symbol_value, (char *) (symbs[index]), svals[index]);
-        actions_map[map_to] = svals[index];
+                IE.symbol_value, (symbols[index].name), symbols[index].value);
+        actions_map[map_to] = symbols[index].value;
     }
 }
 
@@ -319,22 +319,22 @@ static void accept_import(void)
 {   int32 index;
 
     index = symbol_index(IE.symbol_name, -1);
-    sflags[index] |= USED_SFLAG;
+    symbols[index].flags |= USED_SFLAG;
     xref_table[IE.symbol_number] = index;
 
-    if (!(sflags[index] & UNKNOWN_SFLAG))
+    if (!(symbols[index].flags & UNKNOWN_SFLAG))
     {   switch (IE.symbol_type)
         {
             case GLOBAL_VARIABLE_T:
-                if (stypes[index] != GLOBAL_VARIABLE_T)
+                if (symbols[index].type != GLOBAL_VARIABLE_T)
                     link_error_named(
 "module (wrongly) declared this a variable:", IE.symbol_name);
-                variables_map[IE.symbol_value] = svals[index];
+                variables_map[IE.symbol_value] = symbols[index].value;
                 if (IE.symbol_value < lowest_imported_global_no)
                     lowest_imported_global_no = IE.symbol_value;
                 break;
             default:
-                switch(stypes[index])
+                switch(symbols[index].type)
                 {   case ATTRIBUTE_T:
                         link_error_named(
 "this attribute is undeclared within module:", IE.symbol_name);; break;
@@ -361,7 +361,7 @@ static void accept_import(void)
     {   switch (IE.symbol_type)
         {
             case GLOBAL_VARIABLE_T:
-                if (stypes[index] != GLOBAL_VARIABLE_T)
+                if (symbols[index].type != GLOBAL_VARIABLE_T)
                     link_error_named(
                 "Module tried to import a Global variable not defined here:",
                         IE.symbol_name);
@@ -668,7 +668,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
         if (((record_type == EXPORT_MV) || (record_type == EXPORTSF_MV))
             && (IE.symbol_type == INDIVIDUAL_PROPERTY_T))
         {   int32 si = symbol_index(IE.symbol_name, -1);
-            property_identifier_map[IE.symbol_value] = svals[si];
+            property_identifier_map[IE.symbol_value] = symbols[si].value;
         }
         switch(record_type)
         {   case EXPORT_MV:
@@ -693,7 +693,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
         for (i=0; i<module_map[6]; i++)
         {   if (xref_table[i] != -1)
                 printf("module %4d -> story file '%s'\n", i,
-                    (char *) symbs[xref_table[i]]);
+                    symbols[xref_table[i]].name);
         }
     }
 
@@ -715,14 +715,14 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
     /* (6) Backpatch the backpatch markers attached to exported symbols  */
 
     for (i=symbols_base; i<no_symbols; i++)
-    {   if ((sflags[i] & CHANGE_SFLAG) && (sflags[i] & EXPORT_SFLAG))
-        {   backpatch_marker = svals[i]/0x10000;
-            j = svals[i] % 0x10000;
+    {   if ((symbols[i].flags & CHANGE_SFLAG) && (symbols[i].flags & EXPORT_SFLAG))
+        {   backpatch_marker = symbols[i].value/0x10000;
+            j = symbols[i].value % 0x10000;
 
             j = backpatch_backpatch(j);
 
-            svals[i] = backpatch_marker*0x10000 + j;
-            if (backpatch_marker == 0) sflags[i] &= (~(CHANGE_SFLAG));
+            symbols[i].value = backpatch_marker*0x10000 + j;
+            if (backpatch_marker == 0) symbols[i].flags &= (~(CHANGE_SFLAG));
         }
     }
 
@@ -1017,23 +1017,23 @@ static void export_symbols(void)
     for (symbol_number = 0; symbol_number < no_symbols; symbol_number++)
     {   int export_flag = FALSE, import_flag = FALSE;
 
-        if (stypes[symbol_number]==GLOBAL_VARIABLE_T)
-        {   if (svals[symbol_number] < LOWEST_SYSTEM_VAR_NUMBER)
-            {   if (sflags[symbol_number] & IMPORT_SFLAG)
+        if (symbols[symbol_number].type==GLOBAL_VARIABLE_T)
+        {   if (symbols[symbol_number].value < LOWEST_SYSTEM_VAR_NUMBER)
+            {   if (symbols[symbol_number].flags & IMPORT_SFLAG)
                     import_flag = TRUE;
                 else
-                    if (!(sflags[symbol_number] & SYSTEM_SFLAG))
+                    if (!(symbols[symbol_number].flags & SYSTEM_SFLAG))
                         export_flag = TRUE;
             }
         }
         else
-        {   if (!(sflags[symbol_number] & SYSTEM_SFLAG))
-            {   if (sflags[symbol_number] & UNKNOWN_SFLAG)
-                {   if (sflags[symbol_number] & IMPORT_SFLAG)
+        {   if (!(symbols[symbol_number].flags & SYSTEM_SFLAG))
+            {   if (symbols[symbol_number].flags & UNKNOWN_SFLAG)
+                {   if (symbols[symbol_number].flags & IMPORT_SFLAG)
                         import_flag = TRUE;
                 }
                 else
-                switch(stypes[symbol_number])
+                switch(symbols[symbol_number].type)
                 {   case LABEL_T:
                     case ATTRIBUTE_T:
                     case PROPERTY_T:
@@ -1049,27 +1049,27 @@ static void export_symbols(void)
         {   if (linker_trace_level >= 1)
             {   IE.module_value = EXPORT_MV;
                 IE.symbol_number = symbol_number;
-                IE.symbol_type = stypes[symbol_number];
-                IE.symbol_value = svals[symbol_number];
-                IE.symbol_name = (char *) (symbs[symbol_number]);
+                IE.symbol_type = symbols[symbol_number].type;
+                IE.symbol_value = symbols[symbol_number].value;
+                IE.symbol_name = (symbols[symbol_number].name);
                 describe_importexport(&IE);
             }
 
-            if (sflags[symbol_number] & ACTION_SFLAG)
+            if (symbols[symbol_number].flags & ACTION_SFLAG)
                 write_link_byte(EXPORTAC_MV);
             else
-            if (sflags[symbol_number] & INSF_SFLAG)
+            if (symbols[symbol_number].flags & INSF_SFLAG)
                 write_link_byte(EXPORTSF_MV);
             else
                 write_link_byte(EXPORT_MV);
 
             write_link_word(symbol_number);
-            write_link_byte(stypes[symbol_number]);
-            if (sflags[symbol_number] & CHANGE_SFLAG)
-                 write_link_byte(svals[symbol_number] / 0x10000);
+            write_link_byte(symbols[symbol_number].type);
+            if (symbols[symbol_number].flags & CHANGE_SFLAG)
+                 write_link_byte(symbols[symbol_number].value / 0x10000);
             else write_link_byte(0);
-            write_link_word(svals[symbol_number] % 0x10000);
-            write_link_string((char *) (symbs[symbol_number]));
+            write_link_word(symbols[symbol_number].value % 0x10000);
+            write_link_string((symbols[symbol_number].name));
             flush_link_data();
         }
 
@@ -1077,17 +1077,17 @@ static void export_symbols(void)
         {   if (linker_trace_level >= 1)
             {   IE.module_value = IMPORT_MV;
                 IE.symbol_number = symbol_number;
-                IE.symbol_type = stypes[symbol_number];
-                IE.symbol_value = svals[symbol_number];
-                IE.symbol_name = (char *) (symbs[symbol_number]);
+                IE.symbol_type = symbols[symbol_number].type;
+                IE.symbol_value = symbols[symbol_number].value;
+                IE.symbol_name = (symbols[symbol_number].name);
                 describe_importexport(&IE);
             }
 
             write_link_byte(IMPORT_MV);
             write_link_word(symbol_number);
-            write_link_byte(stypes[symbol_number]);
-            write_link_word(svals[symbol_number]);
-            write_link_string((char *) (symbs[symbol_number]));
+            write_link_byte(symbols[symbol_number].type);
+            write_link_word(symbols[symbol_number].value);
+            write_link_string((symbols[symbol_number].name));
             flush_link_data();
         }
     }
@@ -1100,10 +1100,10 @@ static void export_symbols(void)
 int mv_vref=LOWEST_SYSTEM_VAR_NUMBER-1;
 
 void import_symbol(int32 symbol_number)
-{   sflags[symbol_number] |= IMPORT_SFLAG;
-    switch(stypes[symbol_number])
+{   symbols[symbol_number].flags |= IMPORT_SFLAG;
+    switch(symbols[symbol_number].type)
     {   case GLOBAL_VARIABLE_T:
-            assign_symbol(symbol_number, mv_vref--, stypes[symbol_number]);
+            assign_symbol(symbol_number, mv_vref--, symbols[symbol_number].type);
             break;
     }
 }
