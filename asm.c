@@ -1958,6 +1958,12 @@ static void transfer_routine_z(void)
         }
     }
 
+    /* Consistency check */
+    if (new_pc - rstart_pc > zcode_ha_size || adjusted_pc != new_pc)
+    {
+        fatalerror("Optimisation increased routine length or failed to match; should not happen");
+    }
+
     if (asm_trace_level >= 3)
     {   printf("After branch optimisation, routine length is %d bytes\n",
              new_pc - rstart_pc);
@@ -2166,6 +2172,12 @@ static void transfer_routine_g(void)
         }
         transfer_byte(zcode_holding_area + i); new_pc++;
       }
+    }
+
+    /* Consistency check */
+    if (new_pc - rstart_pc > zcode_ha_size || adjusted_pc != new_pc)
+    {
+        fatalerror("Optimisation increased routine length or failed to match; should not happen");
     }
 
     if (asm_trace_level >= 3)
