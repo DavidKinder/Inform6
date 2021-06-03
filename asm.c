@@ -14,8 +14,10 @@ uchar *zcode_markers;              /* Bytes holding marker values for this
                                       code                                   */
 static int zcode_ha_size;          /* Number of bytes in holding area        */
 
-memory_block zcode_area;           /* Block to hold assembled code (if
+unsigned char *zcode_area;         /* Array to hold assembled code (if
                                       temporary files are not being used)    */
+
+memory_list zcode_area_memlist;    /* Manages zcode_area                     */
 
 int32 zmachine_pc;                 /* PC position of assembly (byte offset
                                       from start of Z-code area)             */
@@ -1799,12 +1801,17 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 /*   Called when the holding area contains an entire routine of code:        */
 /*   backpatches the labels, issues module markers, then dumps the routine   */
 /*   into longer-term storage.                                               */
+/*                                                                           */
 /*   Note that in the code received, all branches have long form, and their  */
 /*   contents are not an offset but the label numbers they branch to.        */
 /*   Similarly, LABEL operands (those of "jump" instructions) are label      */
 /*   numbers.  So this routine must change the label numbers to offsets,     */
 /*   slimming the code down as it does so to take advantage of short-form    */
 /*   branch operands where possible.                                         */
+/*                                                                           */
+/*   zcode_ha_size is the number of bytes added since the last transfer      */
+/*   call. So we transfer starting at (zmachine_pc - zcode_ha_size). But we  */
+/*   might transfer fewer bytes than that.                                   */
 /* ------------------------------------------------------------------------- */
 
 static int32 adjusted_pc;
@@ -1815,7 +1822,7 @@ static void transfer_to_temp_file(uchar *c)
 }
 
 static void transfer_to_zcode_area(uchar *c)
-{   write_byte_to_memory_block(&zcode_area, adjusted_pc++, *c);
+{   zcode_area[adjusted_pc++] = *c;
 }
 
 static void transfer_routine_z(void)
@@ -1885,6 +1892,8 @@ static void transfer_routine_z(void)
             operands with offsets to those labels.  Also issue markers, now
             that we know where they occur in the final Z-code area.          */
 
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
+    
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++)
     {   switch(zcode_markers[i])
         { case BRANCH_MV:
@@ -1971,6 +1980,8 @@ static void transfer_routine_z(void)
 
     /*  Insert null bytes if necessary to ensure the next routine address is */
     /*  expressible as a packed address                                      */
+
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+2*scale_factor);
 
     {   uchar zero[1];
         zero[0] = 0;
@@ -2079,6 +2090,8 @@ static void transfer_routine_g(void)
             operands with offsets to those labels.  Also issue markers, now
             that we know where they occur in the final Z-code area.          */
 
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
+    
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++) {
 
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
@@ -3172,7 +3185,7 @@ extern void init_asm_vars(void)
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;
 
-    initialise_memory_block(&zcode_area);
+    zcode_area = NULL;
 }
 
 extern void asm_allocate_arrays(void)
@@ -3200,6 +3213,10 @@ extern void asm_allocate_arrays(void)
     initialise_memory_list(&named_routine_symbols_memlist,
         sizeof(int32), 1000, (void**)&named_routine_symbols,
         "named routine symbols");
+
+    initialise_memory_list(&zcode_area_memlist,
+        sizeof(unsigned char *), 8192, (void**)&zcode_area,
+        "code area");
 }
 
 extern void asm_free_arrays(void)
@@ -3218,7 +3235,7 @@ extern void asm_free_arrays(void)
     my_free(&zcode_markers, "compiled routine code markers");
 
     deallocate_memory_list(&named_routine_symbols_memlist);
-    deallocate_memory_block(&zcode_area);
+    deallocate_memory_list(&zcode_area_memlist);
 }
 
 /* ========================================================================= */

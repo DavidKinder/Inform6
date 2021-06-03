@@ -2152,7 +2152,8 @@ extern void finish_array(int32 i, int is_static);
 /*   Extern definitions for "asm"                                            */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block zcode_area;
+extern unsigned char *zcode_area;
+extern memory_list zcode_area_memlist;
 extern int32 zmachine_pc;
 
 extern int32 no_instructions;

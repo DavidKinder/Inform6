@@ -828,13 +828,17 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
       printf("Inserting code area, %04x to %04x, at code offset %04x (+%04x)\n",
         m_code_offset, m_strs_offset, code_offset, zmachine_pc);
 
+    ensure_memory_list_available(&zcode_area_memlist, zmachine_pc + (m_strs_offset - m_code_offset));
+    
     for (k=m_code_offset;k<m_strs_offset;k++)
     {   if (temporary_files_switch)
         {   fputc(p[k],Temp2_fp);
             zmachine_pc++;
         }
         else
-            write_byte_to_memory_block(&zcode_area, zmachine_pc++, p[k]);
+        {
+            zcode_area[zmachine_pc++] = p[k];
+        }
     }
 
     /* (12) Glue in the static strings area */

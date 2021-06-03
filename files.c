@@ -503,7 +503,7 @@ static void output_file_z(void)
                 while (j<offset && j<next_cons_check) {
                     /* get dummy value */
                     ((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -511,7 +511,7 @@ static void output_file_z(void)
                 while (j<offset && j<next_cons_check) {
                     size++;
                     sf_put((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -521,9 +521,9 @@ static void output_file_z(void)
 
         if (long_flag)
         {   int32 v = (temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j);
+                zcode_area[j];
             v = 256*v + ((temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j+1));
+                zcode_area[j+1]);
             j += 2;
             if (use_function) {
                 v = backpatch_value(v);
@@ -533,7 +533,7 @@ static void output_file_z(void)
         }
         else
         {   int32 v = (temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j);
+                zcode_area[j];
             j++;
             if (use_function) {
                 v = backpatch_value(v);
@@ -559,7 +559,7 @@ static void output_file_z(void)
             while (j<offset && j<next_cons_check) {
                 /* get dummy value */
                 ((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -567,7 +567,7 @@ static void output_file_z(void)
             while (j<offset && j<next_cons_check) {
                 size++;
                 sf_put((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -893,7 +893,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
                 while (j<offset && j<next_cons_check) {
                     /* get dummy value */
                     ((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -901,7 +901,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
                 while (j<offset && j<next_cons_check) {
                     size++;
                     sf_put((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -915,13 +915,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 4:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+1));
+            zcode_area[j+1]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+2));
+            zcode_area[j+2]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+3));
+            zcode_area[j+3]);
           j += 4;
           if (!use_function)
               break;
@@ -935,9 +935,9 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 2:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+1));
+            zcode_area[j+1]);
           j += 2;
           if (!use_function)
               break;
@@ -953,7 +953,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 1:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           j += 1;
           if (!use_function)
               break;
@@ -989,7 +989,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             while (j<offset && j<next_cons_check) {
                 /* get dummy value */
                 ((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -997,7 +997,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             while (j<offset && j<next_cons_check) {
                 size++;
                 sf_put((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
