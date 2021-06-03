@@ -3215,7 +3215,7 @@ extern void asm_allocate_arrays(void)
         "named routine symbols");
 
     initialise_memory_list(&zcode_area_memlist,
-        sizeof(unsigned char *), 8192, (void**)&zcode_area,
+        sizeof(unsigned char), 8192, (void**)&zcode_area,
         "code area");
 }
 
