@@ -14,7 +14,7 @@ uchar *zcode_markers;              /* Bytes holding marker values for this
                                       code                                   */
 static int zcode_ha_size;          /* Number of bytes in holding area        */
 
-unsigned char *zcode_area;         /* Array to hold assembled code (if
+uchar *zcode_area;                 /* Array to hold assembled code (if
                                       temporary files are not being used)    */
 
 memory_list zcode_area_memlist;    /* Manages zcode_area                     */
@@ -3215,7 +3215,7 @@ extern void asm_allocate_arrays(void)
         "named routine symbols");
 
     initialise_memory_list(&zcode_area_memlist,
-        sizeof(unsigned char), 8192, (void**)&zcode_area,
+        sizeof(uchar), 8192, (void**)&zcode_area,
         "code area");
 }
 
