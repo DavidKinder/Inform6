@@ -2273,7 +2273,9 @@ extern void parse_assembly(void);
 /*   Extern definitions for "bpatch"                                         */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block zcode_backpatch_table, staticarray_backpatch_table,
+extern uchar *staticarray_backpatch_table;
+extern memory_list staticarray_backpatch_table_memlist;
+extern memory_block zcode_backpatch_table,
     zmachine_backpatch_table;
 extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;

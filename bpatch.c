@@ -9,7 +9,9 @@
 
 #include "header.h"
 
-memory_block zcode_backpatch_table, staticarray_backpatch_table,
+uchar *staticarray_backpatch_table; /* Allocated to staticarray_backpatch_size */
+memory_list staticarray_backpatch_table_memlist;
+memory_block zcode_backpatch_table,
     zmachine_backpatch_table;
 int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
@@ -502,8 +504,8 @@ extern void backpatch_zmachine_image_g(void)
 
 extern void init_bpatch_vars(void)
 {   initialise_memory_block(&zcode_backpatch_table);
-    initialise_memory_block(&staticarray_backpatch_table);
     initialise_memory_block(&zmachine_backpatch_table);
+    staticarray_backpatch_table = NULL;
 }
 
 extern void bpatch_begin_pass(void)
@@ -514,11 +516,14 @@ extern void bpatch_begin_pass(void)
 
 extern void bpatch_allocate_arrays(void)
 {
+    initialise_memory_list(&staticarray_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&staticarray_backpatch_table,
+        "static array backpatch table");
 }
 
 extern void bpatch_free_arrays(void)
 {   deallocate_memory_block(&zcode_backpatch_table);
-    deallocate_memory_block(&staticarray_backpatch_table);
+    deallocate_memory_list(&staticarray_backpatch_table_memlist);
     deallocate_memory_block(&zmachine_backpatch_table);
 }
 

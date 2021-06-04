@@ -215,17 +215,12 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
             else {
                 /* We can't use backpatch_zmachine() because that only applies to RAM. Instead we add an entry to staticarray_backpatch_table.
                    A backpatch entry is five bytes: *_MV followed by the array offset (in static array area). */
-                write_byte_to_memory_block(&staticarray_backpatch_table,
-                    staticarray_backpatch_size++,
-                    VAL.marker);
-                write_byte_to_memory_block(&staticarray_backpatch_table,
-                    staticarray_backpatch_size++, ((addr >> 24) & 0xFF));
-                write_byte_to_memory_block(&staticarray_backpatch_table,
-                    staticarray_backpatch_size++, ((addr >> 16) & 0xFF));
-                write_byte_to_memory_block(&staticarray_backpatch_table,
-                    staticarray_backpatch_size++, ((addr >> 8) & 0xFF));
-                write_byte_to_memory_block(&staticarray_backpatch_table,
-                    staticarray_backpatch_size++, (addr & 0xFF));
+                ensure_memory_list_available(&staticarray_backpatch_table_memlist, staticarray_backpatch_size+5);
+                staticarray_backpatch_table[staticarray_backpatch_size++] = VAL.marker;
+                staticarray_backpatch_table[staticarray_backpatch_size++] = ((addr >> 24) & 0xFF);
+                staticarray_backpatch_table[staticarray_backpatch_size++] = ((addr >> 16) & 0xFF);
+                staticarray_backpatch_table[staticarray_backpatch_size++] = ((addr >> 8) & 0xFF);
+                staticarray_backpatch_table[staticarray_backpatch_size++] = (addr & 0xFF);
             }
         }
     }

@@ -1178,13 +1178,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         int32 val, ix, jx;
         for (ix=0, jx=0; ix<staticarray_backpatch_size; ix += 5) {
             backpatch_error_flag = FALSE;
-            backpatch_marker = read_byte_from_memory_block(&staticarray_backpatch_table, ix);
+            backpatch_marker = staticarray_backpatch_table[ix];
             /* datalen is always 4 for array backpatching */
             offset = 
-                (read_byte_from_memory_block(&staticarray_backpatch_table, ix+1) << 24)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+2) << 16)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+3) << 8)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+4));
+                (staticarray_backpatch_table[ix+1] << 24)
+                | (staticarray_backpatch_table[ix+2] << 16)
+                | (staticarray_backpatch_table[ix+3] << 8)
+                | (staticarray_backpatch_table[ix+4]);
             while (jx<offset) {
                 sf_put(static_array_area[jx]);
                 size++;
