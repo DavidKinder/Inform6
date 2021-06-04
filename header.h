@@ -2152,7 +2152,7 @@ extern void finish_array(int32 i, int is_static);
 /*   Extern definitions for "asm"                                            */
 /* ------------------------------------------------------------------------- */
 
-extern unsigned char *zcode_area;
+extern uchar *zcode_area;
 extern memory_list zcode_area_memlist;
 extern int32 zmachine_pc;
 
@@ -2823,7 +2823,7 @@ typedef struct huffentity_struct {
   int type;
   union {
     int branch[2];
-    unsigned char ch;
+    uchar ch;
     int val;
   } u;
   int depth;
