@@ -607,7 +607,7 @@ static void output_file_z(void)
     }
     else
       for (i=0; i<static_strings_extent; i++) {
-        sf_put(read_byte_from_memory_block(&static_strings_area,i));
+        sf_put(static_strings_area[i]);
         size++;
       }
 
@@ -1076,7 +1076,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           if (temporary_files_switch)
             ch = fgetc(Temp1_fp);
           else
-            ch = read_byte_from_memory_block(&static_strings_area, ix);
+            ch = static_strings_area[ix];
           ix++;
           if (ix > static_strings_extent || ch < 0)
             compiler_error("Read too much not-yet-compressed text.");

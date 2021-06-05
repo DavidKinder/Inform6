@@ -846,14 +846,16 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
 at strings offset %04x (+%04x)\n",
         m_strs_offset, link_offset, strings_offset,
         static_strings_extent);
+    if (!temporary_files_switch) {
+        ensure_memory_list_available(&static_strings_area_memlist, link_offset-m_strs_offset);
+    }
     for (k=m_strs_offset;k<link_offset;k++)
     {   if (temporary_files_switch)
         {   fputc(p[k], Temp1_fp);
             static_strings_extent++;
         }
         else
-            write_byte_to_memory_block(&static_strings_area,
-                    static_strings_extent++, p[k]);
+            static_strings_area[static_strings_extent++] = p[k];
     }
 
     /* (13) Append the class object-numbers table: note that modules

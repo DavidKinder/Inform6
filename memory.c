@@ -190,7 +190,6 @@ extern void my_free(void *pointer, char *whatitwas)
 static char chunk_name_buffer[80];
 static char *chunk_name(memory_block *MB, int no)
 {   char *p = "(unknown)";
-    if (MB == &static_strings_area) p = "static strings area";
     if (MB == &link_data_area)      p = "link data area";
     if (no < 0)
         sprintf(chunk_name_buffer, "%s chunk array", p);

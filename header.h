@@ -2797,7 +2797,8 @@ extern int   dict_entries;
 extern uchar *dictionary, *dictionary_top;
 extern int   *final_dict_order;
 
-extern memory_block static_strings_area;
+extern uchar *static_strings_area;
+extern memory_list static_strings_area_memlist;
 extern int32 static_strings_extent;
 
 /* And now, a great many declarations for dealing with Glulx string
