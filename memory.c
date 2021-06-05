@@ -192,7 +192,6 @@ static char *chunk_name(memory_block *MB, int no)
 {   char *p = "(unknown)";
     if (MB == &static_strings_area) p = "static strings area";
     if (MB == &link_data_area)      p = "link data area";
-    if (MB == &zcode_backpatch_table) p = "code backpatch table";
     if (no < 0)
         sprintf(chunk_name_buffer, "%s chunk array", p);
     else

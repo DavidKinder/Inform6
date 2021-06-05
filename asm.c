@@ -1953,13 +1953,10 @@ static void transfer_routine_z(void)
                         break;
                     }
 
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++,
-                        zcode_markers[i] + 32*(new_pc/65536));
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++, (new_pc/256)%256);
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++, new_pc%256);
+                    ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+3);
+                    zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i] + 32*(new_pc/65536);
+                    zcode_backpatch_table[zcode_backpatch_size++] = (new_pc/256)%256;
+                    zcode_backpatch_table[zcode_backpatch_size++] = new_pc%256;
                     break;
             }
             transfer_byte(zcode_holding_area + i); new_pc++;
@@ -2167,20 +2164,13 @@ static void transfer_routine_g(void)
              Then a byte indicating the data size to be patched (1, 2, 4).
              Then the four-byte address (new_pc).
           */
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++,
-            zcode_markers[i]);
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++,
-            4);
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 24) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 16) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 8) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, (new_pc & 0xFF));
+          ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+6);
+          zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i];
+          zcode_backpatch_table[zcode_backpatch_size++] = 4;
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 24) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 16) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 8) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
           break;
         }
         transfer_byte(zcode_holding_area + i); new_pc++;

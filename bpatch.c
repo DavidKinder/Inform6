@@ -13,7 +13,8 @@ uchar *staticarray_backpatch_table; /* Allocated to staticarray_backpatch_size *
 memory_list staticarray_backpatch_table_memlist;
 uchar *zmachine_backpatch_table; /* Allocated to zmachine_backpatch_size */
 memory_list zmachine_backpatch_table_memlist;
-memory_block zcode_backpatch_table;
+uchar *zcode_backpatch_table; /* Allocated to zcode_backpatch_size */
+memory_list zcode_backpatch_table_memlist;
 int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 
@@ -496,7 +497,7 @@ extern void backpatch_zmachine_image_g(void)
 /* ------------------------------------------------------------------------- */
 
 extern void init_bpatch_vars(void)
-{   initialise_memory_block(&zcode_backpatch_table);
+{   zcode_backpatch_table = NULL;
     staticarray_backpatch_table = NULL;
     zmachine_backpatch_table = NULL;
 }
@@ -509,6 +510,9 @@ extern void bpatch_begin_pass(void)
 
 extern void bpatch_allocate_arrays(void)
 {
+    initialise_memory_list(&zcode_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&zcode_backpatch_table,
+        "code backpatch table");
     initialise_memory_list(&staticarray_backpatch_table_memlist,
         sizeof(uchar), 128, (void**)&staticarray_backpatch_table,
         "static array backpatch table");
@@ -518,7 +522,7 @@ extern void bpatch_allocate_arrays(void)
 }
 
 extern void bpatch_free_arrays(void)
-{   deallocate_memory_block(&zcode_backpatch_table);
+{   deallocate_memory_list(&zcode_backpatch_table_memlist);
     deallocate_memory_list(&staticarray_backpatch_table_memlist);
     deallocate_memory_list(&zmachine_backpatch_table_memlist);
 }

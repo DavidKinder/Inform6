@@ -482,11 +482,11 @@ static void output_file_z(void)
     for (i=0; i<zcode_backpatch_size; i=i+3)
     {   int long_flag = TRUE;
         offset
-            = 256*read_byte_from_memory_block(&zcode_backpatch_table, i+1)
-              + read_byte_from_memory_block(&zcode_backpatch_table, i+2);
+            = 256*zcode_backpatch_table[i+1]
+              + zcode_backpatch_table[i+2];
         backpatch_error_flag = FALSE;
         backpatch_marker
-            = read_byte_from_memory_block(&zcode_backpatch_table, i);
+            = zcode_backpatch_table[i];
         if (backpatch_marker >= 0x80) long_flag = FALSE;
         backpatch_marker &= 0x7f;
         offset = offset + (backpatch_marker/32)*0x10000;
@@ -635,7 +635,7 @@ static void output_file_z(void)
 
     if (module_switch)
     {   for (i=0; i<zcode_backpatch_size; i++)
-            sf_put(read_byte_from_memory_block(&zcode_backpatch_table, i));
+            sf_put(zcode_backpatch_table[i]);
         for (i=0; i<zmachine_backpatch_size; i++)
             sf_put(zmachine_backpatch_table[i]);
     }
@@ -876,15 +876,15 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         int data_len;
         int32 v;
         offset = 
-          (read_byte_from_memory_block(&zcode_backpatch_table, i+2) << 24)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+3) << 16)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+4) << 8)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+5));
+          (zcode_backpatch_table[i+2] << 24)
+          | (zcode_backpatch_table[i+3] << 16)
+          | (zcode_backpatch_table[i+4] << 8)
+          | (zcode_backpatch_table[i+5]);
         backpatch_error_flag = FALSE;
         backpatch_marker =
-          read_byte_from_memory_block(&zcode_backpatch_table, i);
+          zcode_backpatch_table[i];
         data_len =
-          read_byte_from_memory_block(&zcode_backpatch_table, i+1);
+          zcode_backpatch_table[i+1];
 
         /* All code up until the next backpatch marker gets flushed out
            as-is. (Unless we're in a stripped-out function.) */

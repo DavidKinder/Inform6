@@ -2277,7 +2277,8 @@ extern uchar *staticarray_backpatch_table;
 extern memory_list staticarray_backpatch_table_memlist;
 extern uchar *zmachine_backpatch_table;
 extern memory_list zmachine_backpatch_table_memlist;
-extern memory_block zcode_backpatch_table;
+extern uchar *zcode_backpatch_table;
+extern memory_list zcode_backpatch_table_memlist;
 extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;

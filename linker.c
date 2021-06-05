@@ -740,13 +740,11 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
                 backpatch_module_image(p, marker_value, ZCODE_ZA, offset);
                 break;
             default:
+                ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+3);
                 backpatch_module_image(p, marker_value, ZCODE_ZA, offset);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, backpatch_marker);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, (offset + zmachine_pc)/256);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, (offset + zmachine_pc)%256);
+                zcode_backpatch_table[zcode_backpatch_size++] = backpatch_marker;
+                zcode_backpatch_table[zcode_backpatch_size++] = (offset + zmachine_pc)/256;
+                zcode_backpatch_table[zcode_backpatch_size++] = (offset + zmachine_pc)%256;
                 break;
         }
     }
