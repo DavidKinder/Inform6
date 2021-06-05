@@ -8,7 +8,8 @@
 
 #include "header.h"
 
-memory_block link_data_area;
+uchar *link_data_area;
+static memory_list link_data_area_memlist;
 uchar *link_data_holding_area, *link_data_top;
                                           /*  Start, current top, size of    */
 int32 link_data_size;                     /*  link data table being written  */
@@ -992,12 +993,14 @@ static void write_link_byte(int x)
 extern void flush_link_data(void)
 {   int32 i, j;
     j = subtract_pointers(link_data_top, link_data_holding_area);
-    if (temporary_files_switch)
+    if (temporary_files_switch) {
         for (i=0;i<j;i++) fputc(link_data_holding_area[i], Temp3_fp);
-    else
+    }
+    else {
+        ensure_memory_list_available(&link_data_area_memlist, link_data_size);
         for (i=0;i<j;i++)
-            write_byte_to_memory_block(&link_data_area, link_data_size-j+i,
-            link_data_holding_area[i]);
+            link_data_area[link_data_size-j+i] = link_data_holding_area[i];
+    }
     link_data_top=link_data_holding_area;
 }
 
@@ -1118,7 +1121,7 @@ void import_symbol(int32 symbol_number)
 
 extern void init_linker_vars(void)
 {   link_data_size = 0;
-    initialise_memory_block(&link_data_area);
+    link_data_area = NULL;
 }
 
 extern void linker_begin_pass(void)
@@ -1138,11 +1141,14 @@ extern void linker_allocate_arrays(void)
     else
         link_data_holding_area
             = my_malloc(MAX_LINK_DATA_SIZE, "link data holding area");
+    initialise_memory_list(&link_data_area_memlist,
+        sizeof(uchar), 128, (void**)&link_data_area,
+        "link data area");
 }
 
 extern void linker_free_arrays(void)
 {   my_free(&link_data_holding_area, "link data holding area");
-    deallocate_memory_block(&link_data_area);
+    deallocate_memory_list(&link_data_area_memlist);
 }
 
 /* ========================================================================= */

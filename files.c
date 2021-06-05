@@ -631,7 +631,7 @@ static void output_file_z(void)
     else
         if (module_switch)
             for (i=0; i<link_data_size; i++)
-                sf_put(read_byte_from_memory_block(&link_data_area,i));
+                sf_put(link_data_area[i]);
 
     if (module_switch)
     {   for (i=0; i<zcode_backpatch_size; i++)
