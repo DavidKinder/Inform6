@@ -899,14 +899,6 @@ typedef struct ErrorPosition_s
     int32 orig_char;
 } ErrorPosition;
 
-/*  A memory block is a sparse array of chunks. Chunks are allocated
-    as needed on write. */
-typedef struct memory_block_s
-{
-    size_t count;
-    uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
-} memory_block;
-
 /*  A memory list is a sequential array of items. The list grows as
     necessary, but it is *not* sparse.
     This can optionally maintain an external pointer (of any type) which 
@@ -2641,12 +2633,6 @@ extern void set_memory_sizes(int size_flag);
 extern void adjust_memory_sizes(void);
 extern void memory_command(char *command);
 extern void print_memory_usage(void);
-
-extern void initialise_memory_block(memory_block *MB);
-extern void deallocate_memory_block(memory_block *MB);
-extern int  read_byte_from_memory_block(memory_block *MB, size_t index);
-extern void write_byte_to_memory_block(memory_block *MB,
-    size_t index, int value);
 
 extern void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor);
 extern void deallocate_memory_list(memory_list *ML);
