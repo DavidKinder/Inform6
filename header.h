@@ -2275,8 +2275,9 @@ extern void parse_assembly(void);
 
 extern uchar *staticarray_backpatch_table;
 extern memory_list staticarray_backpatch_table_memlist;
-extern memory_block zcode_backpatch_table,
-    zmachine_backpatch_table;
+extern uchar *zmachine_backpatch_table;
+extern memory_list zmachine_backpatch_table_memlist;
+extern memory_block zcode_backpatch_table;
 extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;

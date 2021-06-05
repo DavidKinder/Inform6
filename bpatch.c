@@ -11,8 +11,9 @@
 
 uchar *staticarray_backpatch_table; /* Allocated to staticarray_backpatch_size */
 memory_list staticarray_backpatch_table_memlist;
-memory_block zcode_backpatch_table,
-    zmachine_backpatch_table;
+uchar *zmachine_backpatch_table; /* Allocated to zmachine_backpatch_size */
+memory_list zmachine_backpatch_table_memlist;
+memory_block zcode_backpatch_table;
 int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 
@@ -354,14 +355,11 @@ static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
 
     /* printf("MV %d ZA %d Off %04x\n", mv, zmachine_area, offset); */
 
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, mv);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, zmachine_area);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, offset/256);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, offset%256);
+    ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+4);
+    zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = zmachine_area;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = offset/256;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = offset%256;
 }
 
 static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
@@ -381,18 +379,13 @@ static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
 
 /*    printf("+MV %d ZA %d Off %06x\n", mv, zmachine_area, offset);  */
 
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, mv);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, zmachine_area);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 24) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 16) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 8) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset) & 0xFF);
+    ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+6);
+    zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = zmachine_area;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 24) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 16) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 8) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset) & 0xFF;
 }
 
 extern void backpatch_zmachine(int mv, int zmachine_area, int32 offset)
@@ -409,12 +402,12 @@ extern void backpatch_zmachine_image_z(void)
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
     {   backpatch_marker
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm);
+            = zmachine_backpatch_table[bm];
         zmachine_area
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm+1);
+            = zmachine_backpatch_table[bm+1];
         offset
-          = 256*read_byte_from_memory_block(&zmachine_backpatch_table,bm+2)
-            + read_byte_from_memory_block(&zmachine_backpatch_table, bm+3);
+          = 256*zmachine_backpatch_table[bm+2]
+            + zmachine_backpatch_table[bm+3];
         bm += 4;
 
         switch(zmachine_area)
@@ -451,16 +444,16 @@ extern void backpatch_zmachine_image_g(void)
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
     {   backpatch_marker
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm);
+            = zmachine_backpatch_table[bm];
         zmachine_area
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm+1);
-        offset = read_byte_from_memory_block(&zmachine_backpatch_table, bm+2);
+            = zmachine_backpatch_table[bm+1];
+        offset = zmachine_backpatch_table[bm+2];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+3);
+          zmachine_backpatch_table[bm+3];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+4);
+          zmachine_backpatch_table[bm+4];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+5);
+          zmachine_backpatch_table[bm+5];
             bm += 6;
 
         /* printf("-MV %d ZA %d Off %06x\n", backpatch_marker, zmachine_area, offset);  */
@@ -504,8 +497,8 @@ extern void backpatch_zmachine_image_g(void)
 
 extern void init_bpatch_vars(void)
 {   initialise_memory_block(&zcode_backpatch_table);
-    initialise_memory_block(&zmachine_backpatch_table);
     staticarray_backpatch_table = NULL;
+    zmachine_backpatch_table = NULL;
 }
 
 extern void bpatch_begin_pass(void)
@@ -519,12 +512,15 @@ extern void bpatch_allocate_arrays(void)
     initialise_memory_list(&staticarray_backpatch_table_memlist,
         sizeof(uchar), 128, (void**)&staticarray_backpatch_table,
         "static array backpatch table");
+    initialise_memory_list(&zmachine_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&zmachine_backpatch_table,
+        "machine backpatch table");
 }
 
 extern void bpatch_free_arrays(void)
 {   deallocate_memory_block(&zcode_backpatch_table);
     deallocate_memory_list(&staticarray_backpatch_table_memlist);
-    deallocate_memory_block(&zmachine_backpatch_table);
+    deallocate_memory_list(&zmachine_backpatch_table_memlist);
 }
 
 /* ========================================================================= */

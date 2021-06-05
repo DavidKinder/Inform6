@@ -637,7 +637,7 @@ static void output_file_z(void)
     {   for (i=0; i<zcode_backpatch_size; i++)
             sf_put(read_byte_from_memory_block(&zcode_backpatch_table, i));
         for (i=0; i<zmachine_backpatch_size; i++)
-            sf_put(read_byte_from_memory_block(&zmachine_backpatch_table, i));
+            sf_put(zmachine_backpatch_table[i]);
     }
 
     /*  (6)  Output null bytes to reach a multiple of 0.5K.                  */
