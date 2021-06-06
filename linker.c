@@ -950,9 +950,7 @@ at strings offset %04x (+%04x)\n",
     /* (17) Append the individual property values table */
 
     i = m_individuals_length;
-    if (individuals_length + i >= MAX_INDIV_PROP_TABLE_SIZE)
-        memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-            MAX_INDIV_PROP_TABLE_SIZE);
+    ensure_memory_list_available(&individuals_table_memlist, individuals_length + i);
 
     if (linker_trace_level >= 2)
       printf("Inserting individual prop tables area, %04x to %04x, at +%04x\n",

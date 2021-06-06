@@ -2647,6 +2647,7 @@ extern int no_attributes, no_properties;
 extern int no_individual_properties;
 extern int individuals_length;
 extern uchar *individuals_table;
+extern memory_list individuals_table_memlist;
 extern int no_classes, no_objects;
 extern objecttz *objectsz;
 extern memory_list objectsz_memlist;
