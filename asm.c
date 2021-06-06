@@ -74,8 +74,10 @@ static char opcode_syntax_string[128];  /*  Text buffer holding the correct
 
 static int routine_symbol;         /* The symbol index of the routine currently
                                       being compiled */
-static char *routine_name;         /* The name of the routine currently being
-                                      compiled                               */
+static memory_list current_routine_name; /* The name of the routine currently
+                                      being compiled. (This may be longer
+                                      than MAX_IDENTIFIER_LENGTH, e.g. for
+                                      an "obj::prop" property routine.)      */
 static int routine_locals;         /* The number of local variables used by
                                       the routine currently being compiled   */
 
@@ -1472,9 +1474,8 @@ extern int32 assemble_routine_header(int no_locals,
 
     routine_symbol = the_symbol;
     name_length = strlen(name) + 1;
-    routine_name =
-      my_malloc(name_length * sizeof(char), "temporary copy of routine name");
-    strncpy(routine_name, name, name_length);
+    ensure_memory_list_available(&current_routine_name, name_length);
+    strncpy(current_routine_name.data, name, name_length);
 
     /*  Update the routine counter                                           */
 
@@ -1705,6 +1706,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 
     if (debugfile_switch)
     {
+        char *routine_name = current_routine_name.data;
         debug_file_printf("<routine>");
         if (embedded_flag)
         {   debug_file_printf
@@ -1770,8 +1772,6 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         }
         debug_file_printf("</routine>");
     }
-
-    my_free(&routine_name, "temporary copy of routine name");
 
     /* Issue warnings about any local variables not used in the routine. */
 
@@ -3207,6 +3207,10 @@ extern void asm_allocate_arrays(void)
     initialise_memory_list(&zcode_area_memlist,
         sizeof(uchar), 8192, (void**)&zcode_area,
         "code area");
+
+    initialise_memory_list(&current_routine_name,
+        sizeof(char), 3*MAX_IDENTIFIER_LENGTH, NULL,
+        "temporary copy of routine name");
 }
 
 extern void asm_free_arrays(void)
@@ -3226,6 +3230,7 @@ extern void asm_free_arrays(void)
 
     deallocate_memory_list(&named_routine_symbols_memlist);
     deallocate_memory_list(&zcode_area_memlist);
+    deallocate_memory_list(&current_routine_name);
 }
 
 /* ========================================================================= */
