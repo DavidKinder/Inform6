@@ -265,7 +265,6 @@ int32 MAX_TRANSCRIPT_SIZE;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
 int MAX_SOURCE_FILES;
-int32 MAX_INDIV_PROP_TABLE_SIZE;
 int32 MAX_OBJ_PROP_TABLE_SIZE;
 int MAX_OBJ_PROP_COUNT;
 int MAX_LOCAL_VARIABLES;
@@ -323,7 +322,6 @@ static void list_memory_sizes(void)
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
-    printf("|  %25s = %-7d |\n","MAX_INDIV_PROP_TABLE_SIZE", MAX_INDIV_PROP_TABLE_SIZE);
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     printf("|  %25s = %-7d |\n","MAX_LABELS",MAX_LABELS);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
@@ -405,7 +403,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_OBJ_PROP_COUNT = 128;
         MAX_OBJ_PROP_TABLE_SIZE = 4096;
 
-        MAX_INDIV_PROP_TABLE_SIZE = 15000;
         MAX_ARRAYS = 128;
 
         MAX_GLOBAL_VARIABLES_z = 240;
@@ -444,7 +441,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 2048;
 
-        MAX_INDIV_PROP_TABLE_SIZE = 10000;
         MAX_ARRAYS = 128;
 
         MAX_GLOBAL_VARIABLES_z = 240;
@@ -483,7 +479,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_OBJ_PROP_COUNT = 64;
         MAX_OBJ_PROP_TABLE_SIZE = 1024;
 
-        MAX_INDIV_PROP_TABLE_SIZE = 5000;
         MAX_ARRAYS = 64;
 
         MAX_GLOBAL_VARIABLES_z = 240;
@@ -744,12 +739,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_SOURCE_FILES is the number of source files that can be read in the \n\
   compilation.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
-    {   printf(
-"  MAX_INDIV_PROP_TABLE_SIZE is the number of bytes allocated to hold the \n\
-  table of ..variable values.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -1064,7 +1053,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
                 MAX_SOURCE_FILES=j, flag=1;
             if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
-                MAX_INDIV_PROP_TABLE_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"INDIV_PROP_START")==0)
                 INDIV_PROP_START=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_TABLE_SIZE")==0)
