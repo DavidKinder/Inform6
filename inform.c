@@ -1139,9 +1139,8 @@ static void run_pass(void)
 
 int output_has_occurred;
 
-static void rennab(int32 time_taken)
+static void rennab(float time_taken)
 {   /*  rennab = reverse of banner  */
-
     int t = no_warnings + no_suppressed_warnings;
 
     if (memout_switch) print_memory_usage();
@@ -1168,7 +1167,16 @@ static void rennab(int32 time_taken)
     if (no_compiler_errors > 0) print_sorry_message();
 
     if (statistics_switch)
-        printf("Completed in %ld seconds\n", (long int) time_taken);
+    {
+        /* Print the duration to a sensible number of decimal places.
+           (We aim for three significant figures.) */
+        if (time_taken >= 10.0)
+            printf("Completed in %.1f seconds\n", time_taken);
+        else if (time_taken >= 1.0)
+            printf("Completed in %.2f seconds\n", time_taken);
+        else
+            printf("Completed in %.3f seconds\n", time_taken);
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1178,7 +1186,13 @@ static void rennab(int32 time_taken)
 static int execute_icl_header(char *file1);
 
 static int compile(int number_of_files_specified, char *file1, char *file2)
-{   int32 time_start;
+{
+#ifdef NO_GETTIMEOFDAY_AVAILABLE
+    int time_start, time_end;
+#else
+    struct timeval time_start, time_end;
+#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    float duration;
 
     if (execute_icl_header(file1))
       return 1;
@@ -1208,7 +1222,13 @@ compiling modules: disabling -S switch\n");
         runtime_error_checking_switch = FALSE;
     }
 
-    time_start=time(0); no_compilations++;
+#ifdef NO_GETTIMEOFDAY_AVAILABLE
+    time_start = time(0);
+#else
+    gettimeofday(&time_start, NULL);
+#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    
+    no_compilations++;
 
     strcpy(Source_Name, file1); convert_filename_flag = TRUE;
     strcpy(Code_Name, file1);
@@ -1242,7 +1262,15 @@ compiling modules: disabling -S switch\n");
 
     free_arrays();
 
-    rennab((int32) (time(0)-time_start));
+#ifdef NO_GETTIMEOFDAY_AVAILABLE
+    time_end = time(0); 
+    duration = (float)(time_end - time_start);
+#else
+    gettimeofday(&time_end, NULL);
+    duration = (time_end.tv_sec - time_start.tv_sec) + (time_end.tv_usec - time_start.tv_usec) / 1000000.0;
+#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    
+    rennab(duration);
 
     if (optimise_switch) optimise_abbreviations();
 

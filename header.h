@@ -83,6 +83,7 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
+#include <sys/time.h>
 #include <time.h>
 #include <limits.h>
 #include <math.h>
