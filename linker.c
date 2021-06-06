@@ -8,7 +8,8 @@
 
 #include "header.h"
 
-memory_block link_data_area;
+uchar *link_data_area;
+static memory_list link_data_area_memlist;
 uchar *link_data_holding_area, *link_data_top;
                                           /*  Start, current top, size of    */
 int32 link_data_size;                     /*  link data table being written  */
@@ -740,13 +741,11 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
                 backpatch_module_image(p, marker_value, ZCODE_ZA, offset);
                 break;
             default:
+                ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+3);
                 backpatch_module_image(p, marker_value, ZCODE_ZA, offset);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, backpatch_marker);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, (offset + zmachine_pc)/256);
-                write_byte_to_memory_block(&zcode_backpatch_table,
-                    zcode_backpatch_size++, (offset + zmachine_pc)%256);
+                zcode_backpatch_table[zcode_backpatch_size++] = backpatch_marker;
+                zcode_backpatch_table[zcode_backpatch_size++] = (offset + zmachine_pc)/256;
+                zcode_backpatch_table[zcode_backpatch_size++] = (offset + zmachine_pc)%256;
                 break;
         }
     }
@@ -828,13 +827,17 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
       printf("Inserting code area, %04x to %04x, at code offset %04x (+%04x)\n",
         m_code_offset, m_strs_offset, code_offset, zmachine_pc);
 
+    ensure_memory_list_available(&zcode_area_memlist, zmachine_pc + (m_strs_offset - m_code_offset));
+    
     for (k=m_code_offset;k<m_strs_offset;k++)
     {   if (temporary_files_switch)
         {   fputc(p[k],Temp2_fp);
             zmachine_pc++;
         }
         else
-            write_byte_to_memory_block(&zcode_area, zmachine_pc++, p[k]);
+        {
+            zcode_area[zmachine_pc++] = p[k];
+        }
     }
 
     /* (12) Glue in the static strings area */
@@ -844,14 +847,16 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
 at strings offset %04x (+%04x)\n",
         m_strs_offset, link_offset, strings_offset,
         static_strings_extent);
+    if (!temporary_files_switch) {
+        ensure_memory_list_available(&static_strings_area_memlist, link_offset-m_strs_offset);
+    }
     for (k=m_strs_offset;k<link_offset;k++)
     {   if (temporary_files_switch)
         {   fputc(p[k], Temp1_fp);
             static_strings_extent++;
         }
         else
-            write_byte_to_memory_block(&static_strings_area,
-                    static_strings_extent++, p[k]);
+            static_strings_area[static_strings_extent++] = p[k];
     }
 
     /* (13) Append the class object-numbers table: note that modules
@@ -988,12 +993,14 @@ static void write_link_byte(int x)
 extern void flush_link_data(void)
 {   int32 i, j;
     j = subtract_pointers(link_data_top, link_data_holding_area);
-    if (temporary_files_switch)
+    if (temporary_files_switch) {
         for (i=0;i<j;i++) fputc(link_data_holding_area[i], Temp3_fp);
-    else
+    }
+    else {
+        ensure_memory_list_available(&link_data_area_memlist, link_data_size);
         for (i=0;i<j;i++)
-            write_byte_to_memory_block(&link_data_area, link_data_size-j+i,
-            link_data_holding_area[i]);
+            link_data_area[link_data_size-j+i] = link_data_holding_area[i];
+    }
     link_data_top=link_data_holding_area;
 }
 
@@ -1114,7 +1121,7 @@ void import_symbol(int32 symbol_number)
 
 extern void init_linker_vars(void)
 {   link_data_size = 0;
-    initialise_memory_block(&link_data_area);
+    link_data_area = NULL;
 }
 
 extern void linker_begin_pass(void)
@@ -1134,11 +1141,14 @@ extern void linker_allocate_arrays(void)
     else
         link_data_holding_area
             = my_malloc(MAX_LINK_DATA_SIZE, "link data holding area");
+    initialise_memory_list(&link_data_area_memlist,
+        sizeof(uchar), 128, (void**)&link_data_area,
+        "link data area");
 }
 
 extern void linker_free_arrays(void)
 {   my_free(&link_data_holding_area, "link data holding area");
-    deallocate_memory_block(&link_data_area);
+    deallocate_memory_list(&link_data_area_memlist);
 }
 
 /* ========================================================================= */

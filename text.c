@@ -13,8 +13,10 @@ uchar *low_strings, *low_strings_top;  /* Start and next free byte in the low
 
 int32 static_strings_extent;           /* Number of bytes of static strings
                                           made so far */
-memory_block static_strings_area;      /* Used if (!temporary_files_switch) to
-                                          hold the static strings area so far */
+uchar *static_strings_area;            /* Used if (!temporary_files_switch) to
+                                          hold the static strings area so far
+                                          Allocated to static_strings_extent */
+memory_list static_strings_area_memlist;
 
 static uchar *strings_holding_area;    /* Area holding translated strings
                                           until they are moved into either
@@ -264,15 +266,17 @@ extern int32 compile_string(char *b, int strctx)
 
     j = static_strings_extent;
 
-    if (temporary_files_switch)
+    if (temporary_files_switch) {
         for (c=strings_holding_area; c<strings_holding_area+i;
              c++, static_strings_extent++)
             fputc(*c,Temp1_fp);
-    else
+    }
+    else {
+        ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+i);
         for (c=strings_holding_area; c<strings_holding_area+i;
              c++, static_strings_extent++)
-            write_byte_to_memory_block(&static_strings_area,
-                static_strings_extent, *c);
+            static_strings_area[static_strings_extent] = *c;
+    }
 
     if (!glulx_mode) {
         return(j/scale_factor);
@@ -916,7 +920,7 @@ void compress_game_text()
         if (temporary_files_switch)
           ch = fgetc(Temp1_fp);
         else
-          ch = read_byte_from_memory_block(&static_strings_area, ix);
+          ch = static_strings_area[ix];
         ix++;
         if (ix > static_strings_extent || ch < 0)
           compiler_error("Read too much not-yet-compressed text.");
@@ -1059,7 +1063,7 @@ void compress_game_text()
       if (temporary_files_switch)
         ch = fgetc(Temp1_fp);
       else
-        ch = read_byte_from_memory_block(&static_strings_area, ix);
+        ch = static_strings_area[ix];
       ix++;
       if (ix > static_strings_extent || ch < 0)
         compiler_error("Read too much not-yet-compressed text.");
@@ -2408,7 +2412,7 @@ extern void init_text_vars(void)
     dict_sort_codes = NULL;
     dict_entries=0;
 
-    initialise_memory_block(&static_strings_area);
+    static_strings_area = NULL;
 }
 
 extern void text_begin_pass(void)
@@ -2429,6 +2433,10 @@ extern void text_begin_pass(void)
 
 extern void text_allocate_arrays(void)
 {
+    initialise_memory_list(&static_strings_area_memlist,
+        sizeof(uchar), 128, (void**)&static_strings_area,
+        "static strings area");
+    
     initialise_memory_list(&abbreviations_at_memlist,
         MAX_ABBREV_LENGTH, 64, (void**)&abbreviations_at,
         "abbreviation text");
@@ -2498,7 +2506,7 @@ extern void text_free_arrays(void)
     my_free(&huff_entities, "huffman entities");
     my_free(&unicode_usage_entries, "unicode entity entities");
 
-    deallocate_memory_block(&static_strings_area);
+    deallocate_memory_list(&static_strings_area_memlist);
 }
 
 extern void ao_free_arrays(void)

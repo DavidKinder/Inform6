@@ -25,7 +25,8 @@ extern void *my_malloc(size_t size, char *whatfor)
     if (memout_switch)
         printf("Allocating %ld bytes for %s\n",size,whatfor);
     if (size==0) return(NULL);
-    c=(char _huge *)halloc(size,1); malloced_bytes+=size;
+    c=(char _huge *)halloc(size,1);
+    malloced_bytes+=size;
     if (c==0) memory_out_error(size, 1, whatfor);
     return(c);
 }
@@ -37,12 +38,13 @@ extern void my_realloc(void *pointer, size_t oldsize, size_t size,
         my_free(pointer, whatfor);
         return;
     }
-    c=halloc(size,1); malloced_bytes+=size;
+    c=halloc(size,1);
+    malloced_bytes+=(size-oldsize);
     if (c==0) memory_out_error(size, 1, whatfor);
     if (memout_switch)
-        printf("Increasing allocation to %ld bytes for %s was (%08lx) \
-now (%08lx)\n",
-            (long int) size,whatfor,(long int) (*(int **)pointer), 
+        printf("Increasing allocation from %ld to %ld bytes for %s was (%08lx) now (%08lx)\n",
+            (long int) oldsize, (long int) size, whatfor,
+            (long int) (*(int **)pointer), 
             (long int) c);
     memcpy(c, *(int **)pointer, MIN(oldsize, size));
     hfree(*(int **)pointer);
@@ -55,7 +57,8 @@ extern void *my_calloc(size_t size, size_t howmany, char *whatfor)
         printf("Allocating %d bytes: array (%ld entries size %ld) for %s\n",
             size*howmany,howmany,size,whatfor);
     if ((size*howmany) == 0) return(NULL);
-    c=(void _huge *)halloc(howmany*size,1); malloced_bytes+=size*howmany;
+    c=(void _huge *)halloc(howmany*size,1);
+    malloced_bytes+=size*howmany;
     if (c==0) memory_out_error(size, howmany, whatfor);
     return(c);
 }
@@ -67,13 +70,14 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
         my_free(pointer, whatfor);
         return;
     }
-    c=(void _huge *)halloc(size*howmany,1); malloced_bytes+=size*howmany;
+    c=(void _huge *)halloc(size*howmany,1);
+    malloced_bytes+=size*(howmany-oldhowmany);
     if (c==0) memory_out_error(size, howmany, whatfor);
     if (memout_switch)
-        printf("Increasing allocation to %ld bytes: array (%ld entries size %ld) \
-for %s was (%08lx) now (%08lx)\n",
+        printf("Increasing allocation from %ld to %ld bytes: array (%ld entries size %ld) for %s was (%08lx) now (%08lx)\n",
+            ((long int)size) * ((long int)oldhowmany),
             ((long int)size) * ((long int)howmany),
-            (long int)howmany,(long int)size,whatfor,
+            (long int)howmany, (long int)size, whatfor,
             (long int) *(int **)pointer, (long int) c);
     memcpy(c, *(int **)pointer, MIN(size*oldhowmany, size*howmany));
     hfree(*(int **)pointer);
@@ -85,7 +89,8 @@ for %s was (%08lx) now (%08lx)\n",
 extern void *my_malloc(size_t size, char *whatfor)
 {   char *c;
     if (size==0) return(NULL);
-    c=malloc(size); malloced_bytes+=size;
+    c=malloc(size);
+    malloced_bytes+=size;
     if (c==0) memory_out_error(size, 1, whatfor);
     if (memout_switch)
         printf("Allocating %ld bytes for %s at (%08lx)\n",
@@ -100,12 +105,13 @@ extern void my_realloc(void *pointer, size_t oldsize, size_t size,
         my_free(pointer, whatfor);
         return;
     }
-    c=realloc(*(int **)pointer,  size); malloced_bytes+=size;
+    c=realloc(*(int **)pointer,  size);
+    malloced_bytes+=(size-oldsize);
     if (c==0) memory_out_error(size, 1, whatfor);
     if (memout_switch)
-        printf("Increasing allocation to %ld bytes for %s was (%08lx) \
-now (%08lx)\n",
-            (long int) size,whatfor,(long int) (*(int **)pointer), 
+        printf("Increasing allocation from %ld to %ld bytes for %s was (%08lx) now (%08lx)\n",
+            (long int) oldsize, (long int) size, whatfor,
+            (long int) (*(int **)pointer), 
             (long int) c);
     *(int **)pointer = c;
 }
@@ -113,7 +119,8 @@ now (%08lx)\n",
 extern void *my_calloc(size_t size, size_t howmany, char *whatfor)
 {   void *c;
     if (size*howmany==0) return(NULL);
-    c=calloc(howmany, size); malloced_bytes+=size*howmany;
+    c=calloc(howmany, size);
+    malloced_bytes+=size*howmany;
     if (c==0) memory_out_error(size, howmany, whatfor);
     if (memout_switch)
         printf("Allocating %ld bytes: array (%ld entries size %ld) \
@@ -132,13 +139,13 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
         return;
     }
     c=realloc(*(int **)pointer, size*howmany); 
-    malloced_bytes+=size*howmany;
+    malloced_bytes+=size*(howmany-oldhowmany);
     if (c==0) memory_out_error(size, howmany, whatfor);
     if (memout_switch)
-        printf("Increasing allocation to %ld bytes: array (%ld entries size %ld) \
-for %s was (%08lx) now (%08lx)\n",
+        printf("Increasing allocation from %ld to %ld bytes: array (%ld entries size %ld) for %s was (%08lx) now (%08lx)\n",
+            ((long int)size) * ((long int)oldhowmany),
             ((long int)size) * ((long int)howmany),
-            (long int)howmany,(long int)size,whatfor,
+            (long int)howmany, (long int)size, whatfor,
             (long int) *(int **)pointer, (long int) c);
     *(int **)pointer = c;
 }
@@ -158,126 +165,6 @@ extern void my_free(void *pointer, char *whatitwas)
 #endif
         *(int **)pointer = NULL;
     }
-}
-
-/* ------------------------------------------------------------------------- */
-/*   Extensible blocks of memory, providing a kind of RAM disc as an         */
-/*   alternative to the temporary files option.                              */
-/*                                                                           */
-/*   The allocation is slightly confusing. A block can store any number of   */
-/*   chunks, which are allocated as needed when data is written. (Data does  */
-/*   not have to be written in order, but you should not try to read a byte  */
-/*   before writing it.) The size of a chunk is defined by ALLOC_CHUNK_SIZE. */
-/*                                                                           */
-/*   (ALLOC_CHUNK_SIZE used to be a compile-time setting. But we are no      */
-/*   longer limited to 72 chunks, so ALLOC_CHUNK_SIZE is just a #define      */
-/*   now.)                                                                   */
-/*                                                                           */
-/*   TODO: This is not really an efficient data structure. (Except for       */
-/*   sparse arrays. But we use only memory_blocks from zero up, never        */
-/*   sparsely.) So we should replace all memory_blocks with memory_lists.    */
-/* ------------------------------------------------------------------------- */
-
-#define ALLOC_CHUNK_SIZE (2048)
-
-static char chunk_name_buffer[80];
-static char *chunk_name(memory_block *MB, int no)
-{   char *p = "(unknown)";
-    if (MB == &static_strings_area) p = "static strings area";
-    if (MB == &zcode_area)          p = "code area";
-    if (MB == &link_data_area)      p = "link data area";
-    if (MB == &zcode_backpatch_table) p = "code backpatch table";
-    if (MB == &staticarray_backpatch_table) p = "static array backpatch table";
-    if (MB == &zmachine_backpatch_table) p = "machine backpatch table";
-    if (no < 0)
-        sprintf(chunk_name_buffer, "%s chunk array", p);
-    else
-        sprintf(chunk_name_buffer, "%s chunk %d", p, no);
-    return(chunk_name_buffer);
-}
-
-extern void initialise_memory_block(memory_block *MB)
-{   size_t i;
-    /* Begin with space for 64 chunks of ALLOC_BLOCK_SIZE (130kb total).
-       We can increase that later if needed. In any case, we don't allocate
-       the chunks themselves yet. */
-    MB->count = 64;
-    MB->chunks = my_malloc(MB->count * sizeof(uchar *), chunk_name(MB, -1));
-    if (MB->chunks == NULL) return;
-    for (i=0; i<MB->count; i++) MB->chunks[i] = NULL;
-}
-
-extern void deallocate_memory_block(memory_block *MB)
-{   size_t i;
-    if (MB->chunks == NULL)
-        return;
-    for (i=0; i<MB->count; i++)
-    {
-        if (MB->chunks[i] != NULL)
-            my_free(&(MB->chunks[i]), chunk_name(MB, i));
-    }
-    my_free(&(MB->chunks), chunk_name(MB, -1));
-    MB->count = 0;
-}
-
-extern int read_byte_from_memory_block(memory_block *MB, size_t index)
-{   uchar *p = NULL;
-    size_t ch;
-    if (MB->chunks == NULL) {
-        compiler_error_named("memory: read from uninitialized block",
-            chunk_name(MB, -1));
-        return 0;
-    }
-    ch = index/ALLOC_CHUNK_SIZE;
-    if (ch >= 0 && ch < MB->count)
-        p = MB->chunks[ch];
-    if (p == NULL)
-    {
-        compiler_error_named("memory: read from unwritten byte in",
-            chunk_name(MB, ch));
-        return 0;
-    }
-    return p[index % ALLOC_CHUNK_SIZE];
-}
-
-extern void write_byte_to_memory_block(memory_block *MB, size_t index, int value)
-{   uchar *p = NULL;
-    size_t ch;
-    if (MB->chunks == NULL) {
-        compiler_error_named("memory: write to uninitialized block",
-            chunk_name(MB, -1));
-        return;
-    }
-    ch = index/ALLOC_CHUNK_SIZE;
-    if (ch < 0)
-    {
-        compiler_error_named("memory: negative index to", chunk_name(MB, -1));
-        return;
-    }
-    if (ch >= MB->count)
-    {
-        /* We need to extend the chunks array. Note that we don't allocate
-           new chunks yet; the extended array contains NULLs. */
-        size_t i;
-        /* Bump up the chunk count to the next higher multiple of 16. */
-        size_t newcount = ((MB->count | 15) + 1) + 16;
-        my_realloc(&(MB->chunks), MB->count * sizeof(uchar *), newcount * sizeof(uchar *), chunk_name(MB, -1));
-        if (MB->chunks == NULL) return;
-        for (i=MB->count; i<newcount; i++) MB->chunks[i] = NULL;
-        MB->count = newcount;
-    }
-
-    if (MB->chunks[ch] == NULL)
-    {
-        int i;
-        MB->chunks[ch] = my_malloc(ALLOC_CHUNK_SIZE, chunk_name(MB, ch));
-        if (MB->chunks[ch] == NULL) return;
-        p = MB->chunks[ch];
-        for (i=0; i<ALLOC_CHUNK_SIZE; i++) p[i] = 255;
-    }
-
-    p = MB->chunks[ch];
-    p[index % ALLOC_CHUNK_SIZE] = value;
 }
 
 /* ------------------------------------------------------------------------- */

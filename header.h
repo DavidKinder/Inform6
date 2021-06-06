@@ -899,14 +899,6 @@ typedef struct ErrorPosition_s
     int32 orig_char;
 } ErrorPosition;
 
-/*  A memory block is a sparse array of chunks. Chunks are allocated
-    as needed on write. */
-typedef struct memory_block_s
-{
-    size_t count;
-    uchar **chunks; /* array of count chunks, each ALLOC_CHUNK_SIZE bytes */
-} memory_block;
-
 /*  A memory list is a sequential array of items. The list grows as
     necessary, but it is *not* sparse.
     This can optionally maintain an external pointer (of any type) which 
@@ -2152,7 +2144,8 @@ extern void finish_array(int32 i, int is_static);
 /*   Extern definitions for "asm"                                            */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block zcode_area;
+extern uchar *zcode_area;
+extern memory_list zcode_area_memlist;
 extern int32 zmachine_pc;
 
 extern int32 no_instructions;
@@ -2272,8 +2265,12 @@ extern void parse_assembly(void);
 /*   Extern definitions for "bpatch"                                         */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block zcode_backpatch_table, staticarray_backpatch_table,
-    zmachine_backpatch_table;
+extern uchar *staticarray_backpatch_table;
+extern memory_list staticarray_backpatch_table_memlist;
+extern uchar *zmachine_backpatch_table;
+extern memory_list zmachine_backpatch_table_memlist;
+extern uchar *zcode_backpatch_table;
+extern memory_list zcode_backpatch_table_memlist;
 extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;
@@ -2574,7 +2571,7 @@ extern keyword_group directives, statements, segment_markers,
 /*   Extern definitions for "linker"                                         */
 /* ------------------------------------------------------------------------- */
 
-extern memory_block link_data_area;
+extern uchar *link_data_area;
 extern int32 link_data_size;
 extern char  current_module_filename[];
 
@@ -2636,12 +2633,6 @@ extern void set_memory_sizes(int size_flag);
 extern void adjust_memory_sizes(void);
 extern void memory_command(char *command);
 extern void print_memory_usage(void);
-
-extern void initialise_memory_block(memory_block *MB);
-extern void deallocate_memory_block(memory_block *MB);
-extern int  read_byte_from_memory_block(memory_block *MB, size_t index);
-extern void write_byte_to_memory_block(memory_block *MB,
-    size_t index, int value);
 
 extern void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor);
 extern void deallocate_memory_list(memory_list *ML);
@@ -2792,7 +2783,8 @@ extern int   dict_entries;
 extern uchar *dictionary, *dictionary_top;
 extern int   *final_dict_order;
 
-extern memory_block static_strings_area;
+extern uchar *static_strings_area;
+extern memory_list static_strings_area_memlist;
 extern int32 static_strings_extent;
 
 /* And now, a great many declarations for dealing with Glulx string
@@ -2822,7 +2814,7 @@ typedef struct huffentity_struct {
   int type;
   union {
     int branch[2];
-    unsigned char ch;
+    uchar ch;
     int val;
   } u;
   int depth;

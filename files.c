@@ -482,11 +482,11 @@ static void output_file_z(void)
     for (i=0; i<zcode_backpatch_size; i=i+3)
     {   int long_flag = TRUE;
         offset
-            = 256*read_byte_from_memory_block(&zcode_backpatch_table, i+1)
-              + read_byte_from_memory_block(&zcode_backpatch_table, i+2);
+            = 256*zcode_backpatch_table[i+1]
+              + zcode_backpatch_table[i+2];
         backpatch_error_flag = FALSE;
         backpatch_marker
-            = read_byte_from_memory_block(&zcode_backpatch_table, i);
+            = zcode_backpatch_table[i];
         if (backpatch_marker >= 0x80) long_flag = FALSE;
         backpatch_marker &= 0x7f;
         offset = offset + (backpatch_marker/32)*0x10000;
@@ -503,7 +503,7 @@ static void output_file_z(void)
                 while (j<offset && j<next_cons_check) {
                     /* get dummy value */
                     ((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -511,7 +511,7 @@ static void output_file_z(void)
                 while (j<offset && j<next_cons_check) {
                     size++;
                     sf_put((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -521,9 +521,9 @@ static void output_file_z(void)
 
         if (long_flag)
         {   int32 v = (temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j);
+                zcode_area[j];
             v = 256*v + ((temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j+1));
+                zcode_area[j+1]);
             j += 2;
             if (use_function) {
                 v = backpatch_value(v);
@@ -533,7 +533,7 @@ static void output_file_z(void)
         }
         else
         {   int32 v = (temporary_files_switch)?fgetc(fin):
-                read_byte_from_memory_block(&zcode_area, j);
+                zcode_area[j];
             j++;
             if (use_function) {
                 v = backpatch_value(v);
@@ -559,7 +559,7 @@ static void output_file_z(void)
             while (j<offset && j<next_cons_check) {
                 /* get dummy value */
                 ((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -567,7 +567,7 @@ static void output_file_z(void)
             while (j<offset && j<next_cons_check) {
                 size++;
                 sf_put((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -607,7 +607,7 @@ static void output_file_z(void)
     }
     else
       for (i=0; i<static_strings_extent; i++) {
-        sf_put(read_byte_from_memory_block(&static_strings_area,i));
+        sf_put(static_strings_area[i]);
         size++;
       }
 
@@ -631,13 +631,13 @@ static void output_file_z(void)
     else
         if (module_switch)
             for (i=0; i<link_data_size; i++)
-                sf_put(read_byte_from_memory_block(&link_data_area,i));
+                sf_put(link_data_area[i]);
 
     if (module_switch)
     {   for (i=0; i<zcode_backpatch_size; i++)
-            sf_put(read_byte_from_memory_block(&zcode_backpatch_table, i));
+            sf_put(zcode_backpatch_table[i]);
         for (i=0; i<zmachine_backpatch_size; i++)
-            sf_put(read_byte_from_memory_block(&zmachine_backpatch_table, i));
+            sf_put(zmachine_backpatch_table[i]);
     }
 
     /*  (6)  Output null bytes to reach a multiple of 0.5K.                  */
@@ -876,15 +876,15 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         int data_len;
         int32 v;
         offset = 
-          (read_byte_from_memory_block(&zcode_backpatch_table, i+2) << 24)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+3) << 16)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+4) << 8)
-          | (read_byte_from_memory_block(&zcode_backpatch_table, i+5));
+          (zcode_backpatch_table[i+2] << 24)
+          | (zcode_backpatch_table[i+3] << 16)
+          | (zcode_backpatch_table[i+4] << 8)
+          | (zcode_backpatch_table[i+5]);
         backpatch_error_flag = FALSE;
         backpatch_marker =
-          read_byte_from_memory_block(&zcode_backpatch_table, i);
+          zcode_backpatch_table[i];
         data_len =
-          read_byte_from_memory_block(&zcode_backpatch_table, i+1);
+          zcode_backpatch_table[i+1];
 
         /* All code up until the next backpatch marker gets flushed out
            as-is. (Unless we're in a stripped-out function.) */
@@ -893,7 +893,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
                 while (j<offset && j<next_cons_check) {
                     /* get dummy value */
                     ((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -901,7 +901,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
                 while (j<offset && j<next_cons_check) {
                     size++;
                     sf_put((temporary_files_switch)?fgetc(fin):
-                        read_byte_from_memory_block(&zcode_area, j));
+                        zcode_area[j]);
                     j++;
                 }
             }
@@ -915,13 +915,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 4:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+1));
+            zcode_area[j+1]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+2));
+            zcode_area[j+2]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+3));
+            zcode_area[j+3]);
           j += 4;
           if (!use_function)
               break;
@@ -935,9 +935,9 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 2:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j+1));
+            zcode_area[j+1]);
           j += 2;
           if (!use_function)
               break;
@@ -953,7 +953,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
         case 1:
           v = ((temporary_files_switch)?fgetc(fin):
-            read_byte_from_memory_block(&zcode_area, j));
+            zcode_area[j]);
           j += 1;
           if (!use_function)
               break;
@@ -989,7 +989,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             while (j<offset && j<next_cons_check) {
                 /* get dummy value */
                 ((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -997,7 +997,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             while (j<offset && j<next_cons_check) {
                 size++;
                 sf_put((temporary_files_switch)?fgetc(fin):
-                    read_byte_from_memory_block(&zcode_area, j));
+                    zcode_area[j]);
                 j++;
             }
         }
@@ -1076,7 +1076,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           if (temporary_files_switch)
             ch = fgetc(Temp1_fp);
           else
-            ch = read_byte_from_memory_block(&static_strings_area, ix);
+            ch = static_strings_area[ix];
           ix++;
           if (ix > static_strings_extent || ch < 0)
             compiler_error("Read too much not-yet-compressed text.");
@@ -1178,13 +1178,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         int32 val, ix, jx;
         for (ix=0, jx=0; ix<staticarray_backpatch_size; ix += 5) {
             backpatch_error_flag = FALSE;
-            backpatch_marker = read_byte_from_memory_block(&staticarray_backpatch_table, ix);
+            backpatch_marker = staticarray_backpatch_table[ix];
             /* datalen is always 4 for array backpatching */
             offset = 
-                (read_byte_from_memory_block(&staticarray_backpatch_table, ix+1) << 24)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+2) << 16)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+3) << 8)
-                | (read_byte_from_memory_block(&staticarray_backpatch_table, ix+4));
+                (staticarray_backpatch_table[ix+1] << 24)
+                | (staticarray_backpatch_table[ix+2] << 16)
+                | (staticarray_backpatch_table[ix+3] << 8)
+                | (staticarray_backpatch_table[ix+4]);
             while (jx<offset) {
                 sf_put(static_array_area[jx]);
                 size++;
