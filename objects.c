@@ -727,9 +727,10 @@ static void property_inheritance_g(void)
 /*   Construction of Z-machine-format property blocks.                       */
 /* ------------------------------------------------------------------------- */
 
-static int write_properties_between(uchar *p, int mark, int from, int to)
+static int write_properties_between(int mark, int from, int to)
 {   int j, k, prop_number, prop_length;
-    /* Note that p is properties_table. */
+    uchar *p = (uchar *) properties_table;
+
     for (prop_number=to; prop_number>=from; prop_number--)
     {   for (j=0; j<full_object.l; j++)
         {   if ((full_object.pp[j].num == prop_number)
@@ -791,14 +792,14 @@ static int write_property_block_z(char *shortname)
         mark += i+1;
     }
     if (current_defn_is_class)
-    {   mark = write_properties_between(p,mark,3,3);
+    {   mark = write_properties_between(mark,3,3);
         for (i=0;i<6;i++)
             p[mark++] = full_object.atts[i];
         ensure_memory_list_available(&class_info_memlist, no_classes+1);
         class_info[no_classes++].begins_at = mark;
     }
 
-    mark = write_properties_between(p, mark, 1, (version_number==3)?31:63);
+    mark = write_properties_between(mark, 1, (version_number==3)?31:63);
 
     i = mark - properties_table_size;
     properties_table_size = mark;
