@@ -307,6 +307,7 @@ uchar *properties_table;               /* Holds the table of property values
                                           (holding one block for each object
                                           and coming immediately after the
                                           object tree in Z-memory)           */
+static memory_list properties_table_memlist;
 int properties_table_size;             /* Number of bytes in this table      */
 
 /* ------------------------------------------------------------------------- */
@@ -735,10 +736,10 @@ static int write_properties_between(int mark, int from, int to)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
             {
-                uchar *p = properties_table;
+                uchar *p;
                 int prop_length = 2*full_object.pp[j].l;
-                if (mark+2+prop_length >= MAX_PROP_TABLE_SIZE)
-                    memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+                ensure_memory_list_available(&properties_table_memlist, mark+2+prop_length);
+                p = properties_table;
                 if (version_number == 3)
                     p[mark++] = prop_number + (prop_length - 1)*32;
                 else
@@ -783,8 +784,7 @@ static int write_property_block_z(char *shortname)
 
     if (shortname != NULL)
     {   uchar *tmp, *nameptr;
-        if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
-            memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+        ensure_memory_list_available(&properties_table_memlist, mark+1+510);
         nameptr = properties_table + mark+1;
         tmp = translate_text(nameptr,nameptr+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
@@ -863,8 +863,7 @@ static int32 write_property_block_g(void)
   }
 
   /* Write out the number of properties in this table. */
-  if (mark+4 >= MAX_PROP_TABLE_SIZE)
-      memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+  ensure_memory_list_available(&properties_table_memlist, mark+4);
   WriteInt32(properties_table+mark, totalprops);
   mark += 4;
 
@@ -881,8 +880,7 @@ static int32 write_property_block_g(void)
         jx<full_object_g.numprops && full_object_g.props[jx].num == propnum;
         jx++) {
       int32 datastart = full_object_g.props[jx].datastart;
-      if (datamark+4*full_object_g.props[jx].datalen >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+      ensure_memory_list_available(&properties_table_memlist, datamark+4*full_object_g.props[jx].datalen);
       for (kx=0; kx<full_object_g.props[jx].datalen; kx++) {
         int32 val = full_object_g.propdata[datastart+kx].value;
         WriteInt32(properties_table+datamark, val);
@@ -893,8 +891,7 @@ static int32 write_property_block_g(void)
         datamark += 4;
       }
     }
-    if (mark+10 >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+    ensure_memory_list_available(&properties_table_memlist, mark+10);
     WriteInt16(properties_table+mark, propnum);
     mark += 2;
     WriteInt16(properties_table+mark, totallen);
@@ -947,8 +944,6 @@ static void manufacture_object_z(void)
     j = write_property_block_z(shortname_buffer);
 
     objectsz[no_objects].propsize = j;
-    if (properties_table_size >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
 
     if (current_defn_is_class)
         for (i=0;i<6;i++) objectsz[no_objects].atts[i] = 0;
@@ -996,8 +991,6 @@ static void manufacture_object_g(void)
     objectsg[no_objects].propaddr = full_object_g.finalpropaddr;
 
     objectsg[no_objects].propsize = j;
-    if (properties_table_size >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
 
     if (current_defn_is_class)
         for (i=0;i<NUM_ATTR_BYTES;i++) 
@@ -2213,7 +2206,9 @@ extern void objects_allocate_arrays(void)
         sizeof(int),       64, (void**)&classes_to_inherit_from,
         "inherited classes list");
 
-    properties_table      = my_malloc(MAX_PROP_TABLE_SIZE,"properties table");
+    initialise_memory_list(&properties_table_memlist,
+        sizeof(uchar), 10000, (void**)&properties_table,
+        "properties table");
     initialise_memory_list(&individuals_table_memlist,
         sizeof(uchar), 10000, (void**)&individuals_table,
         "individual properties table");
@@ -2254,7 +2249,7 @@ extern void objects_free_arrays(void)
     deallocate_memory_list(&class_info_memlist);
     deallocate_memory_list(&classes_to_inherit_from_memlist);
 
-    my_free(&properties_table, "properties table");
+    deallocate_memory_list(&properties_table_memlist);
     deallocate_memory_list(&individuals_table_memlist);
 
     my_free(&defined_this_segment,"defined this segment table");
