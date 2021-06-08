@@ -1208,8 +1208,6 @@ static optab *bestyet, *bestyet2;
 
 static int pass_no;
 
-static char *sub_buffer;
-
 static void optimise_pass(void)
 {   int32 i; int t1, t2;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
@@ -1284,9 +1282,6 @@ static void optimise_pass(void)
                         bestyet[minat].length=nl;
                         bestyet[minat].location=grandtable[tlbtab[i].intab+j];
                         bestyet[minat].popularity=matches;
-                        for (j2=0; j2<nl; j2++) sub_buffer[j2]=
-                            all_text[bestyet[minat].location+j2];
-                        sub_buffer[nl]=0;
                     }
                 }
                 FinishEarly: ;
@@ -1321,7 +1316,6 @@ extern void optimise_abbreviations(void)
 
     pass_no = 0;
     tlbtab=my_calloc(sizeof(tlb), MAX_TLBS, "tlb table"); no_occs=0;
-    sub_buffer=my_calloc(sizeof(char), 4000, "sub_buffer");
     for (i=0; i<MAX_TLBS; i++) tlbtab[i].occurrences=0;
 
     bestyet=my_calloc(sizeof(optab), 256, "bestyet");
@@ -2511,7 +2505,6 @@ extern void text_free_arrays(void)
 
 extern void ao_free_arrays(void)
 {   my_free (&tlbtab,"tlb table");
-    my_free (&sub_buffer,"sub_buffer");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
