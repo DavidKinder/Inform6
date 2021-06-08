@@ -303,7 +303,7 @@ int   *prop_is_long,                   /* Property modifiers, TRUE or FALSE:
       *prop_is_additive;               /* "additive" means that values
                                           accumulate rather than erase each
                                           other during class inheritance     */
-char *properties_table;                /* Holds the table of property values
+uchar *properties_table;               /* Holds the table of property values
                                           (holding one block for each object
                                           and coming immediately after the
                                           object tree in Z-memory)           */
@@ -425,7 +425,7 @@ static void property_inheritance_z(void)
     {
         j=0;
         mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
-        class_prop_block = (uchar *) (properties_table + mark);
+        class_prop_block = (properties_table + mark);
 
         while (class_prop_block[j]!=0)
         {   if (version_number == 3)
@@ -617,7 +617,7 @@ static void property_inheritance_g(void)
 
   for (class=0; class<no_classes_to_inherit_from; class++) {
     mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
-    cpb = (uchar *) (properties_table + mark);
+    cpb = (properties_table + mark);
     /* This now points to the compiled property-table for the class.
        We'll have to go through and decompile it. (For our sins.) */
     num_props = ReadInt32(cpb);
@@ -735,7 +735,7 @@ static int write_properties_between(int mark, int from, int to)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
             {
-                uchar *p = (uchar *) properties_table;
+                uchar *p = properties_table;
                 int prop_length = 2*full_object.pp[j].l;
                 if (mark+2+prop_length >= MAX_PROP_TABLE_SIZE)
                     memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
@@ -785,7 +785,7 @@ static int write_property_block_z(char *shortname)
     {   uchar *tmp, *nameptr;
         if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
             memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-        nameptr = (uchar*)properties_table + mark+1;
+        nameptr = properties_table + mark+1;
         tmp = translate_text(nameptr,nameptr+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
         i = subtract_pointers(tmp, nameptr);

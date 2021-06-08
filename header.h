@@ -2659,7 +2659,7 @@ extern memory_list class_info_memlist;
 extern int32 *prop_default_value;
 extern int *prop_is_long;
 extern int *prop_is_additive;
-extern char *properties_table;
+extern uchar *properties_table;
 extern int properties_table_size;
 
 extern void make_attribute(void);
