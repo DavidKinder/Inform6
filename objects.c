@@ -736,21 +736,19 @@ static int write_properties_between(int mark, int from, int to)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
             {
-                uchar *p;
                 int prop_length = 2*full_object.pp[j].l;
                 ensure_memory_list_available(&properties_table_memlist, mark+2+prop_length);
-                p = properties_table;
                 if (version_number == 3)
-                    p[mark++] = prop_number + (prop_length - 1)*32;
+                    properties_table[mark++] = prop_number + (prop_length - 1)*32;
                 else
                 {   switch(prop_length)
                     {   case 1:
-                          p[mark++] = prop_number; break;
+                          properties_table[mark++] = prop_number; break;
                         case 2:
-                          p[mark++] = prop_number + 0x40; break;
+                          properties_table[mark++] = prop_number + 0x40; break;
                         default:
-                          p[mark++] = prop_number + 0x80;
-                          p[mark++] = prop_length + 0x80; break;
+                          properties_table[mark++] = prop_number + 0x80;
+                          properties_table[mark++] = prop_length + 0x80; break;
                     }
                 }
 
@@ -758,8 +756,8 @@ static int write_properties_between(int mark, int from, int to)
                 {   if (full_object.pp[j].ao[k].marker != 0)
                         backpatch_zmachine(full_object.pp[j].ao[k].marker,
                             PROP_ZA, mark);
-                    p[mark++] = full_object.pp[j].ao[k].value/256;
-                    p[mark++] = full_object.pp[j].ao[k].value%256;
+                    properties_table[mark++] = full_object.pp[j].ao[k].value/256;
+                    properties_table[mark++] = full_object.pp[j].ao[k].value%256;
                 }
             }
         }
