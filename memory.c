@@ -250,7 +250,6 @@ int MAX_ACTIONS;
 int MAX_ADJECTIVES;
 int MAX_DICT_ENTRIES;
 int MAX_STATIC_DATA;
-int MAX_PROP_TABLE_SIZE;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int MAX_EXPRESSION_NODES;
@@ -289,7 +288,6 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
 static int32 MAX_ZCODE_SIZE_z, MAX_ZCODE_SIZE_g;
-static int MAX_PROP_TABLE_SIZE_z, MAX_PROP_TABLE_SIZE_g;
 static int MAX_GLOBAL_VARIABLES_z, MAX_GLOBAL_VARIABLES_g;
 static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
@@ -344,7 +342,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_OBJ_PROP_TABLE_SIZE",
         MAX_OBJ_PROP_TABLE_SIZE);
-    printf("|  %25s = %-7d |\n","MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
     printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
     printf("|  %25s = %-7d |\n","MAX_SOURCE_FILES",MAX_SOURCE_FILES);
     if (glulx_mode)
@@ -381,9 +378,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 2000;
         MAX_STATIC_DATA  = 10000;
 
-        MAX_PROP_TABLE_SIZE_z = 30000;
-        MAX_PROP_TABLE_SIZE_g = 60000;
-
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 200;
         MAX_VERBSPACE = 4096;
@@ -419,9 +413,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 1300;
         MAX_STATIC_DATA  = 10000;
 
-        MAX_PROP_TABLE_SIZE_z = 15000;
-        MAX_PROP_TABLE_SIZE_g = 30000;
-
         MAX_EXPRESSION_NODES = 100;
         MAX_VERBS = 140;
         MAX_VERBSPACE = 4096;
@@ -456,9 +447,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 700;
         MAX_STATIC_DATA  = 10000;
-
-        MAX_PROP_TABLE_SIZE_z = 8000;
-        MAX_PROP_TABLE_SIZE_g = 16000;
 
         MAX_EXPRESSION_NODES = 40;
         MAX_VERBS = 110;
@@ -523,7 +511,6 @@ extern void adjust_memory_sizes()
 {
   if (!glulx_mode) {
     MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_z;
-    MAX_PROP_TABLE_SIZE = MAX_PROP_TABLE_SIZE_z;
     MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_z;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
@@ -533,7 +520,6 @@ extern void adjust_memory_sizes()
   }
   else {
     MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_g;
-    MAX_PROP_TABLE_SIZE = MAX_PROP_TABLE_SIZE_g;
     MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_g;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
@@ -627,12 +613,6 @@ static void explain_parameter(char *command)
 "  MAX_STATIC_DATA is the size of an array of integers holding initial \n\
   values for arrays and strings stored as ASCII inside the Z-machine.  It \n\
   should be at least 1024 but seldom needs much more.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_PROP_TABLE_SIZE")==0)
-    {   printf(
-"  MAX_PROP_TABLE_SIZE is the number of bytes allocated to hold the \n\
-  properties table.\n");
         return;
     }
     if (strcmp(command,"MAX_ABBREVS")==0)
@@ -1000,9 +980,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_GCONSTANTS")==0)
                 flag=2;
             if (strcmp(command,"MAX_PROP_TABLE_SIZE")==0)
-            {   MAX_PROP_TABLE_SIZE=j, flag=1;
-                MAX_PROP_TABLE_SIZE_g=MAX_PROP_TABLE_SIZE_z=j;
-            }
+                flag=3;
             if (strcmp(command,"MAX_FORWARD_REFS")==0)
                 flag=2;
             if (strcmp(command,"STACK_SIZE")==0)

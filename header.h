@@ -2593,7 +2593,7 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
-           MAX_STATIC_DATA,      MAX_PROP_TABLE_SIZE,
+           MAX_STATIC_DATA,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
            MAX_LOW_STRINGS,      MAX_VERBS,
            MAX_VERBSPACE,        MAX_ARRAYS,            MAX_INCLUSION_DEPTH,
