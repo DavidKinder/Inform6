@@ -763,6 +763,7 @@ static int write_properties_between(int mark, int from, int to)
         }
     }
 
+    ensure_memory_list_available(&properties_table_memlist, mark+1);
     properties_table[mark++]=0;
     return(mark);
 }
@@ -792,6 +793,7 @@ static int write_property_block_z(char *shortname)
     }
     if (current_defn_is_class)
     {   mark = write_properties_between(mark,3,3);
+        ensure_memory_list_available(&properties_table_memlist, mark+6);
         for (i=0;i<6;i++)
             properties_table[mark++] = full_object.atts[i];
         ensure_memory_list_available(&class_info_memlist, no_classes+1);
@@ -837,6 +839,7 @@ static int32 write_property_block_g(void)
   int32 datamark;
 
   if (current_defn_is_class) {
+    ensure_memory_list_available(&properties_table_memlist, mark+NUM_ATTR_BYTES);
     for (i=0;i<NUM_ATTR_BYTES;i++)
       properties_table[mark++] = full_object_g.atts[i];
     ensure_memory_list_available(&class_info_memlist, no_classes+1);
