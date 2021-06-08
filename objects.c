@@ -728,14 +728,15 @@ static void property_inheritance_g(void)
 /* ------------------------------------------------------------------------- */
 
 static int write_properties_between(int mark, int from, int to)
-{   int j, k, prop_number, prop_length;
-    uchar *p = (uchar *) properties_table;
+{   int j, k, prop_number;
 
     for (prop_number=to; prop_number>=from; prop_number--)
     {   for (j=0; j<full_object.l; j++)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
-            {   prop_length = 2*full_object.pp[j].l;
+            {
+                uchar *p = (uchar *) properties_table;
+                int prop_length = 2*full_object.pp[j].l;
                 if (mark+2+prop_length >= MAX_PROP_TABLE_SIZE)
                     memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
                 if (version_number == 3)
@@ -763,7 +764,7 @@ static int write_properties_between(int mark, int from, int to)
         }
     }
 
-    p[mark++]=0;
+    properties_table[mark++]=0;
     return(mark);
 }
 
@@ -777,24 +778,24 @@ static int write_property_block_z(char *shortname)
         Return the number of bytes written to the block.                     */
 
     int32 mark = properties_table_size, i;
-    uchar *p = (uchar *) properties_table;
 
     /* printf("Object at %04x\n", mark); */
 
     if (shortname != NULL)
-    {   uchar *tmp;
+    {   uchar *tmp, *nameptr;
         if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
             memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-        tmp = translate_text(p+mark+1,p+mark+1+510,shortname,STRCTX_OBJNAME);
+        nameptr = (uchar*)properties_table + mark+1;
+        tmp = translate_text(nameptr,nameptr+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
-        i = subtract_pointers(tmp,(p+mark+1));
-        p[mark] = i/2;
+        i = subtract_pointers(tmp, nameptr);
+        properties_table[mark] = i/2;
         mark += i+1;
     }
     if (current_defn_is_class)
     {   mark = write_properties_between(mark,3,3);
         for (i=0;i<6;i++)
-            p[mark++] = full_object.atts[i];
+            properties_table[mark++] = full_object.atts[i];
         ensure_memory_list_available(&class_info_memlist, no_classes+1);
         class_info[no_classes++].begins_at = mark;
     }
@@ -836,11 +837,10 @@ static int32 write_property_block_g(void)
   int ix, jx, kx, totalprops;
   int32 mark = properties_table_size;
   int32 datamark;
-  uchar *p = (uchar *) properties_table;
 
   if (current_defn_is_class) {
     for (i=0;i<NUM_ATTR_BYTES;i++)
-      p[mark++] = full_object_g.atts[i];
+      properties_table[mark++] = full_object_g.atts[i];
     ensure_memory_list_available(&class_info_memlist, no_classes+1);
     class_info[no_classes++].begins_at = mark;
   }
@@ -865,7 +865,7 @@ static int32 write_property_block_g(void)
   /* Write out the number of properties in this table. */
   if (mark+4 >= MAX_PROP_TABLE_SIZE)
       memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-  WriteInt32(p+mark, totalprops);
+  WriteInt32(properties_table+mark, totalprops);
   mark += 4;
 
   datamark = mark + 10*totalprops;
@@ -885,7 +885,7 @@ static int32 write_property_block_g(void)
         memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
       for (kx=0; kx<full_object_g.props[jx].datalen; kx++) {
         int32 val = full_object_g.propdata[datastart+kx].value;
-        WriteInt32(p+datamark, val);
+        WriteInt32(properties_table+datamark, val);
         if (full_object_g.propdata[datastart+kx].marker != 0)
           backpatch_zmachine(full_object_g.propdata[datastart+kx].marker,
             PROP_ZA, datamark);
@@ -895,13 +895,13 @@ static int32 write_property_block_g(void)
     }
     if (mark+10 >= MAX_PROP_TABLE_SIZE)
         memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-    WriteInt16(p+mark, propnum);
+    WriteInt16(properties_table+mark, propnum);
     mark += 2;
-    WriteInt16(p+mark, totallen);
+    WriteInt16(properties_table+mark, totallen);
     mark += 2;
-    WriteInt32(p+mark, datamarkstart); 
+    WriteInt32(properties_table+mark, datamarkstart); 
     mark += 4;
-    WriteInt16(p+mark, flags);
+    WriteInt16(properties_table+mark, flags);
     mark += 2;
   }
 
