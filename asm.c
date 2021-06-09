@@ -77,7 +77,7 @@ static int routine_symbol;         /* The symbol index of the routine currently
 static memory_list current_routine_name; /* The name of the routine currently
                                       being compiled. (This may be longer
                                       than MAX_IDENTIFIER_LENGTH, e.g. for
-                                      an "obj::prop" property routine.)      */
+                                      an "obj.prop" property routine.)       */
 static int routine_locals;         /* The number of local variables used by
                                       the routine currently being compiled   */
 
