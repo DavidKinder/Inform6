@@ -307,7 +307,7 @@ uchar *properties_table;               /* Holds the table of property values
                                           (holding one block for each object
                                           and coming immediately after the
                                           object tree in Z-memory)           */
-static memory_list properties_table_memlist;
+memory_list properties_table_memlist;
 int properties_table_size;             /* Number of bytes in this table      */
 
 /* ------------------------------------------------------------------------- */

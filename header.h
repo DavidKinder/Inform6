@@ -923,7 +923,7 @@ typedef struct assembly_instruction_t
     int store_variable_number;
     int32 branch_label_number;
     int branch_flag;
-    char *text;
+    char *text;                    /* if set, generally points to token_text */
     int operand_count;
     assembly_operand operand[8];
 } assembly_instruction;
@@ -2660,6 +2660,7 @@ extern int32 *prop_default_value;
 extern int *prop_is_long;
 extern int *prop_is_additive;
 extern uchar *properties_table;
+extern memory_list properties_table_memlist;
 extern int properties_table_size;
 
 extern void make_attribute(void);
