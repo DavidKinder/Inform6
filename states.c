@@ -1139,6 +1139,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, "give statement");
                      if (runtime_error_checking_switch)
                      {   ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
                          if (version_number >= 5)
@@ -2108,6 +2109,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, "give statement");
                      if (runtime_error_checking_switch && (!veneer_mode))
                      {   ln2 = (ln ? RT__ChG_VR : RT__ChGt_VR);
                          if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
