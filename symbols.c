@@ -195,10 +195,39 @@ extern void add_config_symbol_definition(char *symbol, int32 value)
 /*   Symbol finding, creating, and removing.                                 */
 /* ------------------------------------------------------------------------- */
 
+extern int get_symbol_index(char *p)
+{
+    /*  Return the index in the symbols array of symbol "p", or -1
+        if it isn't there. Does not create a new symbol or mark the
+        symbol as used. */
+
+    int32 new_entry, this;
+    char *r;
+    int hashcode = hash_code_from_string(p);
+
+    this = start_of_list[hashcode];
+
+    do
+    {   if (this == -1) break;
+
+        r = symbols[this].name;
+        new_entry = strcmpcis(r, p);
+        if (new_entry == 0) 
+        {
+            return this;
+        }
+        if (new_entry > 0) break;
+
+        this = symbols[this].next_entry;
+    } while (this != -1);
+
+    return -1;
+}
+
 extern int symbol_index(char *p, int hashcode)
 {
-    /*  Return the index in the symbs/svals/sflags/stypes/... arrays of symbol
-        "p", creating a new symbol with that name if it isn't already there.
+    /*  Return the index in the symbols array of symbol "p", creating a
+        new symbol with that name if it isn't already there.
 
         New symbols are created with flag UNKNOWN_SFLAG, value 0x100
         (a 2-byte quantity in Z-machine terms) and type CONSTANT_T.
@@ -388,6 +417,17 @@ extern void issue_unused_warnings(void)
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
              && (symbols[i].type != OBJECT_T))
             dbnu_warning(typename(symbols[i].type), symbols[i].name, symbols[i].line);
+    }
+}
+
+extern void issue_debug_symbol_warnings(void)
+{
+    int value = get_symbol_index("DEBUG");
+    if (value >= 0 && (symbols[value].flags & USED_SFLAG) && !(symbols[value].flags & UNKNOWN_SFLAG)) {
+        value = get_symbol_index("debug_flag");
+        if (value >= 0 && (symbols[value].flags & USED_SFLAG) && (symbols[value].flags & UNKNOWN_SFLAG)) {
+            warning("DEBUG mode is on, but this story or library does not appear to support it");
+        }
     }
 }
 

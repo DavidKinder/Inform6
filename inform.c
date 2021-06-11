@@ -1124,6 +1124,8 @@ static void run_pass(void)
     lexer_endpass();
     if (module_switch) linker_endpass();
 
+    issue_debug_symbol_warnings();
+    
     close_all_source();
     if (hash_switch && hash_printed_since_newline) printf("\n");
 
