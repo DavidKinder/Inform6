@@ -1189,11 +1189,7 @@ static int execute_icl_header(char *file1);
 
 static int compile(int number_of_files_specified, char *file1, char *file2)
 {
-#ifdef NO_GETTIMEOFDAY_AVAILABLE
-    int time_start, time_end;
-#else
-    struct timeval time_start, time_end;
-#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    TIMEVALUE time_start, time_end;
     float duration;
 
     if (execute_icl_header(file1))
@@ -1224,11 +1220,7 @@ compiling modules: disabling -S switch\n");
         runtime_error_checking_switch = FALSE;
     }
 
-#ifdef NO_GETTIMEOFDAY_AVAILABLE
-    time_start = time(0);
-#else
-    gettimeofday(&time_start, NULL);
-#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    TIMEVALUE_NOW(&time_start);
     
     no_compilations++;
 
@@ -1264,13 +1256,8 @@ compiling modules: disabling -S switch\n");
 
     free_arrays();
 
-#ifdef NO_GETTIMEOFDAY_AVAILABLE
-    time_end = time(0); 
-    duration = (float)(time_end - time_start);
-#else
-    gettimeofday(&time_end, NULL);
-    duration = (time_end.tv_sec - time_start.tv_sec) + (time_end.tv_usec - time_start.tv_usec) / 1000000.0;
-#endif /* NO_GETTIMEOFDAY_AVAILABLE */
+    TIMEVALUE_NOW(&time_end);
+    duration = TIMEVALUE_DIFFERENCE(&time_start, &time_end);
     
     rennab(duration);
 

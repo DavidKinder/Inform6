@@ -83,7 +83,6 @@
 #include <stdarg.h>
 #include <ctype.h>
 #include <string.h>
-#include <sys/time.h>
 #include <time.h>
 #include <limits.h>
 #include <math.h>
@@ -632,6 +631,10 @@ static int32 unique_task_id(void)
 #else
 #define subtract_pointers(p1,p2) (((char *) p1)-((char *) p2))
 #endif
+
+#define TIMEVALUE struct timespec
+#define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
+#define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
 
 /* ------------------------------------------------------------------------- */
 /*   SEEK_SET is a constant which should be defined in the ANSI header files */
