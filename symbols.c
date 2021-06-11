@@ -397,6 +397,23 @@ extern void list_symbols(int level)
     }
 }
 
+extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, char *context)
+{
+    if (AO->symindex >= 0)
+    {
+        symbolinfo *sym = &symbols[AO->symindex];
+        if (sym->type == CONSTANT_T || sym->type == GLOBAL_VARIABLE_T)
+        {
+            return;
+        }
+        if (sym->type == wanttype)
+        {
+            return;
+        }
+        symtype_warning(context, sym->name, typename(sym->type), typename(wanttype));
+    }
+}
+
 extern void issue_unused_warnings(void)
 {   int32 i;
 

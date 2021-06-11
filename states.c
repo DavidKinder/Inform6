@@ -1115,6 +1115,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, "give statement");
                  if ((AO.type == VARIABLE_OT) && (AO.value == 0))
                  {   INITAOTV(&AO, SHORT_CONSTANT_OT, 252);
                      if (version_number != 6) assemblez_1(pull_zc, AO);
@@ -1132,7 +1133,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      {   if ((token_type == SYMBOL_TT)
                              && (symbols[token_value].type != ATTRIBUTE_T))
                            warning_named("This is not a declared Attribute:",
-                             token_text);
+                             token_text); //### delete
                          ln = set_attr_zc;
                          put_token_back();
                      }
@@ -2080,6 +2081,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, "give statement");
                  if ((AO.type == LOCALVAR_OT) && (AO.value == 0))
                      onstack = TRUE;
                  else
@@ -2100,7 +2102,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      {   if ((token_type == SYMBOL_TT)
                              && (symbols[token_value].type != ATTRIBUTE_T))
                            warning_named("This is not a declared Attribute:",
-                             token_text);
+                             token_text); //### delete
                          ln = 1;
                          put_token_back();
                      }
