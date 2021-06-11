@@ -621,7 +621,9 @@ static int32 unique_task_id(void)
 #endif
 
 /* ------------------------------------------------------------------------- */
-/*   A macro (rather than constant) definition:                              */
+/*   subtract_pointers() measures an address difference in bytes. This is    */
+/*   a macro.                                                                */
+/*   We also declare some memory functions for PC_QUICKC.                    */
 /* ------------------------------------------------------------------------- */
 
 #ifdef PC_QUICKC
@@ -632,9 +634,30 @@ static int32 unique_task_id(void)
 #define subtract_pointers(p1,p2) (((char *) p1)-((char *) p2))
 #endif
 
-#define TIMEVALUE struct timespec
-#define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
-#define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
+
+/* ------------------------------------------------------------------------- */
+/*   Definitions for time measurement. TIMEVALUE is a type; TIMEVALUE_NOW()  */
+/*   sets it; TIMEVALUE_DIFFERENCE() determines a difference in seconds,     */
+/*   as a float.                                                             */
+/*   Modern platforms should support timespec_get() or clock_gettime(). If   */
+/*   yours does not, #define USE_OLD_TIME_API to revert to the old           */
+/*   implementation using time(). This can only measure in integer second    */
+/*   counts, but it's better than waiting for gnomon.                        */
+/* ------------------------------------------------------------------------- */
+
+#ifdef USE_OLD_TIME_API
+  #define TIMEVALUE time_t
+  #define TIMEVALUE_NOW(t) (*t) = time(0)
+  #define TIMEVALUE_DIFFERENCE(begt, endt) (float)(*(endt) - *(begt))
+#elif defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+  #define TIMEVALUE struct timespec
+  #define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
+  #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
+#else
+  #define TIMEVALUE struct timespec
+  #define TIMEVALUE_NOW(t) clock_gettime(CLOCK_REALTIME, (t))
+  #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
+#endif
 
 /* ------------------------------------------------------------------------- */
 /*   SEEK_SET is a constant which should be defined in the ANSI header files */
