@@ -1209,7 +1209,10 @@ static optab *bestyet, *bestyet2;
 static int pass_no;
 
 static void optimise_pass(void)
-{   int32 i; int t1, t2;
+{
+    TIMEVALUE t1, t2;
+    float duration;
+    int32 i;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
     for (i=0; i<256; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
@@ -1229,7 +1232,7 @@ static void optimise_pass(void)
             printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
                 pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
                 (long int) tlbtab[i].occurrences);
-            t1=(int) (time(0));
+            TIMEVALUE_NOW(&t1);
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
@@ -1286,8 +1289,9 @@ static void optimise_pass(void)
                 }
                 FinishEarly: ;
             }
-            t2=((int) time(0)) - t1;
-            printf(" (%d seconds)\n",t2);
+            TIMEVALUE_NOW(&t2);
+            duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
+            printf(" (%.4f seconds)\n", duration);
         }
     }
 }
