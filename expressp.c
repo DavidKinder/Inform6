@@ -1190,7 +1190,9 @@ static void emit_token(token_data t)
                     /* Direction properties "n_to", etc *are* compared
                        in some libraries. They have STAR_SFLAG to tell us
                        to skip the warning. */
-                    if ((i < arity) && (o1.symflags & STAR_SFLAG)) break;
+                    if ((i < arity)
+                        && (o1.symindex >= 0)
+                        && (symbols[o1.symindex].flags & STAR_SFLAG)) break;
                 default:
                     warning("Property name in expression is not qualified by object");
             }
