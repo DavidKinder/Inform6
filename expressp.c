@@ -774,7 +774,6 @@ static int evaluate_term(token_data t, assembly_operand *o)
     o->marker = t.marker;
     o->symindex = t.symindex;
     o->symtype = t.symtype;
-    o->symflags = t.symflags;
 
     switch(t.type)
     {   case LARGE_NUMBER_TT:
