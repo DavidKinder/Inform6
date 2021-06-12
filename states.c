@@ -1269,7 +1269,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
                  check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
-                 check_warn_symbol_type(&AO2, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_3(call_vn_zc, veneer_routine(RT__ChT_VR),
@@ -2290,7 +2290,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
                  check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
-                 check_warn_symbol_type(&AO2, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_2(veneer_routine(RT__ChT_VR), AO, AO2,
                          zero_operand);
