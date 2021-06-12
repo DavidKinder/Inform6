@@ -1170,7 +1170,7 @@ static void emit_token(token_data t)
         }
     }
 
-    /* pseudo-typecheck in 6.30 */
+    /* pseudo-typecheck in 6.30: catch an unqualified property name */
     for (i = 1; i <= arity; i++)
     {
         o1 = emitter_stack[emitter_sp - i];
@@ -1187,6 +1187,9 @@ static void emit_token(token_data t)
                 case PROPERTY_OP:
                     if (i < arity) break;
                 case GE_OP: case LE_OP:
+                    /* Direction properties "n_to", etc *are* compared
+                       in some libraries. They have STAR_SFLAG to tell us
+                       to skip the warning. */
                     if ((i < arity) && (o1.symflags & STAR_SFLAG)) break;
                 default:
                     warning("Property name in expression is not qualified by object");

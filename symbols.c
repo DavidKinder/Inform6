@@ -363,19 +363,20 @@ extern char *typename(int type)
 
 static void describe_flags(int flags)
 {   if (flags & UNKNOWN_SFLAG)  printf("(?) ");
-    if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & REPLACE_SFLAG)  printf("(Replaced) ");
+    if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
-    if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & IMPORT_SFLAG)   printf("(Imported) ");
     if (flags & EXPORT_SFLAG)   printf("(Exported) ");
+    if (flags & ALIASED_SFLAG)  printf("(aliased) ");
+    if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & SYSTEM_SFLAG)   printf("(System) ");
     if (flags & INSF_SFLAG)     printf("(created in sys file) ");
     if (flags & UERROR_SFLAG)   printf("('Unknown' error issued) ");
-    if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & ACTION_SFLAG)   printf("(Action name) ");
     if (flags & REDEFINABLE_SFLAG) printf("(Redefinable) ");
+    if (flags & STAR_SFLAG)     printf("(*) ");
 }
 
 extern void describe_symbol(int k)
