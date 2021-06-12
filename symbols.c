@@ -399,18 +399,40 @@ extern void list_symbols(int level)
 
 extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, char *context)
 {
-    if (AO->symindex >= 0)
+    symbolinfo *sym;
+    int symtype;
+    
+    if (AO->symindex < 0)
     {
-        symbolinfo *sym = &symbols[AO->symindex];
-        if (sym->type == CONSTANT_T || sym->type == GLOBAL_VARIABLE_T)
-        {
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. We don't try to generate type warnings. */
+        /* (We could figure out some warnings for literals -- e.g., "give 0 attr" and "give 'word' attr" are errors. But we currently don't. */
+        return;
+    }
+    
+    sym = &symbols[AO->symindex];
+    symtype = sym->type;
+    
+    if (symtype == GLOBAL_VARIABLE_T)
+    {
+        /* A global variable could have any value. No way to generate a warning. */
+        return;
+    }
+    if (symtype == CONSTANT_T)
+    {
+        /* A constant could also have any value. We try inferring its type by looking at the backpatch marker. Sadly, this only works for objects. (And not in Z-code, where object values are not backpatched.) */
+        if (sym->marker == OBJECT_MV) {
+            /* Continue with inferred type. */
+            symtype = OBJECT_T;
+        }
+        else {
+            /* Give up. */
             return;
         }
-        if (sym->type == wanttype)
-        {
-            return;
-        }
-        symtype_warning(context, sym->name, typename(sym->type), typename(wanttype));
+    }
+    
+    if (symtype != wanttype)
+    {
+        symtype_warning(context, sym->name, typename(symtype), typename(wanttype));
     }
 }
 
