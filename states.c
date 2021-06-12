@@ -421,14 +421,12 @@ static void parse_print_z(int finally_return)
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
                           }
                           else
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
                               if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
@@ -660,14 +658,12 @@ static void parse_print_g(int finally_return)
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
                           }
                           else
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
                               if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
