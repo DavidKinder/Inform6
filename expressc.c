@@ -712,6 +712,10 @@ static void compile_conditional_z(int oc,
         check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
         check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
         break;
+    case 200:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"ofclass\" expression");
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
+        break;
     case 201:
         check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"provides\" expression");
         check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
@@ -1214,6 +1218,8 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case OFCLASS_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"ofclass\" expression");
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
         assembleg_call_2(veneer_routine(OC__Cl_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
         AO1 = stack_pointer;
