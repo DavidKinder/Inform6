@@ -1130,11 +1130,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = clear_attr_zc;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (symbols[token_value].type != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text); //### delete
-                         ln = set_attr_zc;
+                     {   ln = set_attr_zc;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
@@ -2100,11 +2096,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = 0;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (symbols[token_value].type != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text); //### delete
-                         ln = 1;
+                     {   ln = 1;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
