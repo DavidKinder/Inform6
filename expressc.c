@@ -705,8 +705,8 @@ static void compile_conditional_z(int oc,
 
     switch (oc) {
     case test_attr_zc:
-        check_warn_symbol_type(&AO1, OBJECT_T, "\"has\" expression");
-        check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"has\" expression");
+        check_warn_symbol_type(&AO1, OBJECT_T, (flag?"\"has\" expression":"\"hasnt\" expression"));
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, (flag?"\"has\" expression":"\"hasnt\" expression"));
         break;
     }
     
@@ -1110,8 +1110,8 @@ static void compile_conditional_g(condclass *cc,
       switch ((cc-condclasses)*2 + 500) {
 
       case HAS_CC:
-        check_warn_symbol_type(&AO1, OBJECT_T, "\"has\" expression");
-        check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"has\" expression");
+        check_warn_symbol_type(&AO1, OBJECT_T, (flag?"\"has\" expression":"\"hasnt\" expression"));
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, (flag?"\"has\" expression":"\"hasnt\" expression"));
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
