@@ -703,6 +703,13 @@ static void compile_conditional_z(int oc,
 
     ASSERT_ZCODE(); 
 
+    switch (oc) {
+    case test_attr_zc:
+        check_warn_symbol_type(&AO1, OBJECT_T, "\"has\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"has\" expression");
+        break;
+    }
+    
     if (oc<200)
     {   if ((runtime_error_checking_switch) && (oc == jin_zc))
         {   if (flag) error_label = next_label++;
@@ -1103,6 +1110,8 @@ static void compile_conditional_g(condclass *cc,
       switch ((cc-condclasses)*2 + 500) {
 
       case HAS_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, "\"has\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"has\" expression");
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
