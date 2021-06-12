@@ -419,7 +419,8 @@ extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, cha
     }
     if (symtype == CONSTANT_T)
     {
-        /* A constant could also have any value. We try inferring its type by looking at the backpatch marker. Sadly, this only works for objects. (And not in Z-code, where object values are not backpatched.) */
+        /* A constant could also have any value. This case also includes forward-declared constants (UNKNOWN_SFLAG). */
+        /* We try inferring its type by looking at the backpatch marker. Sadly, this only works for objects. (And not in Z-code, where object values are not backpatched.) */
         if (sym->marker == OBJECT_MV) {
             /* Continue with inferred type. */
             symtype = OBJECT_T;
