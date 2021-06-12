@@ -397,7 +397,9 @@ extern void list_symbols(int level)
     }
 }
 
-extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, char *context)
+/* Check that the operand is of the given symbol type (XXX_T). If wanttype2 is nonzero, that's a second allowable type.
+   Generate a warning if no match. */
+extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *context)
 {
     symbolinfo *sym;
     int symtype;
@@ -431,7 +433,8 @@ extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, cha
         }
     }
     
-    if (symtype != wanttype)
+    if (!(   (symtype == wanttype)
+          || (wanttype2 != 0 && symtype == wanttype2)))
     {
         symtype_warning(context, sym->name, typename(symtype), typename(wanttype));
     }

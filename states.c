@@ -1115,7 +1115,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"give\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == VARIABLE_OT) && (AO.value == 0))
                  {   INITAOTV(&AO, SHORT_CONSTANT_OT, 252);
                      if (version_number != 6) assemblez_1(pull_zc, AO);
@@ -1135,7 +1135,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
-                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"give\" statement");
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch)
                      {   ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
                          if (version_number >= 5)
@@ -1268,8 +1268,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"move\" statement");
-                 check_warn_symbol_type(&AO2, OBJECT_T, "\"move\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, 0, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_3(call_vn_zc, veneer_routine(RT__ChT_VR),
@@ -1489,7 +1489,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"remove\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_2(call_2n_zc, veneer_routine(RT__ChR_VR),
@@ -2081,7 +2081,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"give\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == LOCALVAR_OT) && (AO.value == 0))
                      onstack = TRUE;
                  else
@@ -2104,7 +2104,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
-                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, "\"give\" statement");
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch && (!veneer_mode))
                      {   ln2 = (ln ? RT__ChG_VR : RT__ChGt_VR);
                          if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
@@ -2289,8 +2289,8 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"move\" statement");
-                 check_warn_symbol_type(&AO2, OBJECT_T, "\"move\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, 0, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_2(veneer_routine(RT__ChT_VR), AO, AO2,
                          zero_operand);
@@ -2473,7 +2473,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, "\"remove\" statement");
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_1(veneer_routine(RT__ChR_VR), AO,
                          zero_operand);
