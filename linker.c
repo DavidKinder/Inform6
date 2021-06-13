@@ -848,7 +848,7 @@ at strings offset %04x (+%04x)\n",
         m_strs_offset, link_offset, strings_offset,
         static_strings_extent);
     if (!temporary_files_switch) {
-        ensure_memory_list_available(&static_strings_area_memlist, link_offset-m_strs_offset);
+        ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+link_offset-m_strs_offset);
     }
     for (k=m_strs_offset;k<link_offset;k++)
     {   if (temporary_files_switch)
@@ -938,6 +938,7 @@ at strings offset %04x (+%04x)\n",
         if (linker_trace_level >= 2)
             printf("Inserting object properties area, %04x to %04x, at +%04x\n",
                 m_props_offset, last, properties_table_size);
+        ensure_memory_list_available(&properties_table_memlist, properties_table_size+last-m_props_offset);
         for (k=0;k<last-m_props_offset;k++)
             properties_table[properties_table_size++] = p[m_props_offset+k];
     }
@@ -950,9 +951,7 @@ at strings offset %04x (+%04x)\n",
     /* (17) Append the individual property values table */
 
     i = m_individuals_length;
-    if (individuals_length + i >= MAX_INDIV_PROP_TABLE_SIZE)
-        memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-            MAX_INDIV_PROP_TABLE_SIZE);
+    ensure_memory_list_available(&individuals_table_memlist, individuals_length + i);
 
     if (linker_trace_level >= 2)
       printf("Inserting individual prop tables area, %04x to %04x, at +%04x\n",

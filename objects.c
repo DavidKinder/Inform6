@@ -303,10 +303,11 @@ int   *prop_is_long,                   /* Property modifiers, TRUE or FALSE:
       *prop_is_additive;               /* "additive" means that values
                                           accumulate rather than erase each
                                           other during class inheritance     */
-char *properties_table;                /* Holds the table of property values
+uchar *properties_table;               /* Holds the table of property values
                                           (holding one block for each object
                                           and coming immediately after the
                                           object tree in Z-memory)           */
+memory_list properties_table_memlist;
 int properties_table_size;             /* Number of bytes in this table      */
 
 /* ------------------------------------------------------------------------- */
@@ -346,6 +347,7 @@ static int individual_prop_table_size; /* Size of the table of individual
                                           properties so far for current obj  */
        uchar *individuals_table;       /* Table of records, each being the
                                           i.p. table for an object           */
+       memory_list individuals_table_memlist;
        int i_m;                        /* Write mark position in the above   */
        int individuals_length;         /* Extent of individuals_table        */
 
@@ -424,7 +426,7 @@ static void property_inheritance_z(void)
     {
         j=0;
         mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
-        class_prop_block = (uchar *) (properties_table + mark);
+        class_prop_block = (properties_table + mark);
 
         while (class_prop_block[j]!=0)
         {   if (version_number == 3)
@@ -485,7 +487,6 @@ so many values that the list has overflowed the maximum 32 entries");
 
                     if (prop_number==3)
                     {   int y, z, class_block_offset;
-                        uchar *p;
 
                         /*  Property 3 holds the address of the table of
                             instance variables, so this is the case where
@@ -496,35 +497,31 @@ so many values that the list has overflowed the maximum 32 entries");
                         class_block_offset = class_prop_block[j-2]*256
                                              + class_prop_block[j-1];
 
-                        p = individuals_table + class_block_offset;
                         z = class_block_offset;
-                        while ((p[0]!=0)||(p[1]!=0))
+                        while ((individuals_table[z]!=0)||(individuals_table[z+1]!=0))
                         {   int already_present = FALSE, l;
                             for (l = full_object.pp[k].ao[0].value; l < i_m;
                                  l = l + 3 + individuals_table[l + 2])
-                                if (individuals_table[l] == p[0]
-                                    && individuals_table[l + 1] == p[1])
+                                if (individuals_table[l] == individuals_table[z]
+                                    && individuals_table[l + 1] == individuals_table[z+1])
                                 {   already_present = TRUE; break;
                                 }
                             if (already_present == FALSE)
                             {   if (module_switch)
                                     backpatch_zmachine(IDENT_MV,
                                         INDIVIDUAL_PROP_ZA, i_m);
-                                if (i_m+3+p[2] > MAX_INDIV_PROP_TABLE_SIZE)
-                                    memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                                        MAX_INDIV_PROP_TABLE_SIZE);
-                                individuals_table[i_m++] = p[0];
-                                individuals_table[i_m++] = p[1];
-                                individuals_table[i_m++] = p[2];
-                                for (y=0;y < p[2]/2;y++)
+                                ensure_memory_list_available(&individuals_table_memlist, i_m+3+individuals_table[z+2]);
+                                individuals_table[i_m++] = individuals_table[z];
+                                individuals_table[i_m++] = individuals_table[z+1];
+                                individuals_table[i_m++] = individuals_table[z+2];
+                                for (y=0;y < individuals_table[z+2]/2;y++)
                                 {   individuals_table[i_m++] = (z+3+y*2)/256;
                                     individuals_table[i_m++] = (z+3+y*2)%256;
                                     backpatch_zmachine(INHERIT_INDIV_MV,
                                         INDIVIDUAL_PROP_ZA, i_m-2);
                                 }
                             }
-                            z += p[2] + 3;
-                            p += p[2] + 3;
+                            z += individuals_table[z+2] + 3;
                         }
                         individuals_length = i_m;
                     }
@@ -553,7 +550,6 @@ so many values that the list has overflowed the maximum 32 entries");
 
                 if (prop_number==3)
                 {   int y, z, class_block_offset;
-                    uchar *p;
 
                     /*  Property 3 holds the address of the table of
                         instance variables, so this is the case where
@@ -572,25 +568,21 @@ so many values that the list has overflowed the maximum 32 entries");
                     class_block_offset = class_prop_block[j-2]*256
                                          + class_prop_block[j-1];
 
-                    p = individuals_table + class_block_offset;
                     z = class_block_offset;
-                    while ((p[0]!=0)||(p[1]!=0))
+                    while ((individuals_table[z]!=0)||(individuals_table[z+1]!=0))
                     {   if (module_switch)
                         backpatch_zmachine(IDENT_MV, INDIVIDUAL_PROP_ZA, i_m);
-                        if (i_m+3+p[2] > MAX_INDIV_PROP_TABLE_SIZE)
-                            memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                                MAX_INDIV_PROP_TABLE_SIZE);
-                        individuals_table[i_m++] = p[0];
-                        individuals_table[i_m++] = p[1];
-                        individuals_table[i_m++] = p[2];
-                        for (y=0;y < p[2]/2;y++)
+                        ensure_memory_list_available(&individuals_table_memlist, i_m+3+individuals_table[z+2]);
+                        individuals_table[i_m++] = individuals_table[z];
+                        individuals_table[i_m++] = individuals_table[z+1];
+                        individuals_table[i_m++] = individuals_table[z+2];
+                        for (y=0;y < individuals_table[z+2]/2;y++)
                         {   individuals_table[i_m++] = (z+3+y*2)/256;
                             individuals_table[i_m++] = (z+3+y*2)%256;
                             backpatch_zmachine(INHERIT_INDIV_MV,
                                 INDIVIDUAL_PROP_ZA, i_m-2);
                         }
-                        z += p[2] + 3;
-                        p += p[2] + 3;
+                        z += individuals_table[z+2] + 3;
                     }
                     individuals_length = i_m;
                 }
@@ -600,9 +592,7 @@ so many values that the list has overflowed the maximum 32 entries");
 
     if (individual_prop_table_size > 0)
     {
-        if (i_m+2 > MAX_INDIV_PROP_TABLE_SIZE)
-            memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                MAX_INDIV_PROP_TABLE_SIZE);
+        ensure_memory_list_available(&individuals_table_memlist, i_m+2);
 
         individuals_table[i_m++] = 0;
         individuals_table[i_m++] = 0;
@@ -628,7 +618,7 @@ static void property_inheritance_g(void)
 
   for (class=0; class<no_classes_to_inherit_from; class++) {
     mark = class_info[classes_to_inherit_from[class] - 1].begins_at;
-    cpb = (uchar *) (properties_table + mark);
+    cpb = (properties_table + mark);
     /* This now points to the compiled property-table for the class.
        We'll have to go through and decompile it. (For our sins.) */
     num_props = ReadInt32(cpb);
@@ -738,27 +728,27 @@ static void property_inheritance_g(void)
 /*   Construction of Z-machine-format property blocks.                       */
 /* ------------------------------------------------------------------------- */
 
-static int write_properties_between(uchar *p, int mark, int from, int to)
-{   int j, k, prop_number, prop_length;
-    /* Note that p is properties_table. */
+static int write_properties_between(int mark, int from, int to)
+{   int j, k, prop_number;
+
     for (prop_number=to; prop_number>=from; prop_number--)
     {   for (j=0; j<full_object.l; j++)
         {   if ((full_object.pp[j].num == prop_number)
                 && (full_object.pp[j].l != 100))
-            {   prop_length = 2*full_object.pp[j].l;
-                if (mark+2+prop_length >= MAX_PROP_TABLE_SIZE)
-                    memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+            {
+                int prop_length = 2*full_object.pp[j].l;
+                ensure_memory_list_available(&properties_table_memlist, mark+2+prop_length);
                 if (version_number == 3)
-                    p[mark++] = prop_number + (prop_length - 1)*32;
+                    properties_table[mark++] = prop_number + (prop_length - 1)*32;
                 else
                 {   switch(prop_length)
                     {   case 1:
-                          p[mark++] = prop_number; break;
+                          properties_table[mark++] = prop_number; break;
                         case 2:
-                          p[mark++] = prop_number + 0x40; break;
+                          properties_table[mark++] = prop_number + 0x40; break;
                         default:
-                          p[mark++] = prop_number + 0x80;
-                          p[mark++] = prop_length + 0x80; break;
+                          properties_table[mark++] = prop_number + 0x80;
+                          properties_table[mark++] = prop_length + 0x80; break;
                     }
                 }
 
@@ -766,14 +756,15 @@ static int write_properties_between(uchar *p, int mark, int from, int to)
                 {   if (full_object.pp[j].ao[k].marker != 0)
                         backpatch_zmachine(full_object.pp[j].ao[k].marker,
                             PROP_ZA, mark);
-                    p[mark++] = full_object.pp[j].ao[k].value/256;
-                    p[mark++] = full_object.pp[j].ao[k].value%256;
+                    properties_table[mark++] = full_object.pp[j].ao[k].value/256;
+                    properties_table[mark++] = full_object.pp[j].ao[k].value%256;
                 }
             }
         }
     }
 
-    p[mark++]=0;
+    ensure_memory_list_available(&properties_table_memlist, mark+1);
+    properties_table[mark++]=0;
     return(mark);
 }
 
@@ -787,29 +778,29 @@ static int write_property_block_z(char *shortname)
         Return the number of bytes written to the block.                     */
 
     int32 mark = properties_table_size, i;
-    uchar *p = (uchar *) properties_table;
 
     /* printf("Object at %04x\n", mark); */
 
     if (shortname != NULL)
-    {   uchar *tmp;
-        if (mark+1+510 >= MAX_PROP_TABLE_SIZE)
-            memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-        tmp = translate_text(p+mark+1,p+mark+1+510,shortname,STRCTX_OBJNAME);
+    {   uchar *tmp, *nameptr;
+        ensure_memory_list_available(&properties_table_memlist, mark+1+510);
+        nameptr = properties_table + mark+1;
+        tmp = translate_text(nameptr,nameptr+510,shortname,STRCTX_OBJNAME);
         if (!tmp) error ("Short name of object exceeded 765 Z-characters");
-        i = subtract_pointers(tmp,(p+mark+1));
-        p[mark] = i/2;
+        i = subtract_pointers(tmp, nameptr);
+        properties_table[mark] = i/2;
         mark += i+1;
     }
     if (current_defn_is_class)
-    {   mark = write_properties_between(p,mark,3,3);
+    {   mark = write_properties_between(mark,3,3);
+        ensure_memory_list_available(&properties_table_memlist, mark+6);
         for (i=0;i<6;i++)
-            p[mark++] = full_object.atts[i];
+            properties_table[mark++] = full_object.atts[i];
         ensure_memory_list_available(&class_info_memlist, no_classes+1);
         class_info[no_classes++].begins_at = mark;
     }
 
-    mark = write_properties_between(p, mark, 1, (version_number==3)?31:63);
+    mark = write_properties_between(mark, 1, (version_number==3)?31:63);
 
     i = mark - properties_table_size;
     properties_table_size = mark;
@@ -846,11 +837,11 @@ static int32 write_property_block_g(void)
   int ix, jx, kx, totalprops;
   int32 mark = properties_table_size;
   int32 datamark;
-  uchar *p = (uchar *) properties_table;
 
   if (current_defn_is_class) {
+    ensure_memory_list_available(&properties_table_memlist, mark+NUM_ATTR_BYTES);
     for (i=0;i<NUM_ATTR_BYTES;i++)
-      p[mark++] = full_object_g.atts[i];
+      properties_table[mark++] = full_object_g.atts[i];
     ensure_memory_list_available(&class_info_memlist, no_classes+1);
     class_info[no_classes++].begins_at = mark;
   }
@@ -873,9 +864,8 @@ static int32 write_property_block_g(void)
   }
 
   /* Write out the number of properties in this table. */
-  if (mark+4 >= MAX_PROP_TABLE_SIZE)
-      memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-  WriteInt32(p+mark, totalprops);
+  ensure_memory_list_available(&properties_table_memlist, mark+4);
+  WriteInt32(properties_table+mark, totalprops);
   mark += 4;
 
   datamark = mark + 10*totalprops;
@@ -891,11 +881,10 @@ static int32 write_property_block_g(void)
         jx<full_object_g.numprops && full_object_g.props[jx].num == propnum;
         jx++) {
       int32 datastart = full_object_g.props[jx].datastart;
-      if (datamark+4*full_object_g.props[jx].datalen >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
+      ensure_memory_list_available(&properties_table_memlist, datamark+4*full_object_g.props[jx].datalen);
       for (kx=0; kx<full_object_g.props[jx].datalen; kx++) {
         int32 val = full_object_g.propdata[datastart+kx].value;
-        WriteInt32(p+datamark, val);
+        WriteInt32(properties_table+datamark, val);
         if (full_object_g.propdata[datastart+kx].marker != 0)
           backpatch_zmachine(full_object_g.propdata[datastart+kx].marker,
             PROP_ZA, datamark);
@@ -903,15 +892,14 @@ static int32 write_property_block_g(void)
         datamark += 4;
       }
     }
-    if (mark+10 >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
-    WriteInt16(p+mark, propnum);
+    ensure_memory_list_available(&properties_table_memlist, mark+10);
+    WriteInt16(properties_table+mark, propnum);
     mark += 2;
-    WriteInt16(p+mark, totallen);
+    WriteInt16(properties_table+mark, totallen);
     mark += 2;
-    WriteInt32(p+mark, datamarkstart); 
+    WriteInt32(properties_table+mark, datamarkstart); 
     mark += 4;
-    WriteInt16(p+mark, flags);
+    WriteInt16(properties_table+mark, flags);
     mark += 2;
   }
 
@@ -957,8 +945,6 @@ static void manufacture_object_z(void)
     j = write_property_block_z(shortname_buffer);
 
     objectsz[no_objects].propsize = j;
-    if (properties_table_size >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
 
     if (current_defn_is_class)
         for (i=0;i<6;i++) objectsz[no_objects].atts[i] = 0;
@@ -1006,8 +992,6 @@ static void manufacture_object_g(void)
     objectsg[no_objects].propaddr = full_object_g.finalpropaddr;
 
     objectsg[no_objects].propsize = j;
-    if (properties_table_size >= MAX_PROP_TABLE_SIZE)
-        memoryerror("MAX_PROP_TABLE_SIZE",MAX_PROP_TABLE_SIZE);
 
     if (current_defn_is_class)
         for (i=0;i<NUM_ATTR_BYTES;i++) 
@@ -1107,6 +1091,7 @@ static void properties_segment_z(int this_segment)
                 i_m = individuals_length;
                 full_object.l++;
             }
+            ensure_memory_list_available(&individuals_table_memlist, i_m+3);
             individuals_table[i_m] = this_identifier_number/256;
             if (this_segment == PRIVATE_SEGMENT)
                 individuals_table[i_m] |= 0x80;
@@ -1240,6 +1225,7 @@ the names '%s' and '%s' actually refer to the same property",
             {   if (AO.marker != 0)
                     backpatch_zmachine(AO.marker, INDIVIDUAL_PROP_ZA,
                         i_m+3+length);
+                ensure_memory_list_available(&individuals_table_memlist, i_m+3+length+2);
                 individuals_table[i_m+3+length++] = AO.value/256;
                 individuals_table[i_m+3+length++] = AO.value%256;
             }
@@ -1260,7 +1246,9 @@ the names '%s' and '%s' actually refer to the same property",
 
         if (length == 0)
         {   if (individual_property)
-            {   individuals_table[i_m+3+length++] = 0;
+            {
+                ensure_memory_list_available(&individuals_table_memlist, i_m+3+length+2);
+                individuals_table[i_m+3+length++] = 0;
                 individuals_table[i_m+3+length++] = 0;
             }
             else
@@ -1283,9 +1271,7 @@ the names '%s' and '%s' actually refer to the same property",
 
         if (individual_property)
         {
-            if (individuals_length+length+3 > MAX_INDIV_PROP_TABLE_SIZE)
-                memoryerror("MAX_INDIV_PROP_TABLE_SIZE",
-                    MAX_INDIV_PROP_TABLE_SIZE);
+            ensure_memory_list_available(&individuals_table_memlist, individuals_length+length+3);
             individuals_table[i_m + 2] = length;
             individuals_length += length+3;
             i_m = individuals_length;
@@ -2143,6 +2129,7 @@ extern void make_object(int nearby_flag,
 extern void init_objects_vars(void)
 {
     properties_table = NULL;
+    individuals_table = NULL;
     prop_is_long = NULL;
     prop_is_additive = NULL;
     prop_default_value = NULL;
@@ -2220,9 +2207,12 @@ extern void objects_allocate_arrays(void)
         sizeof(int),       64, (void**)&classes_to_inherit_from,
         "inherited classes list");
 
-    properties_table      = my_malloc(MAX_PROP_TABLE_SIZE,"properties table");
-    individuals_table     = my_malloc(MAX_INDIV_PROP_TABLE_SIZE,
-                                "individual properties table");
+    initialise_memory_list(&properties_table_memlist,
+        sizeof(uchar), 10000, (void**)&properties_table,
+        "properties table");
+    initialise_memory_list(&individuals_table_memlist,
+        sizeof(uchar), 10000, (void**)&individuals_table,
+        "individual properties table");
 
     defined_this_segment_size = 128;
     defined_this_segment  = my_calloc(sizeof(int), defined_this_segment_size,
@@ -2260,8 +2250,8 @@ extern void objects_free_arrays(void)
     deallocate_memory_list(&class_info_memlist);
     deallocate_memory_list(&classes_to_inherit_from_memlist);
 
-    my_free(&properties_table, "properties table");
-    my_free(&individuals_table,"individual properties table");
+    deallocate_memory_list(&properties_table_memlist);
+    deallocate_memory_list(&individuals_table_memlist);
 
     my_free(&defined_this_segment,"defined this segment table");
 

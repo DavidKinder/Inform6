@@ -1208,10 +1208,11 @@ static optab *bestyet, *bestyet2;
 
 static int pass_no;
 
-static char *sub_buffer;
-
 static void optimise_pass(void)
-{   int32 i; int t1, t2;
+{
+    TIMEVALUE t1, t2;
+    float duration;
+    int32 i;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
     for (i=0; i<256; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
@@ -1231,7 +1232,7 @@ static void optimise_pass(void)
             printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
                 pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
                 (long int) tlbtab[i].occurrences);
-            t1=(int) (time(0));
+            TIMEVALUE_NOW(&t1);
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
@@ -1284,15 +1285,13 @@ static void optimise_pass(void)
                         bestyet[minat].length=nl;
                         bestyet[minat].location=grandtable[tlbtab[i].intab+j];
                         bestyet[minat].popularity=matches;
-                        for (j2=0; j2<nl; j2++) sub_buffer[j2]=
-                            all_text[bestyet[minat].location+j2];
-                        sub_buffer[nl]=0;
                     }
                 }
                 FinishEarly: ;
             }
-            t2=((int) time(0)) - t1;
-            printf(" (%d seconds)\n",t2);
+            TIMEVALUE_NOW(&t2);
+            duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
+            printf(" (%.4f seconds)\n", duration);
         }
     }
 }
@@ -1321,7 +1320,6 @@ extern void optimise_abbreviations(void)
 
     pass_no = 0;
     tlbtab=my_calloc(sizeof(tlb), MAX_TLBS, "tlb table"); no_occs=0;
-    sub_buffer=my_calloc(sizeof(char), 4000, "sub_buffer");
     for (i=0; i<MAX_TLBS; i++) tlbtab[i].occurrences=0;
 
     bestyet=my_calloc(sizeof(optab), 256, "bestyet");
@@ -2511,7 +2509,6 @@ extern void text_free_arrays(void)
 
 extern void ao_free_arrays(void)
 {   my_free (&tlbtab,"tlb table");
-    my_free (&sub_buffer,"sub_buffer");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
