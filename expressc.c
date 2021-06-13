@@ -1721,19 +1721,20 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_OP:
-             {   assembly_operand AO = ET[below].value;
-
+             {
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                        assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
-                         AO, ET[ET[below].right].value, temp_var1);
+                         ET[below].value, ET[ET[below].right].value, temp_var1);
                  else
-                 assemblez_2_to(get_prop_zc, AO,
+                 assemblez_2_to(get_prop_zc, ET[below].value,
                      ET[ET[below].right].value, temp_var1);
                  if (!void_flag) write_result_z(Result, temp_var1);
              }
              break;
 
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(RV__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_ADD_OP:
@@ -2195,7 +2196,7 @@ static void generate_code_from(int n, int void_flag)
             compiler_error("Expr code gen: Can't generate yet");
     }
   }
-  else {
+  else { /* Glulx */
     assembly_operand AO, AO2;
     if (operators[opnum].opcode_number_g != -1)
     {
@@ -2389,6 +2390,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_OP:
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              AO = veneer_routine(RV__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_ADD_OP:
