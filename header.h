@@ -404,11 +404,6 @@ static int32 unique_task_id(void)
 /* 6 */
 #define DEFAULT_ERROR_FORMAT 1
 #define PATHLEN 512
-#ifdef _MSC_VER /* Microsoft Visual C++ */
-#define snprintf _snprintf
-#define isnan _isnan
-#define isinf(x) (!_isnan(x) && !_finite(x))
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   UNIX block                                                              */
@@ -621,7 +616,9 @@ static int32 unique_task_id(void)
 #endif
 
 /* ------------------------------------------------------------------------- */
-/*   A macro (rather than constant) definition:                              */
+/*   subtract_pointers() measures an address difference in bytes. This is    */
+/*   a macro.                                                                */
+/*   We also declare some memory functions for PC_QUICKC.                    */
 /* ------------------------------------------------------------------------- */
 
 #ifdef PC_QUICKC
@@ -630,6 +627,31 @@ static int32 unique_task_id(void)
 #define subtract_pointers(p1,p2) (long)((char _huge *)p1-(char _huge *)p2)
 #else
 #define subtract_pointers(p1,p2) (((char *) p1)-((char *) p2))
+#endif
+
+
+/* ------------------------------------------------------------------------- */
+/*   Definitions for time measurement. TIMEVALUE is a type; TIMEVALUE_NOW()  */
+/*   sets it; TIMEVALUE_DIFFERENCE() determines a difference in seconds,     */
+/*   as a float.                                                             */
+/*   Modern platforms should support timespec_get() or clock_gettime(). If   */
+/*   yours does not, #define USE_OLD_TIME_API to revert to the old           */
+/*   implementation using time(). This can only measure in integer second    */
+/*   counts, but it's better than waiting for gnomon.                        */
+/* ------------------------------------------------------------------------- */
+
+#ifdef USE_OLD_TIME_API
+  #define TIMEVALUE time_t
+  #define TIMEVALUE_NOW(t) (*t) = time(0)
+  #define TIMEVALUE_DIFFERENCE(begt, endt) (float)(*(endt) - *(begt))
+#elif defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+  #define TIMEVALUE struct timespec
+  #define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
+  #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
+#else
+  #define TIMEVALUE struct timespec
+  #define TIMEVALUE_NOW(t) clock_gettime(CLOCK_REALTIME, (t))
+  #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -920,7 +942,7 @@ typedef struct assembly_instruction_t
     int store_variable_number;
     int32 branch_label_number;
     int branch_flag;
-    char *text;
+    char *text;                    /* if set, generally points to token_text */
     int operand_count;
     assembly_operand operand[8];
 } assembly_instruction;
@@ -2591,14 +2613,14 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
-           MAX_STATIC_DATA,      MAX_PROP_TABLE_SIZE,
+           MAX_STATIC_DATA,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
            MAX_LOW_STRINGS,      MAX_VERBS,
            MAX_VERBSPACE,        MAX_ARRAYS,            MAX_INCLUSION_DEPTH,
            MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
-           MAX_TRANSCRIPT_SIZE,  MAX_INDIV_PROP_TABLE_SIZE,
+           MAX_TRANSCRIPT_SIZE,
            MAX_NUM_STATIC_STRINGS, MAX_UNICODE_CHARS,
            MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
@@ -2645,6 +2667,7 @@ extern int no_attributes, no_properties;
 extern int no_individual_properties;
 extern int individuals_length;
 extern uchar *individuals_table;
+extern memory_list individuals_table_memlist;
 extern int no_classes, no_objects;
 extern objecttz *objectsz;
 extern memory_list objectsz_memlist;
@@ -2656,7 +2679,8 @@ extern memory_list class_info_memlist;
 extern int32 *prop_default_value;
 extern int *prop_is_long;
 extern int *prop_is_additive;
-extern char *properties_table;
+extern uchar *properties_table;
+extern memory_list properties_table_memlist;
 extern int properties_table_size;
 
 extern void make_attribute(void);

@@ -1141,9 +1141,8 @@ static void run_pass(void)
 
 int output_has_occurred;
 
-static void rennab(int32 time_taken)
+static void rennab(float time_taken)
 {   /*  rennab = reverse of banner  */
-
     int t = no_warnings + no_suppressed_warnings;
 
     if (memout_switch) print_memory_usage();
@@ -1170,7 +1169,16 @@ static void rennab(int32 time_taken)
     if (no_compiler_errors > 0) print_sorry_message();
 
     if (statistics_switch)
-        printf("Completed in %ld seconds\n", (long int) time_taken);
+    {
+        /* Print the duration to a sensible number of decimal places.
+           (We aim for three significant figures.) */
+        if (time_taken >= 10.0)
+            printf("Completed in %.1f seconds\n", time_taken);
+        else if (time_taken >= 1.0)
+            printf("Completed in %.2f seconds\n", time_taken);
+        else
+            printf("Completed in %.3f seconds\n", time_taken);
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1180,7 +1188,9 @@ static void rennab(int32 time_taken)
 static int execute_icl_header(char *file1);
 
 static int compile(int number_of_files_specified, char *file1, char *file2)
-{   int32 time_start;
+{
+    TIMEVALUE time_start, time_end;
+    float duration;
 
     if (execute_icl_header(file1))
       return 1;
@@ -1210,7 +1220,9 @@ compiling modules: disabling -S switch\n");
         runtime_error_checking_switch = FALSE;
     }
 
-    time_start=time(0); no_compilations++;
+    TIMEVALUE_NOW(&time_start);
+    
+    no_compilations++;
 
     strcpy(Source_Name, file1); convert_filename_flag = TRUE;
     strcpy(Code_Name, file1);
@@ -1244,7 +1256,10 @@ compiling modules: disabling -S switch\n");
 
     free_arrays();
 
-    rennab((int32) (time(0)-time_start));
+    TIMEVALUE_NOW(&time_end);
+    duration = TIMEVALUE_DIFFERENCE(&time_start, &time_end);
+    
+    rennab(duration);
 
     if (optimise_switch) optimise_abbreviations();
 
