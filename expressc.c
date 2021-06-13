@@ -1762,9 +1762,11 @@ static void generate_code_from(int n, int void_flag)
              j=1; AI.operand[0] = veneer_routine(RA__Sc_VR);
              goto GenFunctionCallZ;
         case PROP_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
 
@@ -2404,6 +2406,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_CALL_OP:
         case MESSAGE_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              AO2 = veneer_routine(CA__Pr_VR);
              i = below;
              goto DoFunctionCall;
