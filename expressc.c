@@ -717,7 +717,7 @@ static void compile_conditional_z(int oc,
         check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
         break;
     case 201:
-        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"provides\" expression");
+        /* first argument can be anything */
         check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
         break;
     }
@@ -1226,7 +1226,7 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case PROVIDES_CC:
-        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"provides\" expression");
+        /* first argument can be anything */
         check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
         assembleg_call_2(veneer_routine(OP__Pr_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
