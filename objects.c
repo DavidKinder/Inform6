@@ -1755,7 +1755,6 @@ static void initialise_full_object(void)
 extern void make_class(char * metaclass_name)
 {   int n, duplicates_to_make = 0, class_number = no_objects+1,
         metaclass_flag = (metaclass_name != NULL);
-    char duplicate_name[128]; //###
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -1897,15 +1896,16 @@ You may be able to get round this by declaring some of its property names as \
 \"common properties\" using the 'Property' directive.");
 
     if (duplicates_to_make > 0)
-    {   sprintf(duplicate_name, "%s_1", shortname_buffer);
+    {
+        int namelen = strlen(shortname_buffer);
+        char *duplicate_name = my_malloc(namelen+16, "temporary storage for object duplicate names");
+        strcpy(duplicate_name, shortname_buffer);
         for (n=1; (duplicates_to_make--) > 0; n++)
-        {   if (n>1)
-            {   int i = strlen(duplicate_name);
-                while (duplicate_name[i] != '_') i--;
-                sprintf(duplicate_name+i+1, "%d", n);
-            }
+        {
+            sprintf(duplicate_name+namelen, "_%d", n);
             make_object(FALSE, duplicate_name, class_number, class_number, -1);
         }
+        my_free(&duplicate_name, "temporary storage for object duplicate names");
     }
 }
 
