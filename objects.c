@@ -41,9 +41,11 @@ static char shortname_buffer[766];     /* Text buffer to hold the short name
                                           written almost last)               */
 static int parent_of_this_obj;
 
-static char *classname_text, *objectname_text;
-                                       /* For printing names of embedded
-                                          routines only                      */
+static memory_list current_object_name; /* The name of the object currently
+                                           being defined.                    */
+
+static int current_classname_symbol;    /* For printing names of embedded
+                                           routines only                     */
 
 /* ------------------------------------------------------------------------- */
 /*   Classes.                                                                */
@@ -451,6 +453,8 @@ static void property_inheritance_z(void)
             prop_in_current_defn = FALSE;
 
             kmax = full_object.l;
+            if (kmax > 64)
+                fatalerror("More than 64 property entries in an object");
 
             for (k=0; k<kmax; k++)
                 if (full_object.pp[k].num == prop_number)
@@ -1154,15 +1158,17 @@ the names '%s' and '%s' actually refer to the same property",
                 warning ("'name' property should only contain dictionary words");
 
             if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
-            {   char embedded_name[80];
+            {   char embedded_name[80]; //###
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
-                        "%s::%s", classname_text,
+                        "%s::%s",
+                        symbols[current_classname_symbol].name,
                         symbols[property_name_symbol].name);
                 }
                 else
                 {   sprintf(embedded_name,
-                        "%s.%s", objectname_text,
+                        "%s.%s",
+                        (char *)current_object_name.data,
                         symbols[property_name_symbol].name);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
@@ -1418,15 +1424,17 @@ the names '%s' and '%s' actually refer to the same property",
                 warning ("'name' property should only contain dictionary words");
 
             if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
-            {   char embedded_name[80];
+            {   char embedded_name[80]; //###
                 if (current_defn_is_class)
                 {   sprintf(embedded_name,
-                        "%s::%s", classname_text,
+                        "%s::%s",
+                        symbols[current_classname_symbol].name,
                         symbols[property_name_symbol].name);
                 }
                 else
                 {   sprintf(embedded_name,
-                        "%s.%s", objectname_text,
+                        "%s.%s",
+                        (char *)current_object_name.data,
                         symbols[property_name_symbol].name);
                 }
                 AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
@@ -1778,7 +1786,7 @@ inconvenience, please contact the maintainers.");
     strcpy(shortname_buffer, token_text);
 
     assign_symbol(token_value, class_number, CLASS_T);
-    classname_text = symbols[token_value].name;
+    current_classname_symbol = token_value;
 
     if (!glulx_mode) {
         if (metaclass_flag) symbols[token_value].flags |= SYSTEM_SFLAG;
@@ -1916,14 +1924,13 @@ extern void make_object(int nearby_flag,
         The last is used to create instances of a particular class.  */
 
     int i, tree_depth, internal_name_symbol = 0;
-    char internal_name[64];
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
     directives.enabled = FALSE;
 
-    sprintf(internal_name, "nameless_obj__%d", no_objects+1);
-    objectname_text = internal_name;
+    ensure_memory_list_available(&current_object_name, 32);
+    sprintf(current_object_name.data, "nameless_obj__%d", no_objects+1);
 
     current_defn_is_class = FALSE;
 
@@ -1969,7 +1976,8 @@ extern void make_object(int nearby_flag,
         }
         else
         {   internal_name_symbol = token_value;
-            strcpy(internal_name, token_text);
+            ensure_memory_list_available(&current_object_name, strlen(token_text)+1);
+            strcpy(current_object_name.data, token_text);
         }
     }
 
@@ -2102,11 +2110,12 @@ extern void make_object(int nearby_flag,
     if (debugfile_switch)
     {   debug_file_printf("<object>");
         if (internal_name_symbol > 0)
-        {   debug_file_printf("<identifier>%s</identifier>", internal_name);
+        {   debug_file_printf("<identifier>%s</identifier>",
+                 current_object_name.data);
         } else
         {   debug_file_printf
                 ("<identifier artificial=\"true\">%s</identifier>",
-                 internal_name);
+                 current_object_name.data);
         }
         debug_file_printf("<value>");
         write_debug_object_backpatch(no_objects + 1);
@@ -2139,6 +2148,9 @@ extern void init_objects_vars(void)
     objectatts = NULL;
     classes_to_inherit_from = NULL;
     class_info = NULL;
+
+    full_object_g.props = NULL;    
+    full_object_g.propdata = NULL;    
 }
 
 extern void objects_begin_pass(void)
@@ -2181,6 +2193,7 @@ extern void objects_begin_pass(void)
         no_individual_properties = INDIV_PROP_START+8;
     }
     no_classes = 0;
+    current_classname_symbol = 0;
 
     no_embedded_routines = 0;
 
@@ -2218,6 +2231,10 @@ extern void objects_allocate_arrays(void)
     defined_this_segment  = my_calloc(sizeof(int), defined_this_segment_size,
                                 "defined this segment table");
 
+    initialise_memory_list(&current_object_name,
+        sizeof(char), 32, NULL,
+        "object name currently being defined");
+    
     if (!glulx_mode) {
       initialise_memory_list(&objectsz_memlist,
           sizeof(objecttz), 256, (void**)&objectsz,
@@ -2244,6 +2261,7 @@ extern void objects_free_arrays(void)
     my_free(&prop_is_long,     "property-is-long flags");
     my_free(&prop_is_additive, "property-is-additive flags");
 
+    deallocate_memory_list(&current_object_name);
     deallocate_memory_list(&objectsz_memlist);
     deallocate_memory_list(&objectsg_memlist);
     deallocate_memory_list(&objectatts_memlist);
