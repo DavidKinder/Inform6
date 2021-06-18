@@ -44,8 +44,13 @@ static int parent_of_this_obj;
 static memory_list current_object_name; /* The name of the object currently
                                            being defined.                    */
 
-static int current_classname_symbol;    /* For printing names of embedded
-                                           routines only                     */
+static int current_classname_symbol;    /* The symbol index of the class
+                                           currently being defined.
+                                           For printing names of embedded
+                                           routines only.                    */
+
+static memory_list embedded_function_name; /* Temporary storage for inline
+                                              function name in property.     */
 
 /* ------------------------------------------------------------------------- */
 /*   Classes.                                                                */
@@ -1158,20 +1163,23 @@ the names '%s' and '%s' actually refer to the same property",
                 warning ("'name' property should only contain dictionary words");
 
             if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
-            {   char embedded_name[80]; //###
+            {
+                char *prefix, *sep, *sym;
+                sym = symbols[property_name_symbol].name;
                 if (current_defn_is_class)
-                {   sprintf(embedded_name,
-                        "%s::%s",
-                        symbols[current_classname_symbol].name,
-                        symbols[property_name_symbol].name);
+                {
+                    prefix = symbols[current_classname_symbol].name;
+                    sep = "::";
                 }
                 else
-                {   sprintf(embedded_name,
-                        "%s.%s",
-                        (char *)current_object_name.data,
-                        symbols[property_name_symbol].name);
+                {
+                    prefix = current_object_name.data;
+                    sep = ".";
                 }
-                AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
+                ensure_memory_list_available(&embedded_function_name, strlen(prefix)+strlen(sep)+strlen(sym)+1);
+                sprintf(embedded_function_name.data, "%s%s%s", prefix, sep, sym);
+                
+                AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
                 AO.type = LONG_CONSTANT_OT;
                 AO.marker = IROUTINE_MV;
 
@@ -1424,20 +1432,23 @@ the names '%s' and '%s' actually refer to the same property",
                 warning ("'name' property should only contain dictionary words");
 
             if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
-            {   char embedded_name[80]; //###
+            {
+                char *prefix, *sep, *sym;
+                sym = symbols[property_name_symbol].name;
                 if (current_defn_is_class)
-                {   sprintf(embedded_name,
-                        "%s::%s",
-                        symbols[current_classname_symbol].name,
-                        symbols[property_name_symbol].name);
+                {
+                    prefix = symbols[current_classname_symbol].name;
+                    sep = "::";
                 }
                 else
-                {   sprintf(embedded_name,
-                        "%s.%s",
-                        (char *)current_object_name.data,
-                        symbols[property_name_symbol].name);
+                {
+                    prefix = current_object_name.data;
+                    sep = ".";
                 }
-                AO.value = parse_routine(NULL, TRUE, embedded_name, FALSE, -1);
+                ensure_memory_list_available(&embedded_function_name, strlen(prefix)+strlen(sep)+strlen(sym)+1);
+                sprintf(embedded_function_name.data, "%s%s%s", prefix, sep, sym);
+                
+                AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
                 AO.type = CONSTANT_OT; 
                 AO.marker = IROUTINE_MV;
 
@@ -1744,7 +1755,7 @@ static void initialise_full_object(void)
 extern void make_class(char * metaclass_name)
 {   int n, duplicates_to_make = 0, class_number = no_objects+1,
         metaclass_flag = (metaclass_name != NULL);
-    char duplicate_name[128];
+    char duplicate_name[128]; //###
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -2234,6 +2245,9 @@ extern void objects_allocate_arrays(void)
     initialise_memory_list(&current_object_name,
         sizeof(char), 32, NULL,
         "object name currently being defined");
+    initialise_memory_list(&embedded_function_name,
+        sizeof(char), 32, NULL,
+        "temporary storage for inline function name");
     
     if (!glulx_mode) {
       initialise_memory_list(&objectsz_memlist,
@@ -2262,6 +2276,7 @@ extern void objects_free_arrays(void)
     my_free(&prop_is_additive, "property-is-additive flags");
 
     deallocate_memory_list(&current_object_name);
+    deallocate_memory_list(&embedded_function_name);
     deallocate_memory_list(&objectsz_memlist);
     deallocate_memory_list(&objectsg_memlist);
     deallocate_memory_list(&objectatts_memlist);
