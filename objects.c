@@ -691,9 +691,9 @@ static void property_inheritance_g(void)
 
           for (i=0; i<prop_length; i++) {
             int ppos = full_object_g.propdatasize++;
+            INITAOT(&full_object_g.propdata[ppos], CONSTANT_OT);
             full_object_g.propdata[ppos].value = prop_addr + 4*i;
             full_object_g.propdata[ppos].marker = INHERIT_MV;
-            full_object_g.propdata[ppos].type = CONSTANT_OT;
           }
         }
         else {
@@ -719,9 +719,9 @@ static void property_inheritance_g(void)
 
             for (i=0; i<prop_length; i++) {
               int ppos = full_object_g.propdatasize++;
+              INITAOT(&full_object_g.propdata[ppos], CONSTANT_OT);
               full_object_g.propdata[ppos].value = prop_addr + 4*i;
               full_object_g.propdata[ppos].marker = INHERIT_MV; 
-              full_object_g.propdata[ppos].type = CONSTANT_OT;
             }
           }
 
@@ -1447,9 +1447,9 @@ the names '%s' and '%s' actually refer to the same property",
                 }
                 ensure_memory_list_available(&embedded_function_name, strlen(prefix)+strlen(sep)+strlen(sym)+1);
                 sprintf(embedded_function_name.data, "%s%s%s", prefix, sep, sym);
-                
+
+                INITAOT(&AO, CONSTANT_OT);
                 AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
-                AO.type = CONSTANT_OT; 
                 AO.marker = IROUTINE_MV;
 
                 directives.enabled = FALSE;
@@ -1524,8 +1524,8 @@ the names '%s' and '%s' actually refer to the same property",
         if (length == 0)
         {
             assembly_operand AO;
+            INITAOT(&AO, CONSTANT_OT);            
             AO.value = 0;
-            AO.type = CONSTANT_OT;
             AO.marker = 0;
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
