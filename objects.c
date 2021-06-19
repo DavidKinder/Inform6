@@ -551,6 +551,8 @@ so many values that the list has overflowed the maximum 32 entries");
                     a new property added to full_object                      */
 
                 k=full_object.l++;
+                if (k >= 64)
+                    fatalerror("More than 64 property entries in an object");
                 full_object.pp[k].num = prop_number;
                 full_object.pp[k].l = prop_length/2;
                 for (i=0; i<prop_length/2; i++)
@@ -1082,7 +1084,10 @@ static void properties_segment_z(int this_segment)
             defined_this_segment[def_t_s++] = token_value;
 
             if (individual_prop_table_size++ == 0)
-            {   full_object.pp[full_object.l].num = 3;
+            {
+                if (full_object.l >= 64)
+                    fatalerror("More than 64 property entries in an object");
+                full_object.pp[full_object.l].num = 3;
                 full_object.pp[full_object.l].l = 1;
                 INITAOTV(&full_object.pp[full_object.l].ao[0], LONG_CONSTANT_OT, individuals_length);
                 full_object.pp[full_object.l].ao[0].marker = INDIVPT_MV;
@@ -1113,6 +1118,8 @@ not 'private':", token_text);
             property_number = symbols[token_value].value;
 
             next_prop=full_object.l++;
+            if (next_prop >= 64)
+                fatalerror("More than 64 property entries in an object");
             full_object.pp[next_prop].num = property_number;
         }
 
