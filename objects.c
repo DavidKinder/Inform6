@@ -1510,6 +1510,7 @@ the names '%s' and '%s' actually refer to the same property",
         {
             assembly_operand AO;
             INITAOTV(&AO, CONSTANT_OT, 0);
+            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize+1);
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
         }
