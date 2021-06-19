@@ -802,9 +802,9 @@ typedef struct propg {
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
     int numprops;
-    propg *props;
+    propg *props;               /* managed by g_props_memlist */
     int propdatasize;
-    assembly_operand *propdata;
+    assembly_operand *propdata; /* managed by g_propdata_memlist */
     int32 finalpropaddr;
 } fproptg;
 

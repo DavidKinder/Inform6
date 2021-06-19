@@ -36,6 +36,10 @@ static fproptg full_object_g;          /* Equivalent for Glulx. This object
                                           is very small, since the large arrays
                                           are allocated dynamically by the
                                           Glulx compiler                     */
+
+static memory_list g_props_memlist;    /* Memory-list handlers for parts     */
+static memory_list g_propdata_memlist; /* of full_object_g                   */
+
 static char shortname_buffer[766];     /* Text buffer to hold the short name
                                           (which is read in first, but
                                           written almost last)               */
@@ -2249,11 +2253,12 @@ extern void objects_allocate_arrays(void)
       initialise_memory_list(&objectatts_memlist,
           NUM_ATTR_BYTES, 256, (void**)&objectatts,
           "g-attributes");
-      full_object_g.props = my_calloc(sizeof(propg), MAX_OBJ_PROP_COUNT,
-                              "object property list");
-      full_object_g.propdata = my_calloc(sizeof(assembly_operand),
-                                 MAX_OBJ_PROP_TABLE_SIZE,
-                                 "object property data table");
+      initialise_memory_list(&g_props_memlist,
+          sizeof(propg), MAX_OBJ_PROP_COUNT, (void**)&full_object_g.props,
+          "object property list");
+      initialise_memory_list(&g_propdata_memlist,
+          sizeof(assembly_operand), MAX_OBJ_PROP_TABLE_SIZE, (void**)&full_object_g.propdata,
+          "object property data table");
     }
 }
 
@@ -2277,8 +2282,8 @@ extern void objects_free_arrays(void)
     my_free(&defined_this_segment,"defined this segment table");
 
     if (!glulx_mode) {
-        my_free(&full_object_g.props, "object property list");
-        my_free(&full_object_g.propdata, "object property data table");
+        deallocate_memory_list(&g_props_memlist);
+        deallocate_memory_list(&g_propdata_memlist);
     }
     
 }
