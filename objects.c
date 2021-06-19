@@ -1085,15 +1085,15 @@ static void properties_segment_z(int this_segment)
 
             if (individual_prop_table_size++ == 0)
             {
-                if (full_object.l >= 64)
+                int k=full_object.l++;
+                if (k >= 64)
                     fatalerror("More than 64 property entries in an object");
-                full_object.pp[full_object.l].num = 3;
-                full_object.pp[full_object.l].l = 1;
-                INITAOTV(&full_object.pp[full_object.l].ao[0], LONG_CONSTANT_OT, individuals_length);
-                full_object.pp[full_object.l].ao[0].marker = INDIVPT_MV;
+                full_object.pp[k].num = 3;
+                full_object.pp[k].l = 1;
+                INITAOTV(&full_object.pp[k].ao[0], LONG_CONSTANT_OT, individuals_length);
+                full_object.pp[k].ao[0].marker = INDIVPT_MV;
 
                 i_m = individuals_length;
-                full_object.l++;
             }
             ensure_memory_list_available(&individuals_table_memlist, i_m+3);
             individuals_table[i_m] = this_identifier_number/256;
