@@ -680,6 +680,7 @@ static void property_inheritance_g(void)
             }
           }
           k = full_object_g.numprops++;
+          ensure_memory_list_available(&g_props_memlist, k+1);
           full_object_g.props[k].num = prop_number;
           full_object_g.props[k].flags = 0;
           full_object_g.props[k].datastart = full_object_g.propdatasize;
@@ -707,6 +708,7 @@ static void property_inheritance_g(void)
                 defined at all in full_object_g: we copy out the data into
                 a new property added to full_object_g. */
             k = full_object_g.numprops++;
+            ensure_memory_list_available(&g_props_memlist, k+1);
             full_object_g.props[k].num = prop_number;
             full_object_g.props[k].flags = prop_flags;
             full_object_g.props[k].datastart = full_object_g.propdatasize;
@@ -724,9 +726,6 @@ static void property_inheritance_g(void)
             }
           }
 
-          if (full_object_g.numprops == MAX_OBJ_PROP_COUNT) {
-            memoryerror("MAX_OBJ_PROP_COUNT",MAX_OBJ_PROP_COUNT);
-          }
     }
   }
   
@@ -1358,6 +1357,7 @@ static void properties_segment_g(int this_segment)
             property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
+            ensure_memory_list_available(&g_props_memlist, next_prop+1);
             full_object_g.props[next_prop].num = property_number;
             full_object_g.props[next_prop].flags = 
               ((this_segment == PRIVATE_SEGMENT) ? 1 : 0);
@@ -1380,6 +1380,7 @@ not 'private':", token_text);
             property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
+            ensure_memory_list_available(&g_props_memlist, next_prop+1);
             full_object_g.props[next_prop].num = property_number;
             full_object_g.props[next_prop].flags = 0;
             full_object_g.props[next_prop].datastart = full_object_g.propdatasize;
@@ -1402,10 +1403,6 @@ the names '%s' and '%s' actually refer to the same property",
                     symbols[token_value].name);
                 error(error_b);
             }
-
-        if (full_object_g.numprops == MAX_OBJ_PROP_COUNT) {
-          memoryerror("MAX_OBJ_PROP_COUNT",MAX_OBJ_PROP_COUNT);
-        }
 
         property_name_symbol = token_value;
         symbols[token_value].flags |= USED_SFLAG;
@@ -1826,6 +1823,7 @@ inconvenience, please contact the maintainers.");
     }
     else {
       full_object_g.numprops = 1;
+      ensure_memory_list_available(&g_props_memlist, 1);
       full_object_g.props[0].num = 2;
       full_object_g.props[0].flags = 0;
       full_object_g.props[0].datastart = 0;
@@ -2254,7 +2252,7 @@ extern void objects_allocate_arrays(void)
           NUM_ATTR_BYTES, 256, (void**)&objectatts,
           "g-attributes");
       initialise_memory_list(&g_props_memlist,
-          sizeof(propg), MAX_OBJ_PROP_COUNT, (void**)&full_object_g.props,
+          sizeof(propg), 64, (void**)&full_object_g.props,
           "object property list");
       initialise_memory_list(&g_propdata_memlist,
           sizeof(assembly_operand), MAX_OBJ_PROP_TABLE_SIZE, (void**)&full_object_g.propdata,
