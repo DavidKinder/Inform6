@@ -1822,6 +1822,7 @@ inconvenience, please contact the maintainers.");
       full_object_g.props[0].continuation = 0;
       full_object_g.props[0].datalen = 1;
       full_object_g.propdatasize = 1;
+      ensure_memory_list_available(&g_propdata_memlist, 1);
       INITAOTV(&full_object_g.propdata[0], CONSTANT_OT, no_objects + 1);
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
