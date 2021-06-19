@@ -686,11 +686,8 @@ static void property_inheritance_g(void)
           full_object_g.props[k].datastart = full_object_g.propdatasize;
           full_object_g.props[k].continuation = prevcont+1;
           full_object_g.props[k].datalen = prop_length;
-          if (full_object_g.propdatasize + prop_length 
-            > MAX_OBJ_PROP_TABLE_SIZE) {
-            memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
-          }
-
+          
+          ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize + prop_length);
           for (i=0; i<prop_length; i++) {
             int ppos = full_object_g.propdatasize++;
             INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
@@ -714,11 +711,8 @@ static void property_inheritance_g(void)
             full_object_g.props[k].datastart = full_object_g.propdatasize;
             full_object_g.props[k].continuation = 0;
             full_object_g.props[k].datalen = prop_length;
-            if (full_object_g.propdatasize + prop_length 
-              > MAX_OBJ_PROP_TABLE_SIZE) {
-              memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
-            }
 
+            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize + prop_length);
             for (i=0; i<prop_length; i++) {
               int ppos = full_object_g.propdatasize++;
               INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
@@ -1497,9 +1491,7 @@ the names '%s' and '%s' actually refer to the same property",
                 break;
             }
 
-            if (full_object_g.propdatasize >= MAX_OBJ_PROP_TABLE_SIZE) {
-              memoryerror("MAX_OBJ_PROP_TABLE_SIZE",MAX_OBJ_PROP_TABLE_SIZE);
-            }
+            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize+1);
 
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
@@ -2255,7 +2247,7 @@ extern void objects_allocate_arrays(void)
           sizeof(propg), 64, (void**)&full_object_g.props,
           "object property list");
       initialise_memory_list(&g_propdata_memlist,
-          sizeof(assembly_operand), MAX_OBJ_PROP_TABLE_SIZE, (void**)&full_object_g.propdata,
+          sizeof(assembly_operand), 1024, (void**)&full_object_g.propdata,
           "object property data table");
     }
 }
