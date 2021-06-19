@@ -480,10 +480,10 @@ static void property_inheritance_z(void)
 so many values that the list has overflowed the maximum 32 entries");
                                 break;
                             }
+                            INITAOT(&full_object.pp[k].ao[i], LONG_CONSTANT_OT);
                             full_object.pp[k].ao[i].value = mark + j;
                             j += 2;
                             full_object.pp[k].ao[i].marker = INHERIT_MV;
-                            full_object.pp[k].ao[i].type = LONG_CONSTANT_OT;
                         }
                         full_object.pp[k].l += prop_length/2;
                     }
@@ -551,10 +551,11 @@ so many values that the list has overflowed the maximum 32 entries");
                 full_object.pp[k].num = prop_number;
                 full_object.pp[k].l = prop_length/2;
                 for (i=0; i<prop_length/2; i++)
-                {   full_object.pp[k].ao[i].value = mark + j;
+                {
+                    INITAOT(&full_object.pp[k].ao[i], LONG_CONSTANT_OT);
+                    full_object.pp[k].ao[i].value = mark + j;
                     j+=2;
                     full_object.pp[k].ao[i].marker = INHERIT_MV;
-                    full_object.pp[k].ao[i].type = LONG_CONSTANT_OT;
                 }
 
                 if (prop_number==3)
@@ -568,10 +569,10 @@ so many values that the list has overflowed the maximum 32 entries");
                     if (individual_prop_table_size++ == 0)
                     {   full_object.pp[k].num = 3;
                         full_object.pp[k].l = 1;
+                        INITAOT(&full_object.pp[k].ao[0], LONG_CONSTANT_OT);
                         full_object.pp[k].ao[0].value
                             = individuals_length;
                         full_object.pp[k].ao[0].marker = INDIVPT_MV;
-                        full_object.pp[k].ao[0].type = LONG_CONSTANT_OT;
                         i_m = individuals_length;
                     }
                     class_block_offset = class_prop_block[j-2]*256
@@ -1092,9 +1093,9 @@ static void properties_segment_z(int this_segment)
             if (individual_prop_table_size++ == 0)
             {   full_object.pp[full_object.l].num = 3;
                 full_object.pp[full_object.l].l = 1;
+                INITAOT(&full_object.pp[full_object.l].ao[0], LONG_CONSTANT_OT);
                 full_object.pp[full_object.l].ao[0].value
                     = individuals_length;
-                full_object.pp[full_object.l].ao[0].type = LONG_CONSTANT_OT;
                 full_object.pp[full_object.l].ao[0].marker = INDIVPT_MV;
 
                 i_m = individuals_length;
@@ -1266,8 +1267,9 @@ the names '%s' and '%s' actually refer to the same property",
                 individuals_table[i_m+3+length++] = 0;
             }
             else
-            {   full_object.pp[next_prop].ao[0].value = 0;
-                full_object.pp[next_prop].ao[0].type  = LONG_CONSTANT_OT;
+            {
+                INITAOT(&full_object.pp[next_prop].ao[0], LONG_CONSTANT_OT);
+                full_object.pp[next_prop].ao[0].value = 0;
                 full_object.pp[next_prop].ao[0].marker = 0;
                 length = 2;
             }
@@ -1827,8 +1829,8 @@ inconvenience, please contact the maintainers.");
       full_object.l = 1;
       full_object.pp[0].num = 2;
       full_object.pp[0].l = 1;
+      INITAOT(&full_object.pp[0].ao[0], LONG_CONSTANT_OT);
       full_object.pp[0].ao[0].value  = no_objects + 1;
-      full_object.pp[0].ao[0].type   = LONG_CONSTANT_OT;
       full_object.pp[0].ao[0].marker = OBJECT_MV;
     }
     else {
@@ -1839,8 +1841,8 @@ inconvenience, please contact the maintainers.");
       full_object_g.props[0].continuation = 0;
       full_object_g.props[0].datalen = 1;
       full_object_g.propdatasize = 1;
+      INITAOT(&full_object_g.propdata[0], CONSTANT_OT);
       full_object_g.propdata[0].value  = no_objects + 1;
-      full_object_g.propdata[0].type   = CONSTANT_OT;
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
 
