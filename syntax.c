@@ -256,8 +256,10 @@ static int switch_sign(void)
     return 0;
 }
 
-static assembly_operand spec_stack[32];
-static int spec_type[32];
+/* Info for the current switch statement. Both arrays indexed by spec_sp */
+#define MAX_SPEC_STACK (32)
+static assembly_operand spec_stack[MAX_SPEC_STACK];
+static int spec_type[MAX_SPEC_STACK];
 
 static void compile_alternatives_z(assembly_operand switch_value, int n,
     int stack_level, int label, int flag)
@@ -311,7 +313,7 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
     sequence_point_follows = FALSE;
 
     do
-    {   if (spec_sp == 32)
+    {   if (spec_sp >= MAX_SPEC_STACK)
         {   error("At most 32 values can be given in a single 'switch' case");
             panic_mode_error_recovery();
             return;
