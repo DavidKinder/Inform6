@@ -34,8 +34,8 @@ static fpropt full_object;             /* "fpropt" is a typedef for a struct
                                           sizeof(fpropt) is about 6200 bytes */
 static fproptg full_object_g;          /* Equivalent for Glulx. This object
                                           is very small, since the large arrays
-                                          are allocated dynamically by the
-                                          Glulx compiler                     */
+                                          are allocated dynamically as
+                                          memory-lists                       */
 
 static memory_list g_props_memlist;    /* Memory-list handlers for parts     */
 static memory_list g_propdata_memlist; /* of full_object_g                   */
