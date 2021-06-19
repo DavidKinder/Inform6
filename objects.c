@@ -1130,7 +1130,7 @@ not 'private':", token_text);
             }
             else
             if (symbols[defined_this_segment[i]].value == symbols[token_value].value)
-            {   char error_b[128];
+            {   char error_b[128+2*MAX_IDENTIFIER_LENGTH];
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
@@ -1396,7 +1396,7 @@ not 'private':", token_text);
             }
             else
             if (symbols[defined_this_segment[i]].value == symbols[token_value].value)
-            {   char error_b[128];
+            {   char error_b[128+2*MAX_IDENTIFIER_LENGTH];
                 sprintf(error_b,
                     "Property given twice in the same declaration, because \
 the names '%s' and '%s' actually refer to the same property",
