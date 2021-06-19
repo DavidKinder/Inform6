@@ -480,8 +480,7 @@ static void property_inheritance_z(void)
 so many values that the list has overflowed the maximum 32 entries");
                                 break;
                             }
-                            INITAOT(&full_object.pp[k].ao[i], LONG_CONSTANT_OT);
-                            full_object.pp[k].ao[i].value = mark + j;
+                            INITAOTV(&full_object.pp[k].ao[i], LONG_CONSTANT_OT, mark + j);
                             j += 2;
                             full_object.pp[k].ao[i].marker = INHERIT_MV;
                         }
@@ -552,8 +551,7 @@ so many values that the list has overflowed the maximum 32 entries");
                 full_object.pp[k].l = prop_length/2;
                 for (i=0; i<prop_length/2; i++)
                 {
-                    INITAOT(&full_object.pp[k].ao[i], LONG_CONSTANT_OT);
-                    full_object.pp[k].ao[i].value = mark + j;
+                    INITAOTV(&full_object.pp[k].ao[i], LONG_CONSTANT_OT, mark + j);
                     j+=2;
                     full_object.pp[k].ao[i].marker = INHERIT_MV;
                 }
@@ -569,9 +567,7 @@ so many values that the list has overflowed the maximum 32 entries");
                     if (individual_prop_table_size++ == 0)
                     {   full_object.pp[k].num = 3;
                         full_object.pp[k].l = 1;
-                        INITAOT(&full_object.pp[k].ao[0], LONG_CONSTANT_OT);
-                        full_object.pp[k].ao[0].value
-                            = individuals_length;
+                        INITAOTV(&full_object.pp[k].ao[0], LONG_CONSTANT_OT, individuals_length);
                         full_object.pp[k].ao[0].marker = INDIVPT_MV;
                         i_m = individuals_length;
                     }
@@ -692,8 +688,7 @@ static void property_inheritance_g(void)
 
           for (i=0; i<prop_length; i++) {
             int ppos = full_object_g.propdatasize++;
-            INITAOT(&full_object_g.propdata[ppos], CONSTANT_OT);
-            full_object_g.propdata[ppos].value = prop_addr + 4*i;
+            INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
             full_object_g.propdata[ppos].marker = INHERIT_MV;
           }
         }
@@ -720,8 +715,7 @@ static void property_inheritance_g(void)
 
             for (i=0; i<prop_length; i++) {
               int ppos = full_object_g.propdatasize++;
-              INITAOT(&full_object_g.propdata[ppos], CONSTANT_OT);
-              full_object_g.propdata[ppos].value = prop_addr + 4*i;
+              INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
               full_object_g.propdata[ppos].marker = INHERIT_MV; 
             }
           }
@@ -1093,9 +1087,7 @@ static void properties_segment_z(int this_segment)
             if (individual_prop_table_size++ == 0)
             {   full_object.pp[full_object.l].num = 3;
                 full_object.pp[full_object.l].l = 1;
-                INITAOT(&full_object.pp[full_object.l].ao[0], LONG_CONSTANT_OT);
-                full_object.pp[full_object.l].ao[0].value
-                    = individuals_length;
+                INITAOTV(&full_object.pp[full_object.l].ao[0], LONG_CONSTANT_OT, individuals_length);
                 full_object.pp[full_object.l].ao[0].marker = INDIVPT_MV;
 
                 i_m = individuals_length;
@@ -1268,9 +1260,7 @@ the names '%s' and '%s' actually refer to the same property",
             }
             else
             {
-                INITAOT(&full_object.pp[next_prop].ao[0], LONG_CONSTANT_OT);
-                full_object.pp[next_prop].ao[0].value = 0;
-                full_object.pp[next_prop].ao[0].marker = 0;
+                INITAOTV(&full_object.pp[next_prop].ao[0], LONG_CONSTANT_OT, 0);
                 length = 2;
             }
         }
@@ -1526,9 +1516,7 @@ the names '%s' and '%s' actually refer to the same property",
         if (length == 0)
         {
             assembly_operand AO;
-            INITAOT(&AO, CONSTANT_OT);            
-            AO.value = 0;
-            AO.marker = 0;
+            INITAOTV(&AO, CONSTANT_OT, 0);
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
         }
@@ -1829,8 +1817,7 @@ inconvenience, please contact the maintainers.");
       full_object.l = 1;
       full_object.pp[0].num = 2;
       full_object.pp[0].l = 1;
-      INITAOT(&full_object.pp[0].ao[0], LONG_CONSTANT_OT);
-      full_object.pp[0].ao[0].value  = no_objects + 1;
+      INITAOTV(&full_object.pp[0].ao[0], LONG_CONSTANT_OT, no_objects + 1);
       full_object.pp[0].ao[0].marker = OBJECT_MV;
     }
     else {
@@ -1841,8 +1828,7 @@ inconvenience, please contact the maintainers.");
       full_object_g.props[0].continuation = 0;
       full_object_g.props[0].datalen = 1;
       full_object_g.propdatasize = 1;
-      INITAOT(&full_object_g.propdata[0], CONSTANT_OT);
-      full_object_g.propdata[0].value  = no_objects + 1;
+      INITAOTV(&full_object_g.propdata[0], CONSTANT_OT, no_objects + 1);
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
 
