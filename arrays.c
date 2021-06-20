@@ -35,6 +35,9 @@
 /*   a separate allocation of MAX_STATIC_DATA bytes.                         */
 /* ------------------------------------------------------------------------- */
 uchar   *dynamic_array_area;           /* See above                          */
+static memory_list dynamic_array_area_memlist;
+int dynamic_array_area_size;           /* Size in bytes                      */
+
 int32   *global_initial_value;
 
 int no_globals;                        /* Number of global variables used
@@ -44,9 +47,8 @@ int no_globals;                        /* Number of global variables used
                                        /* In Glulx, Inform uses the bottom 
                                           ten.                               */
 
-int dynamic_array_area_size;           /* Size in bytes                      */
-
 uchar   *static_array_area;
+static memory_list static_array_area_memlist;
 int static_array_area_size;
 
 int no_arrays;
@@ -130,25 +132,25 @@ extern void finish_array(int32 i, int is_static)
 
 }
 
+/* Fill in array entry i (in either the static or dynamic area). */
 extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 {
   uchar *area;
   int area_size;
   
   if (!is_static) {
+      ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size+(i+1)*array_entry_size);
       area = dynamic_array_area;
       area_size = dynamic_array_area_size;
   }
   else {
+      ensure_memory_list_available(&static_array_area_memlist, static_array_area_size+(i+1)*array_entry_size);
       area = static_array_area;
       area_size = static_array_area_size;
   }
   
   if (!glulx_mode) {
     /*  Array entry i (initial entry has i=0) is set to Z-machine value j    */
-
-    if (area_size+(i+1)*array_entry_size > MAX_STATIC_DATA)
-        memoryerror("MAX_STATIC_DATA", MAX_STATIC_DATA);
 
     if (array_entry_size==1)
     {   area[area_size+i] = (VAL.value)%256;
@@ -181,9 +183,6 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
   }
   else {
     /*  Array entry i (initial entry has i=0) is set to value j              */
-
-    if (area_size+(i+1)*array_entry_size > MAX_STATIC_DATA)
-        memoryerror("MAX_STATIC_DATA", MAX_STATIC_DATA);
 
     if (array_entry_size==1)
     {   area[area_size+i] = (VAL.value) & 0xFF;
@@ -754,9 +753,12 @@ extern void arrays_begin_pass(void)
 }
 
 extern void arrays_allocate_arrays(void)
-{   dynamic_array_area = my_calloc(sizeof(uchar), MAX_STATIC_DATA, 
+{
+    initialise_memory_list(&dynamic_array_area_memlist,
+        sizeof(uchar), 10000, (void**)&dynamic_array_area,
         "dynamic array data");
-    static_array_area = my_calloc(sizeof(uchar), MAX_STATIC_DATA, 
+    initialise_memory_list(&static_array_area_memlist,
+        sizeof(uchar), 10000, (void**)&static_array_area,
         "static array data");
     initialise_memory_list(&arrays_memlist,
         sizeof(arrayinfo), 64, (void**)&arrays,
@@ -766,8 +768,9 @@ extern void arrays_allocate_arrays(void)
 }
 
 extern void arrays_free_arrays(void)
-{   my_free(&dynamic_array_area, "dynamic array data");
-    my_free(&static_array_area, "static array data");
+{
+    deallocate_memory_list(&dynamic_array_area_memlist);
+    deallocate_memory_list(&static_array_area_memlist);
     deallocate_memory_list(&arrays_memlist);
     my_free(&global_initial_value, "global values");
 }
