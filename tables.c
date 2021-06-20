@@ -982,11 +982,11 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
             printf("\
 %6d classes                      %6d objects\n\
-%6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
+%6d global vars (maximum 233)    %6d variable/array space\n",
                  no_classes,
                  no_objects,
                  no_globals,
-                 dynamic_array_area_size, MAX_STATIC_DATA);
+                 dynamic_array_area_size);
 
             printf(
 "%6d verbs (maximum %3d)          %6d dictionary entries (maximum %d)\n\
@@ -1672,11 +1672,11 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
             printf("\
 %6d classes                      %6d objects\n\
-%6d global vars (maximum %3d)    %6d variable/array space (maximum %d)\n",
+%6d global vars (maximum %3d)    %6d variable/array space\n",
                  no_classes,
                  no_objects,
                  no_globals, MAX_GLOBAL_VARIABLES,
-                 dynamic_array_area_size, MAX_STATIC_DATA);
+                 dynamic_array_area_size);
 
             printf(
 "%6d verbs (maximum %3d)          %6d dictionary entries (maximum %d)\n\
