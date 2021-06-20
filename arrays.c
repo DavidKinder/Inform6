@@ -753,7 +753,12 @@ extern void arrays_begin_pass(void)
         no_globals=0; 
     else
         no_globals=11;
+
+    /* This initial global-variable area isn't used, but the compiler
+       is set up for it. */
     dynamic_array_area_size = WORDSIZE * MAX_GLOBAL_VARIABLES;
+    ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size);
+    
     static_array_area_size = 0;
 }
 
