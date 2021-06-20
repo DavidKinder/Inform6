@@ -129,7 +129,9 @@ extern void finish_array(int32 i, int is_static)
 
 }
 
-/* Fill in array entry i (in either the static or dynamic area). */
+/* Fill in array entry i (in either the static or dynamic area).
+   When this is called, foo_array_area_size is the end of the previous
+   array; we're writing after that. */
 extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 {
   uchar *area;
