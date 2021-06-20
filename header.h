@@ -2154,9 +2154,9 @@ extern void verbs_free_arrays(void);
 
 extern int no_globals, no_arrays;
 extern int dynamic_array_area_size;
-extern int *dynamic_array_area;
+extern uchar *dynamic_array_area;
 extern int static_array_area_size;
-extern int *static_array_area;
+extern uchar *static_array_area;
 extern int32 *global_initial_value;
 extern arrayinfo *arrays;
 

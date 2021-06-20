@@ -13,9 +13,9 @@
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
-/*    int    dynamic_array_area[]         Initial values for the bytes of    */
+/*    uchar  dynamic_array_area[]         Initial values for the bytes of    */
 /*                                        the dynamic array area             */
-/*    int    static_array_area[]          Initial values for the bytes of    */
+/*    uchar  static_array_area[]          Initial values for the bytes of    */
 /*                                        the static array area              */
 /*    int32  global_initial_value[n]      The initialised value of the nth   */
 /*                                        global variable (counting 0 - 239) */
@@ -34,7 +34,7 @@
 /*   The storage for these goes, unsurprisingly, into static_array_area --   */
 /*   a separate allocation of MAX_STATIC_DATA bytes.                         */
 /* ------------------------------------------------------------------------- */
-int     *dynamic_array_area;           /* See above                          */
+uchar   *dynamic_array_area;           /* See above                          */
 int32   *global_initial_value;
 
 int no_globals;                        /* Number of global variables used
@@ -46,7 +46,7 @@ int no_globals;                        /* Number of global variables used
 
 int dynamic_array_area_size;           /* Size in bytes                      */
 
-int     *static_array_area;
+uchar   *static_array_area;
 int static_array_area_size;
 
 int no_arrays;
@@ -67,7 +67,7 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
 
 extern void finish_array(int32 i, int is_static)
 {
-  int *area;
+  uchar *area;
   int area_size;
   
   if (!is_static) {
@@ -132,7 +132,7 @@ extern void finish_array(int32 i, int is_static)
 
 extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 {
-  int *area;
+  uchar *area;
   int area_size;
   
   if (!is_static) {
@@ -754,9 +754,9 @@ extern void arrays_begin_pass(void)
 }
 
 extern void arrays_allocate_arrays(void)
-{   dynamic_array_area = my_calloc(sizeof(int), MAX_STATIC_DATA, 
+{   dynamic_array_area = my_calloc(sizeof(uchar), MAX_STATIC_DATA, 
         "dynamic array data");
-    static_array_area = my_calloc(sizeof(int), MAX_STATIC_DATA, 
+    static_array_area = my_calloc(sizeof(uchar), MAX_STATIC_DATA, 
         "static array data");
     initialise_memory_list(&arrays_memlist,
         sizeof(arrayinfo), 64, (void**)&arrays,
