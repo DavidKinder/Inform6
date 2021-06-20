@@ -50,6 +50,8 @@ int     *static_array_area;
 int static_array_area_size;
 
 int no_arrays;
+arrayinfo *arrays;
+static memory_list arrays_memlist;
 int32   *array_symbols;
 int     *array_sizes, *array_types, *array_locs;
 /* array_sizes[N] gives the length of array N; array_types[N] is one of
@@ -762,6 +764,9 @@ extern void arrays_allocate_arrays(void)
         "dynamic array data");
     static_array_area = my_calloc(sizeof(int), MAX_STATIC_DATA, 
         "static array data");
+    initialise_memory_list(&arrays_memlist,
+        sizeof(arrayinfo), 64, (void**)&arrays,
+        "array info");
     array_sizes = my_calloc(sizeof(int), MAX_ARRAYS, "array sizes");
     array_types = my_calloc(sizeof(int), MAX_ARRAYS, "array types");
     array_locs = my_calloc(sizeof(int), MAX_ARRAYS, "array locations");
@@ -773,6 +778,7 @@ extern void arrays_allocate_arrays(void)
 extern void arrays_free_arrays(void)
 {   my_free(&dynamic_array_area, "dynamic array data");
     my_free(&static_array_area, "static array data");
+    deallocate_memory_list(&arrays_memlist);
     my_free(&global_initial_value, "global values");
     my_free(&array_sizes, "array sizes");
     my_free(&array_types, "array types");

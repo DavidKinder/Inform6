@@ -900,6 +900,13 @@ typedef struct symboldebuginfo_s {
     maybe_file_position replacement_backpatch_pos;
 } symboldebuginfo;
 
+typedef struct arrayinfo_s {
+    int32 symbol; /* index in symbols[] */
+    int size;     /* length of array */
+    int type;     /* BYTE_ARRAY, WORD_ARRAY, etc */
+    int loc;      /* true for static, false for dynamic (regular) arrays */
+} arrayinfo;
+
 typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
@@ -2151,6 +2158,7 @@ extern int *dynamic_array_area;
 extern int static_array_area_size;
 extern int *static_array_area;
 extern int32 *global_initial_value;
+extern arrayinfo *arrays;
 extern int32 *array_symbols;
 extern int  *array_sizes, *array_types, *array_locs;
 
