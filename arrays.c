@@ -22,17 +22,14 @@
 /*                                                                           */
 /*   The "dynamic array area" is the Z-machine area holding the current      */
 /*   values of the global variables (in 240x2 = 480 bytes) followed by any   */
-/*   (dynamic) arrays which may be defined.  Owing to a poor choice of name  */
-/*   some years ago, this is also called the "static data area", which is    */
-/*   why the memory setting for its maximum extent is "MAX_STATIC_DATA".     */
+/*   (dynamic) arrays which may be defined.                                  */
 /*                                                                           */
 /*   In Glulx, that 240 is changed to MAX_GLOBAL_VAR_NUMBER, and we take     */
 /*   correspondingly more space for the globals. This *really* ought to be   */
 /*   split into two segments.                                                */
 /*                                                                           */
 /*   We can also store arrays (but not globals) into static memory (ROM).    */
-/*   The storage for these goes, unsurprisingly, into static_array_area --   */
-/*   a separate allocation of MAX_STATIC_DATA bytes.                         */
+/*   The storage for these goes, unsurprisingly, into static_array_area.     */
 /* ------------------------------------------------------------------------- */
 uchar   *dynamic_array_area;           /* See above                          */
 static memory_list dynamic_array_area_memlist;
