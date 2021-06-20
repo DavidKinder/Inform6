@@ -453,13 +453,13 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
 
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
-        {   if (((AO1.marker == ARRAY_MV) == (!array_locs[x]))
-                && (AO1.value == symbols[array_symbols[x]].value))
-            {   size_ao.value = array_sizes[x]; y=x;
+        {   if (((AO1.marker == ARRAY_MV) == (!arrays[x].loc))
+                && (AO1.value == symbols[arrays[x].symbol].value))
+            {   size_ao.value = arrays[x].size; y=x;
             }
         }
         
-        if (array_locs[y] && !read_flag) {
+        if (arrays[y].loc && !read_flag) {
             error("Cannot write to a static array");
         }
 
@@ -467,19 +467,19 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
             from_module=TRUE;
         else {
             from_module=FALSE;
-            type_ao = zero_ao; type_ao.value = array_types[y];
+            type_ao = zero_ao; type_ao.value = arrays[y].type;
 
             if ((!is_systemfile()))
             {   if (byte_flag)
                 {
-                    if ((array_types[y] == WORD_ARRAY)
-                        || (array_types[y] == TABLE_ARRAY))
+                    if ((arrays[y].type == WORD_ARRAY)
+                        || (arrays[y].type == TABLE_ARRAY))
                         warning("Using '->' to access a --> or table array");
                 }
                 else
                 {
-                    if ((array_types[y] == BYTE_ARRAY)
-                        || (array_types[y] == STRING_ARRAY))
+                    if ((arrays[y].type == BYTE_ARRAY)
+                        || (arrays[y].type == STRING_ARRAY))
                     warning("Using '-->' to access a -> or string array");
                 }
             }
@@ -507,15 +507,15 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         max_ao = size_ao;
 
         if (byte_flag
-            && ((array_types[y] == WORD_ARRAY)
-                || (array_types[y] == TABLE_ARRAY)))
+            && ((arrays[y].type == WORD_ARRAY)
+                || (arrays[y].type == TABLE_ARRAY)))
         {   max_ao.value = size_ao.value*2 + 1;
             type_ao.value += 8;
         }
         if ((!byte_flag)
-            && ((array_types[y] == BYTE_ARRAY)
-                || (array_types[y] == STRING_ARRAY) 
-                || (array_types[y] == BUFFER_ARRAY)))
+            && ((arrays[y].type == BYTE_ARRAY)
+                || (arrays[y].type == STRING_ARRAY) 
+                || (arrays[y].type == BUFFER_ARRAY)))
         {   if ((size_ao.value % 2) == 0)
                  max_ao.value = size_ao.value/2 - 1;
             else max_ao.value = (size_ao.value-1)/2;
@@ -527,10 +527,10 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         if (max_ao.value >= 256) max_ao.type = LONG_CONSTANT_OT;
 
         /* Can't write to the size entry in a string or table */
-        if (((array_types[y] == STRING_ARRAY)
-             || (array_types[y] == TABLE_ARRAY))
+        if (((arrays[y].type == STRING_ARRAY)
+             || (arrays[y].type == TABLE_ARRAY))
             && (!read_flag))
-        {   if ((array_types[y] == TABLE_ARRAY) && byte_flag)
+        {   if ((arrays[y].type == TABLE_ARRAY) && byte_flag)
                 zero_ao.value = 2;
             else zero_ao.value = 1;
         }
@@ -818,30 +818,30 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     {   
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
-        {   if (((AO1.marker == ARRAY_MV) == (!array_locs[x]))
-                && (AO1.value == symbols[array_symbols[x]].value))
-            {   size_ao.value = array_sizes[x]; y=x;
+        {   if (((AO1.marker == ARRAY_MV) == (!arrays[x].loc))
+                && (AO1.value == symbols[arrays[x].symbol].value))
+            {   size_ao.value = arrays[x].size; y=x;
             }
         }
         if (size_ao.value==-1) compiler_error("Array size can't be found");
 
-        type_ao = zero_ao; type_ao.value = array_types[y];
+        type_ao = zero_ao; type_ao.value = arrays[y].type;
 
-        if (array_locs[y] && !read_flag) {
+        if (arrays[y].loc && !read_flag) {
             error("Cannot write to a static array");
         }
 
         if ((!is_systemfile()))
         {   if (data_len == 1)
             {
-                if ((array_types[y] == WORD_ARRAY)
-                    || (array_types[y] == TABLE_ARRAY))
+                if ((arrays[y].type == WORD_ARRAY)
+                    || (arrays[y].type == TABLE_ARRAY))
                     warning("Using '->' to access a --> or table array");
             }
             else
             {
-                if ((array_types[y] == BYTE_ARRAY)
-                    || (array_types[y] == STRING_ARRAY))
+                if ((arrays[y].type == BYTE_ARRAY)
+                    || (arrays[y].type == STRING_ARRAY))
                  warning("Using '-->' to access a -> or string array");
             }
         }
@@ -863,25 +863,25 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
            Here "size_ao.value" = largest permitted entry of its own kind */
         max_ao = size_ao;
         if (data_len == 1
-            && ((array_types[y] == WORD_ARRAY)
-                || (array_types[y] == TABLE_ARRAY)))
+            && ((arrays[y].type == WORD_ARRAY)
+                || (arrays[y].type == TABLE_ARRAY)))
         {   max_ao.value = size_ao.value*4 + 3;
             type_ao.value += 8;
         }
         if (data_len == 4
-            && ((array_types[y] == BYTE_ARRAY)
-                || (array_types[y] == STRING_ARRAY)
-                || (array_types[y] == BUFFER_ARRAY)))
+            && ((arrays[y].type == BYTE_ARRAY)
+                || (arrays[y].type == STRING_ARRAY)
+                || (arrays[y].type == BUFFER_ARRAY)))
         {   max_ao.value = (size_ao.value-3)/4;
             type_ao.value += 16;
         }
         max_ao.value++;
 
         /* Can't write to the size entry in a string or table */
-        if (((array_types[y] == STRING_ARRAY)
-             || (array_types[y] == TABLE_ARRAY))
+        if (((arrays[y].type == STRING_ARRAY)
+             || (arrays[y].type == TABLE_ARRAY))
             && (!read_flag))
-        {   if ((array_types[y] == TABLE_ARRAY) && data_len == 1)
+        {   if ((arrays[y].type == TABLE_ARRAY) && data_len == 1)
                 zero_ao.value = 4;
             else zero_ao.value = 1;
         }

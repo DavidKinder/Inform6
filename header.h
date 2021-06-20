@@ -2159,8 +2159,6 @@ extern int static_array_area_size;
 extern int *static_array_area;
 extern int32 *global_initial_value;
 extern arrayinfo *arrays;
-extern int32 *array_symbols;
-extern int  *array_sizes, *array_types, *array_locs;
 
 extern void make_global(int array_flag, int name_only);
 extern void set_variable_value(int i, int32 v);

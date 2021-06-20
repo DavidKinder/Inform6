@@ -52,11 +52,6 @@ int static_array_area_size;
 int no_arrays;
 arrayinfo *arrays;
 static memory_list arrays_memlist;
-int32   *array_symbols;
-int     *array_sizes, *array_types, *array_locs;
-/* array_sizes[N] gives the length of array N; array_types[N] is one of
-   the constants BYTE_ARRAY, WORD_ARRAY, etc; array_locs[N] is true for
-   static arrays, false for dynamic arrays.                                  */
 
 static int array_entry_size,           /* 1 for byte array, 2 for word array */
            array_base;                 /* Offset in dynamic array area of the
@@ -347,7 +342,7 @@ extern void make_global(int array_flag, int name_only)
         }
         if (no_arrays == MAX_ARRAYS)
             memoryerror("MAX_ARRAYS", MAX_ARRAYS);
-        array_symbols[no_arrays] = i;
+        arrays[no_arrays].symbol = i;
     }
     else
     {   if (!glulx_mode && no_globals==233)
@@ -526,8 +521,8 @@ extern void make_global(int array_flag, int name_only)
         static_array_area_size += extraspace;
     }
 
-    array_types[no_arrays] = array_type;
-    array_locs[no_arrays] = is_static;
+    arrays[no_arrays].type = array_type;
+    arrays[no_arrays].loc = is_static;
 
     switch(data_type)
     {
@@ -701,7 +696,7 @@ advance as part of 'Zcharacter table':", unicode);
 
     if ((array_type==BYTE_ARRAY) || (array_type==WORD_ARRAY)) i--;
     if (array_type==BUFFER_ARRAY) i+=WORDSIZE-1;
-    array_sizes[no_arrays++] = i;
+    arrays[no_arrays++].size = i;
 }
 
 extern int32 begin_table_array(void)
@@ -746,7 +741,7 @@ extern void init_arrays_vars(void)
 {   dynamic_array_area = NULL;
     static_array_area = NULL;
     global_initial_value = NULL;
-    array_sizes = NULL; array_symbols = NULL; array_types = NULL;
+    arrays = NULL;
 }
 
 extern void arrays_begin_pass(void)
@@ -767,10 +762,6 @@ extern void arrays_allocate_arrays(void)
     initialise_memory_list(&arrays_memlist,
         sizeof(arrayinfo), 64, (void**)&arrays,
         "array info");
-    array_sizes = my_calloc(sizeof(int), MAX_ARRAYS, "array sizes");
-    array_types = my_calloc(sizeof(int), MAX_ARRAYS, "array types");
-    array_locs = my_calloc(sizeof(int), MAX_ARRAYS, "array locations");
-    array_symbols = my_calloc(sizeof(int32), MAX_ARRAYS, "array symbols");
     global_initial_value = my_calloc(sizeof(int32), MAX_GLOBAL_VARIABLES, 
         "global values");
 }
@@ -780,10 +771,6 @@ extern void arrays_free_arrays(void)
     my_free(&static_array_area, "static array data");
     deallocate_memory_list(&arrays_memlist);
     my_free(&global_initial_value, "global values");
-    my_free(&array_sizes, "array sizes");
-    my_free(&array_types, "array types");
-    my_free(&array_locs, "array locations");
-    my_free(&array_symbols, "array sizes");
 }
 
 /* ========================================================================= */
