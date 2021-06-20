@@ -748,16 +748,25 @@ extern void init_arrays_vars(void)
 }
 
 extern void arrays_begin_pass(void)
-{   no_arrays = 0; 
+{
+    int ix;
+    
+    no_arrays = 0; 
     if (!glulx_mode)
         no_globals=0; 
     else
         no_globals=11;
 
-    /* This initial global-variable area isn't used, but the compiler
-       is set up for it. */
+    /* This initial segment of dynamic_array_area is never used. It's
+       notionally space for the global variables, but that data is
+       kept in the global_initial_value array. Nonethless, all the
+       compiler math is set up with the idea that arrays start at
+       WORDSIZE * MAX_GLOBAL_VARIABLES, so we need the blank segment.
+    */
     dynamic_array_area_size = WORDSIZE * MAX_GLOBAL_VARIABLES;
     ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size);
+    for (ix=0; ix<WORDSIZE * MAX_GLOBAL_VARIABLES; ix++)
+        dynamic_array_area[ix] = 0;
     
     static_array_area_size = 0;
 }
