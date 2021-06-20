@@ -32,7 +32,7 @@
 /*   The storage for these goes, unsurprisingly, into static_array_area.     */
 /* ------------------------------------------------------------------------- */
 uchar   *dynamic_array_area;           /* See above                          */
-static memory_list dynamic_array_area_memlist;
+memory_list dynamic_array_area_memlist;
 int dynamic_array_area_size;           /* Size in bytes                      */
 
 int32   *global_initial_value;
@@ -45,7 +45,7 @@ int no_globals;                        /* Number of global variables used
                                           ten.                               */
 
 uchar   *static_array_area;
-static memory_list static_array_area_memlist;
+memory_list static_array_area_memlist;
 int static_array_area_size;
 
 int no_arrays;
