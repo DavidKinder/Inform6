@@ -64,16 +64,21 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
                                        /* In Glulx, of course, that will be
                                           4 instead of 2.                    */
 
+/* Complete the array. Fill in the size field (if it has one) and 
+   advance foo_array_area_size.
+*/
 extern void finish_array(int32 i, int is_static)
 {
   uchar *area;
   int area_size;
   
   if (!is_static) {
+      ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size+array_base+1*array_entry_size);
       area = dynamic_array_area;
       area_size = dynamic_array_area_size;
   }
   else {
+      ensure_memory_list_available(&static_array_area_memlist, static_array_area_size+array_base+1*array_entry_size);
       area = static_array_area;
       area_size = static_array_area_size;
   }
@@ -131,7 +136,8 @@ extern void finish_array(int32 i, int is_static)
 
 /* Fill in array entry i (in either the static or dynamic area).
    When this is called, foo_array_area_size is the end of the previous
-   array; we're writing after that. */
+   array; we're writing after that.
+*/
 extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 {
   uchar *area;
