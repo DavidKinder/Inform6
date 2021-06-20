@@ -340,8 +340,7 @@ extern void make_global(int array_flag, int name_only)
         else {
             assign_symbol(i, static_array_area_size, STATIC_ARRAY_T);
         }
-        if (no_arrays == MAX_ARRAYS)
-            memoryerror("MAX_ARRAYS", MAX_ARRAYS);
+        ensure_memory_list_available(&arrays_memlist, no_arrays+1);
         arrays[no_arrays].symbol = i;
     }
     else
