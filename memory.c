@@ -245,7 +245,6 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
-int MAX_ARRAYS;
 int MAX_ACTIONS;
 int MAX_ADJECTIVES;
 int MAX_DICT_ENTRIES;
@@ -303,7 +302,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
     printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
-    printf("|  %25s = %-7d |\n","MAX_ARRAYS",MAX_ARRAYS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
@@ -386,8 +384,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_ARRAYS = 128;
-
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
     }
@@ -418,8 +414,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_ARRAYS = 128;
-
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
     }
@@ -449,8 +443,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_TRANSCRIPT_SIZE = 100000;
         MAX_NUM_STATIC_STRINGS = 10000;
-
-        MAX_ARRAYS = 64;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
@@ -609,11 +601,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
   (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_ARRAYS")==0)
-    {   printf(
-"  MAX_ARRAYS is the maximum number of declared arrays.\n");
         return;
     }
     if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
@@ -967,7 +954,7 @@ extern void memory_command(char *command)
                 MAX_DYNAMIC_STRINGS_g=MAX_DYNAMIC_STRINGS_z=j;
             }
             if (strcmp(command,"MAX_ARRAYS")==0)
-                MAX_ARRAYS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
                 MAX_EXPRESSION_NODES=j, flag=1;
             if (strcmp(command,"MAX_VERBS")==0)
