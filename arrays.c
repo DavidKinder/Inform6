@@ -759,7 +759,7 @@ extern void arrays_begin_pass(void)
 
     /* This initial segment of dynamic_array_area is never used. It's
        notionally space for the global variables, but that data is
-       kept in the global_initial_value array. Nonethless, all the
+       kept in the global_initial_value array. Nonetheless, all the
        compiler math is set up with the idea that arrays start at
        WORDSIZE * MAX_GLOBAL_VARIABLES, so we need the blank segment.
     */
@@ -777,7 +777,7 @@ extern void arrays_allocate_arrays(void)
         sizeof(uchar), 10000, (void**)&dynamic_array_area,
         "dynamic array data");
     initialise_memory_list(&static_array_area_memlist,
-        sizeof(uchar), 10000, (void**)&static_array_area,
+        sizeof(uchar), 0, (void**)&static_array_area,
         "static array data");
     initialise_memory_list(&arrays_memlist,
         sizeof(arrayinfo), 64, (void**)&arrays,
