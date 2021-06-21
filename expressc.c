@@ -703,6 +703,25 @@ static void compile_conditional_z(int oc,
 
     ASSERT_ZCODE(); 
 
+    switch (oc) {
+    case test_attr_zc:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
+        break;
+    case jin_zc:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
+        check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
+        break;
+    case 200:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
+        break;
+    case 201:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
+        break;
+    }
+    
     if (oc<200)
     {   if ((runtime_error_checking_switch) && (oc == jin_zc))
         {   if (flag) error_label = next_label++;
@@ -1103,6 +1122,8 @@ static void compile_conditional_g(condclass *cc,
       switch ((cc-condclasses)*2 + 500) {
 
       case HAS_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
@@ -1181,6 +1202,8 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case IN_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
+        check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
@@ -1195,12 +1218,16 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case OFCLASS_CC:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
         assembleg_call_2(veneer_routine(OC__Cl_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
         AO1 = stack_pointer;
         break;
 
       case PROVIDES_CC:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
         assembleg_call_2(veneer_routine(OP__Pr_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
         AO1 = stack_pointer;
@@ -1672,6 +1699,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_ADD_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
                  assemblez_2_to(get_prop_addr_zc, AO,
@@ -1682,6 +1710,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_NUM_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_NUM_RTE);
                  assemblez_2_to(get_prop_addr_zc, AO,
@@ -1694,25 +1723,28 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_OP:
-             {   assembly_operand AO = ET[below].value;
-
+             {
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                        assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
-                         AO, ET[ET[below].right].value, temp_var1);
+                         ET[below].value, ET[ET[below].right].value, temp_var1);
                  else
-                 assemblez_2_to(get_prop_zc, AO,
+                 assemblez_2_to(get_prop_zc, ET[below].value,
                      ET[ET[below].right].value, temp_var1);
                  if (!void_flag) write_result_z(Result, temp_var1);
              }
              break;
 
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(RV__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_ADD_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              j=1; AI.operand[0] = veneer_routine(RA__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_NUM_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              j=1; AI.operand[0] = veneer_routine(RL__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_SETEQUALS_OP:
@@ -1734,9 +1766,11 @@ static void generate_code_from(int n, int void_flag)
              j=1; AI.operand[0] = veneer_routine(RA__Sc_VR);
              goto GenFunctionCallZ;
         case PROP_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
 
@@ -2168,7 +2202,7 @@ static void generate_code_from(int n, int void_flag)
             compiler_error("Expr code gen: Can't generate yet");
     }
   }
-  else {
+  else { /* Glulx */
     assembly_operand AO, AO2;
     if (operators[opnum].opcode_number_g != -1)
     {
@@ -2362,19 +2396,23 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_OP:
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              AO = veneer_routine(RV__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_ADD_OP:
         case PROP_ADD_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              AO = veneer_routine(RA__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_NUM_OP:
         case PROP_NUM_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              AO = veneer_routine(RL__Pr_VR);
              goto TwoArgFunctionCall;
 
         case PROP_CALL_OP:
         case MESSAGE_CALL_OP:
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              AO2 = veneer_routine(CA__Pr_VR);
              i = below;
              goto DoFunctionCall;
