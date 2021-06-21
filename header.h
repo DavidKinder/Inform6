@@ -744,12 +744,10 @@ typedef struct assembly_operand_t
 {   int   type;
     int32 value;
     int   symindex;
-    int   symtype;
-    int   symflags;
     int   marker;
 } assembly_operand;
 
-#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1, (aop)->symtype=0, (aop)->symflags=0)
+#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1)
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
@@ -2370,6 +2368,7 @@ extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
+extern void symtype_warning(char *context, char *name, char *type, char *wanttype);
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
@@ -2720,6 +2719,7 @@ extern void describe_symbol(int k);
 extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);
 extern void assign_symbol(int index, int32 value, int type);
+extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *label);
 extern void issue_unused_warnings(void);
 extern void issue_debug_symbol_warnings(void);
 extern void add_config_symbol_definition(char *symbol, int32 value);

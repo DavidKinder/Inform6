@@ -773,8 +773,6 @@ static int evaluate_term(token_data t, assembly_operand *o)
 
     o->marker = t.marker;
     o->symindex = t.symindex;
-    o->symtype = t.symtype;
-    o->symflags = t.symflags;
 
     switch(t.type)
     {   case LARGE_NUMBER_TT:
@@ -1170,11 +1168,12 @@ static void emit_token(token_data t)
         }
     }
 
-    /* pseudo-typecheck in 6.30 */
+    /* pseudo-typecheck in 6.30: catch an unqualified property name */
     for (i = 1; i <= arity; i++)
     {
         o1 = emitter_stack[emitter_sp - i];
-        if (is_property_t(o1.symtype) ) {
+        if ((o1.symindex >= 0)
+            && is_property_t(symbols[o1.symindex].type)) {
             switch(t.value) 
             {
                 case FCALL_OP:
@@ -1187,7 +1186,11 @@ static void emit_token(token_data t)
                 case PROPERTY_OP:
                     if (i < arity) break;
                 case GE_OP: case LE_OP:
-                    if ((i < arity) && (o1.symflags & STAR_SFLAG)) break;
+                    /* Direction properties "n_to", etc *are* compared
+                       in some libraries. They have STAR_SFLAG to tell us
+                       to skip the warning. */
+                    if ((i < arity)
+                        && (symbols[o1.symindex].flags & STAR_SFLAG)) break;
                 default:
                     warning("Property name in expression is not qualified by object");
             }
@@ -1911,7 +1914,9 @@ extern assembly_operand parse_expression(int context)
                 ET[AO.value].up = -1;
             }
             else {
-                if ((context != CONSTANT_CONTEXT) && is_property_t(AO.symtype) 
+                if ((context != CONSTANT_CONTEXT)
+                    && (AO.symindex >= 0)
+                    && is_property_t(symbols[AO.symindex].type) 
                     && (arrow_allowed) && (!bare_prop_allowed))
                     warning("Bare property name found. \"self.prop\" intended?");
             }

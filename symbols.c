@@ -363,19 +363,20 @@ extern char *typename(int type)
 
 static void describe_flags(int flags)
 {   if (flags & UNKNOWN_SFLAG)  printf("(?) ");
-    if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & REPLACE_SFLAG)  printf("(Replaced) ");
+    if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
-    if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & IMPORT_SFLAG)   printf("(Imported) ");
     if (flags & EXPORT_SFLAG)   printf("(Exported) ");
+    if (flags & ALIASED_SFLAG)  printf("(aliased) ");
+    if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & SYSTEM_SFLAG)   printf("(System) ");
     if (flags & INSF_SFLAG)     printf("(created in sys file) ");
     if (flags & UERROR_SFLAG)   printf("('Unknown' error issued) ");
-    if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & ACTION_SFLAG)   printf("(Action name) ");
     if (flags & REDEFINABLE_SFLAG) printf("(Redefinable) ");
+    if (flags & STAR_SFLAG)     printf("(*) ");
 }
 
 extern void describe_symbol(int k)
@@ -394,6 +395,49 @@ extern void list_symbols(int level)
             ((symbols[k].flags & (SYSTEM_SFLAG + UNKNOWN_SFLAG + INSF_SFLAG)) == 0))
         {   describe_symbol(k); printf("\n");
         }
+    }
+}
+
+/* Check that the operand is of the given symbol type (XXX_T). If wanttype2 is nonzero, that's a second allowable type.
+   Generate a warning if no match. */
+extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *context)
+{
+    symbolinfo *sym;
+    int symtype;
+    
+    if (AO->symindex < 0)
+    {
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. We don't try to generate type warnings. */
+        /* (We could figure out some warnings for literals -- e.g., "give 0 attr" and "give 'word' attr" are errors. But we currently don't. */
+        return;
+    }
+    
+    sym = &symbols[AO->symindex];
+    symtype = sym->type;
+    
+    if (symtype == GLOBAL_VARIABLE_T)
+    {
+        /* A global variable could have any value. No way to generate a warning. */
+        return;
+    }
+    if (symtype == CONSTANT_T)
+    {
+        /* A constant could also have any value. This case also includes forward-declared constants (UNKNOWN_SFLAG). */
+        /* We try inferring its type by looking at the backpatch marker. Sadly, this only works for objects. (And not in Z-code, where object values are not backpatched.) */
+        if (sym->marker == OBJECT_MV) {
+            /* Continue with inferred type. */
+            symtype = OBJECT_T;
+        }
+        else {
+            /* Give up. */
+            return;
+        }
+    }
+    
+    if (!(   (symtype == wanttype)
+          || (wanttype2 != 0 && symtype == wanttype2)))
+    {
+        symtype_warning(context, sym->name, typename(symtype), typename(wanttype));
     }
 }
 

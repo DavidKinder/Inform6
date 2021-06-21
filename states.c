@@ -421,16 +421,12 @@ static void parse_print_z(int finally_return)
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
-                              AO.symflags = symbols[token_value].flags;
                           }
                           else
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
-                              AO.symflags = symbols[token_value].flags;
                               if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
@@ -662,16 +658,12 @@ static void parse_print_g(int finally_return)
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
-                              AO.symflags = symbols[token_value].flags;
                           }
                           else
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
-                              AO.symtype = symbols[token_value].type;
-                              AO.symflags = symbols[token_value].flags;
                               if (symbols[token_value].type != ROUTINE_T)
                                 ebf_error("printing routine name", token_text);
                           }
@@ -1115,6 +1107,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == VARIABLE_OT) && (AO.value == 0))
                  {   INITAOTV(&AO, SHORT_CONSTANT_OT, 252);
                      if (version_number != 6) assemblez_1(pull_zc, AO);
@@ -1129,15 +1122,12 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = clear_attr_zc;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (symbols[token_value].type != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text);
-                         ln = set_attr_zc;
+                     {   ln = set_attr_zc;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch)
                      {   ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
                          if (version_number >= 5)
@@ -1270,6 +1260,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_3(call_vn_zc, veneer_routine(RT__ChT_VR),
@@ -1489,6 +1481,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_2(call_2n_zc, veneer_routine(RT__ChR_VR),
@@ -2080,6 +2073,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == LOCALVAR_OT) && (AO.value == 0))
                      onstack = TRUE;
                  else
@@ -2097,15 +2091,12 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = 0;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (symbols[token_value].type != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text);
-                         ln = 1;
+                     {   ln = 1;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch && (!veneer_mode))
                      {   ln2 = (ln ? RT__ChG_VR : RT__ChGt_VR);
                          if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
@@ -2290,6 +2281,8 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_2(veneer_routine(RT__ChT_VR), AO, AO2,
                          zero_operand);
@@ -2472,6 +2465,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_1(veneer_routine(RT__ChR_VR), AO,
                          zero_operand);

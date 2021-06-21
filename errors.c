@@ -403,6 +403,14 @@ extern void warning_named(char *s1, char *s2)
     message(2,error_message_buff);
 }
 
+extern void symtype_warning(char *context, char *name, char *type, char *wanttype)
+{
+    if (nowarnings_switch) { no_suppressed_warnings++; return; }
+    snprintf(error_message_buff, ERROR_BUFLEN, "In %s, expected %s but found %s \"%s\"", context, wanttype, type, name);
+    ellipsize_error_message_buff();
+    message(2,error_message_buff);
+}
+
 extern void dbnu_warning(char *type, char *name, brief_location report_line)
 {   int i;
     ErrorPosition E = ErrorReport;
