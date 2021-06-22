@@ -741,10 +741,10 @@ static int32 unique_task_id(void)
 /* ------------------------------------------------------------------------- */
 
 typedef struct assembly_operand_t
-{   int   type;
+{   int   type;     /* ?_OT value */
     int32 value;
-    int   symindex;
-    int   marker;
+    int   symindex; /* index in symbols array, if derived from a symbol */
+    int   marker;   /* ?_MV value */
 } assembly_operand;
 
 #define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1)
