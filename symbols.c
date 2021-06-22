@@ -294,6 +294,7 @@ extern int symbol_index(char *p, int hashcode)
     symbols[no_symbols].value   =  0x100; /* ###-wrong? Would this fix the
                                      unbound-symbol-causes-asm-error? */
     symbols[no_symbols].flags  =  UNKNOWN_SFLAG;
+    symbols[no_symbols].marker =  0;
     symbols[no_symbols].type  =  CONSTANT_T;
     symbols[no_symbols].line  =  get_brief_location(&ErrorReport);
     if (debugfile_switch)
@@ -633,22 +634,14 @@ static void assign_symbol_base(int index, int32 value, int type)
 
 extern void assign_symbol(int index, int32 value, int type)
 {
-    symbols[index].marker = 0;
     assign_symbol_base(index, value, type);
+    symbols[index].marker = 0;
 }
 
 extern void assign_marked_symbol(int index, int marker, int32 value, int type)
 {
-    if (!glulx_mode) {
-        /* In Z-code, marker is encoded into value */
-        symbols[index].marker = 0;
-        assign_symbol_base(index, (int32)marker*0x10000 + (value % 0x10000),
-            type);
-    }
-    else {
-        symbols[index].marker = marker;
-        assign_symbol_base(index, value, type);
-    }
+    assign_symbol_base(index, value, type);
+    symbols[index].marker = marker;
 }
 
 static void emit_debug_information_for_predefined_symbol
