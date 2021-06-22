@@ -644,7 +644,7 @@ static int32 unique_task_id(void)
   #define TIMEVALUE time_t
   #define TIMEVALUE_NOW(t) (*t) = time(0)
   #define TIMEVALUE_DIFFERENCE(begt, endt) (float)(*(endt) - *(begt))
-#elif defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+#elif __STDC_VERSION__ >= 201112L
   #define TIMEVALUE struct timespec
   #define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
   #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
