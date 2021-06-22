@@ -883,10 +883,8 @@ typedef struct token_data_s
 
 typedef struct symbolinfo_s {
     char *name; /* Points into a symbol_name_space_chunk */
-    /* In Z-code, the value field encodes value and marker (and the marker
-       field is unused). In Glulx they're separate. */
     int32 value;
-    int marker;
+    int marker; /* ?_MV value */
     brief_location line;
     unsigned int flags;  /* ?_SFLAGS bitmask */
     uchar type; /* ?_T value */
