@@ -362,6 +362,15 @@ static void write_z_char_g(int i)
   total_bytes_trans++;  
 }
 
+/* Helper routine to compute the weight, in units, of a character handled by the Z-Machine */
+extern int zchar_weight(int j) {
+    if (iso_to_alphabet_grid[j] < 0)        { return 4; }
+    else
+    {   if (iso_to_alphabet_grid[j] < 26)   { return 1; }
+        else                                { return 2; }
+    }
+}
+
 /* ------------------------------------------------------------------------- */
 /*   The main routine "text.c" provides to the rest of Inform: the text      */
 /*   translator. p is the address to write output to, s_text the source text */
@@ -438,6 +447,51 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         }
     }
     
+    /* Computing the optimal way to parse strings to insert abbreviations with dynamic programming */
+    /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
+    /* We compute this optimal way here; it's stored in optimal_parse_schedule */
+    uchar *q, c; int l, min_score, from, abbr_length;
+    int text_in_length = strlen(text_in);
+    int optimal_parse_scores[text_in_length+1];
+    int optimal_parse_schedule[text_in_length];
+    if (economy_switch)
+    {   
+        optimal_parse_scores[text_in_length] = 0;
+        for(j=text_in_length-1; j>=0; j--)
+        {    // initial values: empty schedule, score = just write the letter without abbreviating
+            optimal_parse_schedule[j] = -1;
+            min_score = zchar_weight(text_in[j]) + optimal_parse_scores[j+1];
+            // if there's an abbreviation starting with that letter...
+            if ( (from = abbrevs_lookup[text_in[j]]) != -1)
+            {
+                c = text_in[j];
+                // loop on all abbreviations starting with what's in c
+                for (k=from, q=(uchar *)abbreviations_at+from*MAX_ABBREV_LENGTH;
+                    (k<no_abbreviations)&&(c==q[0]); k++, q+=MAX_ABBREV_LENGTH)
+                {   
+                    // let's compare; we also keep track of the length of the abbreviation
+                    if (text_in[j+1]==q[1])
+                    {   abbr_length = 2;
+                        for (l=2; q[l]!=0; l++)
+                        {    if (text_in[j+l]!=q[l]) {goto NotMatched;} else {abbr_length++;}
+                        }
+                        // we have a match, but is it smaller in size?
+                        if (min_score > 2 + optimal_parse_scores[j+abbr_length])
+                        {   // it is indeed smaller, so let's write it down in our schedule
+                            min_score = 2 + optimal_parse_scores[j+abbr_length];
+                            optimal_parse_schedule[j] = k;
+                        }
+                        NotMatched: ;
+                    }
+                }
+            }
+        // We gave it our best, this is the smallest we got
+        optimal_parse_scores[j] = min_score;
+        }
+    }
+
+
+    
   if (!glulx_mode) {
 
     /*  The empty string of Z-text is illegal, since it can't carry an end
@@ -466,15 +520,21 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         }
 
         /*  Try abbreviations if the economy switch set                      */
-
-        if ((economy_switch) && (!is_abbreviation)
-            && ((k=abbrevs_lookup[text_in[i]])!=-1))
-        {   if ((j=try_abbreviations_from(text_in, i, k))!=-1)
-            {   /* abbreviations run from MAX_DYNAMIC_STRINGS to 96 */
-                j += MAX_DYNAMIC_STRINGS;
-                write_z_char_z(j/32+1); write_z_char_z(j%32);
-            }
+        /*  Look at the abbreviation schedule to see if we should abbreviate here */
+        /*  Note: Just because the schedule has something doesn't mean we should abbreviate there; */
+        /*  sometimes you abbreviate before because it's better. If we have already replaced the */
+        /*  char by a '1', it means we're in the middle of an abbreviation; don't try to abbreviate then. */
+        if ((economy_switch) && (!is_abbreviation) && text_in[i] != 1 && ((j = optimal_parse_schedule[i]) != -1))
+        {   
+            // fill with 1s, which will get ignored by everyone else
+            p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+            for (k=0; p[k]!=0; k++) text_in[i+k]=1;
+            // actually write the abbreviation in the story file
+            j += MAX_DYNAMIC_STRINGS;
+            write_z_char_z(j/32+1); write_z_char_z(j%32);
+            abbreviations[j].freq++;
         }
+        
 
         /* If Unicode switch set, use text_to_unicode to perform UTF-8
            decoding */
