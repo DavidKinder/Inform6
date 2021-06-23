@@ -644,7 +644,7 @@ static int32 unique_task_id(void)
   #define TIMEVALUE time_t
   #define TIMEVALUE_NOW(t) (*t) = time(0)
   #define TIMEVALUE_DIFFERENCE(begt, endt) (float)(*(endt) - *(begt))
-#elif defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+#elif __STDC_VERSION__ >= 201112L
   #define TIMEVALUE struct timespec
   #define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
   #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0)
@@ -741,15 +741,13 @@ static int32 unique_task_id(void)
 /* ------------------------------------------------------------------------- */
 
 typedef struct assembly_operand_t
-{   int   type;
+{   int   type;     /* ?_OT value */
     int32 value;
-    int   symindex;
-    int   symtype;
-    int   symflags;
-    int   marker;
+    int   symindex; /* index in symbols array, if derived from a symbol */
+    int   marker;   /* ?_MV value */
 } assembly_operand;
 
-#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1, (aop)->symtype=0, (aop)->symflags=0)
+#define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1)
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
@@ -885,10 +883,8 @@ typedef struct token_data_s
 
 typedef struct symbolinfo_s {
     char *name; /* Points into a symbol_name_space_chunk */
-    /* In Z-code, the value field encodes value and marker (and the marker
-       field is unused). In Glulx they're separate. */
     int32 value;
-    int marker;
+    int marker; /* ?_MV value */
     brief_location line;
     unsigned int flags;  /* ?_SFLAGS bitmask */
     uchar type; /* ?_T value */
@@ -2378,6 +2374,7 @@ extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
+extern void symtype_warning(char *context, char *name, char *type, char *wanttype);
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
@@ -2727,6 +2724,7 @@ extern void describe_symbol(int k);
 extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);
 extern void assign_symbol(int index, int32 value, int type);
+extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *label);
 extern void issue_unused_warnings(void);
 extern void issue_debug_symbol_warnings(void);
 extern void add_config_symbol_definition(char *symbol, int32 value);

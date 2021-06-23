@@ -56,9 +56,23 @@ memory for them without requiring user intervention.
  <li>MAX_ABBREVS (removed only for Glulx)
  <li>MAX_CLASSES
  <li>MAX_INDIV_PROP_TABLE_SIZE
+ <li>MAX_OBJ_PROP_COUNT
+ <li>MAX_OBJ_PROP_TABLE_SIZE
  <li>MAX_OBJECTS
  <li>MAX_PROP_TABLE_SIZE
  <li>MAX_SYMBOLS
+ </ul>
+<li><p>There are now warnings if the compiler detects that the type used in certain expressions is not correct.
+This only checks expressions that contain defined symbols, and does not change the generated code. The checks are:
+ <ul>
+ <li><tt>remove O</tt>: O is an object
+ <li><tt>move O to P</tt>: O is an object; P is an object or a class
+ <li><tt>give O A</tt>: O is an object; A is an attribute
+ <li><tt>O has/hasnt A</tt>: O is an object; A is an attribute
+ <li><tt>O in/notin P</tt>: O is an object; P is an object or a class
+ <li><tt>X ofclass C</tt>: C is a class
+ <li><tt>X provides P</tt>: P is a property
+ <li><tt>X.P</tt>, <tt>X.P()</tt>, <tt>X.&P</tt>, <tt>X.#P</tt>: P is a property
  </ul>
 <li><p>Assembly output (<tt>-a</tt> mode) now shows symbolic information for each assembly operand, if possible.
 <li><p>The <tt>Trace verbs</tt> directive now prints out the entire grammar table.
