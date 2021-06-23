@@ -264,8 +264,6 @@ int32 MAX_TRANSCRIPT_SIZE;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
 int MAX_SOURCE_FILES;
-int32 MAX_OBJ_PROP_TABLE_SIZE;
-int MAX_OBJ_PROP_COUNT;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -336,12 +334,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
-    if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MAX_OBJ_PROP_COUNT",
-        MAX_OBJ_PROP_COUNT);
-    if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MAX_OBJ_PROP_TABLE_SIZE",
-        MAX_OBJ_PROP_TABLE_SIZE);
     printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
     printf("|  %25s = %-7d |\n","MAX_SOURCE_FILES",MAX_SOURCE_FILES);
     if (glulx_mode)
@@ -394,9 +386,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_OBJ_PROP_COUNT = 128;
-        MAX_OBJ_PROP_TABLE_SIZE = 4096;
-
         MAX_ARRAYS = 128;
 
         MAX_GLOBAL_VARIABLES_z = 240;
@@ -429,9 +418,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_TRANSCRIPT_SIZE = 200000;
         MAX_NUM_STATIC_STRINGS = 20000;
 
-        MAX_OBJ_PROP_COUNT = 64;
-        MAX_OBJ_PROP_TABLE_SIZE = 2048;
-
         MAX_ARRAYS = 128;
 
         MAX_GLOBAL_VARIABLES_z = 240;
@@ -463,9 +449,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_TRANSCRIPT_SIZE = 100000;
         MAX_NUM_STATIC_STRINGS = 10000;
-
-        MAX_OBJ_PROP_COUNT = 64;
-        MAX_OBJ_PROP_TABLE_SIZE = 1024;
 
         MAX_ARRAYS = 64;
 
@@ -725,18 +708,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
   properties are numbered INDIV_PROP_START and up.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
-    {   printf(
-"  MAX_OBJ_PROP_COUNT is the maximum number of properties a single object \n\
-  can have. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_OBJ_PROP_TABLE_SIZE")==0)
-    {   printf(
-"  MAX_OBJ_PROP_TABLE_SIZE is the number of words allocated to hold a \n\
-  single object's properties. (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_LOCAL_VARIABLES")==0)
@@ -1035,9 +1006,9 @@ extern void memory_command(char *command)
             if (strcmp(command,"INDIV_PROP_START")==0)
                 INDIV_PROP_START=j, flag=1;
             if (strcmp(command,"MAX_OBJ_PROP_TABLE_SIZE")==0)
-                MAX_OBJ_PROP_TABLE_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
-                MAX_OBJ_PROP_COUNT=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_LOCAL_VARIABLES")==0)
             {   MAX_LOCAL_VARIABLES=j, flag=1;
                 MAX_LOCAL_VARIABLES_g=MAX_LOCAL_VARIABLES_z=j;

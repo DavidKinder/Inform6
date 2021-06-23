@@ -3210,7 +3210,7 @@ extern void asm_allocate_arrays(void)
 
     initialise_memory_list(&current_routine_name,
         sizeof(char), 3*MAX_IDENTIFIER_LENGTH, NULL,
-        "temporary copy of routine name");
+        "routine name currently being defined");
 }
 
 extern void asm_free_arrays(void)

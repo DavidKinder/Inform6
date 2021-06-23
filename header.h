@@ -800,9 +800,9 @@ typedef struct propg {
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
     int numprops;
-    propg *props;
+    propg *props;               /* managed by g_props_memlist */
     int propdatasize;
-    assembly_operand *propdata;
+    assembly_operand *propdata; /* managed by g_propdata_memlist */
     int32 finalpropaddr;
 } fproptg;
 
@@ -2622,7 +2622,6 @@ extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,
            MAX_NUM_STATIC_STRINGS, MAX_UNICODE_CHARS,
            MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
-extern int32 MAX_OBJ_PROP_COUNT, MAX_OBJ_PROP_TABLE_SIZE;
 extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
