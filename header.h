@@ -741,10 +741,10 @@ static int32 unique_task_id(void)
 /* ------------------------------------------------------------------------- */
 
 typedef struct assembly_operand_t
-{   int   type;
+{   int   type;     /* ?_OT value */
     int32 value;
-    int   symindex;
-    int   marker;
+    int   symindex; /* index in symbols array, if derived from a symbol */
+    int   marker;   /* ?_MV value */
 } assembly_operand;
 
 #define INITAOTV(aop, typ, val) ((aop)->type=(typ), (aop)->value=(val), (aop)->marker=0, (aop)->symindex=-1)
@@ -883,10 +883,8 @@ typedef struct token_data_s
 
 typedef struct symbolinfo_s {
     char *name; /* Points into a symbol_name_space_chunk */
-    /* In Z-code, the value field encodes value and marker (and the marker
-       field is unused). In Glulx they're separate. */
     int32 value;
-    int marker;
+    int marker; /* ?_MV value */
     brief_location line;
     unsigned int flags;  /* ?_SFLAGS bitmask */
     uchar type; /* ?_T value */

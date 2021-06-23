@@ -298,7 +298,7 @@ static void accept_export(void)
 
                 break;
         }
-        assign_symbol(index, IE.backpatch*0x10000 + IE.symbol_value,
+        assign_marked_symbol(index, IE.backpatch, IE.symbol_value,
             IE.symbol_type);
         if (IE.backpatch != 0) symbols[index].flags |= CHANGE_SFLAG;
         symbols[index].flags |= EXPORT_SFLAG;
@@ -717,12 +717,12 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
 
     for (i=symbols_base; i<no_symbols; i++)
     {   if ((symbols[i].flags & CHANGE_SFLAG) && (symbols[i].flags & EXPORT_SFLAG))
-        {   backpatch_marker = symbols[i].value/0x10000;
+        {   backpatch_marker = symbols[i].marker;
             j = symbols[i].value % 0x10000;
 
             j = backpatch_backpatch(j);
 
-            symbols[i].value = backpatch_marker*0x10000 + j;
+            symbols[i].value = j;
             if (backpatch_marker == 0) symbols[i].flags &= (~(CHANGE_SFLAG));
         }
     }
@@ -1072,7 +1072,7 @@ static void export_symbols(void)
             write_link_word(symbol_number);
             write_link_byte(symbols[symbol_number].type);
             if (symbols[symbol_number].flags & CHANGE_SFLAG)
-                 write_link_byte(symbols[symbol_number].value / 0x10000);
+                 write_link_byte(symbols[symbol_number].marker);
             else write_link_byte(0);
             write_link_word(symbols[symbol_number].value % 0x10000);
             write_link_string((symbols[symbol_number].name));

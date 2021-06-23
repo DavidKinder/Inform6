@@ -124,7 +124,7 @@ static int32 backpatch_value_z(int32 value)
             else
             if (symbols[value].flags & CHANGE_SFLAG)
             {   symbols[value].flags &= (~(CHANGE_SFLAG));
-                backpatch_marker = (symbols[value].value/0x10000);
+                backpatch_marker = (symbols[value].marker);
                 if ((backpatch_marker < 0)
                     || (backpatch_marker > LARGEST_BPATCH_MV))
                 {
