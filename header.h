@@ -896,6 +896,13 @@ typedef struct symboldebuginfo_s {
     maybe_file_position replacement_backpatch_pos;
 } symboldebuginfo;
 
+typedef struct arrayinfo_s {
+    int32 symbol; /* index in symbols[] */
+    int size;     /* length of array */
+    int type;     /* BYTE_ARRAY, WORD_ARRAY, etc */
+    int loc;      /* true for static, false for dynamic (regular) arrays */
+} arrayinfo;
+
 typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
@@ -2143,12 +2150,13 @@ extern void verbs_free_arrays(void);
 
 extern int no_globals, no_arrays;
 extern int dynamic_array_area_size;
-extern int *dynamic_array_area;
+extern uchar *dynamic_array_area;
+extern memory_list dynamic_array_area_memlist;
 extern int static_array_area_size;
-extern int *static_array_area;
+extern uchar *static_array_area;
+extern memory_list static_array_area_memlist;
 extern int32 *global_initial_value;
-extern int32 *array_symbols;
-extern int  *array_sizes, *array_types, *array_locs;
+extern arrayinfo *arrays;
 
 extern void make_global(int array_flag, int name_only);
 extern void set_variable_value(int i, int32 v);
@@ -2611,10 +2619,9 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
-           MAX_STATIC_DATA,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
            MAX_LOW_STRINGS,      MAX_VERBS,
-           MAX_VERBSPACE,        MAX_ARRAYS,            MAX_INCLUSION_DEPTH,
+           MAX_VERBSPACE,        MAX_INCLUSION_DEPTH,
            MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,

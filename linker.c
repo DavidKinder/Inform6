@@ -808,8 +808,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
     /* (10) Glue in the dynamic array data */
 
     i = m_static_offset - m_vars_offset - MAX_GLOBAL_VARIABLES*2;
-    if (dynamic_array_area_size + i >= MAX_STATIC_DATA)
-        memoryerror("MAX_STATIC_DATA", MAX_STATIC_DATA);
+    ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size + i);
 
     if (linker_trace_level >= 2)
         printf("Inserting dynamic array area, %04x to %04x, at %04x\n",
@@ -932,8 +931,6 @@ at strings offset %04x (+%04x)\n",
 
     if (last>m_props_offset)
     {   i = m_static_offset - m_vars_offset - MAX_GLOBAL_VARIABLES*2;
-        if (dynamic_array_area_size + i >= MAX_STATIC_DATA)
-            memoryerror("MAX_STATIC_DATA", MAX_STATIC_DATA);
 
         if (linker_trace_level >= 2)
             printf("Inserting object properties area, %04x to %04x, at +%04x\n",
