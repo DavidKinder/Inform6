@@ -134,10 +134,6 @@ static void select_target(int targ)
       MAX_GLOBAL_VARIABLES = 240;
       fatalerror("You cannot change MAX_GLOBAL_VARIABLES in Z-code");
     }
-    if (MAX_VERBS > 255) {
-      MAX_VERBS = 255;
-      fatalerror("MAX_VERBS can only go above 255 when Glulx is used");
-    }
   }
   else {
     /* Glulx */

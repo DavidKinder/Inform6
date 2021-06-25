@@ -251,7 +251,6 @@ int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int MAX_EXPRESSION_NODES;
-int MAX_VERBS;
 int MAX_VERBSPACE;
 int MAX_LABELS;
 int MAX_LINESPACE;
@@ -346,7 +345,6 @@ static void list_memory_sizes(void)
            (long int) MAX_UNICODE_CHARS);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
-    printf("|  %25s = %-7d |\n","MAX_VERBS",MAX_VERBS);
     printf("|  %25s = %-7d |\n","MAX_VERBSPACE",MAX_VERBSPACE);
     printf("|  %25s = %-7ld |\n","MAX_ZCODE_SIZE",
            (long int) MAX_ZCODE_SIZE);
@@ -366,7 +364,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 2000;
 
         MAX_EXPRESSION_NODES = 100;
-        MAX_VERBS = 200;
         MAX_VERBSPACE = 4096;
         MAX_LABELS = 1000;
         MAX_LINESPACE = 16000;
@@ -395,7 +392,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 1300;
 
         MAX_EXPRESSION_NODES = 100;
-        MAX_VERBS = 140;
         MAX_VERBSPACE = 4096;
         MAX_LINESPACE = 10000;
 
@@ -424,7 +420,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 700;
 
         MAX_EXPRESSION_NODES = 40;
-        MAX_VERBS = 110;
         MAX_VERBSPACE = 2048;
         MAX_LINESPACE = 10000;
         MAX_LABELS = 1000;
@@ -597,13 +592,6 @@ static void explain_parameter(char *command)
   evaluator's storage for parse trees.  In effect, it measures how \n\
   complicated algebraic expressions are allowed to be.  Increasing it by \n\
   one costs about 80 bytes.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_VERBS")==0)
-    {   printf(
-"  MAX_VERBS is the maximum number of verbs (such as \"take\") which can be \n\
-  defined, each with its own grammar.  To increase it by one costs about\n\
-  128 bytes.  A full game will contain at least 100.\n");
         return;
     }
     if (strcmp(command,"MAX_VERBSPACE")==0)
@@ -946,7 +934,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
                 MAX_EXPRESSION_NODES=j, flag=1;
             if (strcmp(command,"MAX_VERBS")==0)
-                MAX_VERBS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_VERBSPACE")==0)
                 MAX_VERBSPACE=j, flag=1;
             if (strcmp(command,"MAX_LABELS")==0)
