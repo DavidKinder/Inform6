@@ -70,11 +70,12 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*   The format of this list is a sequence of variable-length records:       */
 /*                                                                           */
 /*     Byte offset to start of next record  (1 byte)                         */
-/*     Inform verb number this word corresponds to  (1 byte)                 */
+/*     Inform verb number this word corresponds to  (2 bytes)                */
 /*     The English verb-word (reduced to lower case), null-terminated        */
 /* ------------------------------------------------------------------------- */
 
-static char *English_verb_list;        /* First byte of first record         */
+static char *English_verb_list;       /* Allocated to English_verb_list_size */
+static memory_list English_verb_list_memlist;
 
 static int English_verb_list_size;     /* Size of the list in bytes          */
 
@@ -540,10 +541,9 @@ static void register_verb(char *English_verb, int number)
     entrysize = strlen(English_verb)+4;
     if (entrysize > MAX_VERB_WORD_SIZE+4)
         error_numbered("Verb word is too long -- max length is", MAX_VERB_WORD_SIZE);
-    top = English_verb_list + English_verb_list_size; /*###*/
+    ensure_memory_list_available(&English_verb_list_memlist, English_verb_list_size + entrysize);
+    top = English_verb_list + English_verb_list_size;
     English_verb_list_size += entrysize;
-    if (English_verb_list_size >= MAX_VERBSPACE)
-        memoryerror("MAX_VERBSPACE", MAX_VERBSPACE);
 
     top[0] = entrysize;
     top[1] = number/256;
@@ -1129,7 +1129,9 @@ extern void verbs_allocate_arrays(void)
     adjective_sort_code   = my_calloc(DICT_WORD_BYTES, MAX_ADJECTIVES,
                                 "adjective sort codes");
 
-    English_verb_list     = my_malloc(MAX_VERBSPACE, "register of verbs");
+    initialise_memory_list(&English_verb_list_memlist,
+        sizeof(char), 2048, (void**)&English_verb_list,
+        "register of verbs");
 }
 
 extern void verbs_free_arrays(void)
@@ -1141,7 +1143,7 @@ extern void verbs_free_arrays(void)
     my_free(&grammar_token_routine, "grammar token routines");
     my_free(&adjectives, "adjectives");
     my_free(&adjective_sort_code, "adjective sort codes");
-    my_free(&English_verb_list, "register of verbs");
+    deallocate_memory_list(&English_verb_list_memlist);
 }
 
 /* ========================================================================= */
