@@ -87,7 +87,8 @@ static int English_verb_list_size;     /* Size of the list in bytes
 /*   Arrays used by this file                                                */
 /* ------------------------------------------------------------------------- */
 
-  verbt   *Inform_verbs;
+  verbt   *Inform_verbs;  /* Allocated up to no_Inform_verbs */
+  static memory_list Inform_verbs_memlist;
   uchar   *grammar_lines;
   int32    grammar_lines_top;
   int      no_grammar_lines, no_grammar_tokens;
@@ -954,9 +955,8 @@ extern void make_verb(void)
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
+        ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         Inform_verb = no_Inform_verbs;
-        if (no_Inform_verbs == MAX_VERBS)
-            memoryerror("MAX_VERBS",MAX_VERBS);
     }
 
     for (i=0; i<no_given; i++)
@@ -1006,9 +1006,8 @@ extern void extend_verb(void)
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
+        ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         l = -1;
-        if (no_Inform_verbs == MAX_VERBS)
-            memoryerror("MAX_VERBS", MAX_VERBS);
         while (get_next_token(),
                ((token_type == DQ_TT) || (token_type == SQ_TT)))
         {   Inform_verb = get_verb();
@@ -1116,7 +1115,10 @@ extern void verbs_begin_pass(void)
 
 extern void verbs_allocate_arrays(void)
 {
-    Inform_verbs          = my_calloc(sizeof(verbt),   MAX_VERBS, "verbs");
+    initialise_memory_list(&Inform_verbs_memlist,
+        sizeof(verbt), 128, (void**)&Inform_verbs,
+        "verbs");
+    
     grammar_lines         = my_malloc(MAX_LINESPACE, "grammar lines");
     action_byte_offset    = my_calloc(sizeof(int32),   MAX_ACTIONS, "actions");
     action_symbol         = my_calloc(sizeof(int32),   MAX_ACTIONS,
@@ -1134,7 +1136,7 @@ extern void verbs_allocate_arrays(void)
 
 extern void verbs_free_arrays(void)
 {
-    my_free(&Inform_verbs, "verbs");
+    deallocate_memory_list(&Inform_verbs_memlist);
     my_free(&grammar_lines, "grammar lines");
     my_free(&action_byte_offset, "actions");
     my_free(&action_symbol, "action symbols");
