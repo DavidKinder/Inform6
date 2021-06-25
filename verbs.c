@@ -74,11 +74,9 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*     The English verb-word (reduced to lower case), null-terminated        */
 /* ------------------------------------------------------------------------- */
 
-static char *English_verb_list,        /* First byte of first record         */
-            *English_verb_list_top;    /* Next byte free for new record      */
+static char *English_verb_list;        /* First byte of first record         */
 
-static int English_verb_list_size;     /* Size of the list in bytes
-                                          (redundant but convenient)         */
+static int English_verb_list_size;     /* Size of the list in bytes          */
 
 /* Maximum synonyms in a single Verb/Extend directive */
 #define MAX_VERB_SYNONYMS (32)
@@ -493,7 +491,7 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 
     char *p;
     p=English_verb_list;
-    while (p < English_verb_list_top)
+    while (p < English_verb_list+English_verb_list_size)
     {   if (strcmp(English_verb, p+3) == 0)
         {   if (new_number)
             {   p[1] = (*new_number)/256;
@@ -512,7 +510,7 @@ static char *find_verb_by_number(int num)
     /*  Find the English verb string with the given verb number. */
     char *p;
     p=English_verb_list;
-    while (p < English_verb_list_top)
+    while (p < English_verb_list+English_verb_list_size)
     {
         int val = (p[1] << 8) | p[2];
         if (val == num) {
@@ -527,6 +525,7 @@ static void register_verb(char *English_verb, int number)
 {
     /*  Registers a new English verb as referring to the given Inform-verb
         number.  (See comments above for format of the list.)                */
+    char *top;
     int entrysize;
 
     if (find_or_renumber_verb(English_verb, NULL) != -1)
@@ -541,15 +540,15 @@ static void register_verb(char *English_verb, int number)
     entrysize = strlen(English_verb)+4;
     if (entrysize > MAX_VERB_WORD_SIZE+4)
         error_numbered("Verb word is too long -- max length is", MAX_VERB_WORD_SIZE);
+    top = English_verb_list + English_verb_list_size; /*###*/
     English_verb_list_size += entrysize;
     if (English_verb_list_size >= MAX_VERBSPACE)
         memoryerror("MAX_VERBSPACE", MAX_VERBSPACE);
 
-    English_verb_list_top[0] = entrysize;
-    English_verb_list_top[1] = number/256;
-    English_verb_list_top[2] = number%256;
-    strcpy(English_verb_list_top+3, English_verb);
-    English_verb_list_top += entrysize;
+    top[0] = entrysize;
+    top[1] = number/256;
+    top[2] = number%256;
+    strcpy(top+3, English_verb);
 }
 
 static int get_verb(void)
@@ -1131,7 +1130,6 @@ extern void verbs_allocate_arrays(void)
                                 "adjective sort codes");
 
     English_verb_list     = my_malloc(MAX_VERBSPACE, "register of verbs");
-    English_verb_list_top = English_verb_list;
 }
 
 extern void verbs_free_arrays(void)
