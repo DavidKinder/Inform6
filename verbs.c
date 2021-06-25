@@ -949,7 +949,12 @@ extern void make_verb(void)
             ebf_error("';' after English verb", token_text);
     }
     else
-    {   Inform_verb = no_Inform_verbs;
+    {
+        if (!glulx_mode && no_Inform_verbs >= 255) {
+            error("Z-code is limited to 255 verbs.");
+            panic_mode_error_recovery(); return;
+        }
+        Inform_verb = no_Inform_verbs;
         if (no_Inform_verbs == MAX_VERBS)
             memoryerror("MAX_VERBS",MAX_VERBS);
     }
@@ -996,7 +1001,12 @@ extern void extend_verb(void)
 
     get_next_token();
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ONLY_DK))
-    {   l = -1;
+    {
+        if (!glulx_mode && no_Inform_verbs >= 255) {
+            error("Z-code is limited to 255 verbs.");
+            panic_mode_error_recovery(); return;
+        }
+        l = -1;
         if (no_Inform_verbs == MAX_VERBS)
             memoryerror("MAX_VERBS", MAX_VERBS);
         while (get_next_token(),
