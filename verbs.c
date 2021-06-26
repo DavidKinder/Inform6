@@ -589,6 +589,7 @@ static void ensure_grammar_lines_available(int verbnum, int num)
 static int grammar_line(int verbnum, int line)
 {
     /*  Parse a grammar line, to be written into grammar_lines[mark] onward.
+        This stores the line position in Inform_verbs[verbnum].l[line].
 
         Syntax: * <token1> ... <token-n> -> <action>
 
