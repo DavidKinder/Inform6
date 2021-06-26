@@ -451,7 +451,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
     /* We compute this optimal way here; it's stored in optimal_parse_schedule */
     uchar *q, c; int l, min_score, from, abbr_length;
-    int text_in_length = strlen(text_in);
+    int text_in_length = strlen( (char*) text_in);
     int optimal_parse_scores[text_in_length+1];
     int optimal_parse_schedule[text_in_length];
     if (economy_switch)
