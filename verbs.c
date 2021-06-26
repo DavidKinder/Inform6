@@ -94,9 +94,13 @@ static int English_verb_list_size;     /* Size of the list in bytes          */
 
   int32   *action_byte_offset,
           *action_symbol,
-          *grammar_token_routine,
-          *adjectives;
-  static uchar *adjective_sort_code;
+          *grammar_token_routine;
+
+  int32   *adjectives; /* Allocated to no_adjectives */
+  static memory_list adjectives_memlist;
+
+  static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES */
+  static memory_list adjective_sort_code_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
@@ -441,8 +445,12 @@ static int make_adjective(char *English_word)
     int i; 
     uchar new_sort_code[MAX_DICT_WORD_BYTES];
 
-    if (no_adjectives >= MAX_ADJECTIVES)
-        memoryerror("MAX_ADJECTIVES", MAX_ADJECTIVES);
+    if (no_adjectives >= 255) {
+        error("Grammar version 1 cannot support more than 255 prepositions");
+        return 0;
+    }
+    ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);
+    ensure_memory_list_available(&adjective_sort_code_memlist, (no_adjectives+1) * DICT_WORD_BYTES);
 
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
@@ -1147,10 +1155,13 @@ extern void verbs_allocate_arrays(void)
                                 "action symbols");
     grammar_token_routine = my_calloc(sizeof(int32),   MAX_ACTIONS,
                                 "grammar token routines");
-    adjectives            = my_calloc(sizeof(int32),   MAX_ADJECTIVES,
-                                "adjectives");
-    adjective_sort_code   = my_calloc(DICT_WORD_BYTES, MAX_ADJECTIVES,
-                                "adjective sort codes");
+
+    initialise_memory_list(&adjectives_memlist,
+        sizeof(int32), 50, (void**)&adjectives,
+        "adjectives");
+    initialise_memory_list(&adjective_sort_code_memlist,
+        sizeof(uchar), 50*DICT_WORD_BYTES, (void**)&adjective_sort_code,
+        "adjective sort codes");
 
     initialise_memory_list(&English_verb_list_memlist,
         sizeof(char), 2048, (void**)&English_verb_list,
@@ -1169,8 +1180,8 @@ extern void verbs_free_arrays(void)
     my_free(&action_byte_offset, "actions");
     my_free(&action_symbol, "action symbols");
     my_free(&grammar_token_routine, "grammar token routines");
-    my_free(&adjectives, "adjectives");
-    my_free(&adjective_sort_code, "adjective sort codes");
+    deallocate_memory_list(&adjectives_memlist);
+    deallocate_memory_list(&adjective_sort_code_memlist);
     deallocate_memory_list(&English_verb_list_memlist);
 }
 
