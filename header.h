@@ -819,10 +819,14 @@ typedef struct propg {
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
     int numprops;
-    propg *props;               /* managed by g_props_memlist */
+    propg *props;               /* allocated to numprops */
+    memory_list props_memlist;
     int propdatasize;
-    assembly_operand *propdata; /* managed by g_propdata_memlist */
+    assembly_operand *propdata; /* allocated to propdatasize */
+    memory_list propdata_memlist;
     int32 finalpropaddr;
+    /* It's safe to use memory_lists in this object because there's just
+       one and it's static. */
 } fproptg;
 
 /* Constructed object (G). */
