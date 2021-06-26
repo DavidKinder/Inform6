@@ -616,14 +616,7 @@ static int grammar_line(int verbnum, int line)
         return FALSE;
     }
 
-    /*  Have we run out of lines or token space?  */
-
-    if (line >= MAX_LINES_PER_VERB)
-    {   discard_token_location(beginning_debug_location);
-        error("Too many lines of grammar for verb. This maximum is built \
-into Inform, so suggest rewriting grammar using general parsing routines");
-        return(FALSE);
-    }
+    /*  Have we run out of token space?  */
 
     /*  Internally, a line can be up to 3*32 + 1 + 2 = 99 bytes long  */
     /*  In Glulx, that's 5*32 + 4 = 164 bytes */
@@ -642,6 +635,7 @@ into Inform, so suggest rewriting grammar using general parsing routines");
         }
     }
 
+    ensure_memory_list_available(&Inform_verbs[verbnum].l_memlist, line+1);
     Inform_verbs[verbnum].l[line] = mark;
 
     if (!glulx_mode) {
@@ -949,13 +943,17 @@ extern void make_verb(void)
             ebf_error("';' after English verb", token_text);
     }
     else
-    {
+    {   verb_equals_form = FALSE;
         if (!glulx_mode && no_Inform_verbs >= 255) {
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         Inform_verb = no_Inform_verbs;
+        Inform_verbs[no_Inform_verbs].lines = 0;
+        initialise_memory_list(&Inform_verbs[no_Inform_verbs].l_memlist,
+            sizeof(int), 0, (void**)&Inform_verbs[no_Inform_verbs].l,
+            "grammar lines for one verb");
     }
 
     for (i=0; i<no_given; i++)
@@ -1026,7 +1024,14 @@ extern void extend_verb(void)
             English-verbs given have had their dictionary entries modified
             to point to                                                      */
 
-        Inform_verbs[no_Inform_verbs] = Inform_verbs[Inform_verb];
+        initialise_memory_list(&Inform_verbs[no_Inform_verbs].l_memlist,
+            sizeof(int), 0, (void**)&Inform_verbs[no_Inform_verbs].l,
+            "grammar lines for one verb");
+        l = Inform_verbs[Inform_verb].lines;
+        ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l);
+        Inform_verbs[no_Inform_verbs].lines = l;
+        for (k=0; k<l; k++)
+            Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
         Inform_verb = no_Inform_verbs++;
     }
     else
@@ -1059,17 +1064,23 @@ extern void extend_verb(void)
     lines = 0;
     if (extend_mode == EXTEND_LAST) lines=l;
     do
-    {   if (extend_mode == EXTEND_FIRST)
+    {
+        if (extend_mode == EXTEND_FIRST) {
+            ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l+lines+1);
             for (k=l; k>0; k--)
                  Inform_verbs[Inform_verb].l[k+lines]
                      = Inform_verbs[Inform_verb].l[k-1+lines];
+        }
     } while (grammar_line(Inform_verb, lines++));
 
     if (extend_mode == EXTEND_FIRST)
-    {   Inform_verbs[Inform_verb].lines = l+lines-1;
-        for (k=0; k<l; k++)
+    {
+        ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l+lines+1);
+        Inform_verbs[Inform_verb].lines = l+lines-1;
+        for (k=0; k<l; k++) {
             Inform_verbs[Inform_verb].l[k+lines-1]
                 = Inform_verbs[Inform_verb].l[k+lines];
+        }
     }
     else Inform_verbs[Inform_verb].lines = --lines;
 

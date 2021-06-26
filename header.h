@@ -740,6 +740,21 @@ static int32 unique_task_id(void)
 /*   Structure definitions (there are a few others local to files)           */
 /* ------------------------------------------------------------------------- */
 
+/*  A memory list is a sequential array of items. The list grows as
+    necessary, but it is *not* sparse.
+    This can optionally maintain an external pointer (of any type) which 
+    also refers to the allocated array. The external pointer will always
+    have the same value as data.
+*/
+typedef struct memory_list_s
+{
+    char *whatfor;   /* must be a static string */
+    void *data;      /* allocated array of count*itemsize bytes */
+    void **extpointer;  /* pointer to keep in sync */
+    size_t itemsize;    /* item size in bytes */
+    size_t count;       /* number of items allocated */
+} memory_list;
+
 typedef struct assembly_operand_t
 {   int   type;     /* ?_OT value */
     int32 value;
@@ -751,10 +766,10 @@ typedef struct assembly_operand_t
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
-#define  MAX_LINES_PER_VERB 32
 typedef struct verbt {
     int lines;
-    int l[MAX_LINES_PER_VERB];
+    int *l;
+    memory_list l_memlist;
 } verbt;
 
 /* Information about an object class. */
@@ -923,21 +938,6 @@ typedef struct ErrorPosition_s
     int32 orig_line;
     int32 orig_char;
 } ErrorPosition;
-
-/*  A memory list is a sequential array of items. The list grows as
-    necessary, but it is *not* sparse.
-    This can optionally maintain an external pointer (of any type) which 
-    also refers to the allocated array. The external pointer will always
-    have the same value as data.
-*/
-typedef struct memory_list_s
-{
-    char *whatfor;   /* must be a static string */
-    void *data;      /* allocated array of count*itemsize bytes */
-    void **extpointer;  /* pointer to keep in sync */
-    size_t itemsize;    /* item size in bytes */
-    size_t count;       /* number of items allocated */
-} memory_list;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
    the text, store_variable_number, branch_label_number, or branch_flag
