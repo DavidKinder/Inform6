@@ -246,7 +246,6 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ACTIONS;
-int MAX_ADJECTIVES;
 int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
@@ -298,7 +297,6 @@ static void list_memory_sizes(void)
     printf("+--------------------------------------+\n");
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
-    printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
@@ -358,7 +356,6 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 2000;
 
         MAX_EXPRESSION_NODES = 100;
@@ -385,7 +382,6 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 1300;
 
         MAX_EXPRESSION_NODES = 100;
@@ -412,7 +408,6 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 700;
 
         MAX_EXPRESSION_NODES = 40;
@@ -508,13 +503,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_ACTIONS is the maximum number of actions - that is, routines such as \n\
   TakeSub which are referenced in the grammar table.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_ADJECTIVES")==0)
-    {   printf(
-"  MAX_ADJECTIVES is the maximum number of different \"adjectives\" in the \n\
-  grammar table.  Adjectives are misleadingly named: they are words such as \n\
-  \"in\", \"under\" and the like.\n");
         return;
     }
     if (strcmp(command,"MAX_DICT_ENTRIES")==0)
@@ -875,7 +863,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ACTIONS")==0)
                 MAX_ACTIONS=j, flag=1;
             if (strcmp(command,"MAX_ADJECTIVES")==0)
-                MAX_ADJECTIVES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_DICT_ENTRIES")==0)
                 MAX_DICT_ENTRIES=j, flag=1;
             if (strcmp(command,"DICT_WORD_SIZE")==0) 

@@ -2622,7 +2622,7 @@ extern void  link_module(char *filename);
 extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
-           MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
+           MAX_ACTIONS,          MAX_ABBREVS,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
            MAX_LOW_STRINGS,
            MAX_INCLUSION_DEPTH,
