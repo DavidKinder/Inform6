@@ -1147,6 +1147,11 @@ extern void verbs_allocate_arrays(void)
 
 extern void verbs_free_arrays(void)
 {
+    int ix;
+    for (ix=0; ix<no_Inform_verbs; ix++)
+    {
+        deallocate_memory_list(&Inform_verbs[ix].l_memlist);
+    }
     deallocate_memory_list(&Inform_verbs_memlist);
     my_free(&grammar_lines, "grammar lines");
     my_free(&action_byte_offset, "actions");
