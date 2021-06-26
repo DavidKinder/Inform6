@@ -745,6 +745,10 @@ static int32 unique_task_id(void)
     This can optionally maintain an external pointer (of any type) which 
     also refers to the allocated array. The external pointer will always
     have the same value as data.
+    (Note: the external pointer must itself have a stable location, because
+    we keep a copy of it. It cannot live in another memory list or realloced
+    array. Most of our memory lists refer to global or static variables,
+    so that's fine.)
 */
 typedef struct memory_list_s
 {
