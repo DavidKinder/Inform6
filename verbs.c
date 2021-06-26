@@ -576,6 +576,16 @@ static int get_verb(void)
 /*   Grammar lines for Verb/Extend directives.                               */
 /* ------------------------------------------------------------------------- */
 
+static void ensure_grammar_lines_available(int verbnum, int num)
+{
+    /* Note that the size field always starts positive. */
+    if (num > Inform_verbs[verbnum].size) {
+        int newsize = 2*num+4;
+        my_realloc(&Inform_verbs[verbnum].l, sizeof(int) * Inform_verbs[verbnum].size, sizeof(int) * newsize, "grammar lines for one verb");
+        Inform_verbs[verbnum].size = newsize;
+    }
+}
+
 static int grammar_line(int verbnum, int line)
 {
     /*  Parse a grammar line, to be written into grammar_lines[mark] onward.
@@ -635,7 +645,7 @@ static int grammar_line(int verbnum, int line)
         }
     }
 
-    ensure_memory_list_available(&Inform_verbs[verbnum].l_memlist, line+1);
+    ensure_grammar_lines_available(verbnum, line+1);
     Inform_verbs[verbnum].l[line] = mark;
 
     if (!glulx_mode) {
@@ -951,9 +961,8 @@ extern void make_verb(void)
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         Inform_verb = no_Inform_verbs;
         Inform_verbs[no_Inform_verbs].lines = 0;
-        initialise_memory_list(&Inform_verbs[no_Inform_verbs].l_memlist,
-            sizeof(int), 0, (void**)&Inform_verbs[no_Inform_verbs].l,
-            "grammar lines for one verb");
+        Inform_verbs[no_Inform_verbs].size = 4;
+        Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
     }
 
     for (i=0; i<no_given; i++)
@@ -1023,13 +1032,13 @@ extern void extend_verb(void)
         /*  Copy the old Inform-verb into a new one which the list of
             English-verbs given have had their dictionary entries modified
             to point to                                                      */
+        /*  (We are copying entry Inform_verb to no_Inform_verbs here.) */
 
-        initialise_memory_list(&Inform_verbs[no_Inform_verbs].l_memlist,
-            sizeof(int), 0, (void**)&Inform_verbs[no_Inform_verbs].l,
-            "grammar lines for one verb");
-        l = Inform_verbs[Inform_verb].lines;
-        ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l);
+        l = Inform_verbs[Inform_verb].lines; /* number of lines to copy */
+        
         Inform_verbs[no_Inform_verbs].lines = l;
+        Inform_verbs[no_Inform_verbs].size = l+4;
+        Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
         for (k=0; k<l; k++)
             Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
         Inform_verb = no_Inform_verbs++;
@@ -1066,7 +1075,7 @@ extern void extend_verb(void)
     do
     {
         if (extend_mode == EXTEND_FIRST) {
-            ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l+lines+1);
+            ensure_grammar_lines_available(Inform_verb, l+lines+1);
             for (k=l; k>0; k--)
                  Inform_verbs[Inform_verb].l[k+lines]
                      = Inform_verbs[Inform_verb].l[k-1+lines];
@@ -1075,7 +1084,7 @@ extern void extend_verb(void)
 
     if (extend_mode == EXTEND_FIRST)
     {
-        ensure_memory_list_available(&Inform_verbs[no_Inform_verbs].l_memlist, l+lines+1);
+        ensure_grammar_lines_available(Inform_verb, l+lines+1);
         Inform_verbs[Inform_verb].lines = l+lines-1;
         for (k=0; k<l; k++) {
             Inform_verbs[Inform_verb].l[k+lines-1]
@@ -1150,7 +1159,7 @@ extern void verbs_free_arrays(void)
     int ix;
     for (ix=0; ix<no_Inform_verbs; ix++)
     {
-        deallocate_memory_list(&Inform_verbs[ix].l_memlist);
+        my_free(&Inform_verbs[ix].l, "grammar lines for one verb");
     }
     deallocate_memory_list(&Inform_verbs_memlist);
     my_free(&grammar_lines, "grammar lines");

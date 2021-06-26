@@ -772,8 +772,8 @@ typedef struct assembly_operand_t
 
 typedef struct verbt {
     int lines;
-    int *l;
-    memory_list l_memlist;
+    int *l; /* alloced array */
+    int size; /* allocated size of l */
 } verbt;
 
 /* Information about an object class. */
