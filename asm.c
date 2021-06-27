@@ -100,7 +100,9 @@ static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
              *label_prev;
 static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
-static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point */
+static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
+                                              Only used when debugfile_switch
+                                              is set.                        */
 static memory_list sequence_points_memlist;
 
 static void set_label_offset(int label, int32 offset)
@@ -834,7 +836,9 @@ extern void assemblez_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_points[next_sequence_point].label = next_label;
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
@@ -1140,7 +1144,9 @@ extern void assembleg_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_points[next_sequence_point].label = next_label;
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
