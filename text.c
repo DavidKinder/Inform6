@@ -451,11 +451,23 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
     /* We compute this optimal way here; it's stored in optimal_parse_schedule */
     uchar *q, c; int l, min_score, from, abbr_length;
-    int text_in_length = strlen( (char*) text_in);
-    int optimal_parse_scores[text_in_length+1];
-    int optimal_parse_schedule[text_in_length];
+    int text_in_length;
+    int *optimal_parse_scores;
+    memory_list optimal_parse_scores_memlist;
+    initialise_memory_list(&optimal_parse_scores_memlist,
+        sizeof(int), 0, (void**)&optimal_parse_scores,
+        "optimal parse scores");
+    int *optimal_parse_schedule;
+    memory_list optimal_parse_schedule_memlist;
+    initialise_memory_list(&optimal_parse_schedule_memlist,
+        sizeof(int), 0, (void**)&optimal_parse_schedule,
+        "optimal parse schedule");
     if (economy_switch)
     {   
+        text_in_length = strlen( (char*) text_in);
+        ensure_memory_list_available(&optimal_parse_schedule_memlist, text_in_length);
+        ensure_memory_list_available(&optimal_parse_scores_memlist, text_in_length+1);
+        
         optimal_parse_scores[text_in_length] = 0;
         for(j=text_in_length-1; j>=0; j--)
         {    // initial values: empty schedule, score = just write the letter without abbreviating
@@ -669,6 +681,9 @@ advance as part of 'Zcharacter table':", unicode);
 
     end_z_chars();
 
+    /*  Deallocate the memory we needed to reserve for the abbreviation computation */
+    deallocate_memory_list(&optimal_parse_schedule_memlist);
+    deallocate_memory_list(&optimal_parse_scores_memlist);
   }
   else {
 
