@@ -94,6 +94,12 @@ static memory_list abbreviations_memlist;
 uchar *abbreviations_at;                 /* Allocated up to no_abbreviations */
 static memory_list abbreviations_at_memlist;
 
+static int *optimal_parse_schedule;
+static memory_list optimal_parse_schedule_memlist;
+
+static int *optimal_parse_scores;
+static memory_list optimal_parse_scores_memlist;
+
 /* ------------------------------------------------------------------------- */
 
 int32 total_chars_trans,               /* Number of ASCII chars of text in   */
@@ -450,20 +456,10 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     /* Computing the optimal way to parse strings to insert abbreviations with dynamic programming */
     /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
     /* We compute this optimal way here; it's stored in optimal_parse_schedule */
-    int *optimal_parse_schedule;
-    memory_list optimal_parse_schedule_memlist;
-    initialise_memory_list(&optimal_parse_schedule_memlist,
-        sizeof(int), 0, (void**)&optimal_parse_schedule,
-        "optimal parse schedule");
     if (economy_switch)
     {   
         uchar *q, c; int l, min_score, from, abbr_length;
         int text_in_length;
-        int *optimal_parse_scores;
-        memory_list optimal_parse_scores_memlist;
-        initialise_memory_list(&optimal_parse_scores_memlist,
-            sizeof(int), 0, (void**)&optimal_parse_scores,
-            "optimal parse scores");
         text_in_length = strlen( (char*) text_in);
         ensure_memory_list_available(&optimal_parse_schedule_memlist, text_in_length);
         ensure_memory_list_available(&optimal_parse_scores_memlist, text_in_length+1);
@@ -497,11 +493,9 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
                     }
                 }
             }
-        // We gave it our best, this is the smallest we got
-        optimal_parse_scores[j] = min_score;
+            // We gave it our best, this is the smallest we got
+            optimal_parse_scores[j] = min_score;
         }
-    /* we're done with this array, but not with the schedule */
-    deallocate_memory_list(&optimal_parse_scores_memlist);
     }
 
 
@@ -682,9 +676,6 @@ advance as part of 'Zcharacter table':", unicode);
     /*  Flush the Z-characters output buffer and set the "end" bit           */
 
     end_z_chars();
-
-    /*  Deallocate the memory we needed to reserve for the abbreviation computation */
-    deallocate_memory_list(&optimal_parse_schedule_memlist);
   }
   else {
 
@@ -2487,6 +2478,8 @@ extern void init_text_vars(void)
     dict_entries=0;
 
     static_strings_area = NULL;
+    optimal_parse_schedule = NULL;
+    optimal_parse_scores = NULL;
 }
 
 extern void text_begin_pass(void)
@@ -2519,6 +2512,13 @@ extern void text_allocate_arrays(void)
         sizeof(abbreviation), 64, (void**)&abbreviations,
         "abbreviations");
 
+    initialise_memory_list(&optimal_parse_schedule_memlist,
+        sizeof(int), 0, (void**)&optimal_parse_schedule,
+        "optimal parse schedule");
+    initialise_memory_list(&optimal_parse_scores_memlist,
+        sizeof(int), 0, (void**)&optimal_parse_scores,
+        "optimal parse scores");
+    
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
     final_dict_order = my_calloc(sizeof(int),  MAX_DICT_ENTRIES,
@@ -2568,6 +2568,9 @@ extern void text_free_arrays(void)
     my_free(&low_strings, "low (abbreviation) strings");
     deallocate_memory_list(&abbreviations_at_memlist);
     deallocate_memory_list(&abbreviations_memlist);
+
+    deallocate_memory_list(&optimal_parse_schedule_memlist);
+    deallocate_memory_list(&optimal_parse_scores_memlist);
 
     my_free(&dtree,            "red-black tree for dictionary");
     my_free(&final_dict_order, "final dictionary ordering table");
