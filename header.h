@@ -926,6 +926,12 @@ typedef struct arrayinfo_s {
     int loc;      /* true for static, false for dynamic (regular) arrays */
 } arrayinfo;
 
+typedef struct sequencepointinfo_s {
+    int label;               /* Label number */
+    debug_location location; /* Source code reference (used for making
+                                debugging file)                              */
+} sequencepointinfo;
+
 typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or

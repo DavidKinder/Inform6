@@ -30,7 +30,8 @@ int execution_never_reaches_here,  /* TRUE if the current PC value in the
     next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
-int no_sequence_points;            /* Kept for statistics purposes only      */
+int no_sequence_points;            /* Total over all routines; kept for
+                                      statistics purposes only               */
 
 static int label_moved_error_already_given;
                                    /* When one label has moved, all subsequent
@@ -99,11 +100,8 @@ static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
              *label_prev;
 static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
-static int   *sequence_point_labels;
-                                   /* Label numbers for each                 */
-static debug_location *sequence_point_locations;
-                                   /* Source code references for each        */
-                                   /* (used for making debugging file)       */
+static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point */
+static memory_list sequence_points_memlist;
 
 static void set_label_offset(int label, int32 offset)
 {
@@ -836,8 +834,8 @@ extern void assemblez_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {   sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -1142,8 +1140,8 @@ extern void assembleg_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {   sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -1765,9 +1763,9 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         {   debug_file_printf("<sequence-point>");
             debug_file_printf("<address>");
             write_debug_code_backpatch
-                (label_offsets[sequence_point_labels[i]]);
+                (label_offsets[sequence_points[i].label]);
             debug_file_printf("</address>");
-            write_debug_location(sequence_point_locations[i]);
+            write_debug_location(sequence_points[i].location);
             debug_file_printf("</sequence-point>");
         }
         debug_file_printf("</routine>");
@@ -3160,6 +3158,8 @@ extern void asm_begin_pass(void)
     next_label = 0;
     next_sequence_point = 0;
     zcode_ha_size = 0;
+
+    sequence_points = NULL;
 }
 
 extern void init_asm_vars(void)
@@ -3190,12 +3190,10 @@ extern void asm_allocate_arrays(void)
     label_symbols = my_calloc(sizeof(int32), MAX_LABELS, "label symbols");
     label_next = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
     label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    sequence_point_labels
-        = my_calloc(sizeof(int), MAX_LABELS, "sequence point labels");
-    sequence_point_locations
-        = my_calloc(sizeof(debug_location),
-                    MAX_LABELS,
-                    "sequence point locations");
+    
+    initialise_memory_list(&sequence_points_memlist,
+        sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
+        "sequence points");
 
     zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
     zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
@@ -3222,8 +3220,7 @@ extern void asm_free_arrays(void)
     my_free(&label_symbols, "label symbols");
     my_free(&label_next, "label dll 1");
     my_free(&label_prev, "label dll 2");
-    my_free(&sequence_point_labels, "sequence point labels");
-    my_free(&sequence_point_locations, "sequence point locations");
+    deallocate_memory_list(&sequence_points_memlist);
 
     my_free(&zcode_holding_area, "compiled routine code area");
     my_free(&zcode_markers, "compiled routine code markers");
