@@ -450,13 +450,6 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     /* Computing the optimal way to parse strings to insert abbreviations with dynamic programming */
     /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
     /* We compute this optimal way here; it's stored in optimal_parse_schedule */
-    uchar *q, c; int l, min_score, from, abbr_length;
-    int text_in_length;
-    int *optimal_parse_scores;
-    memory_list optimal_parse_scores_memlist;
-    initialise_memory_list(&optimal_parse_scores_memlist,
-        sizeof(int), 0, (void**)&optimal_parse_scores,
-        "optimal parse scores");
     int *optimal_parse_schedule;
     memory_list optimal_parse_schedule_memlist;
     initialise_memory_list(&optimal_parse_schedule_memlist,
@@ -464,6 +457,13 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         "optimal parse schedule");
     if (economy_switch)
     {   
+        uchar *q, c; int l, min_score, from, abbr_length;
+        int text_in_length;
+        int *optimal_parse_scores;
+        memory_list optimal_parse_scores_memlist;
+        initialise_memory_list(&optimal_parse_scores_memlist,
+            sizeof(int), 0, (void**)&optimal_parse_scores,
+            "optimal parse scores");
         text_in_length = strlen( (char*) text_in);
         ensure_memory_list_available(&optimal_parse_schedule_memlist, text_in_length);
         ensure_memory_list_available(&optimal_parse_scores_memlist, text_in_length+1);
@@ -500,6 +500,8 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         // We gave it our best, this is the smallest we got
         optimal_parse_scores[j] = min_score;
         }
+    /* we're done with this array, but not with the schedule */
+    deallocate_memory_list(&optimal_parse_scores_memlist);
     }
 
 
@@ -683,7 +685,6 @@ advance as part of 'Zcharacter table':", unicode);
 
     /*  Deallocate the memory we needed to reserve for the abbreviation computation */
     deallocate_memory_list(&optimal_parse_schedule_memlist);
-    deallocate_memory_list(&optimal_parse_scores_memlist);
   }
   else {
 
