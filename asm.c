@@ -3157,17 +3157,6 @@ extern void parse_assembly(void)
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
 
-extern void asm_begin_pass(void)
-{   no_instructions = 0;
-    zmachine_pc = 0;
-    no_sequence_points = 0;
-    next_label = 0;
-    next_sequence_point = 0;
-    zcode_ha_size = 0;
-
-    sequence_points = NULL;
-}
-
 extern void init_asm_vars(void)
 {   int i;
 
@@ -3178,10 +3167,20 @@ extern void init_asm_vars(void)
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
 
+    sequence_points = NULL;
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;
 
     zcode_area = NULL;
+}
+
+extern void asm_begin_pass(void)
+{   no_instructions = 0;
+    zmachine_pc = 0;
+    no_sequence_points = 0;
+    next_label = 0;
+    next_sequence_point = 0;
+    zcode_ha_size = 0;
 }
 
 extern void asm_allocate_arrays(void)
