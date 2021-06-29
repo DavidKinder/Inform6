@@ -114,18 +114,18 @@ static void set_label_offset(int label, int32 offset)
 {
     if (label >= MAX_LABELS) memoryerror("MAX_LABELS", MAX_LABELS);
 
-    label_offsets[label] = offset;
+    labels[label].offset = offset;
     if (last_label == -1)
-    {   label_prev[label] = -1;
+    {   labels[label].prev = -1;
         first_label = label;
     }
     else
-    {   label_prev[label] = last_label;
-        label_next[last_label] = label;
+    {   labels[label].prev = last_label;
+        labels[last_label].next = label;
     }
     last_label = label;
-    label_next[label] = -1;
-    label_symbols[label] = -1;
+    labels[label].next = -1;
+    labels[label].symbol = -1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1438,7 +1438,7 @@ extern void assemble_label_no(int n)
 }
 
 extern void define_symbol_label(int symbol)
-{   label_symbols[symbols[symbol].value] = symbol;
+{   labels[symbols[symbol].value].symbol = symbol;
 }
 
 extern int32 assemble_routine_header(int no_locals,
@@ -1774,7 +1774,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         {   debug_file_printf("<sequence-point>");
             debug_file_printf("<address>");
             write_debug_code_backpatch
-                (label_offsets[sequence_points[i].label]);
+                (labels[sequence_points[i].label].offset);
             debug_file_printf("</address>");
             write_debug_location(sequence_points[i].location);
             debug_file_printf("</sequence-point>");
@@ -1790,7 +1790,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
                 routine_starts_line);
 
     for (i=0; i<next_label; i++)
-    {   int j = label_symbols[i];
+    {   int j = labels[i].symbol;
         if (j != -1)
         {   if (symbols[j].flags & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
@@ -1860,8 +1860,8 @@ static void transfer_routine_z(void)
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
             if (asm_trace_level >= 4)
                 printf("To label %d, which is %d from here\n",
-                    j, label_offsets[j]-pc);
-            if ((label_offsets[j] >= pc+2) && (label_offsets[j] < pc+64))
+                    j, labels[j].offset-pc);
+            if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
             {   if (asm_trace_level >= 4) printf("Short form\n");
                 zcode_markers[i+1] = DELETED_MV;
             }
@@ -1881,17 +1881,17 @@ static void transfer_routine_z(void)
         {   printf("Opening label: %d\n", first_label);
             for (i=0;i<next_label;i++)
                 printf("Label %d offset %04x next -> %d previous -> %d\n",
-                    i, label_offsets[i], label_next[i], label_prev[i]);
+                    i, labels[i].offset, labels[i].next, labels[i].prev);
         }
 
         for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
             i<zcode_ha_size; i++, pc++)
-        {   while ((label != -1) && (label_offsets[label] == pc))
+        {   while ((label != -1) && (labels[label].offset == pc))
             {   if (asm_trace_level >= 4)
                     printf("Position of L%d corrected from %04x to %04x\n",
-                        label, label_offsets[label], new_pc);
-                label_offsets[label] = new_pc;
-                label = label_next[label];
+                        label, labels[label].offset, new_pc);
+                labels[label].offset = new_pc;
+                label = labels[label].next;
             }
            if (zcode_markers[i] != DELETED_MV) new_pc++;
         }
@@ -1912,7 +1912,7 @@ static void transfer_routine_z(void)
             branch_on_true = ((zcode_holding_area[i]) & 0x80);
             offset_of_next = new_pc + long_form + 1;
 
-            addr = label_offsets[j] - offset_of_next + 2;
+            addr = labels[j].offset - offset_of_next + 2;
             if (addr<-0x2000 || addr>0x1fff) 
                 fatalerror("Branch out of range: divide the routine up?");
             if (addr<0) addr+=(int32) 0x10000L;
@@ -1934,7 +1934,7 @@ static void transfer_routine_z(void)
 
           case LABEL_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
-            addr = label_offsets[j] - new_pc;
+            addr = labels[j].offset - new_pc;
             if (addr<-0x8000 || addr>0x7fff) 
                 fatalerror("Jump out of range: divide the routine up?");
             if (addr<0) addr += (int32) 0x10000L;
@@ -2031,10 +2031,10 @@ static void transfer_routine_g(void)
             | (zcode_holding_area[i+2] << 8)
             | (zcode_holding_area[i+3]));
         offset_of_next = pc + 4;
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        addr = (labels[j].offset - offset_of_next) + 2;
         if (asm_trace_level >= 4)
             printf("To label %d, which is (%d-2) = %d from here\n",
-                j, addr, label_offsets[j] - offset_of_next);
+                j, addr, labels[j].offset - offset_of_next);
         if (addr >= -0x80 && addr < 0x80) {
             if (asm_trace_level >= 4) printf("...Byte form\n");
             zcode_markers[i+1] = DELETED_MV;
@@ -2075,18 +2075,18 @@ static void transfer_routine_g(void)
         printf("Opening label: %d\n", first_label);
         for (i=0;i<next_label;i++)
             printf("Label %d offset %04x next -> %d previous -> %d\n",
-                i, label_offsets[i], label_next[i], label_prev[i]);
+                i, labels[i].offset, labels[i].next, labels[i].prev);
       }
 
       for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
         i<zcode_ha_size; 
         i++, pc++) {
-        while ((label != -1) && (label_offsets[label] == pc)) {
+        while ((label != -1) && (labels[label].offset == pc)) {
             if (asm_trace_level >= 4)
                 printf("Position of L%d corrected from %04x to %04x\n",
-                label, label_offsets[label], new_pc);
-            label_offsets[label] = new_pc;
-            label = label_next[label];
+                label, labels[label].offset, new_pc);
+            labels[label].offset = new_pc;
+            label = labels[label].next;
         }
         if (zcode_markers[i] != DELETED_MV) new_pc++;
       }
@@ -2119,7 +2119,7 @@ static void transfer_routine_g(void)
            after it. */
         offset_of_next = new_pc + form_len;
 
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        addr = (labels[j].offset - offset_of_next) + 2;
         if (asm_trace_level >= 4) {
             printf("Branch at offset %04x: %04x (%s)\n",
                 new_pc, addr, ((form_len == 1) ? "byte" :
