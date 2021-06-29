@@ -94,6 +94,11 @@ static void transfer_routine_g(void);
 /*   Label data                                                              */
 /* ------------------------------------------------------------------------- */
 
+static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
+                             These are allocated sequentially, but accessed
+                             as a double-linked list from first_label
+                             to last_label. */
+static memory_list labels_memlist;
 static int first_label, last_label;
 static int32 *label_offsets;       /* Double-linked list of label offsets    */
 static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
@@ -3167,6 +3172,7 @@ extern void init_asm_vars(void)
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
 
+    labels = NULL;
     sequence_points = NULL;
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;
@@ -3196,6 +3202,9 @@ extern void asm_allocate_arrays(void)
     label_next = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
     label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
     
+    initialise_memory_list(&labels_memlist,
+        sizeof(labelinfo), 1000, (void**)&labels,
+        "labels");
     initialise_memory_list(&sequence_points_memlist,
         sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
         "sequence points");
@@ -3225,6 +3234,7 @@ extern void asm_free_arrays(void)
     my_free(&label_symbols, "label symbols");
     my_free(&label_next, "label dll 1");
     my_free(&label_prev, "label dll 2");
+    deallocate_memory_list(&labels_memlist);
     deallocate_memory_list(&sequence_points_memlist);
 
     my_free(&zcode_holding_area, "compiled routine code area");
