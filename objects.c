@@ -37,9 +37,6 @@ static fproptg full_object_g;          /* Equivalent for Glulx. This object
                                           are allocated dynamically as
                                           memory-lists                       */
 
-static memory_list g_props_memlist;    /* Memory-list handlers for parts     */
-static memory_list g_propdata_memlist; /* of full_object_g                   */
-
 static char shortname_buffer[766];     /* Text buffer to hold the short name
                                           (which is read in first, but
                                           written almost last)               */
@@ -682,14 +679,14 @@ static void property_inheritance_g(void)
             }
           }
           k = full_object_g.numprops++;
-          ensure_memory_list_available(&g_props_memlist, k+1);
+          ensure_memory_list_available(&full_object_g.props_memlist, k+1);
           full_object_g.props[k].num = prop_number;
           full_object_g.props[k].flags = 0;
           full_object_g.props[k].datastart = full_object_g.propdatasize;
           full_object_g.props[k].continuation = prevcont+1;
           full_object_g.props[k].datalen = prop_length;
           
-          ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize + prop_length);
+          ensure_memory_list_available(&full_object_g.propdata_memlist, full_object_g.propdatasize + prop_length);
           for (i=0; i<prop_length; i++) {
             int ppos = full_object_g.propdatasize++;
             INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
@@ -707,14 +704,14 @@ static void property_inheritance_g(void)
                 defined at all in full_object_g: we copy out the data into
                 a new property added to full_object_g. */
             k = full_object_g.numprops++;
-            ensure_memory_list_available(&g_props_memlist, k+1);
+            ensure_memory_list_available(&full_object_g.props_memlist, k+1);
             full_object_g.props[k].num = prop_number;
             full_object_g.props[k].flags = prop_flags;
             full_object_g.props[k].datastart = full_object_g.propdatasize;
             full_object_g.props[k].continuation = 0;
             full_object_g.props[k].datalen = prop_length;
 
-            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize + prop_length);
+            ensure_memory_list_available(&full_object_g.propdata_memlist, full_object_g.propdatasize + prop_length);
             for (i=0; i<prop_length; i++) {
               int ppos = full_object_g.propdatasize++;
               INITAOTV(&full_object_g.propdata[ppos], CONSTANT_OT, prop_addr + 4*i);
@@ -1358,7 +1355,7 @@ static void properties_segment_g(int this_segment)
             property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
-            ensure_memory_list_available(&g_props_memlist, next_prop+1);
+            ensure_memory_list_available(&full_object_g.props_memlist, next_prop+1);
             full_object_g.props[next_prop].num = property_number;
             full_object_g.props[next_prop].flags = 
               ((this_segment == PRIVATE_SEGMENT) ? 1 : 0);
@@ -1381,7 +1378,7 @@ not 'private':", token_text);
             property_number = symbols[token_value].value;
 
             next_prop=full_object_g.numprops++;
-            ensure_memory_list_available(&g_props_memlist, next_prop+1);
+            ensure_memory_list_available(&full_object_g.props_memlist, next_prop+1);
             full_object_g.props[next_prop].num = property_number;
             full_object_g.props[next_prop].flags = 0;
             full_object_g.props[next_prop].datastart = full_object_g.propdatasize;
@@ -1498,7 +1495,7 @@ the names '%s' and '%s' actually refer to the same property",
                 break;
             }
 
-            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize+1);
+            ensure_memory_list_available(&full_object_g.propdata_memlist, full_object_g.propdatasize+1);
 
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
@@ -1517,7 +1514,7 @@ the names '%s' and '%s' actually refer to the same property",
         {
             assembly_operand AO;
             INITAOTV(&AO, CONSTANT_OT, 0);
-            ensure_memory_list_available(&g_propdata_memlist, full_object_g.propdatasize+1);
+            ensure_memory_list_available(&full_object_g.propdata_memlist, full_object_g.propdatasize+1);
             full_object_g.propdata[full_object_g.propdatasize++] = AO;
             length += 1;
         }
@@ -1823,14 +1820,14 @@ inconvenience, please contact the maintainers.");
     }
     else {
       full_object_g.numprops = 1;
-      ensure_memory_list_available(&g_props_memlist, 1);
+      ensure_memory_list_available(&full_object_g.props_memlist, 1);
       full_object_g.props[0].num = 2;
       full_object_g.props[0].flags = 0;
       full_object_g.props[0].datastart = 0;
       full_object_g.props[0].continuation = 0;
       full_object_g.props[0].datalen = 1;
       full_object_g.propdatasize = 1;
-      ensure_memory_list_available(&g_propdata_memlist, 1);
+      ensure_memory_list_available(&full_object_g.propdata_memlist, 1);
       INITAOTV(&full_object_g.propdata[0], CONSTANT_OT, no_objects + 1);
       full_object_g.propdata[0].marker = OBJECT_MV;
     }
@@ -2252,10 +2249,10 @@ extern void objects_allocate_arrays(void)
       initialise_memory_list(&objectatts_memlist,
           NUM_ATTR_BYTES, 256, (void**)&objectatts,
           "g-attributes");
-      initialise_memory_list(&g_props_memlist,
+      initialise_memory_list(&full_object_g.props_memlist,
           sizeof(propg), 64, (void**)&full_object_g.props,
           "object property list");
-      initialise_memory_list(&g_propdata_memlist,
+      initialise_memory_list(&full_object_g.propdata_memlist,
           sizeof(assembly_operand), 1024, (void**)&full_object_g.propdata,
           "object property data table");
     }
@@ -2281,8 +2278,8 @@ extern void objects_free_arrays(void)
     my_free(&defined_this_segment,"defined this segment table");
 
     if (!glulx_mode) {
-        deallocate_memory_list(&g_props_memlist);
-        deallocate_memory_list(&g_propdata_memlist);
+        deallocate_memory_list(&full_object_g.props_memlist);
+        deallocate_memory_list(&full_object_g.propdata_memlist);
     }
     
 }

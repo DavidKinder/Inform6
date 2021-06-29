@@ -740,6 +740,25 @@ static int32 unique_task_id(void)
 /*   Structure definitions (there are a few others local to files)           */
 /* ------------------------------------------------------------------------- */
 
+/*  A memory list is a sequential array of items. The list grows as
+    necessary, but it is *not* sparse.
+    This can optionally maintain an external pointer (of any type) which 
+    also refers to the allocated array. The external pointer will always
+    have the same value as data.
+    (Note: the external pointer must itself have a stable location, because
+    we keep a pointer *to* it. It cannot live in another memory list or
+    realloced array. Most of our memory lists refer to global or static
+    variables, so that's fine.)
+*/
+typedef struct memory_list_s
+{
+    char *whatfor;   /* must be a static string */
+    void *data;      /* allocated array of count*itemsize bytes */
+    void **extpointer;  /* pointer to keep in sync */
+    size_t itemsize;    /* item size in bytes */
+    size_t count;       /* number of items allocated */
+} memory_list;
+
 typedef struct assembly_operand_t
 {   int   type;     /* ?_OT value */
     int32 value;
@@ -751,10 +770,10 @@ typedef struct assembly_operand_t
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
-#define  MAX_LINES_PER_VERB 32
 typedef struct verbt {
     int lines;
-    int l[MAX_LINES_PER_VERB];
+    int *l; /* alloced array */
+    int size; /* allocated size of l */
 } verbt;
 
 /* Information about an object class. */
@@ -800,10 +819,14 @@ typedef struct propg {
 typedef struct fproptg {
     uchar atts[MAX_NUM_ATTR_BYTES]; 
     int numprops;
-    propg *props;               /* managed by g_props_memlist */
+    propg *props;               /* allocated to numprops */
+    memory_list props_memlist;
     int propdatasize;
-    assembly_operand *propdata; /* managed by g_propdata_memlist */
+    assembly_operand *propdata; /* allocated to propdatasize */
+    memory_list propdata_memlist;
     int32 finalpropaddr;
+    /* It's safe to use memory_lists in this object because there's just
+       one and it's static. */
 } fproptg;
 
 /* Constructed object (G). */
@@ -923,21 +946,6 @@ typedef struct ErrorPosition_s
     int32 orig_line;
     int32 orig_char;
 } ErrorPosition;
-
-/*  A memory list is a sequential array of items. The list grows as
-    necessary, but it is *not* sparse.
-    This can optionally maintain an external pointer (of any type) which 
-    also refers to the allocated array. The external pointer will always
-    have the same value as data.
-*/
-typedef struct memory_list_s
-{
-    char *whatfor;   /* must be a static string */
-    void *data;      /* allocated array of count*itemsize bytes */
-    void **extpointer;  /* pointer to keep in sync */
-    size_t itemsize;    /* item size in bytes */
-    size_t count;       /* number of items allocated */
-} memory_list;
 
 /* This serves for both Z-code and Glulx instructions. Glulx doesn't use
    the text, store_variable_number, branch_label_number, or branch_flag
@@ -2618,10 +2626,10 @@ extern void  link_module(char *filename);
 extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
-           MAX_ACTIONS,    MAX_ADJECTIVES,   MAX_ABBREVS,
+           MAX_ACTIONS,          MAX_ABBREVS,
            MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
-           MAX_LOW_STRINGS,      MAX_VERBS,
-           MAX_VERBSPACE,        MAX_INCLUSION_DEPTH,
+           MAX_LOW_STRINGS,
+           MAX_INCLUSION_DEPTH,
            MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STATIC_STRINGS, MAX_ZCODE_SIZE, MAX_LINK_DATA_SIZE,

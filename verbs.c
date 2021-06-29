@@ -70,15 +70,14 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*   The format of this list is a sequence of variable-length records:       */
 /*                                                                           */
 /*     Byte offset to start of next record  (1 byte)                         */
-/*     Inform verb number this word corresponds to  (1 byte)                 */
+/*     Inform verb number this word corresponds to  (2 bytes)                */
 /*     The English verb-word (reduced to lower case), null-terminated        */
 /* ------------------------------------------------------------------------- */
 
-static char *English_verb_list,        /* First byte of first record         */
-            *English_verb_list_top;    /* Next byte free for new record      */
+static char *English_verb_list;       /* Allocated to English_verb_list_size */
+static memory_list English_verb_list_memlist;
 
-static int English_verb_list_size;     /* Size of the list in bytes
-                                          (redundant but convenient)         */
+static int English_verb_list_size;     /* Size of the list in bytes          */
 
 /* Maximum synonyms in a single Verb/Extend directive */
 #define MAX_VERB_SYNONYMS (32)
@@ -87,16 +86,21 @@ static int English_verb_list_size;     /* Size of the list in bytes
 /*   Arrays used by this file                                                */
 /* ------------------------------------------------------------------------- */
 
-  verbt   *Inform_verbs;
+  verbt   *Inform_verbs;  /* Allocated up to no_Inform_verbs */
+  static memory_list Inform_verbs_memlist;
   uchar   *grammar_lines;
   int32    grammar_lines_top;
   int      no_grammar_lines, no_grammar_tokens;
 
   int32   *action_byte_offset,
           *action_symbol,
-          *grammar_token_routine,
-          *adjectives;
-  static uchar *adjective_sort_code;
+          *grammar_token_routine;
+
+  int32   *adjectives; /* Allocated to no_adjectives */
+  static memory_list adjectives_memlist;
+
+  static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES */
+  static memory_list adjective_sort_code_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
@@ -441,8 +445,12 @@ static int make_adjective(char *English_word)
     int i; 
     uchar new_sort_code[MAX_DICT_WORD_BYTES];
 
-    if (no_adjectives >= MAX_ADJECTIVES)
-        memoryerror("MAX_ADJECTIVES", MAX_ADJECTIVES);
+    if (no_adjectives >= 255) {
+        error("Grammar version 1 cannot support more than 255 prepositions");
+        return 0;
+    }
+    ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);
+    ensure_memory_list_available(&adjective_sort_code_memlist, (no_adjectives+1) * DICT_WORD_BYTES);
 
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
@@ -492,7 +500,7 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 
     char *p;
     p=English_verb_list;
-    while (p < English_verb_list_top)
+    while (p < English_verb_list+English_verb_list_size)
     {   if (strcmp(English_verb, p+3) == 0)
         {   if (new_number)
             {   p[1] = (*new_number)/256;
@@ -511,7 +519,7 @@ static char *find_verb_by_number(int num)
     /*  Find the English verb string with the given verb number. */
     char *p;
     p=English_verb_list;
-    while (p < English_verb_list_top)
+    while (p < English_verb_list+English_verb_list_size)
     {
         int val = (p[1] << 8) | p[2];
         if (val == num) {
@@ -526,6 +534,7 @@ static void register_verb(char *English_verb, int number)
 {
     /*  Registers a new English verb as referring to the given Inform-verb
         number.  (See comments above for format of the list.)                */
+    char *top;
     int entrysize;
 
     if (find_or_renumber_verb(English_verb, NULL) != -1)
@@ -540,15 +549,14 @@ static void register_verb(char *English_verb, int number)
     entrysize = strlen(English_verb)+4;
     if (entrysize > MAX_VERB_WORD_SIZE+4)
         error_numbered("Verb word is too long -- max length is", MAX_VERB_WORD_SIZE);
+    ensure_memory_list_available(&English_verb_list_memlist, English_verb_list_size + entrysize);
+    top = English_verb_list + English_verb_list_size;
     English_verb_list_size += entrysize;
-    if (English_verb_list_size >= MAX_VERBSPACE)
-        memoryerror("MAX_VERBSPACE", MAX_VERBSPACE);
 
-    English_verb_list_top[0] = entrysize;
-    English_verb_list_top[1] = number/256;
-    English_verb_list_top[2] = number%256;
-    strcpy(English_verb_list_top+3, English_verb);
-    English_verb_list_top += entrysize;
+    top[0] = entrysize;
+    top[1] = number/256;
+    top[2] = number%256;
+    strcpy(top+3, English_verb);
 }
 
 static int get_verb(void)
@@ -576,9 +584,22 @@ static int get_verb(void)
 /*   Grammar lines for Verb/Extend directives.                               */
 /* ------------------------------------------------------------------------- */
 
+static void ensure_grammar_lines_available(int verbnum, int num)
+{
+    /* Note that the size field always starts positive. */
+    if (num > Inform_verbs[verbnum].size) {
+        int newsize = 2*num+4;
+        my_realloc(&Inform_verbs[verbnum].l, sizeof(int) * Inform_verbs[verbnum].size, sizeof(int) * newsize, "grammar lines for one verb");
+        Inform_verbs[verbnum].size = newsize;
+    }
+}
+
 static int grammar_line(int verbnum, int line)
 {
     /*  Parse a grammar line, to be written into grammar_lines[mark] onward.
+        This stores the line position in Inform_verbs[verbnum].l[line].
+        (It does not increment Inform_verbs[verbnum].lines; the caller
+        must do that.)
 
         Syntax: * <token1> ... <token-n> -> <action>
 
@@ -616,14 +637,7 @@ static int grammar_line(int verbnum, int line)
         return FALSE;
     }
 
-    /*  Have we run out of lines or token space?  */
-
-    if (line >= MAX_LINES_PER_VERB)
-    {   discard_token_location(beginning_debug_location);
-        error("Too many lines of grammar for verb. This maximum is built \
-into Inform, so suggest rewriting grammar using general parsing routines");
-        return(FALSE);
-    }
+    /*  Have we run out of token space?  */
 
     /*  Internally, a line can be up to 3*32 + 1 + 2 = 99 bytes long  */
     /*  In Glulx, that's 5*32 + 4 = 164 bytes */
@@ -642,6 +656,7 @@ into Inform, so suggest rewriting grammar using general parsing routines");
         }
     }
 
+    ensure_grammar_lines_available(verbnum, line+1);
     Inform_verbs[verbnum].l[line] = mark;
 
     if (!glulx_mode) {
@@ -949,9 +964,16 @@ extern void make_verb(void)
             ebf_error("';' after English verb", token_text);
     }
     else
-    {   Inform_verb = no_Inform_verbs;
-        if (no_Inform_verbs == MAX_VERBS)
-            memoryerror("MAX_VERBS",MAX_VERBS);
+    {   verb_equals_form = FALSE;
+        if (!glulx_mode && no_Inform_verbs >= 255) {
+            error("Z-code is limited to 255 verbs.");
+            panic_mode_error_recovery(); return;
+        }
+        ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
+        Inform_verb = no_Inform_verbs;
+        Inform_verbs[no_Inform_verbs].lines = 0;
+        Inform_verbs[no_Inform_verbs].size = 4;
+        Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
     }
 
     for (i=0; i<no_given; i++)
@@ -996,9 +1018,13 @@ extern void extend_verb(void)
 
     get_next_token();
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ONLY_DK))
-    {   l = -1;
-        if (no_Inform_verbs == MAX_VERBS)
-            memoryerror("MAX_VERBS", MAX_VERBS);
+    {
+        if (!glulx_mode && no_Inform_verbs >= 255) {
+            error("Z-code is limited to 255 verbs.");
+            panic_mode_error_recovery(); return;
+        }
+        ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
+        l = -1;
         while (get_next_token(),
                ((token_type == DQ_TT) || (token_type == SQ_TT)))
         {   Inform_verb = get_verb();
@@ -1017,8 +1043,15 @@ extern void extend_verb(void)
         /*  Copy the old Inform-verb into a new one which the list of
             English-verbs given have had their dictionary entries modified
             to point to                                                      */
+        /*  (We are copying entry Inform_verb to no_Inform_verbs here.) */
 
-        Inform_verbs[no_Inform_verbs] = Inform_verbs[Inform_verb];
+        l = Inform_verbs[Inform_verb].lines; /* number of lines to copy */
+        
+        Inform_verbs[no_Inform_verbs].lines = l;
+        Inform_verbs[no_Inform_verbs].size = l+4;
+        Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
+        for (k=0; k<l; k++)
+            Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
         Inform_verb = no_Inform_verbs++;
     }
     else
@@ -1051,17 +1084,23 @@ extern void extend_verb(void)
     lines = 0;
     if (extend_mode == EXTEND_LAST) lines=l;
     do
-    {   if (extend_mode == EXTEND_FIRST)
+    {
+        if (extend_mode == EXTEND_FIRST) {
+            ensure_grammar_lines_available(Inform_verb, l+lines+1);
             for (k=l; k>0; k--)
                  Inform_verbs[Inform_verb].l[k+lines]
                      = Inform_verbs[Inform_verb].l[k-1+lines];
+        }
     } while (grammar_line(Inform_verb, lines++));
 
     if (extend_mode == EXTEND_FIRST)
-    {   Inform_verbs[Inform_verb].lines = l+lines-1;
-        for (k=0; k<l; k++)
+    {
+        ensure_grammar_lines_available(Inform_verb, l+lines+1);
+        Inform_verbs[Inform_verb].lines = l+lines-1;
+        for (k=0; k<l; k++) {
             Inform_verbs[Inform_verb].l[k+lines-1]
                 = Inform_verbs[Inform_verb].l[k+lines];
+        }
     }
     else Inform_verbs[Inform_verb].lines = --lines;
 
@@ -1106,32 +1145,44 @@ extern void verbs_begin_pass(void)
 
 extern void verbs_allocate_arrays(void)
 {
-    Inform_verbs          = my_calloc(sizeof(verbt),   MAX_VERBS, "verbs");
+    initialise_memory_list(&Inform_verbs_memlist,
+        sizeof(verbt), 128, (void**)&Inform_verbs,
+        "verbs");
+    
     grammar_lines         = my_malloc(MAX_LINESPACE, "grammar lines");
     action_byte_offset    = my_calloc(sizeof(int32),   MAX_ACTIONS, "actions");
     action_symbol         = my_calloc(sizeof(int32),   MAX_ACTIONS,
                                 "action symbols");
     grammar_token_routine = my_calloc(sizeof(int32),   MAX_ACTIONS,
                                 "grammar token routines");
-    adjectives            = my_calloc(sizeof(int32),   MAX_ADJECTIVES,
-                                "adjectives");
-    adjective_sort_code   = my_calloc(DICT_WORD_BYTES, MAX_ADJECTIVES,
-                                "adjective sort codes");
 
-    English_verb_list     = my_malloc(MAX_VERBSPACE, "register of verbs");
-    English_verb_list_top = English_verb_list;
+    initialise_memory_list(&adjectives_memlist,
+        sizeof(int32), 50, (void**)&adjectives,
+        "adjectives");
+    initialise_memory_list(&adjective_sort_code_memlist,
+        sizeof(uchar), 50*DICT_WORD_BYTES, (void**)&adjective_sort_code,
+        "adjective sort codes");
+
+    initialise_memory_list(&English_verb_list_memlist,
+        sizeof(char), 2048, (void**)&English_verb_list,
+        "register of verbs");
 }
 
 extern void verbs_free_arrays(void)
 {
-    my_free(&Inform_verbs, "verbs");
+    int ix;
+    for (ix=0; ix<no_Inform_verbs; ix++)
+    {
+        my_free(&Inform_verbs[ix].l, "grammar lines for one verb");
+    }
+    deallocate_memory_list(&Inform_verbs_memlist);
     my_free(&grammar_lines, "grammar lines");
     my_free(&action_byte_offset, "actions");
     my_free(&action_symbol, "action symbols");
     my_free(&grammar_token_routine, "grammar token routines");
-    my_free(&adjectives, "adjectives");
-    my_free(&adjective_sort_code, "adjective sort codes");
-    my_free(&English_verb_list, "register of verbs");
+    deallocate_memory_list(&adjectives_memlist);
+    deallocate_memory_list(&adjective_sort_code_memlist);
+    deallocate_memory_list(&English_verb_list_memlist);
 }
 
 /* ========================================================================= */

@@ -246,13 +246,10 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ACTIONS;
-int MAX_ADJECTIVES;
 int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int MAX_EXPRESSION_NODES;
-int MAX_VERBS;
-int MAX_VERBSPACE;
 int MAX_LABELS;
 int MAX_LINESPACE;
 int32 MAX_STATIC_STRINGS;
@@ -300,7 +297,6 @@ static void list_memory_sizes(void)
     printf("+--------------------------------------+\n");
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
-    printf("|  %25s = %-7d |\n","MAX_ADJECTIVES",MAX_ADJECTIVES);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
@@ -346,8 +342,6 @@ static void list_memory_sizes(void)
            (long int) MAX_UNICODE_CHARS);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
-    printf("|  %25s = %-7d |\n","MAX_VERBS",MAX_VERBS);
-    printf("|  %25s = %-7d |\n","MAX_VERBSPACE",MAX_VERBSPACE);
     printf("|  %25s = %-7ld |\n","MAX_ZCODE_SIZE",
            (long int) MAX_ZCODE_SIZE);
     printf("+--------------------------------------+\n");
@@ -362,12 +356,9 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 2000;
 
         MAX_EXPRESSION_NODES = 100;
-        MAX_VERBS = 200;
-        MAX_VERBSPACE = 4096;
         MAX_LABELS = 1000;
         MAX_LINESPACE = 16000;
 
@@ -391,12 +382,9 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 1300;
 
         MAX_EXPRESSION_NODES = 100;
-        MAX_VERBS = 140;
-        MAX_VERBSPACE = 4096;
         MAX_LINESPACE = 10000;
 
         MAX_LABELS = 1000;
@@ -420,12 +408,9 @@ extern void set_memory_sizes(int size_flag)
         HASH_TAB_SIZE      = 512;
 
         MAX_ACTIONS      = 200;
-        MAX_ADJECTIVES   = 50;
         MAX_DICT_ENTRIES = 700;
 
         MAX_EXPRESSION_NODES = 40;
-        MAX_VERBS = 110;
-        MAX_VERBSPACE = 2048;
         MAX_LINESPACE = 10000;
         MAX_LABELS = 1000;
 
@@ -520,13 +505,6 @@ static void explain_parameter(char *command)
   TakeSub which are referenced in the grammar table.\n");
         return;
     }
-    if (strcmp(command,"MAX_ADJECTIVES")==0)
-    {   printf(
-"  MAX_ADJECTIVES is the maximum number of different \"adjectives\" in the \n\
-  grammar table.  Adjectives are misleadingly named: they are words such as \n\
-  \"in\", \"under\" and the like.\n");
-        return;
-    }
     if (strcmp(command,"MAX_DICT_ENTRIES")==0)
     {   printf(
 "  MAX_DICT_ENTRIES is the maximum number of words which can be entered \n\
@@ -597,19 +575,6 @@ static void explain_parameter(char *command)
   evaluator's storage for parse trees.  In effect, it measures how \n\
   complicated algebraic expressions are allowed to be.  Increasing it by \n\
   one costs about 80 bytes.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_VERBS")==0)
-    {   printf(
-"  MAX_VERBS is the maximum number of verbs (such as \"take\") which can be \n\
-  defined, each with its own grammar.  To increase it by one costs about\n\
-  128 bytes.  A full game will contain at least 100.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_VERBSPACE")==0)
-    {   printf(
-"  MAX_VERBSPACE is the size of workspace used to store verb words, so may\n\
-  need increasing in games with many synonyms: unlikely to exceed 4K.\n");
         return;
     }
     if (strcmp(command,"MAX_LABELS")==0)
@@ -898,7 +863,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ACTIONS")==0)
                 MAX_ACTIONS=j, flag=1;
             if (strcmp(command,"MAX_ADJECTIVES")==0)
-                MAX_ADJECTIVES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_DICT_ENTRIES")==0)
                 MAX_DICT_ENTRIES=j, flag=1;
             if (strcmp(command,"DICT_WORD_SIZE")==0) 
@@ -946,9 +911,9 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
                 MAX_EXPRESSION_NODES=j, flag=1;
             if (strcmp(command,"MAX_VERBS")==0)
-                MAX_VERBS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_VERBSPACE")==0)
-                MAX_VERBSPACE=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_LABELS")==0)
                 MAX_LABELS=j, flag=1;
             if (strcmp(command,"MAX_LINESPACE")==0)
