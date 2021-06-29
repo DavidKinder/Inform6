@@ -108,7 +108,7 @@ static memory_list sequence_points_memlist;
 
 static void set_label_offset(int label, int32 offset)
 {
-    if (label >= MAX_LABELS) memoryerror("MAX_LABELS", MAX_LABELS);
+    ensure_memory_list_available(&labels_memlist, label+1);
 
     labels[label].offset = offset;
     if (last_label == -1)
@@ -1434,7 +1434,10 @@ extern void assemble_label_no(int n)
 }
 
 extern void define_symbol_label(int symbol)
-{   labels[symbols[symbol].value].symbol = symbol;
+{
+    int label = symbols[symbol].value;
+    ensure_memory_list_available(&labels_memlist, label+1);
+    labels[label].symbol = symbol;
 }
 
 extern int32 assemble_routine_header(int no_locals,
@@ -3186,8 +3189,7 @@ extern void asm_begin_pass(void)
 }
 
 extern void asm_allocate_arrays(void)
-{   if ((debugfile_switch) && (MAX_LABELS < 2000)) MAX_LABELS = 2000;
-
+{
     variable_tokens = my_calloc(sizeof(int32),  
         MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable tokens");
     variable_usage = my_calloc(sizeof(int),  
