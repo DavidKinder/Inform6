@@ -97,13 +97,9 @@ static void transfer_routine_g(void);
 static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
                              These are allocated sequentially, but accessed
                              as a double-linked list from first_label
-                             to last_label. */
+                             to last_label (in PC order). */
 static memory_list labels_memlist;
 static int first_label, last_label;
-static int32 *label_offsets;       /* Double-linked list of label offsets    */
-static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
-             *label_prev;
-static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
 static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
                                               Only used when debugfile_switch
@@ -3197,11 +3193,6 @@ extern void asm_allocate_arrays(void)
     variable_usage = my_calloc(sizeof(int),  
         MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable usage");
 
-    label_offsets = my_calloc(sizeof(int32), MAX_LABELS, "label offsets");
-    label_symbols = my_calloc(sizeof(int32), MAX_LABELS, "label symbols");
-    label_next = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    
     initialise_memory_list(&labels_memlist,
         sizeof(labelinfo), 1000, (void**)&labels,
         "labels");
@@ -3230,10 +3221,6 @@ extern void asm_free_arrays(void)
     my_free(&variable_tokens, "variable tokens");
     my_free(&variable_usage, "variable usage");
 
-    my_free(&label_offsets, "label offsets");
-    my_free(&label_symbols, "label symbols");
-    my_free(&label_next, "label dll 1");
-    my_free(&label_prev, "label dll 2");
     deallocate_memory_list(&labels_memlist);
     deallocate_memory_list(&sequence_points_memlist);
 
