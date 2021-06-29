@@ -1436,6 +1436,8 @@ extern void assemble_label_no(int n)
 extern void define_symbol_label(int symbol)
 {
     int label = symbols[symbol].value;
+    /* We may be creating a new label (label = next_label) or filling in
+       the value of an old one. So we call ensure. */
     ensure_memory_list_available(&labels_memlist, label+1);
     labels[label].symbol = symbol;
 }
