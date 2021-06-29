@@ -250,7 +250,6 @@ int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int MAX_EXPRESSION_NODES;
-int MAX_LABELS;
 int MAX_LINESPACE;
 int32 MAX_STATIC_STRINGS;
 int32 MAX_ZCODE_SIZE;
@@ -312,7 +311,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
-    printf("|  %25s = %-7d |\n","MAX_LABELS",MAX_LABELS);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
     printf("|  %25s = %-7d |\n","MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
     if (glulx_mode)
@@ -359,7 +357,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_DICT_ENTRIES = 2000;
 
         MAX_EXPRESSION_NODES = 100;
-        MAX_LABELS = 1000;
         MAX_LINESPACE = 16000;
 
         MAX_STATIC_STRINGS = 8000;
@@ -387,7 +384,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_EXPRESSION_NODES = 100;
         MAX_LINESPACE = 10000;
 
-        MAX_LABELS = 1000;
         MAX_STATIC_STRINGS = 8000;
         MAX_ZCODE_SIZE_z = 20000;
         MAX_ZCODE_SIZE_g = 40000;
@@ -412,7 +408,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_EXPRESSION_NODES = 40;
         MAX_LINESPACE = 10000;
-        MAX_LABELS = 1000;
 
         MAX_STATIC_STRINGS = 8000;
         MAX_ZCODE_SIZE_z = 10000;
@@ -575,15 +570,6 @@ static void explain_parameter(char *command)
   evaluator's storage for parse trees.  In effect, it measures how \n\
   complicated algebraic expressions are allowed to be.  Increasing it by \n\
   one costs about 80 bytes.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_LABELS")==0)
-    {   printf(
-"  MAX_LABELS is the maximum number of label points in any one routine.\n\
-  (If the -k debugging information switch is set, MAX_LABELS is raised to\n\
-  a minimum level of 2000, as about twice the normal number of label points\n\
-  are needed to generate tables of how source code corresponds to positions\n\
-  in compiled code.)");
         return;
     }
     if (strcmp(command,"MAX_LINESPACE")==0)
@@ -915,7 +901,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_VERBSPACE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LABELS")==0)
-                MAX_LABELS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_LINESPACE")==0)
                 MAX_LINESPACE=j, flag=1;
             if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
