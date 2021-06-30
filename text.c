@@ -94,11 +94,11 @@ static memory_list abbreviations_memlist;
 uchar *abbreviations_at;                 /* Allocated up to no_abbreviations */
 static memory_list abbreviations_at_memlist;
 
-static int *optimal_parse_schedule;
-static memory_list optimal_parse_schedule_memlist;
+static int *abbreviations_optimal_parse_schedule;
+static memory_list abbreviations_optimal_parse_schedule_memlist;
 
-static int *optimal_parse_scores;
-static memory_list optimal_parse_scores_memlist;
+static int *abbreviations_optimal_parse_scores;
+static memory_list abbreviations_optimal_parse_scores_memlist;
 
 /* ------------------------------------------------------------------------- */
 
@@ -357,24 +357,24 @@ static void end_z_chars(void)
 /* Glulx handles this much more simply -- compression is done elsewhere. */
 static void write_z_char_g(int i)
 {
-  ASSERT_GLULX();
-  if (text_out_pc+1 > text_out_limit) {
-      text_out_overflow = TRUE;
-      return;
-  }
-  total_zchars_trans++;
-  text_out_pc[0] = i;
-  text_out_pc++;
-  total_bytes_trans++;  
+    ASSERT_GLULX();
+    if (text_out_pc+1 > text_out_limit) {
+        text_out_overflow = TRUE;
+        return;
+    }
+    total_zchars_trans++;
+    text_out_pc[0] = i;
+    text_out_pc++;
+    total_bytes_trans++;  
 }
 
 /* Helper routine to compute the weight, in units, of a character handled by the Z-Machine */
-extern int zchar_weight(int j) {
-    if (iso_to_alphabet_grid[j] < 0)        { return 4; }
-    else
-    {   if (iso_to_alphabet_grid[j] < 26)   { return 1; }
-        else                                { return 2; }
-    }
+static int zchar_weight(int c)
+{
+    int lookup = iso_to_alphabet_grid[c];
+    if (lookup < 0) return 4;
+    if (lookup < 26) return 1;
+    return 2;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -454,47 +454,49 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     }
     
     /* Computing the optimal way to parse strings to insert abbreviations with dynamic programming */
-    /*    (ref: R.A. Wagner , “Common phrases and minimum-space text storage”, Commun. ACM, 16 (3) (1973)) */
-    /* We compute this optimal way here; it's stored in optimal_parse_schedule */
+    /*  (ref: R.A. Wagner , "Common phrases and minimum-space text storage", Commun. ACM, 16 (3) (1973)) */
+    /* We compute this optimal way here; it's stored in abbreviations_optimal_parse_schedule */
     if (economy_switch)
     {   
-        uchar *q, c; int l, min_score, from, abbr_length;
+        uchar *q, c;
+        int l, min_score, from, abbr_length;
         int text_in_length;
+
         text_in_length = strlen( (char*) text_in);
-        ensure_memory_list_available(&optimal_parse_schedule_memlist, text_in_length);
-        ensure_memory_list_available(&optimal_parse_scores_memlist, text_in_length+1);
+        ensure_memory_list_available(&abbreviations_optimal_parse_schedule_memlist, text_in_length);
+        ensure_memory_list_available(&abbreviations_optimal_parse_scores_memlist, text_in_length+1);
         
-        optimal_parse_scores[text_in_length] = 0;
+        abbreviations_optimal_parse_scores[text_in_length] = 0;
         for(j=text_in_length-1; j>=0; j--)
-        {    // initial values: empty schedule, score = just write the letter without abbreviating
-            optimal_parse_schedule[j] = -1;
-            min_score = zchar_weight(text_in[j]) + optimal_parse_scores[j+1];
-            // if there's an abbreviation starting with that letter...
+        {   /* Initial values: empty schedule, score = just write the letter without abbreviating. */
+            abbreviations_optimal_parse_schedule[j] = -1;
+            min_score = zchar_weight(text_in[j]) + abbreviations_optimal_parse_scores[j+1];
+            /* If there's an abbreviation starting with that letter... */
             if ( (from = abbrevs_lookup[text_in[j]]) != -1)
             {
                 c = text_in[j];
-                // loop on all abbreviations starting with what's in c
+                /* Loop on all abbreviations starting with what is in c. */
                 for (k=from, q=(uchar *)abbreviations_at+from*MAX_ABBREV_LENGTH;
                     (k<no_abbreviations)&&(c==q[0]); k++, q+=MAX_ABBREV_LENGTH)
                 {   
-                    // let's compare; we also keep track of the length of the abbreviation
+                    /* Let's compare; we also keep track of the length of the abbreviation. */
                     if (text_in[j+1]==q[1])
                     {   abbr_length = 2;
                         for (l=2; q[l]!=0; l++)
                         {    if (text_in[j+l]!=q[l]) {goto NotMatched;} else {abbr_length++;}
                         }
-                        // we have a match, but is it smaller in size?
-                        if (min_score > 2 + optimal_parse_scores[j+abbr_length])
-                        {   // it is indeed smaller, so let's write it down in our schedule
-                            min_score = 2 + optimal_parse_scores[j+abbr_length];
-                            optimal_parse_schedule[j] = k;
+                        /* We have a match, but is it smaller in size? */
+                        if (min_score > 2 + abbreviations_optimal_parse_scores[j+abbr_length])
+                        {   /* It is indeed smaller, so let's write it down in our schedule. */
+                            min_score = 2 + abbreviations_optimal_parse_scores[j+abbr_length];
+                            abbreviations_optimal_parse_schedule[j] = k;
                         }
                         NotMatched: ;
                     }
                 }
             }
-            // We gave it our best, this is the smallest we got
-            optimal_parse_scores[j] = min_score;
+            /* We gave it our best, this is the smallest we got. */
+            abbreviations_optimal_parse_scores[j] = min_score;
         }
     }
 
@@ -527,17 +529,18 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
             }
         }
 
-        /*  Try abbreviations if the economy switch set                      */
-        /*  Look at the abbreviation schedule to see if we should abbreviate here */
+        /*  Try abbreviations if the economy switch set. */
+        /*  Look at the abbreviation schedule to see if we should abbreviate here. */
         /*  Note: Just because the schedule has something doesn't mean we should abbreviate there; */
         /*  sometimes you abbreviate before because it's better. If we have already replaced the */
         /*  char by a '1', it means we're in the middle of an abbreviation; don't try to abbreviate then. */
-        if ((economy_switch) && (!is_abbreviation) && text_in[i] != 1 && ((j = optimal_parse_schedule[i]) != -1))
-        {   
-            // fill with 1s, which will get ignored by everyone else
+        if ((economy_switch) && (!is_abbreviation) && text_in[i] != 1 &&
+            ((j = abbreviations_optimal_parse_schedule[i]) != -1))
+        {
+            /* Fill with 1s, which will get ignored by everyone else. */
             p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
             for (k=0; p[k]!=0; k++) text_in[i+k]=1;
-            // actually write the abbreviation in the story file
+            /* Actually write the abbreviation in the story file. */
             abbreviations[j].freq++;
             j += MAX_DYNAMIC_STRINGS;
             write_z_char_z(j/32+1); write_z_char_z(j%32);
@@ -2478,8 +2481,8 @@ extern void init_text_vars(void)
     dict_entries=0;
 
     static_strings_area = NULL;
-    optimal_parse_schedule = NULL;
-    optimal_parse_scores = NULL;
+    abbreviations_optimal_parse_schedule = NULL;
+    abbreviations_optimal_parse_scores = NULL;
 }
 
 extern void text_begin_pass(void)
@@ -2512,12 +2515,12 @@ extern void text_allocate_arrays(void)
         sizeof(abbreviation), 64, (void**)&abbreviations,
         "abbreviations");
 
-    initialise_memory_list(&optimal_parse_schedule_memlist,
-        sizeof(int), 0, (void**)&optimal_parse_schedule,
-        "optimal parse schedule");
-    initialise_memory_list(&optimal_parse_scores_memlist,
-        sizeof(int), 0, (void**)&optimal_parse_scores,
-        "optimal parse scores");
+    initialise_memory_list(&abbreviations_optimal_parse_schedule_memlist,
+        sizeof(int), 0, (void**)&abbreviations_optimal_parse_schedule,
+        "abbreviations optimal parse schedule");
+    initialise_memory_list(&abbreviations_optimal_parse_scores_memlist,
+        sizeof(int), 0, (void**)&abbreviations_optimal_parse_scores,
+        "abbreviations optimal parse scores");
     
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
@@ -2569,8 +2572,8 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&abbreviations_at_memlist);
     deallocate_memory_list(&abbreviations_memlist);
 
-    deallocate_memory_list(&optimal_parse_schedule_memlist);
-    deallocate_memory_list(&optimal_parse_scores_memlist);
+    deallocate_memory_list(&abbreviations_optimal_parse_schedule_memlist);
+    deallocate_memory_list(&abbreviations_optimal_parse_scores_memlist);
 
     my_free(&dtree,            "red-black tree for dictionary");
     my_free(&final_dict_order, "final dictionary ordering table");
