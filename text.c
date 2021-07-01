@@ -542,6 +542,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
             for (k=0; p[k]!=0; k++) text_in[i+k]=1;
             /* Actually write the abbreviation in the story file. */
             abbreviations[j].freq++;
+            /* Abbreviations run from MAX_DYNAMIC_STRINGS to 96. */
             j += MAX_DYNAMIC_STRINGS;
             write_z_char_z(j/32+1); write_z_char_z(j%32);
         }
