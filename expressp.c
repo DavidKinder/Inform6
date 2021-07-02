@@ -1776,7 +1776,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
 /* --- Shift-reduce parser ------------------------------------------------- */
 
 static int sr_sp;
-static token_data *sr_stack;
+static token_data *sr_stack; /* Allocated to sr_sp */
+static memory_list sr_stack_memlist;
 
 extern assembly_operand parse_expression(int context)
 {
@@ -1938,8 +1939,7 @@ extern assembly_operand parse_expression(int context)
 
             case LOWER_P:
             case EQUAL_P:
-                if (sr_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+                ensure_memory_list_available(&sr_stack_memlist, sr_sp+1);
                 sr_stack[sr_sp++] = b;
                 switch(b.type)
                 {
@@ -2053,7 +2053,9 @@ extern void init_expressp_vars(void)
     /* make_operands(); */
     make_lexical_interface_tables();
     for (i=0;i<32;i++) system_function_usage[i] = 0;
+    
     ET = NULL;
+    sr_stack = NULL;
 }
 
 extern void expressp_begin_pass(void)
@@ -2072,7 +2074,9 @@ extern void expressp_allocate_arrays(void)
         "emitter bracket layer counts");
     emitter_stack = my_calloc(sizeof(assembly_operand), MAX_EXPRESSION_NODES,
         "emitter stack");
-    sr_stack = my_calloc(sizeof(token_data), MAX_EXPRESSION_NODES,
+
+    initialise_memory_list(&sr_stack_memlist,
+        sizeof(token_data), 100, (void**)&sr_stack,
         "shift-reduce parser stack");
 }
 
@@ -2083,7 +2087,8 @@ extern void expressp_free_arrays(void)
     my_free(&emitter_markers, "emitter markers");
     my_free(&emitter_bracket_counts, "emitter bracket layer counts");
     my_free(&emitter_stack, "emitter stack");
-    my_free(&sr_stack, "shift-reduce parser stack");
+
+    deallocate_memory_list(&sr_stack_memlist);
 }
 
 /* ========================================================================= */
