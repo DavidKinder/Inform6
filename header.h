@@ -926,6 +926,19 @@ typedef struct arrayinfo_s {
     int loc;      /* true for static, false for dynamic (regular) arrays */
 } arrayinfo;
 
+typedef struct labelinfo_s {
+    int32 offset; /* Offset (zmachine_pc) value */
+    int32 symbol; /* Symbol numbers if defined in source */
+    int next;     /* For linked list */
+    int prev;     /* For linked list */
+} labelinfo;
+
+typedef struct sequencepointinfo_s {
+    int label;               /* Label number */
+    debug_location location; /* Source code reference (used for making
+                                debugging file)                              */
+} sequencepointinfo;
+
 typedef struct FileId_s                 /*  Source code file identifier:     */
 {   char *filename;                     /*  The filename (after translation) */
     FILE *handle;                       /*  Handle of file (when open), or
@@ -2627,7 +2640,7 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
            MAX_ACTIONS,          MAX_ABBREVS,
-           MAX_EXPRESSION_NODES, MAX_LABELS,            MAX_LINESPACE,
+           MAX_EXPRESSION_NODES, MAX_LINESPACE,
            MAX_LOW_STRINGS,
            MAX_INCLUSION_DEPTH,
            MAX_SOURCE_FILES,     MAX_DYNAMIC_STRINGS;

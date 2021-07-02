@@ -30,7 +30,8 @@ int execution_never_reaches_here,  /* TRUE if the current PC value in the
     next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
-int no_sequence_points;            /* Kept for statistics purposes only      */
+int no_sequence_points;            /* Total over all routines; kept for
+                                      statistics purposes only               */
 
 static int label_moved_error_already_given;
                                    /* When one label has moved, all subsequent
@@ -93,34 +94,34 @@ static void transfer_routine_g(void);
 /*   Label data                                                              */
 /* ------------------------------------------------------------------------- */
 
+static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
+                             These are allocated sequentially, but accessed
+                             as a double-linked list from first_label
+                             to last_label (in PC order). */
+static memory_list labels_memlist;
 static int first_label, last_label;
-static int32 *label_offsets;       /* Double-linked list of label offsets    */
-static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
-             *label_prev;
-static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
-static int   *sequence_point_labels;
-                                   /* Label numbers for each                 */
-static debug_location *sequence_point_locations;
-                                   /* Source code references for each        */
-                                   /* (used for making debugging file)       */
+static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
+                                              Only used when debugfile_switch
+                                              is set.                        */
+static memory_list sequence_points_memlist;
 
 static void set_label_offset(int label, int32 offset)
 {
-    if (label >= MAX_LABELS) memoryerror("MAX_LABELS", MAX_LABELS);
+    ensure_memory_list_available(&labels_memlist, label+1);
 
-    label_offsets[label] = offset;
+    labels[label].offset = offset;
     if (last_label == -1)
-    {   label_prev[label] = -1;
+    {   labels[label].prev = -1;
         first_label = label;
     }
     else
-    {   label_prev[label] = last_label;
-        label_next[last_label] = label;
+    {   labels[label].prev = last_label;
+        labels[last_label].next = label;
     }
     last_label = label;
-    label_next[label] = -1;
-    label_symbols[label] = -1;
+    labels[label].next = -1;
+    labels[label].symbol = -1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -836,8 +837,10 @@ extern void assemblez_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -1142,8 +1145,10 @@ extern void assembleg_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -1429,7 +1434,12 @@ extern void assemble_label_no(int n)
 }
 
 extern void define_symbol_label(int symbol)
-{   label_symbols[symbols[symbol].value] = symbol;
+{
+    int label = symbols[symbol].value;
+    /* We may be creating a new label (label = next_label) or filling in
+       the value of an old one. So we call ensure. */
+    ensure_memory_list_available(&labels_memlist, label+1);
+    labels[label].symbol = symbol;
 }
 
 extern int32 assemble_routine_header(int no_locals,
@@ -1765,9 +1775,9 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         {   debug_file_printf("<sequence-point>");
             debug_file_printf("<address>");
             write_debug_code_backpatch
-                (label_offsets[sequence_point_labels[i]]);
+                (labels[sequence_points[i].label].offset);
             debug_file_printf("</address>");
-            write_debug_location(sequence_point_locations[i]);
+            write_debug_location(sequence_points[i].location);
             debug_file_printf("</sequence-point>");
         }
         debug_file_printf("</routine>");
@@ -1781,7 +1791,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
                 routine_starts_line);
 
     for (i=0; i<next_label; i++)
-    {   int j = label_symbols[i];
+    {   int j = labels[i].symbol;
         if (j != -1)
         {   if (symbols[j].flags & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
@@ -1851,8 +1861,8 @@ static void transfer_routine_z(void)
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
             if (asm_trace_level >= 4)
                 printf("To label %d, which is %d from here\n",
-                    j, label_offsets[j]-pc);
-            if ((label_offsets[j] >= pc+2) && (label_offsets[j] < pc+64))
+                    j, labels[j].offset-pc);
+            if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
             {   if (asm_trace_level >= 4) printf("Short form\n");
                 zcode_markers[i+1] = DELETED_MV;
             }
@@ -1872,17 +1882,17 @@ static void transfer_routine_z(void)
         {   printf("Opening label: %d\n", first_label);
             for (i=0;i<next_label;i++)
                 printf("Label %d offset %04x next -> %d previous -> %d\n",
-                    i, label_offsets[i], label_next[i], label_prev[i]);
+                    i, labels[i].offset, labels[i].next, labels[i].prev);
         }
 
         for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
             i<zcode_ha_size; i++, pc++)
-        {   while ((label != -1) && (label_offsets[label] == pc))
+        {   while ((label != -1) && (labels[label].offset == pc))
             {   if (asm_trace_level >= 4)
                     printf("Position of L%d corrected from %04x to %04x\n",
-                        label, label_offsets[label], new_pc);
-                label_offsets[label] = new_pc;
-                label = label_next[label];
+                        label, labels[label].offset, new_pc);
+                labels[label].offset = new_pc;
+                label = labels[label].next;
             }
            if (zcode_markers[i] != DELETED_MV) new_pc++;
         }
@@ -1903,7 +1913,7 @@ static void transfer_routine_z(void)
             branch_on_true = ((zcode_holding_area[i]) & 0x80);
             offset_of_next = new_pc + long_form + 1;
 
-            addr = label_offsets[j] - offset_of_next + 2;
+            addr = labels[j].offset - offset_of_next + 2;
             if (addr<-0x2000 || addr>0x1fff) 
                 fatalerror("Branch out of range: divide the routine up?");
             if (addr<0) addr+=(int32) 0x10000L;
@@ -1925,7 +1935,7 @@ static void transfer_routine_z(void)
 
           case LABEL_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
-            addr = label_offsets[j] - new_pc;
+            addr = labels[j].offset - new_pc;
             if (addr<-0x8000 || addr>0x7fff) 
                 fatalerror("Jump out of range: divide the routine up?");
             if (addr<0) addr += (int32) 0x10000L;
@@ -2022,10 +2032,10 @@ static void transfer_routine_g(void)
             | (zcode_holding_area[i+2] << 8)
             | (zcode_holding_area[i+3]));
         offset_of_next = pc + 4;
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        addr = (labels[j].offset - offset_of_next) + 2;
         if (asm_trace_level >= 4)
             printf("To label %d, which is (%d-2) = %d from here\n",
-                j, addr, label_offsets[j] - offset_of_next);
+                j, addr, labels[j].offset - offset_of_next);
         if (addr >= -0x80 && addr < 0x80) {
             if (asm_trace_level >= 4) printf("...Byte form\n");
             zcode_markers[i+1] = DELETED_MV;
@@ -2066,18 +2076,18 @@ static void transfer_routine_g(void)
         printf("Opening label: %d\n", first_label);
         for (i=0;i<next_label;i++)
             printf("Label %d offset %04x next -> %d previous -> %d\n",
-                i, label_offsets[i], label_next[i], label_prev[i]);
+                i, labels[i].offset, labels[i].next, labels[i].prev);
       }
 
       for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
         i<zcode_ha_size; 
         i++, pc++) {
-        while ((label != -1) && (label_offsets[label] == pc)) {
+        while ((label != -1) && (labels[label].offset == pc)) {
             if (asm_trace_level >= 4)
                 printf("Position of L%d corrected from %04x to %04x\n",
-                label, label_offsets[label], new_pc);
-            label_offsets[label] = new_pc;
-            label = label_next[label];
+                label, labels[label].offset, new_pc);
+            labels[label].offset = new_pc;
+            label = labels[label].next;
         }
         if (zcode_markers[i] != DELETED_MV) new_pc++;
       }
@@ -2110,7 +2120,7 @@ static void transfer_routine_g(void)
            after it. */
         offset_of_next = new_pc + form_len;
 
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        addr = (labels[j].offset - offset_of_next) + 2;
         if (asm_trace_level >= 4) {
             printf("Branch at offset %04x: %04x (%s)\n",
                 new_pc, addr, ((form_len == 1) ? "byte" :
@@ -3153,15 +3163,6 @@ extern void parse_assembly(void)
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
 
-extern void asm_begin_pass(void)
-{   no_instructions = 0;
-    zmachine_pc = 0;
-    no_sequence_points = 0;
-    next_label = 0;
-    next_sequence_point = 0;
-    zcode_ha_size = 0;
-}
-
 extern void init_asm_vars(void)
 {   int i;
 
@@ -3172,30 +3173,36 @@ extern void init_asm_vars(void)
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
 
+    labels = NULL;
+    sequence_points = NULL;
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;
 
     zcode_area = NULL;
 }
 
-extern void asm_allocate_arrays(void)
-{   if ((debugfile_switch) && (MAX_LABELS < 2000)) MAX_LABELS = 2000;
+extern void asm_begin_pass(void)
+{   no_instructions = 0;
+    zmachine_pc = 0;
+    no_sequence_points = 0;
+    next_label = 0;
+    next_sequence_point = 0;
+    zcode_ha_size = 0;
+}
 
+extern void asm_allocate_arrays(void)
+{
     variable_tokens = my_calloc(sizeof(int32),  
         MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable tokens");
     variable_usage = my_calloc(sizeof(int),  
         MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable usage");
 
-    label_offsets = my_calloc(sizeof(int32), MAX_LABELS, "label offsets");
-    label_symbols = my_calloc(sizeof(int32), MAX_LABELS, "label symbols");
-    label_next = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    sequence_point_labels
-        = my_calloc(sizeof(int), MAX_LABELS, "sequence point labels");
-    sequence_point_locations
-        = my_calloc(sizeof(debug_location),
-                    MAX_LABELS,
-                    "sequence point locations");
+    initialise_memory_list(&labels_memlist,
+        sizeof(labelinfo), 1000, (void**)&labels,
+        "labels");
+    initialise_memory_list(&sequence_points_memlist,
+        sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
+        "sequence points");
 
     zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
     zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
@@ -3218,12 +3225,8 @@ extern void asm_free_arrays(void)
     my_free(&variable_tokens, "variable tokens");
     my_free(&variable_usage, "variable usage");
 
-    my_free(&label_offsets, "label offsets");
-    my_free(&label_symbols, "label symbols");
-    my_free(&label_next, "label dll 1");
-    my_free(&label_prev, "label dll 2");
-    my_free(&sequence_point_labels, "sequence point labels");
-    my_free(&sequence_point_locations, "sequence point locations");
+    deallocate_memory_list(&labels_memlist);
+    deallocate_memory_list(&sequence_points_memlist);
 
     my_free(&zcode_holding_area, "compiled routine code area");
     my_free(&zcode_markers, "compiled routine code markers");
