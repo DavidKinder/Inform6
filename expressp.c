@@ -953,7 +953,8 @@ static int evaluate_term(token_data t, assembly_operand *o)
 
 /* --- Emitter ------------------------------------------------------------- */
 
-expression_tree_node *ET;
+expression_tree_node *ET; /* Allocated to ET_used */
+static memory_list ET_memlist;
 static int ET_used;
 
 extern void clear_expression_space(void)
@@ -1294,9 +1295,8 @@ static void emit_token(token_data t)
             }
     }
 
+    ensure_memory_list_available(&ET_memlist, ET_used+1);
     op_node_number = ET_used++;
-    if (op_node_number == MAX_EXPRESSION_NODES)
-        memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
 
     ET[op_node_number].operator_number = t.value;
     ET[op_node_number].up = -1;
@@ -1315,9 +1315,9 @@ static void emit_token(token_data t)
         if (emitter_stack[i].type == EXPRESSION_OT)
             operand_node_number = emitter_stack[i].value;
         else
-        {   operand_node_number = ET_used++;
-            if (operand_node_number == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        {
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
+            operand_node_number = ET_used++;
             ET[operand_node_number].down = -1;
             ET[operand_node_number].value = emitter_stack[i];
         }
@@ -1651,9 +1651,9 @@ static void insert_exp_to_cond(int n, int context)
 
     if (ET[n].down == -1)
     {   if (context==CONDITION_CONTEXT)
-        {   new = ET_used++;
-            if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        {
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
+            new = ET_used++;
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1674,9 +1674,8 @@ static void insert_exp_to_cond(int n, int context)
         default:
             if (context != CONDITION_CONTEXT) break;
 
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
             new = ET_used++;
-            if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1733,9 +1732,8 @@ static void func_args_on_stack(int n, int context)
               || ET[fnaddr].value.value == INDIRECT_SYSF
               || ET[fnaddr].value.value == GLK_SYSF))) {
         if (etoken_num_children(pn) > (unsigned int)(opnum == FCALL_OP ? 4:3)) {
+          ensure_memory_list_available(&ET_memlist, ET_used+1);
           new = ET_used++;
-          if (new == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
           ET[new] = ET[n];
           ET[n].down = new; 
           ET[n].operator_number = PUSH_OP;
@@ -1756,9 +1754,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
 
     if (AO.type != EXPRESSION_OT)
     {   if (context != CONDITION_CONTEXT) return AO;
+        ensure_memory_list_available(&ET_memlist, ET_used+1);
         n = ET_used++;
-        if (n == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
         ET[n].down = -1;
         ET[n].up = -1;
         ET[n].right = -1;
@@ -1779,7 +1776,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
 /* --- Shift-reduce parser ------------------------------------------------- */
 
 static int sr_sp;
-static token_data *sr_stack;
+static token_data *sr_stack; /* Allocated to sr_sp */
+static memory_list sr_stack_memlist;
 
 extern assembly_operand parse_expression(int context)
 {
@@ -1941,8 +1939,7 @@ extern assembly_operand parse_expression(int context)
 
             case LOWER_P:
             case EQUAL_P:
-                if (sr_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+                ensure_memory_list_available(&sr_stack_memlist, sr_sp+1);
                 sr_stack[sr_sp++] = b;
                 switch(b.type)
                 {
@@ -2056,6 +2053,9 @@ extern void init_expressp_vars(void)
     /* make_operands(); */
     make_lexical_interface_tables();
     for (i=0;i<32;i++) system_function_usage[i] = 0;
+    
+    ET = NULL;
+    sr_stack = NULL;
 }
 
 extern void expressp_begin_pass(void)
@@ -2063,24 +2063,32 @@ extern void expressp_begin_pass(void)
 }
 
 extern void expressp_allocate_arrays(void)
-{   ET = my_calloc(sizeof(expression_tree_node), MAX_EXPRESSION_NODES,
+{
+    initialise_memory_list(&ET_memlist,
+        sizeof(expression_tree_node), 100, (void**)&ET,
         "expression parse trees");
+    
     emitter_markers = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
         "emitter markers");
     emitter_bracket_counts = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
         "emitter bracket layer counts");
     emitter_stack = my_calloc(sizeof(assembly_operand), MAX_EXPRESSION_NODES,
         "emitter stack");
-    sr_stack = my_calloc(sizeof(token_data), MAX_EXPRESSION_NODES,
+
+    initialise_memory_list(&sr_stack_memlist,
+        sizeof(token_data), 100, (void**)&sr_stack,
         "shift-reduce parser stack");
 }
 
 extern void expressp_free_arrays(void)
-{   my_free(&ET, "expression parse trees");
+{
+    deallocate_memory_list(&ET_memlist);
+    
     my_free(&emitter_markers, "emitter markers");
     my_free(&emitter_bracket_counts, "emitter bracket layer counts");
     my_free(&emitter_stack, "emitter stack");
-    my_free(&sr_stack, "shift-reduce parser stack");
+
+    deallocate_memory_list(&sr_stack_memlist);
 }
 
 /* ========================================================================= */
