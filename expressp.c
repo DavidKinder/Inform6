@@ -54,8 +54,7 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
 
 extern int *variable_usage;
 
-/* Must be at least as many as keyword_group system_functions (currently 12) */
-int system_function_usage[32];
+int system_function_usage[NUMBER_SYSTEM_FUNCTIONS];
 
 static int get_next_etoken(void)
 {   int v, symbol = 0, mark_symbol_as_used = FALSE,
@@ -2057,7 +2056,8 @@ extern void init_expressp_vars(void)
 {   int i;
     /* make_operands(); */
     make_lexical_interface_tables();
-    for (i=0;i<32;i++) system_function_usage[i] = 0;
+    for (i=0; i<NUMBER_SYSTEM_FUNCTIONS; i++)
+        system_function_usage[i] = 0;
 
     ET = NULL;
     emitter_stack = NULL;
