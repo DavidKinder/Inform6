@@ -1012,8 +1012,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
             return;
         }
         error_named("Missing operand for", t.text);
-        if (emitter_sp == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
         emitter_stack[emitter_sp].op = zero_operand;
@@ -1089,8 +1088,7 @@ static void emit_token(token_data t)
     {   emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
 
-        if (emitter_sp == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         if (!evaluate_term(t, &(emitter_stack[emitter_sp++].op)))
             compiler_error_named("Emit token error:", t.text);
         return;
@@ -1162,8 +1160,7 @@ static void emit_token(token_data t)
         if (arity > stack_size)
         {   error_named("Missing operand for", t.text);
             while (arity > stack_size)
-            {   if (emitter_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+            {   ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
                 emitter_stack[emitter_sp].marker = 0;
                 emitter_stack[emitter_sp].bracket_count = 0;
                 emitter_stack[emitter_sp].op = zero_operand;
