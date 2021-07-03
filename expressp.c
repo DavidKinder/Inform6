@@ -1855,6 +1855,9 @@ extern assembly_operand parse_expression(int context)
     etoken_count = 0;
     inserting_token = FALSE;
 
+    /* There's places where we access emitter_stack[emitter_sp] before
+       incrementing emitter_sp, so ensure 1 right away. */
+    ensure_memory_list_available(&emitter_stack_memlist, 1);
     emitter_sp = 0;
     bracket_level = 0;
 
@@ -1862,6 +1865,7 @@ extern assembly_operand parse_expression(int context)
     previous_token.type = ENDEXP_TT;
     previous_token.value = 0;
 
+    ensure_memory_list_available(&sr_stack_memlist, 1);
     sr_sp = 1;
     sr_stack[0] = previous_token;
 
