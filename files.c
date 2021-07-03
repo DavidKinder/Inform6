@@ -36,9 +36,6 @@ static int checksum_count;              /* similarly                         */
 /* ------------------------------------------------------------------------- */
 
 FileId *InputFiles=NULL;                /*  Ids for all the source files     */
-static char *filename_storage,          /*  Translated filenames             */
-            *filename_storage_p;
-static int filename_storage_left;
 
 /* ------------------------------------------------------------------------- */
 /*   When emitting debug information, we won't have addresses of routines,   */
@@ -114,14 +111,8 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         handle = fopen(name,"r");
     } while ((handle == NULL) && (x != 0));
 
-    if (filename_storage_left <= (int)strlen(name))
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
-
-    filename_storage_left -= strlen(name)+1;
-    strcpy(filename_storage_p, name);
-    InputFiles[total_files].filename = filename_storage_p;
-
-    filename_storage_p += strlen(name)+1;
+    InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
+    strcpy(InputFiles[total_files].filename, name);
 
     if (debugfile_switch)
     {   debug_file_printf("<source index=\"%d\">", total_files);
@@ -209,14 +200,8 @@ extern int register_orig_sourcefile(char *filename)
     if (total_files == MAX_SOURCE_FILES)
         memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
 
-    if (filename_storage_left <= (int)strlen(name))
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
-
-    filename_storage_left -= strlen(name)+1;
-    strcpy(filename_storage_p, name);
-    InputFiles[total_files].filename = filename_storage_p;
-
-    filename_storage_p += strlen(name)+1;
+    InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
+    strcpy(InputFiles[total_files].filename, name);
 
     if (debugfile_switch)
     {   debug_file_printf("<source index=\"%d\">", total_files);
@@ -1913,9 +1898,7 @@ static void initialise_accumulator
 }
 
 extern void files_allocate_arrays(void)
-{   filename_storage = my_malloc(MAX_SOURCE_FILES*64, "filename storage");
-    filename_storage_p = filename_storage;
-    filename_storage_left = MAX_SOURCE_FILES*64;
+{
     InputFiles = my_malloc(MAX_SOURCE_FILES*sizeof(FileId), 
         "input file storage");
     if (debugfile_switch)
@@ -1945,7 +1928,12 @@ static void tear_down_accumulator(debug_backpatch_accumulator *accumulator)
 }
 
 extern void files_free_arrays(void)
-{   my_free(&filename_storage, "filename storage");
+{
+    int ix;
+    for (ix=0; ix<total_files; ix++)
+    {
+        my_free(&InputFiles[total_files].filename, "filename storage");
+    }
     my_free(&InputFiles, "input file storage");
     if (debugfile_switch)
     {   if (!glulx_mode)
