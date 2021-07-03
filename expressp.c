@@ -1070,10 +1070,11 @@ static void emit_token(token_data t)
     {   if (stack_size < emitter_sp && emitter_stack[emitter_sp-stack_size-1].bracket_count)
         {   if (stack_size == 0)
             {   error("No expression between brackets '(' and ')'");
+                ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
                 emitter_stack[emitter_sp].op = zero_operand;
                 emitter_stack[emitter_sp].marker = 0;
                 emitter_stack[emitter_sp].bracket_count = 0;
-                ++emitter_sp;
+                emitter_sp++;
             }
             else if (stack_size < 1)
                 compiler_error("SR error: emitter stack empty in subexpression");
@@ -1085,7 +1086,9 @@ static void emit_token(token_data t)
     }
 
     if (t.type != OP_TT)
-    {   emitter_stack[emitter_sp].marker = 0;
+    {
+        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
+        emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
 
         ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
@@ -1855,9 +1858,6 @@ extern assembly_operand parse_expression(int context)
     etoken_count = 0;
     inserting_token = FALSE;
 
-    /* There's places where we access emitter_stack[emitter_sp] before
-       incrementing emitter_sp, so ensure 1 right away. */
-    ensure_memory_list_available(&emitter_stack_memlist, 1);
     emitter_sp = 0;
     bracket_level = 0;
 
