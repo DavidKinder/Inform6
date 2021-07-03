@@ -35,7 +35,9 @@ static int checksum_count;              /* similarly                         */
 /*   level is only concerned with file names and handles.                    */
 /* ------------------------------------------------------------------------- */
 
-FileId *InputFiles=NULL;                /*  Ids for all the source files     */
+FileId *InputFiles=NULL;                /*  Ids for all the source files
+                                            Allocated to total_files         */
+static memory_list InputFiles_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   When emitting debug information, we won't have addresses of routines,   */
@@ -102,8 +104,7 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
     int x = 0;
     FILE *handle;
 
-    if (total_files == MAX_SOURCE_FILES)
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+    ensure_memory_list_available(&InputFiles_memlist, total_files+1);
 
     do
     {   x = translate_in_filename(x, name, filename_given, same_directory_flag,
@@ -147,7 +148,8 @@ static void close_sourcefile(int file_number)
 {
     if (InputFiles[file_number-1].handle == NULL) return;
 
-    /*  Close this file.  */
+    /*  Close this file. But keep the InputFiles entry around, including
+        its filename. */
 
     if (ferror(InputFiles[file_number-1].handle))
         fatalerror_named("I/O failure: couldn't read from source file",
@@ -197,8 +199,7 @@ extern int register_orig_sourcefile(char *filename)
 
     name = filename; /* no translation */
 
-    if (total_files == MAX_SOURCE_FILES)
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+    ensure_memory_list_available(&InputFiles_memlist, total_files+1);
 
     InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
     strcpy(InputFiles[total_files].filename, name);
@@ -1899,7 +1900,8 @@ static void initialise_accumulator
 
 extern void files_allocate_arrays(void)
 {
-    InputFiles = my_malloc(MAX_SOURCE_FILES*sizeof(FileId), 
+    initialise_memory_list(&InputFiles_memlist,
+        sizeof(FileId), 64, (void**)&InputFiles,
         "input file storage");
     if (debugfile_switch)
     {   if (glulx_mode)
@@ -1934,7 +1936,8 @@ extern void files_free_arrays(void)
     {
         my_free(&InputFiles[total_files].filename, "filename storage");
     }
-    my_free(&InputFiles, "input file storage");
+    deallocate_memory_list(&InputFiles_memlist);
+    
     if (debugfile_switch)
     {   if (!glulx_mode)
         {   tear_down_accumulator(&object_backpatch_accumulator);
