@@ -256,7 +256,6 @@ int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
 int32 MAX_LINK_DATA_SIZE;
 int MAX_INCLUSION_DEPTH;
-int MAX_SOURCE_FILES;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -324,7 +323,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
     printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
-    printf("|  %25s = %-7d |\n","MAX_SOURCE_FILES",MAX_SOURCE_FILES);
     if (glulx_mode)
       printf("|  %25s = %-7ld |\n","MAX_STACK_SIZE",
            (long int) MAX_STACK_SIZE);
@@ -419,7 +417,6 @@ extern void set_memory_sizes(int size_flag)
     }
 
     /* Regardless of size_flag... */
-    MAX_SOURCE_FILES = 256;
     MAX_INCLUSION_DEPTH = 5;
     MAX_LOCAL_VARIABLES_z = 16;
     MAX_LOCAL_VARIABLES_g = 32;
@@ -609,12 +606,6 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
     {   printf(
 "  MAX_INCLUSION_DEPTH is the number of nested includes permitted.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_SOURCE_FILES")==0)
-    {   printf(
-"  MAX_SOURCE_FILES is the number of source files that can be read in the \n\
-  compilation.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -913,7 +904,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
                 MAX_INCLUSION_DEPTH=j, flag=1;
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
-                MAX_SOURCE_FILES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
                 flag=3;
             if (strcmp(command,"INDIV_PROP_START")==0)
