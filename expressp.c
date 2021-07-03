@@ -1090,7 +1090,6 @@ static void emit_token(token_data t)
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
 
-        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         if (!evaluate_term(t, &(emitter_stack[emitter_sp++].op)))
             compiler_error_named("Emit token error:", t.text);
         return;
