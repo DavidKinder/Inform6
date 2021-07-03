@@ -1901,7 +1901,7 @@ static void initialise_accumulator
 extern void files_allocate_arrays(void)
 {
     initialise_memory_list(&InputFiles_memlist,
-        sizeof(FileId), 64, (void**)&InputFiles,
+        sizeof(FileId), 16, (void**)&InputFiles,
         "input file storage");
     if (debugfile_switch)
     {   if (glulx_mode)
