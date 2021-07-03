@@ -1934,7 +1934,7 @@ extern void files_free_arrays(void)
     int ix;
     for (ix=0; ix<total_files; ix++)
     {
-        my_free(&InputFiles[total_files].filename, "filename storage");
+        my_free(&InputFiles[ix].filename, "filename storage");
     }
     deallocate_memory_list(&InputFiles_memlist);
     
