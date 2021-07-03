@@ -2059,8 +2059,8 @@ extern void init_expressp_vars(void)
     make_lexical_interface_tables();
     for (i=0;i<32;i++) system_function_usage[i] = 0;
 
-    emitter_stack = NULL;
     ET = NULL;
+    emitter_stack = NULL;
     sr_stack = NULL;
 }
 
