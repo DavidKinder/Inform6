@@ -249,7 +249,6 @@ int MAX_ACTIONS;
 int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
-int MAX_EXPRESSION_NODES;
 int MAX_LINESPACE;
 int32 MAX_STATIC_STRINGS;
 int32 MAX_ZCODE_SIZE;
@@ -302,7 +301,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
     printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_EXPRESSION_NODES",MAX_EXPRESSION_NODES);
     printf("|  %25s = %-7d |\n","MAX_GLOBAL_VARIABLES",MAX_GLOBAL_VARIABLES);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
     if (!glulx_mode)
@@ -356,7 +354,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 2000;
 
-        MAX_EXPRESSION_NODES = 100;
         MAX_LINESPACE = 16000;
 
         MAX_STATIC_STRINGS = 8000;
@@ -381,7 +378,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 1300;
 
-        MAX_EXPRESSION_NODES = 100;
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
@@ -406,7 +402,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 700;
 
-        MAX_EXPRESSION_NODES = 40;
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
@@ -562,14 +557,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
   (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
-    {   printf(
-"  MAX_EXPRESSION_NODES is the maximum number of nodes in the expression \n\
-  evaluator's storage for parse trees.  In effect, it measures how \n\
-  complicated algebraic expressions are allowed to be.  Increasing it by \n\
-  one costs about 80 bytes.\n");
         return;
     }
     if (strcmp(command,"MAX_LINESPACE")==0)
@@ -895,7 +882,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ARRAYS")==0)
                 flag=3;
             if (strcmp(command,"MAX_EXPRESSION_NODES")==0)
-                MAX_EXPRESSION_NODES=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_VERBS")==0)
                 flag=3;
             if (strcmp(command,"MAX_VERBSPACE")==0)

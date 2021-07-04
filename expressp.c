@@ -54,8 +54,7 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
 
 extern int *variable_usage;
 
-/* Must be at least as many as keyword_group system_functions (currently 12) */
-int system_function_usage[32];
+int system_function_usage[NUMBER_SYSTEM_FUNCTIONS];
 
 static int get_next_etoken(void)
 {   int v, symbol = 0, mark_symbol_as_used = FALSE,
@@ -953,21 +952,26 @@ static int evaluate_term(token_data t, assembly_operand *o)
 
 /* --- Emitter ------------------------------------------------------------- */
 
-expression_tree_node *ET;
+expression_tree_node *ET; /* Allocated to ET_used */
+static memory_list ET_memlist;
 static int ET_used;
 
 extern void clear_expression_space(void)
 {   ET_used = 0;
 }
 
-static assembly_operand *emitter_stack;
-static int *emitter_markers;
-static int *emitter_bracket_counts;
+typedef struct emitterstackinfo_s {
+    assembly_operand op;
+    int marker;
+    int bracket_count;
+} emitterstackinfo;
 
 #define FUNCTION_VALUE_MARKER 1
 #define ARGUMENT_VALUE_MARKER 2
 #define OR_VALUE_MARKER 3
 
+static emitterstackinfo *emitter_stack; /* Allocated to emitter_sp */
+static memory_list emitter_stack_memlist;
 static int emitter_sp;
 
 static int is_property_t(int symbol_type)
@@ -981,7 +985,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
     }
     if (expr_trace_level >= 2)
     {   printf("Marking top of emitter stack (which is ");
-        print_operand(&emitter_stack[emitter_sp-1], FALSE);
+        print_operand(&emitter_stack[emitter_sp-1].op, FALSE);
         printf(") as ");
         switch(marker)
         {
@@ -1000,21 +1004,20 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
         }
         printf("\n");
     }
-    if (emitter_markers[emitter_sp-1])
+    if (emitter_stack[emitter_sp-1].marker)
     {   if (marker == ARGUMENT_VALUE_MARKER)
         {
             warning("Ignoring spurious leading comma");
             return;
         }
         error_named("Missing operand for", t.text);
-        if (emitter_sp == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
-        emitter_markers[emitter_sp] = 0;
-        emitter_bracket_counts[emitter_sp] = 0;
-        emitter_stack[emitter_sp] = zero_operand;
+        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
+        emitter_stack[emitter_sp].marker = 0;
+        emitter_stack[emitter_sp].bracket_count = 0;
+        emitter_stack[emitter_sp].op = zero_operand;
         emitter_sp++;
     }
-    emitter_markers[emitter_sp-1] = marker;
+    emitter_stack[emitter_sp-1].marker = marker;
 }
 
 static void add_bracket_layer_to_emitter_stack(int depth)
@@ -1022,7 +1025,7 @@ static void add_bracket_layer_to_emitter_stack(int depth)
     if (emitter_sp < depth + 1) return;
     if (expr_trace_level >= 2)
         printf("Adding bracket layer\n");
-    ++emitter_bracket_counts[emitter_sp-depth-1];
+    ++emitter_stack[emitter_sp-depth-1].bracket_count;
 }
 
 static void remove_bracket_layer_from_emitter_stack()
@@ -1030,11 +1033,11 @@ static void remove_bracket_layer_from_emitter_stack()
     if (emitter_sp < 2) return;
     if (expr_trace_level >= 2)
         printf("Removing bracket layer\n");
-    if (emitter_bracket_counts[emitter_sp-2] <= 0)
+    if (emitter_stack[emitter_sp-2].bracket_count <= 0)
     {   compiler_error("SR error: Attempt to remove a nonexistent bracket layer from the emitter stack");
         return;
     }
-    --emitter_bracket_counts[emitter_sp-2];
+    --emitter_stack[emitter_sp-2].bracket_count;
 }
 
 static void emit_token(token_data t)
@@ -1045,11 +1048,11 @@ static void emit_token(token_data t)
     if (expr_trace_level >= 2)
     {   printf("Output: %-19s%21s ", t.text, "");
         for (i=0; i<emitter_sp; i++)
-        {   print_operand(&emitter_stack[i], FALSE); printf(" ");
-            if (emitter_markers[i] == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
-            if (emitter_markers[i] == ARGUMENT_VALUE_MARKER) printf(":ARGUMENT ");
-            if (emitter_markers[i] == OR_VALUE_MARKER) printf(":OR ");
-            if (emitter_bracket_counts[i]) printf(":BRACKETS(%d) ", emitter_bracket_counts[i]);
+        {   print_operand(&emitter_stack[i].op, FALSE); printf(" ");
+            if (emitter_stack[i].marker == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
+            if (emitter_stack[i].marker == ARGUMENT_VALUE_MARKER) printf(":ARGUMENT ");
+            if (emitter_stack[i].marker == OR_VALUE_MARKER) printf(":OR ");
+            if (emitter_stack[i].bracket_count) printf(":BRACKETS(%d) ", emitter_stack[i].bracket_count);
         }
         printf("\n");
     }
@@ -1058,18 +1061,19 @@ static void emit_token(token_data t)
 
     stack_size = 0;
     while ((stack_size < emitter_sp) &&
-           !emitter_markers[emitter_sp-stack_size-1] &&
-           !emitter_bracket_counts[emitter_sp-stack_size-1])
+           !emitter_stack[emitter_sp-stack_size-1].marker &&
+           !emitter_stack[emitter_sp-stack_size-1].bracket_count)
         stack_size++;
 
     if (t.type == SUBCLOSE_TT)
-    {   if (stack_size < emitter_sp && emitter_bracket_counts[emitter_sp-stack_size-1])
+    {   if (stack_size < emitter_sp && emitter_stack[emitter_sp-stack_size-1].bracket_count)
         {   if (stack_size == 0)
             {   error("No expression between brackets '(' and ')'");
-                emitter_stack[emitter_sp] = zero_operand;
-                emitter_markers[emitter_sp] = 0;
-                emitter_bracket_counts[emitter_sp] = 0;
-                ++emitter_sp;
+                ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
+                emitter_stack[emitter_sp].op = zero_operand;
+                emitter_stack[emitter_sp].marker = 0;
+                emitter_stack[emitter_sp].bracket_count = 0;
+                emitter_sp++;
             }
             else if (stack_size < 1)
                 compiler_error("SR error: emitter stack empty in subexpression");
@@ -1081,12 +1085,12 @@ static void emit_token(token_data t)
     }
 
     if (t.type != OP_TT)
-    {   emitter_markers[emitter_sp] = 0;
-        emitter_bracket_counts[emitter_sp] = 0;
+    {
+        ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
+        emitter_stack[emitter_sp].marker = 0;
+        emitter_stack[emitter_sp].bracket_count = 0;
 
-        if (emitter_sp == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
-        if (!evaluate_term(t, &(emitter_stack[emitter_sp++])))
+        if (!evaluate_term(t, &(emitter_stack[emitter_sp++].op)))
             compiler_error_named("Emit token error:", t.text);
         return;
     }
@@ -1097,9 +1101,9 @@ static void emit_token(token_data t)
        apply argument-separating commas. */
     if (t.value == COMMA_OP &&
         stack_size < emitter_sp &&
-        (emitter_markers[emitter_sp-stack_size-1] == ARGUMENT_VALUE_MARKER ||
-         emitter_markers[emitter_sp-stack_size-1] == FUNCTION_VALUE_MARKER) &&
-        !emitter_bracket_counts[emitter_sp-stack_size-1])
+        (emitter_stack[emitter_sp-stack_size-1].marker == ARGUMENT_VALUE_MARKER ||
+         emitter_stack[emitter_sp-stack_size-1].marker == FUNCTION_VALUE_MARKER) &&
+        !emitter_stack[emitter_sp-stack_size-1].bracket_count)
     {   if (expr_trace_level >= 2)
             printf("Treating comma as argument-separating\n");
         return;
@@ -1112,27 +1116,27 @@ static void emit_token(token_data t)
     if (t.value == FCALL_OP)
     {   if (expr_trace_level >= 3)
         {   printf("FCALL_OP finds marker stack: ");
-            for (x=0; x<emitter_sp; x++) printf("%d ", emitter_markers[x]);
+            for (x=0; x<emitter_sp; x++) printf("%d ", emitter_stack[x].marker);
             printf("\n");
         }
-        if (emitter_markers[emitter_sp-1] == ARGUMENT_VALUE_MARKER)
+        if (emitter_stack[emitter_sp-1].marker == ARGUMENT_VALUE_MARKER)
             warning("Ignoring spurious trailing comma");
-        while (emitter_markers[emitter_sp-arity] != FUNCTION_VALUE_MARKER)
+        while (emitter_stack[emitter_sp-arity].marker != FUNCTION_VALUE_MARKER)
         {
             if ((glulx_mode &&
-                 emitter_stack[emitter_sp-arity].type == SYSFUN_OT) ||
+                 emitter_stack[emitter_sp-arity].op.type == SYSFUN_OT) ||
                 (!glulx_mode &&
-                 emitter_stack[emitter_sp-arity].type == VARIABLE_OT &&
-                 emitter_stack[emitter_sp-arity].value >= 256 &&
-                 emitter_stack[emitter_sp-arity].value < 288))
-            {   int index = emitter_stack[emitter_sp-arity].value;
+                 emitter_stack[emitter_sp-arity].op.type == VARIABLE_OT &&
+                 emitter_stack[emitter_sp-arity].op.value >= 256 &&
+                 emitter_stack[emitter_sp-arity].op.value < 288))
+            {   int index = emitter_stack[emitter_sp-arity].op.value;
                 if(!glulx_mode)
                     index -= 256;
                 if(index >= 0 && index < NUMBER_SYSTEM_FUNCTIONS)
                     error_named("System function name used as a value:", system_functions.keywords[index]);
                 else
                     compiler_error("Found unnamed system function used as a value");
-                emitter_stack[emitter_sp-arity] = zero_operand;
+                emitter_stack[emitter_sp-arity].op = zero_operand;
             }
             ++arity;
         }
@@ -1144,12 +1148,12 @@ static void emit_token(token_data t)
         if (operators[t.value].precedence == 3)
         {   arity = 2;
             x = emitter_sp-1;
-            if(!emitter_markers[x] && !emitter_bracket_counts[x])
-            {   for (--x; emitter_markers[x] == OR_VALUE_MARKER && !emitter_bracket_counts[x]; --x)
+            if(!emitter_stack[x].marker && !emitter_stack[x].bracket_count)
+            {   for (--x; emitter_stack[x].marker == OR_VALUE_MARKER && !emitter_stack[x].bracket_count; --x)
                 {   ++arity;
                     ++stack_size;
                 }
-                for (;x >= 0 && !emitter_markers[x] && !emitter_bracket_counts[x]; --x)
+                for (;x >= 0 && !emitter_stack[x].marker && !emitter_stack[x].bracket_count; --x)
                     ++stack_size;
             }
         }
@@ -1157,11 +1161,10 @@ static void emit_token(token_data t)
         if (arity > stack_size)
         {   error_named("Missing operand for", t.text);
             while (arity > stack_size)
-            {   if (emitter_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
-                emitter_markers[emitter_sp] = 0;
-                emitter_bracket_counts[emitter_sp] = 0;
-                emitter_stack[emitter_sp] = zero_operand;
+            {   ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
+                emitter_stack[emitter_sp].marker = 0;
+                emitter_stack[emitter_sp].bracket_count = 0;
+                emitter_stack[emitter_sp].op = zero_operand;
                 emitter_sp++;
                 stack_size++;
             }
@@ -1171,7 +1174,7 @@ static void emit_token(token_data t)
     /* pseudo-typecheck in 6.30: catch an unqualified property name */
     for (i = 1; i <= arity; i++)
     {
-        o1 = emitter_stack[emitter_sp - i];
+        o1 = emitter_stack[emitter_sp - i].op;
         if ((o1.symindex >= 0)
             && is_property_t(symbols[o1.symindex].type)) {
             switch(t.value) 
@@ -1199,7 +1202,7 @@ static void emit_token(token_data t)
 
     switch(arity)
     {   case 1:
-            o1 = emitter_stack[emitter_sp - 1];
+            o1 = emitter_stack[emitter_sp - 1].op;
             if ((o1.marker == 0) && is_constant_ot(o1.type))
             {   switch(t.value)
                 {   case UNARY_MINUS_OP: x = -o1.value; goto FoldConstant;
@@ -1217,8 +1220,8 @@ static void emit_token(token_data t)
             break;
 
         case 2:
-            o1 = emitter_stack[emitter_sp - 2];
-            o2 = emitter_stack[emitter_sp - 1];
+            o1 = emitter_stack[emitter_sp - 2].op;
+            o2 = emitter_stack[emitter_sp - 1].op;
 
             if ((o1.marker == 0) && (o2.marker == 0)
                 && is_constant_ot(o1.type) && is_constant_ot(o2.type))
@@ -1294,9 +1297,8 @@ static void emit_token(token_data t)
             }
     }
 
+    ensure_memory_list_available(&ET_memlist, ET_used+1);
     op_node_number = ET_used++;
-    if (op_node_number == MAX_EXPRESSION_NODES)
-        memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
 
     ET[op_node_number].operator_number = t.value;
     ET[op_node_number].up = -1;
@@ -1312,14 +1314,14 @@ static void emit_token(token_data t)
         if (expr_trace_level >= 3)
             printf("i=%d, emitter_sp=%d, arity=%d, ETU=%d\n",
                 i, emitter_sp, arity, ET_used);
-        if (emitter_stack[i].type == EXPRESSION_OT)
-            operand_node_number = emitter_stack[i].value;
+        if (emitter_stack[i].op.type == EXPRESSION_OT)
+            operand_node_number = emitter_stack[i].op.value;
         else
-        {   operand_node_number = ET_used++;
-            if (operand_node_number == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        {
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
+            operand_node_number = ET_used++;
             ET[operand_node_number].down = -1;
-            ET[operand_node_number].value = emitter_stack[i];
+            ET[operand_node_number].value = emitter_stack[i].op;
         }
         ET[operand_node_number].up = op_node_number;
         ET[operand_node_number].right = -1;
@@ -1334,11 +1336,11 @@ static void emit_token(token_data t)
 
     emitter_sp = emitter_sp - arity + 1;
 
-    emitter_stack[emitter_sp - 1].type = EXPRESSION_OT;
-    emitter_stack[emitter_sp - 1].value = op_node_number;
+    emitter_stack[emitter_sp - 1].op.type = EXPRESSION_OT;
+    emitter_stack[emitter_sp - 1].op.value = op_node_number;
+    emitter_stack[emitter_sp - 1].op.marker = 0;
     emitter_stack[emitter_sp - 1].marker = 0;
-    emitter_markers[emitter_sp - 1] = 0;
-    emitter_bracket_counts[emitter_sp - 1] = 0;
+    emitter_stack[emitter_sp - 1].bracket_count = 0;
     /* Remove the marker for the brackets implied by operator precedence */
     remove_bracket_layer_from_emitter_stack();
 
@@ -1383,28 +1385,28 @@ the range -32768 to +32767:", folding_error);
 
     if (!glulx_mode) {
         if (x<256)
-            emitter_stack[emitter_sp - 1].type = SHORT_CONSTANT_OT;
-        else emitter_stack[emitter_sp - 1].type = LONG_CONSTANT_OT;
+            emitter_stack[emitter_sp - 1].op.type = SHORT_CONSTANT_OT;
+        else emitter_stack[emitter_sp - 1].op.type = LONG_CONSTANT_OT;
     }
     else {
         if (x == 0)
-            emitter_stack[emitter_sp - 1].type = ZEROCONSTANT_OT;
+            emitter_stack[emitter_sp - 1].op.type = ZEROCONSTANT_OT;
         else if (x >= -128 && x <= 127) 
-            emitter_stack[emitter_sp - 1].type = BYTECONSTANT_OT;
+            emitter_stack[emitter_sp - 1].op.type = BYTECONSTANT_OT;
         else if (x >= -32768 && x <= 32767) 
-            emitter_stack[emitter_sp - 1].type = HALFCONSTANT_OT;
+            emitter_stack[emitter_sp - 1].op.type = HALFCONSTANT_OT;
         else
-            emitter_stack[emitter_sp - 1].type = CONSTANT_OT;
+            emitter_stack[emitter_sp - 1].op.type = CONSTANT_OT;
     }
 
-    emitter_stack[emitter_sp - 1].value = x;
+    emitter_stack[emitter_sp - 1].op.value = x;
+    emitter_stack[emitter_sp - 1].op.marker = 0;
     emitter_stack[emitter_sp - 1].marker = 0;
-    emitter_markers[emitter_sp - 1] = 0;
-    emitter_bracket_counts[emitter_sp - 1] = 0;
+    emitter_stack[emitter_sp - 1].bracket_count = 0;
 
     if (expr_trace_level >= 2)
     {   printf("Folding constant to: ");
-        print_operand(&emitter_stack[emitter_sp - 1], FALSE);
+        print_operand(&emitter_stack[emitter_sp - 1].op, FALSE);
         printf("\n");
     }
 
@@ -1651,9 +1653,9 @@ static void insert_exp_to_cond(int n, int context)
 
     if (ET[n].down == -1)
     {   if (context==CONDITION_CONTEXT)
-        {   new = ET_used++;
-            if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+        {
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
+            new = ET_used++;
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1674,9 +1676,8 @@ static void insert_exp_to_cond(int n, int context)
         default:
             if (context != CONDITION_CONTEXT) break;
 
+            ensure_memory_list_available(&ET_memlist, ET_used+1);
             new = ET_used++;
-            if (new == MAX_EXPRESSION_NODES)
-                memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
             ET[new] = ET[n];
             ET[n].down = new; ET[n].operator_number = NONZERO_OP;
             ET[new].up = n; ET[new].right = -1;
@@ -1733,9 +1734,8 @@ static void func_args_on_stack(int n, int context)
               || ET[fnaddr].value.value == INDIRECT_SYSF
               || ET[fnaddr].value.value == GLK_SYSF))) {
         if (etoken_num_children(pn) > (unsigned int)(opnum == FCALL_OP ? 4:3)) {
+          ensure_memory_list_available(&ET_memlist, ET_used+1);
           new = ET_used++;
-          if (new == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
           ET[new] = ET[n];
           ET[n].down = new; 
           ET[n].operator_number = PUSH_OP;
@@ -1756,9 +1756,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
 
     if (AO.type != EXPRESSION_OT)
     {   if (context != CONDITION_CONTEXT) return AO;
+        ensure_memory_list_available(&ET_memlist, ET_used+1);
         n = ET_used++;
-        if (n == MAX_EXPRESSION_NODES)
-            memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
         ET[n].down = -1;
         ET[n].up = -1;
         ET[n].right = -1;
@@ -1779,7 +1778,8 @@ static assembly_operand check_conditions(assembly_operand AO, int context)
 /* --- Shift-reduce parser ------------------------------------------------- */
 
 static int sr_sp;
-static token_data *sr_stack;
+static token_data *sr_stack; /* Allocated to sr_sp */
+static memory_list sr_stack_memlist;
 
 extern assembly_operand parse_expression(int context)
 {
@@ -1863,6 +1863,7 @@ extern assembly_operand parse_expression(int context)
     previous_token.type = ENDEXP_TT;
     previous_token.value = 0;
 
+    ensure_memory_list_available(&sr_stack_memlist, 1);
     sr_sp = 1;
     sr_stack[0] = previous_token;
 
@@ -1902,7 +1903,7 @@ extern assembly_operand parse_expression(int context)
                 return AO;
             }
 
-            AO = emitter_stack[0];
+            AO = emitter_stack[0].op;
             if (AO.type == EXPRESSION_OT)
             {   if (expr_trace_level >= 3)
                 {   printf("Tree before lvalue checking:\n");
@@ -1941,8 +1942,7 @@ extern assembly_operand parse_expression(int context)
 
             case LOWER_P:
             case EQUAL_P:
-                if (sr_sp == MAX_EXPRESSION_NODES)
-                    memoryerror("MAX_EXPRESSION_NODES", MAX_EXPRESSION_NODES);
+                ensure_memory_list_available(&sr_stack_memlist, sr_sp+1);
                 sr_stack[sr_sp++] = b;
                 switch(b.type)
                 {
@@ -2055,7 +2055,12 @@ extern void init_expressp_vars(void)
 {   int i;
     /* make_operands(); */
     make_lexical_interface_tables();
-    for (i=0;i<32;i++) system_function_usage[i] = 0;
+    for (i=0; i<NUMBER_SYSTEM_FUNCTIONS; i++)
+        system_function_usage[i] = 0;
+
+    ET = NULL;
+    emitter_stack = NULL;
+    sr_stack = NULL;
 }
 
 extern void expressp_begin_pass(void)
@@ -2063,24 +2068,27 @@ extern void expressp_begin_pass(void)
 }
 
 extern void expressp_allocate_arrays(void)
-{   ET = my_calloc(sizeof(expression_tree_node), MAX_EXPRESSION_NODES,
+{
+    initialise_memory_list(&ET_memlist,
+        sizeof(expression_tree_node), 100, (void**)&ET,
         "expression parse trees");
-    emitter_markers = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
-        "emitter markers");
-    emitter_bracket_counts = my_calloc(sizeof(int), MAX_EXPRESSION_NODES,
-        "emitter bracket layer counts");
-    emitter_stack = my_calloc(sizeof(assembly_operand), MAX_EXPRESSION_NODES,
-        "emitter stack");
-    sr_stack = my_calloc(sizeof(token_data), MAX_EXPRESSION_NODES,
+
+    initialise_memory_list(&emitter_stack_memlist,
+        sizeof(emitterstackinfo), 100, (void**)&emitter_stack,
+        "expression stack");
+
+    initialise_memory_list(&sr_stack_memlist,
+        sizeof(token_data), 100, (void**)&sr_stack,
         "shift-reduce parser stack");
 }
 
 extern void expressp_free_arrays(void)
-{   my_free(&ET, "expression parse trees");
-    my_free(&emitter_markers, "emitter markers");
-    my_free(&emitter_bracket_counts, "emitter bracket layer counts");
-    my_free(&emitter_stack, "emitter stack");
-    my_free(&sr_stack, "shift-reduce parser stack");
+{
+    deallocate_memory_list(&ET_memlist);
+    
+    deallocate_memory_list(&emitter_stack_memlist);
+
+    deallocate_memory_list(&sr_stack_memlist);
 }
 
 /* ========================================================================= */
