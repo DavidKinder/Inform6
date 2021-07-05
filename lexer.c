@@ -1243,18 +1243,28 @@ typedef struct Sourcefile_s
     LexicalBlock LB;
 } Sourcefile;
 
-static Sourcefile *FileStack;
-static int File_sp;                              /*  Stack pointer           */
+static Sourcefile *FileStack;     /*  Allocated to FileStack_max */
+static memory_list FileStack_memlist;
+static int FileStack_max;         /*  The highest value that File_sp has
+                                      reached
+                                      (Filestack entries to this depth have
+                                      a buffer allocated)                    */
 
-static Sourcefile *CF;                           /*  Top entry on stack      */
+static int File_sp;               /*  Current stack pointer                  */
+static Sourcefile *CF;            /*  Top entry on stack (always equal to
+                                      FileStack[File_sp-1])                  */
 
 static int last_input_file;
 
+/* Set CF and CurrentLB.
+   This does not increment File_sp; the caller must do that. */
 static void begin_buffering_file(int i, int file_no)
 {   int j, cnt; uchar *p;
 
-    if (i >= MAX_INCLUSION_DEPTH) 
-       memoryerror("MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
+    ensure_memory_list_available(&FileStack_memlist, i+1);
+    while (i >= FileStack_max) {
+        FileStack[FileStack_max++].buffer = my_malloc(SOURCE_BUFFER_SIZE+4, "source file buffer");
+    }
 
     p = (uchar *) FileStack[i].buffer;
 
@@ -1806,6 +1816,11 @@ extern void restart_lexer(char *lexical_source, char *name)
 
 extern void init_lexer_vars(void)
 {
+    FileStack = NULL;
+    FileStack_max = 0;
+    CF = NULL;
+    CurrentLB = NULL;
+    
     blank_brief_location.file_index = -1;
     blank_brief_location.line_number = 0;
     blank_brief_location.orig_file_index = 0;
@@ -1833,14 +1848,12 @@ extern void lexer_endpass(void)
 }
 
 extern void lexer_allocate_arrays(void)
-{   int i;
-
-    FileStack = my_malloc(MAX_INCLUSION_DEPTH*sizeof(Sourcefile),
-        "filestack buffer");
-
-    for (i=0; i<MAX_INCLUSION_DEPTH; i++)
-    FileStack[i].buffer = my_malloc(SOURCE_BUFFER_SIZE+4, "source file buffer");
-
+{
+    initialise_memory_list(&FileStack_memlist,
+        sizeof(Sourcefile), 4, (void**)&FileStack,
+        "source file stack");
+    FileStack_max = 0;
+    
     lexeme_memory = my_malloc(5*MAX_QTEXT_SIZE, "lexeme memory");
 
     keywords_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
@@ -1881,13 +1894,15 @@ extern void lexer_allocate_arrays(void)
 }
 
 extern void lexer_free_arrays(void)
-{   int i; char *p;
+{   int i;
+    CF = NULL;
+    CurrentLB = NULL;
 
-    for (i=0; i<MAX_INCLUSION_DEPTH; i++)
-    {   p = FileStack[i].buffer;
-        my_free(&p, "source file buffer");
+    for (i=0; i<FileStack_max; i++)
+    {
+        my_free(&FileStack[i].buffer, "source file buffer");
     }
-    my_free(&FileStack, "filestack buffer");
+    deallocate_memory_list(&FileStack_memlist);
     my_free(&lexeme_memory, "lexeme memory");
 
     my_free(&keywords_hash_table, "keyword hash table");
