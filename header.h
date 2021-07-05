@@ -2930,6 +2930,7 @@ extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
 extern actioninfo *actions;
+extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
 

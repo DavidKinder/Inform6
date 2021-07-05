@@ -88,7 +88,7 @@ static int English_verb_list_size;     /* Size of the list in bytes          */
   int      no_grammar_lines, no_grammar_tokens;
 
   actioninfo *actions; /* Allocated to no_actions */
-  static memory_list actions_memlist;
+  memory_list actions_memlist;
   int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
   static memory_list grammar_token_routine_memlist;
 
@@ -371,7 +371,7 @@ extern assembly_operand action_of_name(char *name)
 
     if (symbols[j].flags & UNKNOWN_SFLAG)
     {
-        if (no_actions>=MAX_ACTIONS) memoryerror("MAX_ACTIONS",MAX_ACTIONS);
+        ensure_memory_list_available(&actions_memlist, no_actions+1);
         new_action(name, no_actions);
         actions[no_actions].symbol = j;
         actions[no_actions].byte_offset = 0; /* fill in later */

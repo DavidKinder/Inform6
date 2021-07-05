@@ -249,6 +249,7 @@ static void accept_export(void)
     else
     {   if (IE.module_value == EXPORTAC_MV)
         {   IE.symbol_value = no_actions;
+            ensure_memory_list_available(&actions_memlist, no_actions+1);
             actions[no_actions].symbol = index;
             actions[no_actions].byte_offset = 0; /* fill in later */
             no_actions++;
