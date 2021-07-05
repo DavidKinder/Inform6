@@ -1261,6 +1261,9 @@ static int last_input_file;
 static void begin_buffering_file(int i, int file_no)
 {   int j, cnt; uchar *p;
 
+    CF = NULL;
+    CurrentLB = NULL;
+    
     ensure_memory_list_available(&FileStack_memlist, i+1);
     while (i >= FileStack_max) {
         FileStack[FileStack_max++].buffer = my_malloc(SOURCE_BUFFER_SIZE+4, "source file buffer");
