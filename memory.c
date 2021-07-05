@@ -177,10 +177,18 @@ extern void my_free(void *pointer, char *whatitwas)
 /*   You typically initialise this with extpointer referring to an array of  */
 /*   structs or whatever type you need. Whenever the memory list grows, the  */
 /*   external array will be updated to refer to the new data.                */
+/*                                                                           */
+/*   Add "#define DEBUG_MEMLISTS" to allocate exactly the number of items    */
+/*   needed, rather than increasing allocations exponentially. This is very  */
+/*   slow but it lets us track down array overruns.                          */
 /* ------------------------------------------------------------------------- */
 
 void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor)
 {
+    #ifdef DEBUG_MEMLISTS
+    initalloc = 0;          /* No initial allocation */
+    #endif
+    
     ML->whatfor = whatfor;
     ML->itemsize = itemsize;
     ML->count = 0;
@@ -228,6 +236,10 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 
     oldcount = ML->count;
     ML->count = 2*count+8;  /* Allow headroom for future growth */
+    
+    #ifdef DEBUG_MEMLISTS
+    ML->count = count;      /* No headroom */
+    #endif
     
     if (ML->data == NULL)
         ML->data = my_calloc(ML->itemsize, ML->count, ML->whatfor);
