@@ -84,7 +84,8 @@ static memory_list English_verbs_given_memlist;
 
   verbt   *Inform_verbs;  /* Allocated up to no_Inform_verbs */
   static memory_list Inform_verbs_memlist;
-  uchar   *grammar_lines;
+  uchar   *grammar_lines; /* Allocated to grammar_lines_top */
+  static memory_list grammar_lines_memlist;
   int32    grammar_lines_top;
   int      no_grammar_lines, no_grammar_tokens;
 
@@ -1118,6 +1119,7 @@ extern void init_verbs_vars(void)
 
     Inform_verbs = NULL;
     actions = NULL;
+    grammar_lines = NULL;
     grammar_token_routine = NULL;
     adjectives = NULL;
     adjective_sort_code = NULL;
@@ -1146,7 +1148,9 @@ extern void verbs_allocate_arrays(void)
         sizeof(verbt), 128, (void**)&Inform_verbs,
         "verbs");
     
-    grammar_lines         = my_malloc(MAX_LINESPACE, "grammar lines");
+    initialise_memory_list(&grammar_lines_memlist,
+        sizeof(uchar), 4000, (void**)&grammar_lines,
+        "grammar lines");
     
     initialise_memory_list(&actions_memlist,
         sizeof(actioninfo), 128, (void**)&actions,
@@ -1180,7 +1184,7 @@ extern void verbs_free_arrays(void)
         my_free(&Inform_verbs[ix].l, "grammar lines for one verb");
     }
     deallocate_memory_list(&Inform_verbs_memlist);
-    my_free(&grammar_lines, "grammar lines");
+    deallocate_memory_list(&grammar_lines_memlist);
     deallocate_memory_list(&actions_memlist);
     deallocate_memory_list(&grammar_token_routine_memlist);
     deallocate_memory_list(&adjectives_memlist);
