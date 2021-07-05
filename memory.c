@@ -255,7 +255,6 @@ int32 MAX_ZCODE_SIZE;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
 int32 MAX_LINK_DATA_SIZE;
-int MAX_INCLUSION_DEPTH;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -306,7 +305,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_EXT_WORDS",ZCODE_HEADER_EXT_WORDS);
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
-    printf("|  %25s = %-7d |\n","MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
     printf("|  %25s = %-7d |\n","MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
@@ -417,7 +415,6 @@ extern void set_memory_sizes(int size_flag)
     }
 
     /* Regardless of size_flag... */
-    MAX_INCLUSION_DEPTH = 5;
     MAX_LOCAL_VARIABLES_z = 16;
     MAX_LOCAL_VARIABLES_g = 32;
     DICT_CHAR_SIZE = 1;
@@ -601,11 +598,6 @@ static void explain_parameter(char *command)
 "  MAX_TRANSCRIPT_SIZE is only allocated for the abbreviations optimisation \n\
   switch, and has the size in bytes of a buffer to hold the entire text of\n\
   the game being compiled: it has to be enormous, say 100000 to 200000.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
-    {   printf(
-"  MAX_INCLUSION_DEPTH is the number of nested includes permitted.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -902,7 +894,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_CLASSES")==0)
                 flag=3;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
-                MAX_INCLUSION_DEPTH=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_SOURCE_FILES")==0)
                 flag=3;
             if (strcmp(command,"MAX_INDIV_PROP_TABLE_SIZE")==0)
