@@ -35,10 +35,9 @@ static int checksum_count;              /* similarly                         */
 /*   level is only concerned with file names and handles.                    */
 /* ------------------------------------------------------------------------- */
 
-FileId *InputFiles=NULL;                /*  Ids for all the source files     */
-static char *filename_storage,          /*  Translated filenames             */
-            *filename_storage_p;
-static int filename_storage_left;
+FileId *InputFiles=NULL;                /*  Ids for all the source files
+                                            Allocated to total_files         */
+static memory_list InputFiles_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   When emitting debug information, we won't have addresses of routines,   */
@@ -105,8 +104,7 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
     int x = 0;
     FILE *handle;
 
-    if (total_files == MAX_SOURCE_FILES)
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+    ensure_memory_list_available(&InputFiles_memlist, total_files+1);
 
     do
     {   x = translate_in_filename(x, name, filename_given, same_directory_flag,
@@ -114,14 +112,8 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         handle = fopen(name,"r");
     } while ((handle == NULL) && (x != 0));
 
-    if (filename_storage_left <= (int)strlen(name))
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
-
-    filename_storage_left -= strlen(name)+1;
-    strcpy(filename_storage_p, name);
-    InputFiles[total_files].filename = filename_storage_p;
-
-    filename_storage_p += strlen(name)+1;
+    InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
+    strcpy(InputFiles[total_files].filename, name);
 
     if (debugfile_switch)
     {   debug_file_printf("<source index=\"%d\">", total_files);
@@ -156,7 +148,8 @@ static void close_sourcefile(int file_number)
 {
     if (InputFiles[file_number-1].handle == NULL) return;
 
-    /*  Close this file.  */
+    /*  Close this file. But keep the InputFiles entry around, including
+        its filename. */
 
     if (ferror(InputFiles[file_number-1].handle))
         fatalerror_named("I/O failure: couldn't read from source file",
@@ -206,17 +199,10 @@ extern int register_orig_sourcefile(char *filename)
 
     name = filename; /* no translation */
 
-    if (total_files == MAX_SOURCE_FILES)
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
+    ensure_memory_list_available(&InputFiles_memlist, total_files+1);
 
-    if (filename_storage_left <= (int)strlen(name))
-        memoryerror("MAX_SOURCE_FILES", MAX_SOURCE_FILES);
-
-    filename_storage_left -= strlen(name)+1;
-    strcpy(filename_storage_p, name);
-    InputFiles[total_files].filename = filename_storage_p;
-
-    filename_storage_p += strlen(name)+1;
+    InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
+    strcpy(InputFiles[total_files].filename, name);
 
     if (debugfile_switch)
     {   debug_file_printf("<source index=\"%d\">", total_files);
@@ -1913,10 +1899,9 @@ static void initialise_accumulator
 }
 
 extern void files_allocate_arrays(void)
-{   filename_storage = my_malloc(MAX_SOURCE_FILES*64, "filename storage");
-    filename_storage_p = filename_storage;
-    filename_storage_left = MAX_SOURCE_FILES*64;
-    InputFiles = my_malloc(MAX_SOURCE_FILES*sizeof(FileId), 
+{
+    initialise_memory_list(&InputFiles_memlist,
+        sizeof(FileId), 16, (void**)&InputFiles,
         "input file storage");
     if (debugfile_switch)
     {   if (glulx_mode)
@@ -1945,8 +1930,14 @@ static void tear_down_accumulator(debug_backpatch_accumulator *accumulator)
 }
 
 extern void files_free_arrays(void)
-{   my_free(&filename_storage, "filename storage");
-    my_free(&InputFiles, "input file storage");
+{
+    int ix;
+    for (ix=0; ix<total_files; ix++)
+    {
+        my_free(&InputFiles[ix].filename, "filename storage");
+    }
+    deallocate_memory_list(&InputFiles_memlist);
+    
     if (debugfile_switch)
     {   if (!glulx_mode)
         {   tear_down_accumulator(&object_backpatch_accumulator);
