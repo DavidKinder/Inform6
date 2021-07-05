@@ -74,8 +74,9 @@ static memory_list English_verb_list_memlist;
 
 static int English_verb_list_size;     /* Size of the list in bytes          */
 
-/* Maximum synonyms in a single Verb/Extend directive */
-#define MAX_VERB_SYNONYMS (32) //###
+static char **English_verbs_given;     /* Allocated to no_given
+                                          (Used only within make_verb())     */
+static memory_list English_verbs_given_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Arrays used by this file                                                */
@@ -926,7 +927,6 @@ extern void make_verb(void)
 
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
 
-    char *English_verbs_given[MAX_VERB_SYNONYMS];
     int no_given = 0, i;
 
     directive_keywords.enabled = TRUE;
@@ -940,10 +940,7 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        if (no_given >= MAX_VERB_SYNONYMS) {
-            error("Too many synonyms in a Verb directive.");
-            panic_mode_error_recovery(); return;
-        }
+        ensure_memory_list_available(&English_verbs_given_memlist, no_given+1);
         English_verbs_given[no_given++] = token_text;
         get_next_token();
     }
@@ -1125,6 +1122,7 @@ extern void init_verbs_vars(void)
     adjectives = NULL;
     adjective_sort_code = NULL;
     English_verb_list = NULL;
+    English_verbs_given = NULL;
 
     if (!glulx_mode)
         grammar_version_number = 1;
@@ -1168,6 +1166,10 @@ extern void verbs_allocate_arrays(void)
     initialise_memory_list(&English_verb_list_memlist,
         sizeof(char), 2048, (void**)&English_verb_list,
         "register of verbs");
+
+    initialise_memory_list(&English_verbs_given_memlist,
+        sizeof(char *), 10, (void**)&English_verbs_given,
+        "verb words within a single definition");
 }
 
 extern void verbs_free_arrays(void)
@@ -1184,6 +1186,7 @@ extern void verbs_free_arrays(void)
     deallocate_memory_list(&adjectives_memlist);
     deallocate_memory_list(&adjective_sort_code_memlist);
     deallocate_memory_list(&English_verb_list_memlist);
+    deallocate_memory_list(&English_verbs_given_memlist);
 }
 
 /* ========================================================================= */
