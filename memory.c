@@ -257,7 +257,6 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
-int MAX_ACTIONS;
 int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
@@ -304,7 +303,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7s |\n","Memory setting","Value");
     printf("+--------------------------------------+\n");
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
-    printf("|  %25s = %-7d |\n","MAX_ACTIONS",MAX_ACTIONS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
     printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
@@ -359,7 +357,6 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 2000;
 
         MAX_LINESPACE = 16000;
@@ -383,7 +380,6 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 1300;
 
         MAX_LINESPACE = 10000;
@@ -407,7 +403,6 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_ACTIONS      = 200;
         MAX_DICT_ENTRIES = 700;
 
         MAX_LINESPACE = 10000;
@@ -493,12 +488,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
   symbols banks.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_ACTIONS")==0)
-    {   printf(
-"  MAX_ACTIONS is the maximum number of actions - that is, routines such as \n\
-  TakeSub which are referenced in the grammar table.\n");
         return;
     }
     if (strcmp(command,"MAX_DICT_ENTRIES")==0)
@@ -829,7 +818,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_OBJECTS")==0)
                 flag=3;
             if (strcmp(command,"MAX_ACTIONS")==0)
-                MAX_ACTIONS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_ADJECTIVES")==0)
                 flag=3;
             if (strcmp(command,"MAX_DICT_ENTRIES")==0)
