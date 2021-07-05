@@ -478,6 +478,8 @@ static int make_parsing_routine(int32 routine_address)
         if (grammar_token_routine[l] == routine_address)
             return l;
 
+    if (no_grammar_token_routines>=MAX_ACTIONS) memoryerror("MAX_ACTIONS",MAX_ACTIONS);
+    
     grammar_token_routine[l] = routine_address;
     return(no_grammar_token_routines++);
 }
