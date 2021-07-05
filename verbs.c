@@ -93,8 +93,9 @@ static int English_verb_list_size;     /* Size of the list in bytes          */
   int      no_grammar_lines, no_grammar_tokens;
 
   int32   *action_byte_offset,
-          *action_symbol,
-          *grammar_token_routine;
+          *action_symbol;
+  int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
+  static memory_list grammar_token_routine_memlist;
 
   int32   *adjectives; /* Allocated to no_adjectives */
   static memory_list adjectives_memlist;
@@ -478,9 +479,9 @@ static int make_parsing_routine(int32 routine_address)
         if (grammar_token_routine[l] == routine_address)
             return l;
 
-    if (no_grammar_token_routines>=MAX_ACTIONS) memoryerror("MAX_ACTIONS",MAX_ACTIONS);
+    ensure_memory_list_available(&grammar_token_routine_memlist, no_grammar_token_routines+1);
     
-    grammar_token_routine[l] = routine_address;
+    grammar_token_routine[no_grammar_token_routines] = routine_address;
     return(no_grammar_token_routines++);
 }
 
@@ -1155,8 +1156,10 @@ extern void verbs_allocate_arrays(void)
     action_byte_offset    = my_calloc(sizeof(int32),   MAX_ACTIONS, "actions");
     action_symbol         = my_calloc(sizeof(int32),   MAX_ACTIONS,
                                 "action symbols");
-    grammar_token_routine = my_calloc(sizeof(int32),   MAX_ACTIONS,
-                                "grammar token routines");
+    
+    initialise_memory_list(&grammar_token_routine_memlist,
+        sizeof(int32), 50, (void**)&grammar_token_routine,
+        "grammar token routines");
 
     initialise_memory_list(&adjectives_memlist,
         sizeof(int32), 50, (void**)&adjectives,
@@ -1181,7 +1184,7 @@ extern void verbs_free_arrays(void)
     my_free(&grammar_lines, "grammar lines");
     my_free(&action_byte_offset, "actions");
     my_free(&action_symbol, "action symbols");
-    my_free(&grammar_token_routine, "grammar token routines");
+    deallocate_memory_list(&grammar_token_routine_memlist);
     deallocate_memory_list(&adjectives_memlist);
     deallocate_memory_list(&adjective_sort_code_memlist);
     deallocate_memory_list(&English_verb_list_memlist);
