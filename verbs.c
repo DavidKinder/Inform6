@@ -597,7 +597,10 @@ static void ensure_grammar_lines_available(int verbnum, int num)
 
 static int grammar_line(int verbnum, int line)
 {
-    /*  Parse a grammar line, to be written into grammar_lines[mark] onward.
+    /*  Parse a grammar line, to be written into grammar_lines[] starting
+        at grammar_lines_top. grammar_lines_top is left at the end
+        of the new line.
+
         This stores the line position in Inform_verbs[verbnum].l[line].
         (It does not increment Inform_verbs[verbnum].lines; the caller
         must do that.)
@@ -638,24 +641,7 @@ static int grammar_line(int verbnum, int line)
         return FALSE;
     }
 
-    /*  Have we run out of token space?  */
-
-    /*  Internally, a line can be up to 3*32 + 1 + 2 = 99 bytes long  */
-    /*  In Glulx, that's 5*32 + 4 = 164 bytes */
-
     mark = grammar_lines_top;
-    if (!glulx_mode) {
-        if (mark + 100 >= MAX_LINESPACE)
-        {   discard_token_location(beginning_debug_location);
-            memoryerror("MAX_LINESPACE", MAX_LINESPACE);
-        }
-    }
-    else {
-        if (mark + 165 >= MAX_LINESPACE)
-        {   discard_token_location(beginning_debug_location);
-            memoryerror("MAX_LINESPACE", MAX_LINESPACE);
-        }
-    }
 
     ensure_grammar_lines_available(verbnum, line+1);
     Inform_verbs[verbnum].l[line] = mark;
@@ -668,6 +654,7 @@ static int grammar_line(int verbnum, int line)
         mark = mark + 3;
         TOKEN_SIZE = 5;
     }
+    ensure_memory_list_available(&grammar_lines_memlist, mark);
 
     grammar_token = 0; last_was_slash = TRUE; slash_mode = FALSE;
     no_grammar_lines++;
@@ -838,6 +825,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
                     error("'/' can only be applied to prepositions");
                 bytecode |= 0x10;
             }
+            ensure_memory_list_available(&grammar_lines_memlist, mark+5);
             grammar_lines[mark++] = bytecode;
             if (!glulx_mode) {
                 grammar_lines[mark++] = wordcode/256;
@@ -853,6 +841,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
 
     } while (TRUE);
 
+    ensure_memory_list_available(&grammar_lines_memlist, mark+1);
     grammar_lines[mark++] = 15;
     grammar_lines_top = mark;
 
@@ -899,6 +888,7 @@ Library 6/3 or later");
         debug_file_printf("</table-entry>");
     }
 
+    ensure_memory_list_available(&grammar_lines_memlist, mark+3);
     if (!glulx_mode) {
         if (reverse_action)
             j = j + 0x400;
