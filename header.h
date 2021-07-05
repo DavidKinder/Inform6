@@ -776,6 +776,12 @@ typedef struct verbt {
     int size; /* allocated size of l */
 } verbt;
 
+typedef struct actioninfo_s {
+    int32 symbol;      /* The symbol table index of the action name */
+    int32 byte_offset; /* The (byte) offset in the Z-machine code area of 
+                          the ...Sub routine */
+} actioninfo;
+
 /* Information about an object class. */
 typedef struct classinfo_s {
     /* The number of the prototype-object for this class */
@@ -2923,8 +2929,8 @@ extern int32 grammar_version_symbol;
 extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
-extern int32 *action_byte_offset,
-             *grammar_token_routine,
+extern actioninfo *actions;
+extern int32 *grammar_token_routine,
              *adjectives;
 
 extern void find_the_actions(void);

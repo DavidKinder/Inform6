@@ -18,13 +18,8 @@ int32 grammar_version_symbol;          /* Index of "Grammar__Version"
 /* ------------------------------------------------------------------------- */
 /*   Array defined below:                                                    */
 /*                                                                           */
-/*    int32   action_byte_offset[n]       The (byte) offset in the Z-machine */
-/*                                        code area of the ...Sub routine    */
-/*                                        for action n.  (NB: This is left   */
-/*                                        blank until the end of the         */
-/*                                        compilation pass.)                 */
-/*    int32   action_symbol[n]            The symbol table index of the n-th */
-/*                                        action's name.                     */
+/*    actioninfo actions[n]               Symbol table index and byte offset */
+/*                                        of the ...Sub routine              */
 /* ------------------------------------------------------------------------- */
 
 int no_actions,                        /* Number of actions made so far      */
@@ -80,7 +75,7 @@ static memory_list English_verb_list_memlist;
 static int English_verb_list_size;     /* Size of the list in bytes          */
 
 /* Maximum synonyms in a single Verb/Extend directive */
-#define MAX_VERB_SYNONYMS (32)
+#define MAX_VERB_SYNONYMS (32) //###
 
 /* ------------------------------------------------------------------------- */
 /*   Arrays used by this file                                                */
@@ -92,8 +87,8 @@ static int English_verb_list_size;     /* Size of the list in bytes          */
   int32    grammar_lines_top;
   int      no_grammar_lines, no_grammar_tokens;
 
-  int32   *action_byte_offset,
-          *action_symbol;
+  actioninfo *actions; /* Allocated to no_actions */
+  static memory_list actions_memlist;
   int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
   static memory_list grammar_token_routine_memlist;
 
@@ -178,7 +173,7 @@ static void list_grammar_line_v1(int mark)
     }
 
     printf(" -> ");
-    actsym = action_symbol[action];
+    actsym = actions[action].symbol;
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
@@ -263,7 +258,7 @@ static void list_grammar_line_v2(int mark)
         }
     }
     printf(" -> ");
-    actsym = action_symbol[action];
+    actsym = actions[action].symbol;
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
@@ -378,7 +373,8 @@ extern assembly_operand action_of_name(char *name)
     {
         if (no_actions>=MAX_ACTIONS) memoryerror("MAX_ACTIONS",MAX_ACTIONS);
         new_action(name, no_actions);
-        action_symbol[no_actions] = j;
+        actions[no_actions].symbol = j;
+        actions[no_actions].byte_offset = 0; /* fill in later */
         assign_symbol(j, no_actions++, CONSTANT_T);
         symbols[j].flags |= ACTION_SFLAG;
     }
@@ -403,26 +399,26 @@ extern void find_the_actions(void)
     char action_sub[MAX_IDENTIFIER_LENGTH+4];
 
     if (module_switch)
-        for (i=0; i<no_actions; i++) action_byte_offset[i] = 0;
+        for (i=0; i<no_actions; i++) actions[i].byte_offset = 0;
     else
     for (i=0; i<no_actions; i++)
-    {   strcpy(action_name, symbols[action_symbol[i]].name);
+    {   strcpy(action_name, symbols[actions[i].symbol].name);
         action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");
         j = symbol_index(action_sub, -1);
         if (symbols[j].flags & UNKNOWN_SFLAG)
         {
-            error_named_at("No ...Sub action routine found for action:", action_name, symbols[action_symbol[i]].line);
+            error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);
         }
         else
         if (symbols[j].type != ROUTINE_T)
         {
-            error_named_at("No ...Sub action routine found for action:", action_name, symbols[action_symbol[i]].line);
+            error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);
             error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, symbols[j].line);
         }
         else
-        {   action_byte_offset[i] = symbols[j].value;
+        {   actions[i].byte_offset = symbols[j].value;
             symbols[j].flags |= USED_SFLAG;
         }
     }
@@ -1124,7 +1120,7 @@ extern void init_verbs_vars(void)
     English_verb_list_size = 0;
 
     Inform_verbs = NULL;
-    action_byte_offset = NULL;
+    actions = NULL;
     grammar_token_routine = NULL;
     adjectives = NULL;
     adjective_sort_code = NULL;
@@ -1153,9 +1149,10 @@ extern void verbs_allocate_arrays(void)
         "verbs");
     
     grammar_lines         = my_malloc(MAX_LINESPACE, "grammar lines");
-    action_byte_offset    = my_calloc(sizeof(int32),   MAX_ACTIONS, "actions");
-    action_symbol         = my_calloc(sizeof(int32),   MAX_ACTIONS,
-                                "action symbols");
+    
+    initialise_memory_list(&actions_memlist,
+        sizeof(actioninfo), 128, (void**)&actions,
+        "actions");
     
     initialise_memory_list(&grammar_token_routine_memlist,
         sizeof(int32), 50, (void**)&grammar_token_routine,
@@ -1182,8 +1179,7 @@ extern void verbs_free_arrays(void)
     }
     deallocate_memory_list(&Inform_verbs_memlist);
     my_free(&grammar_lines, "grammar lines");
-    my_free(&action_byte_offset, "actions");
-    my_free(&action_symbol, "action symbols");
+    deallocate_memory_list(&actions_memlist);
     deallocate_memory_list(&grammar_token_routine_memlist);
     deallocate_memory_list(&adjectives_memlist);
     deallocate_memory_list(&adjective_sort_code_memlist);

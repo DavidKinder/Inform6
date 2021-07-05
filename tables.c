@@ -899,7 +899,7 @@ or less.");
 
         mark = actions_at;
         for (i=0; i<no_actions; i++)
-        {   j=action_byte_offset[i];
+        {   j=actions[i].byte_offset;
             if (OMIT_UNUSED_ROUTINES)
                 j = df_stripped_address_for_address(j);
             j += code_offset/scale_factor;
@@ -1593,7 +1593,7 @@ table format requested (producing number 2 format instead)");
 
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
-          j = action_byte_offset[i];
+          j = actions[i].byte_offset;
           if (OMIT_UNUSED_ROUTINES)
             j = df_stripped_address_for_address(j);
           j += code_offset;
