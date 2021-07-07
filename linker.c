@@ -8,9 +8,12 @@
 
 #include "header.h"
 
+uchar *link_data_holding_area;            /* Allocated to link_data_ha_size  */
+static memory_list link_data_holding_area_memlist;
+int32 link_data_ha_size;
+
 uchar *link_data_area;
 static memory_list link_data_area_memlist;
-uchar *link_data_holding_area, *link_data_top;
                                           /*  Start, current top, size of    */
 int32 link_data_size;                     /*  link data table being written  */
                                           /*  (holding import/export names)  */
@@ -979,16 +982,15 @@ at strings offset %04x (+%04x)\n",
 /* ------------------------------------------------------------------------- */
 
 static void write_link_byte(int x)
-{   *link_data_top=(unsigned char) x; link_data_top++; link_data_size++;
-    if (subtract_pointers(link_data_top,link_data_holding_area)
-        >= MAX_LINK_DATA_SIZE)
-    {   memoryerror("MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
-    }
+{
+    //###
+    link_data_holding_area[link_data_ha_size] = (unsigned char) x;
+    link_data_ha_size++; link_data_size++;
 }
 
 extern void flush_link_data(void)
 {   int32 i, j;
-    j = subtract_pointers(link_data_top, link_data_holding_area);
+    j = link_data_ha_size;
     if (temporary_files_switch) {
         for (i=0;i<j;i++) fputc(link_data_holding_area[i], Temp3_fp);
     }
@@ -997,7 +999,7 @@ extern void flush_link_data(void)
         for (i=0;i<j;i++)
             link_data_area[link_data_size-j+i] = link_data_holding_area[i];
     }
-    link_data_top=link_data_holding_area;
+    link_data_ha_size = 0;
 }
 
 static void write_link_word(int32 x)
@@ -1118,10 +1120,12 @@ void import_symbol(int32 symbol_number)
 extern void init_linker_vars(void)
 {   link_data_size = 0;
     link_data_area = NULL;
+    link_data_ha_size = 0;
+    link_data_holding_area = NULL;
 }
 
 extern void linker_begin_pass(void)
-{   link_data_top = link_data_holding_area;
+{   link_data_ha_size = 0;
 }
 
 extern void linker_endpass(void)
