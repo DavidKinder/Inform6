@@ -937,7 +937,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
         case ONE:
             o1 = AI->operand[0];
-            *start_pc=(*start_pc) + o1.type*0x10;
+            *start_pc += o1.type*0x10;
             write_operand(o1);
             break;
 
@@ -948,12 +948,12 @@ extern void assemblez_instruction(assembly_instruction *AI)
             /* Transfer to VAR form if either operand is a long constant */
 
             if ((o1.type==LONG_CONSTANT_OT)||(o2.type==LONG_CONSTANT_OT))
-            {   *start_pc=(*start_pc) + 0xc0;
+            {   *start_pc += 0xc0;
                 byteout(o1.type*0x40 + o2.type*0x10 + 0x0f, 0);
             }
             else
-            {   if (o1.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x40;
-                if (o2.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x20;
+            {   if (o1.type==VARIABLE_OT) *start_pc += 0x40;
+                if (o2.type==VARIABLE_OT) *start_pc += 0x20;
             }
             write_operand(o1);
             write_operand(o2);
