@@ -10,8 +10,10 @@
 
 uchar *zcode_holding_area;         /* Area holding code yet to be transferred
                                       to either zcode_area or temp file no 1 */
+static memory_list zcode_holding_area_memlist;
 uchar *zcode_markers;              /* Bytes holding marker values for this
                                       code                                   */
+static memory_list zcode_markers_memlist;
 static int zcode_ha_size;          /* Number of bytes in holding area        */
 
 uchar *zcode_area;                 /* Array to hold assembled code (if
@@ -304,8 +306,9 @@ extern void print_operand(const assembly_operand *o, int annotate)
 /* ------------------------------------------------------------------------- */
 
 static void byteout(int32 i, int mv)
-{   if (zcode_ha_size >= MAX_ZCODE_SIZE)
-        memoryerror("MAX_ZCODE_SIZE",MAX_ZCODE_SIZE);
+{
+    ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+1);
+    ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+1);
     zcode_markers[zcode_ha_size] = (uchar) mv;
     zcode_holding_area[zcode_ha_size++] = (uchar) i;
     zmachine_pc++;
@@ -3204,8 +3207,12 @@ extern void asm_allocate_arrays(void)
         sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
         "sequence points");
 
-    zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
-    zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
+    initialise_memory_list(&zcode_holding_area_memlist,
+        sizeof(uchar), 2000, (void**)&zcode_holding_area,
+        "compiled routine code area");
+    initialise_memory_list(&zcode_markers_memlist,
+        sizeof(uchar), 2000, (void**)&zcode_markers,
+        "compiled routine markers area");
 
     initialise_memory_list(&named_routine_symbols_memlist,
         sizeof(int32), 1000, (void**)&named_routine_symbols,
@@ -3228,8 +3235,8 @@ extern void asm_free_arrays(void)
     deallocate_memory_list(&labels_memlist);
     deallocate_memory_list(&sequence_points_memlist);
 
-    my_free(&zcode_holding_area, "compiled routine code area");
-    my_free(&zcode_markers, "compiled routine code markers");
+    deallocate_memory_list(&zcode_holding_area_memlist);
+    deallocate_memory_list(&zcode_markers_memlist);
 
     deallocate_memory_list(&named_routine_symbols_memlist);
     deallocate_memory_list(&zcode_area_memlist);
