@@ -263,7 +263,6 @@ int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int MAX_LINESPACE;
 int32 MAX_STATIC_STRINGS;
-int32 MAX_ZCODE_SIZE;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
 int32 MAX_LINK_DATA_SIZE;
@@ -288,7 +287,6 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    which have different defaults under Z-code and Glulx. We have to get
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
-static int32 MAX_ZCODE_SIZE_z, MAX_ZCODE_SIZE_g;
 static int MAX_GLOBAL_VARIABLES_z, MAX_GLOBAL_VARIABLES_g;
 static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
@@ -346,8 +344,6 @@ static void list_memory_sizes(void)
            (long int) MAX_UNICODE_CHARS);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
-    printf("|  %25s = %-7ld |\n","MAX_ZCODE_SIZE",
-           (long int) MAX_ZCODE_SIZE);
     printf("+--------------------------------------+\n");
 }
 
@@ -365,8 +361,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 16000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_ZCODE_SIZE_z = 20000;
-        MAX_ZCODE_SIZE_g = 40000;
         MAX_LINK_DATA_SIZE = 2000;
 
         MAX_LOW_STRINGS = 2048;
@@ -389,8 +383,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_ZCODE_SIZE_z = 20000;
-        MAX_ZCODE_SIZE_g = 40000;
         MAX_LINK_DATA_SIZE = 2000;
 
         MAX_LOW_STRINGS = 2048;
@@ -413,8 +405,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_ZCODE_SIZE_z = 10000;
-        MAX_ZCODE_SIZE_g = 20000;
         MAX_LINK_DATA_SIZE = 1000;
 
         MAX_LOW_STRINGS = 1024;
@@ -461,7 +451,6 @@ extern void set_memory_sizes(int size_flag)
 extern void adjust_memory_sizes()
 {
   if (!glulx_mode) {
-    MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_z;
     MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_z;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
@@ -470,7 +459,6 @@ extern void adjust_memory_sizes()
     INDIV_PROP_START = 64;
   }
   else {
-    MAX_ZCODE_SIZE = MAX_ZCODE_SIZE_g;
     MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_g;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
@@ -579,15 +567,6 @@ static void explain_parameter(char *command)
   plenty, allowing string constants of up to about 3000 characters long.\n\
   Inform automatically ensures that this is at least twice the size of\n\
   MAX_QTEXT_SIZE, to be on the safe side.");
-        return;
-    }
-    if (strcmp(command,"MAX_ZCODE_SIZE")==0)
-    {
-        printf(
-"  MAX_ZCODE_SIZE is the size in bytes of a buffer to hold compiled \n\
-  code for a single routine.  (It applies to both Z-code and Glulx, \n\
-  despite the name.)  As a guide, the longest library routine is \n\
-  about 6500 bytes long in Z-code; about twice that in Glulx.");
         return;
     }
     if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
@@ -894,9 +873,7 @@ extern void memory_command(char *command)
                     MAX_STATIC_STRINGS = 2*MAX_QTEXT_SIZE;
             }
             if (strcmp(command,"MAX_ZCODE_SIZE")==0)
-            {   MAX_ZCODE_SIZE=j, flag=1;
-                MAX_ZCODE_SIZE_g=MAX_ZCODE_SIZE_z=j;
-            }
+                flag=3;
             if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
                 MAX_LINK_DATA_SIZE=j, flag=1;
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
