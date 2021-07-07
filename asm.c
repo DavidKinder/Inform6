@@ -824,7 +824,8 @@ static void write_operand(assembly_operand op)
 
 extern void assemblez_instruction(assembly_instruction *AI)
 {
-    uchar *start_pc, *operands_pc;
+    int32 operands_pc;
+    int32 start_pc;
     int32 offset, j, topbits=0, types_byte1, types_byte2;
     int operand_rules, min=0, max=0, no_operands_given, at_seq_point = FALSE;
     assembly_operand o1, o2;
@@ -872,7 +873,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     /* 1. Write the opcode byte(s) */
 
-    start_pc = zcode_holding_area + zcode_ha_size;
+    start_pc = zcode_ha_size;
 
     switch(opco.no)
     {   case VAR_LONG: topbits=0xc0; min=0; max=8; break;
@@ -887,7 +888,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
     }
     byteout(opco.code + topbits, 0);
 
-    operands_pc = zcode_holding_area + zcode_ha_size;
+    operands_pc = zcode_ha_size;
 
     /* 2. Dispose of the special rules LABEL and TEXT */
 
@@ -937,13 +938,13 @@ extern void assemblez_instruction(assembly_instruction *AI)
                 else
                     types_byte2 = (types_byte2 & (~mask)) + o1.type*multi;
             }
-            *operands_pc=types_byte1;
-            if (opco.no == VAR_LONG) *(operands_pc+1)=types_byte2;
+            zcode_holding_area[operands_pc]=types_byte1;
+            if (opco.no == VAR_LONG) zcode_holding_area[operands_pc+1]=types_byte2;
             break;
 
         case ONE:
             o1 = AI->operand[0];
-            *start_pc=(*start_pc) + o1.type*0x10;
+            zcode_holding_area[start_pc] += o1.type*0x10;
             write_operand(o1);
             break;
 
@@ -954,12 +955,12 @@ extern void assemblez_instruction(assembly_instruction *AI)
             /* Transfer to VAR form if either operand is a long constant */
 
             if ((o1.type==LONG_CONSTANT_OT)||(o2.type==LONG_CONSTANT_OT))
-            {   *start_pc=(*start_pc) + 0xc0;
+            {   zcode_holding_area[start_pc] += 0xc0;
                 byteout(o1.type*0x40 + o2.type*0x10 + 0x0f, 0);
             }
             else
-            {   if (o1.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x40;
-                if (o2.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x20;
+            {   if (o1.type==VARIABLE_OT) zcode_holding_area[start_pc] += 0x40;
+                if (o2.type==VARIABLE_OT) zcode_holding_area[start_pc] += 0x20;
             }
             write_operand(o1);
             write_operand(o2);
@@ -1060,10 +1061,10 @@ extern void assemblez_instruction(assembly_instruction *AI)
         }
 
         if (asm_trace_level>=2)
-        {   for (j=0;start_pc<zcode_holding_area + zcode_ha_size;
+        {   for (j=0;start_pc<zcode_ha_size;
                  j++, start_pc++)
             {   if (j%16==0) printf("\n                               ");
-                printf("%02x ", *start_pc);
+                printf("%02x ", zcode_holding_area[start_pc]);
             }
         }
         printf("\n");
@@ -1135,7 +1136,8 @@ static void assembleg_macro(assembly_instruction *AI)
 
 extern void assembleg_instruction(assembly_instruction *AI)
 {
-    uchar *start_pc, *opmodes_pc;
+    int32 opmodes_pc;
+    int32 start_pc;
     int32 offset, j;
     int no_operands_given, at_seq_point = FALSE;
     int ix, k;
@@ -1185,7 +1187,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
     /* 1. Write the opcode byte(s) */
 
-    start_pc = zcode_holding_area + zcode_ha_size; 
+    start_pc = zcode_ha_size; 
 
     if (opco.code < 0x80) {
       byteout(opco.code, 0);
@@ -1205,7 +1207,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
        every two operands (rounded up). We write zeroes for now; 
        when the operands are written, we'll go back and fix them. */
 
-    opmodes_pc = zcode_holding_area + zcode_ha_size;
+    opmodes_pc = zcode_ha_size;
 
     for (ix=0; ix<opco.no; ix+=2) {
       byteout(0, 0);
@@ -1247,8 +1249,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
             }
             else {
                 /* branch to label k */
-                j = subtract_pointers((zcode_holding_area + zcode_ha_size), 
-                    opmodes_pc);
+                j = (zcode_ha_size - opmodes_pc);
                 j = 2*j - ix;
                 marker = BRANCH_MV + j;
                 if (!(marker >= BRANCH_MV && marker < BRANCHMAX_MV)) {
@@ -1377,7 +1378,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
       if (ix & 1)
           j = (j << 4);
-      opmodes_pc[ix/2] |= j;
+      zcode_holding_area[opmodes_pc+ix/2] |= j;
     }
 
     /* Print assembly trace. */
@@ -1403,16 +1404,16 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
       if (asm_trace_level>=2) {
         for (j=0;
-            start_pc<zcode_holding_area + zcode_ha_size;
+            start_pc<zcode_ha_size;
             j++, start_pc++) {
             if (j%16==0) printf("\n                               ");
             if (/* DISABLES CODE */ (0)) {
-                printf("%02x ", *start_pc);
+                printf("%02x ", zcode_holding_area[start_pc]);
             }
             else {
-                printf("%02x", *start_pc);
-                if (zcode_markers[start_pc-zcode_holding_area])
-                    printf("{%02x}", zcode_markers[start_pc-zcode_holding_area]);
+                printf("%02x", zcode_holding_area[start_pc]);
+                if (zcode_markers[start_pc])
+                    printf("{%02x}", zcode_markers[start_pc]);
                 printf(" ");
             }
         }
