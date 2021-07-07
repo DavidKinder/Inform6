@@ -1130,7 +1130,7 @@ static void assembleg_macro(assembly_instruction *AI)
 
 extern void assembleg_instruction(assembly_instruction *AI)
 {
-    uchar *opmodes_pc;
+    int32 opmodes_pc;
     int32 start_pc;
     int32 offset, j;
     int no_operands_given, at_seq_point = FALSE;
@@ -1201,7 +1201,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
        every two operands (rounded up). We write zeroes for now; 
        when the operands are written, we'll go back and fix them. */
 
-    opmodes_pc = zcode_holding_area + zcode_ha_size;
+    opmodes_pc = zcode_ha_size;
 
     for (ix=0; ix<opco.no; ix+=2) {
       byteout(0, 0);
@@ -1243,8 +1243,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
             }
             else {
                 /* branch to label k */
-                j = subtract_pointers((zcode_holding_area + zcode_ha_size), 
-                    opmodes_pc);
+                j = (zcode_ha_size - opmodes_pc);
                 j = 2*j - ix;
                 marker = BRANCH_MV + j;
                 if (!(marker >= BRANCH_MV && marker < BRANCHMAX_MV)) {
@@ -1373,7 +1372,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
       if (ix & 1)
           j = (j << 4);
-      opmodes_pc[ix/2] |= j;
+      zcode_holding_area[opmodes_pc+ix/2] |= j;
     }
 
     /* Print assembly trace. */
