@@ -8,10 +8,10 @@
 
 #include "header.h"
 
-uchar *zcode_holding_area;         /* Area holding code yet to be transferred
+static uchar *zcode_holding_area;  /* Area holding code yet to be transferred
                                       to either zcode_area or temp file no 1 */
 static memory_list zcode_holding_area_memlist;
-uchar *zcode_markers;              /* Bytes holding marker values for this
+static uchar *zcode_markers;       /* Bytes holding marker values for this
                                       code                                   */
 static memory_list zcode_markers_memlist;
 static int zcode_ha_size;          /* Number of bytes in holding area        */
@@ -899,9 +899,12 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text, STRCTX_GAMEOPC);
+        uchar *tmp;
+        ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
+        ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
+        tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area + zcode_ha_size + MAX_STATIC_STRINGS, AI->text, STRCTX_GAMEOPC);
         if (!tmp)
-            memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
+            memoryerror("MAX_STATIC_STRINGS", MAX_STATIC_STRINGS);
         j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));
         for (i=0; i<j; i++) zcode_markers[zcode_ha_size++] = 0;
         zmachine_pc += j;
