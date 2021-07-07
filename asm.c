@@ -821,7 +821,7 @@ static void write_operand(assembly_operand op)
 
 extern void assemblez_instruction(assembly_instruction *AI)
 {
-    uchar *operands_pc;
+    int32 operands_pc;
     int32 start_pc;
     int32 offset, j, topbits=0, types_byte1, types_byte2;
     int operand_rules, min=0, max=0, no_operands_given, at_seq_point = FALSE;
@@ -885,7 +885,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
     }
     byteout(opco.code + topbits, 0);
 
-    operands_pc = zcode_holding_area + zcode_ha_size;
+    operands_pc = zcode_ha_size;
 
     /* 2. Dispose of the special rules LABEL and TEXT */
 
@@ -932,8 +932,8 @@ extern void assemblez_instruction(assembly_instruction *AI)
                 else
                     types_byte2 = (types_byte2 & (~mask)) + o1.type*multi;
             }
-            *operands_pc=types_byte1;
-            if (opco.no == VAR_LONG) *(operands_pc+1)=types_byte2;
+            zcode_holding_area[operands_pc]=types_byte1;
+            if (opco.no == VAR_LONG) zcode_holding_area[operands_pc+1]=types_byte2;
             break;
 
         case ONE:
