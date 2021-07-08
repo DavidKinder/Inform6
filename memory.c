@@ -265,7 +265,6 @@ int MAX_LINESPACE;
 int32 MAX_STATIC_STRINGS;
 int MAX_LOW_STRINGS;
 int32 MAX_TRANSCRIPT_SIZE;
-int32 MAX_LINK_DATA_SIZE;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -317,7 +316,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     printf("|  %25s = %-7d |\n","MAX_LINESPACE",MAX_LINESPACE);
-    printf("|  %25s = %-7d |\n","MAX_LINK_DATA_SIZE",MAX_LINK_DATA_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_LOCAL_VARIABLES",MAX_LOCAL_VARIABLES);
     printf("|  %25s = %-7d |\n","MAX_LOW_STRINGS",MAX_LOW_STRINGS);
@@ -361,7 +359,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 16000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_LINK_DATA_SIZE = 2000;
 
         MAX_LOW_STRINGS = 2048;
 
@@ -383,7 +380,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_LINK_DATA_SIZE = 2000;
 
         MAX_LOW_STRINGS = 2048;
 
@@ -405,7 +401,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LINESPACE = 10000;
 
         MAX_STATIC_STRINGS = 8000;
-        MAX_LINK_DATA_SIZE = 1000;
 
         MAX_LOW_STRINGS = 1024;
 
@@ -567,14 +562,6 @@ static void explain_parameter(char *command)
   plenty, allowing string constants of up to about 3000 characters long.\n\
   Inform automatically ensures that this is at least twice the size of\n\
   MAX_QTEXT_SIZE, to be on the safe side.");
-        return;
-    }
-    if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
-    {
-        printf(
-"  MAX_LINK_DATA_SIZE is the size in bytes of a buffer to hold module \n\
-  link data before it's written into longer-term storage.  2000 bytes \n\
-  is plenty.");
         return;
     }
     if (strcmp(command,"MAX_LOW_STRINGS")==0)
@@ -875,7 +862,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ZCODE_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
-                MAX_LINK_DATA_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
                 MAX_LOW_STRINGS=j, flag=1;
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
