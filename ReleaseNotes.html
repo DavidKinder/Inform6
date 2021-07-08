@@ -47,13 +47,14 @@ These are the changes delivered in version 6.36 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
-<li><p>Work has been done on refactoring Inform to use dynamic memory allocation rather than fixed size buffers.
-As a result, the following settings are now removed: if the available space is filled, Inform will allocate more
-memory without requiring user intervention.
+<li><p>Inform has been refactored to use dynamic memory allocation rather than fixed size buffers. As a result,
+the following settings are now removed: if the available space is filled, Inform will allocate more memory
+without requiring user intervention.
  <ul>
  <li>ALLOC_CHUNK_SIZE
  <li>SYMBOLS_CHUNK_SIZE
  <li>MAX_ABBREVS (removed only for Glulx)
+ <li>MAX_ACTIONS
  <li>MAX_ADJECTIVES
  <li>MAX_ARRAYS
  <li>MAX_CLASSES
@@ -61,6 +62,8 @@ memory without requiring user intervention.
  <li>MAX_INCLUSION_DEPTH
  <li>MAX_INDIV_PROP_TABLE_SIZE
  <li>MAX_LABELS
+ <li>MAX_LINESPACE
+ <li>MAX_LINK_DATA_SIZE
  <li>MAX_OBJ_PROP_COUNT
  <li>MAX_OBJ_PROP_TABLE_SIZE
  <li>MAX_OBJECTS
@@ -70,6 +73,7 @@ memory without requiring user intervention.
  <li>MAX_SYMBOLS
  <li>MAX_VERBS
  <li>MAX_VERBSPACE
+ <li>MAX_ZCODE_SIZE
  </ul>
 <li><p>There are now warnings if the compiler detects that the type used in certain expressions is not correct.
 This only checks expressions that contain defined symbols, and does not change the generated code. The checks are:
