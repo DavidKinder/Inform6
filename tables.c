@@ -899,7 +899,7 @@ or less.");
 
         mark = actions_at;
         for (i=0; i<no_actions; i++)
-        {   j=action_byte_offset[i];
+        {   j=actions[i].byte_offset;
             if (OMIT_UNUSED_ROUTINES)
                 j = df_stripped_address_for_address(j);
             j += code_offset/scale_factor;
@@ -991,13 +991,13 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
             printf(
 "%6d verbs                        %6d dictionary entries (maximum %d)\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
-%6d actions (maximum %3d)        %6d attributes (maximum %2d)\n\
+%6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %2d)    %6d individual props (unlimited)\n",
                  no_Inform_verbs,
                  dict_entries, MAX_DICT_ENTRIES,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
-                 no_actions, MAX_ACTIONS,
+                 no_actions,
                  no_attributes, ((version_number==3)?32:48),
                  no_properties-2, ((version_number==3)?30:62),
                  no_individual_properties - 64);
@@ -1593,7 +1593,7 @@ table format requested (producing number 2 format instead)");
 
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
-          j = action_byte_offset[i];
+          j = actions[i].byte_offset;
           if (OMIT_UNUSED_ROUTINES)
             j = df_stripped_address_for_address(j);
           j += code_offset;
@@ -1681,13 +1681,13 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
             printf(
 "%6d verbs                        %6d dictionary entries (maximum %d)\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
-%6d actions (maximum %3d)        %6d attributes (maximum %2d)\n\
+%6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %3d)   %6d individual props (unlimited)\n",
                  no_Inform_verbs,
                  dict_entries, MAX_DICT_ENTRIES,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
-                 no_actions, MAX_ACTIONS,
+                 no_actions,
                  no_attributes, NUM_ATTR_BYTES*8,
                  no_properties, INDIV_PROP_START,
                  no_individual_properties - INDIV_PROP_START);
