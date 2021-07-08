@@ -17,7 +17,6 @@ static memory_list link_data_area_memlist;
                                           /*  Start, current top, size of    */
 int32 link_data_size;                     /*  link data table being written  */
                                           /*  (holding import/export names)  */
-extern int32 *action_symbol;
 
 /* ------------------------------------------------------------------------- */
 /*   Marker values                                                           */
@@ -253,7 +252,10 @@ static void accept_export(void)
     else
     {   if (IE.module_value == EXPORTAC_MV)
         {   IE.symbol_value = no_actions;
-            action_symbol[no_actions++] = index;
+            ensure_memory_list_available(&actions_memlist, no_actions+1);
+            actions[no_actions].symbol = index;
+            actions[no_actions].byte_offset = 0; /* fill in later */
+            no_actions++;
             if (linker_trace_level >= 4)
                 printf("Creating action ##%s\n", symbols[index].name);
         }
