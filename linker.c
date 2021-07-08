@@ -983,7 +983,7 @@ at strings offset %04x (+%04x)\n",
 
 static void write_link_byte(int x)
 {
-    //###
+    ensure_memory_list_available(&link_data_holding_area_memlist, link_data_ha_size+1);
     link_data_holding_area[link_data_ha_size] = (unsigned char) x;
     link_data_ha_size++; link_data_size++;
 }
@@ -1135,19 +1135,19 @@ extern void linker_endpass(void)
 }
 
 extern void linker_allocate_arrays(void)
-{   if (!module_switch)
-        link_data_holding_area
-            = my_malloc(64, "link data holding area");
-    else
-        link_data_holding_area
-            = my_malloc(MAX_LINK_DATA_SIZE, "link data holding area");
+{
+    int initlinksize = (module_switch ? 2000 : 0);
+    initialise_memory_list(&link_data_holding_area_memlist,
+        sizeof(uchar), initlinksize, (void**)&link_data_holding_area,
+        "link data holding area");
     initialise_memory_list(&link_data_area_memlist,
         sizeof(uchar), 128, (void**)&link_data_area,
         "link data area");
 }
 
 extern void linker_free_arrays(void)
-{   my_free(&link_data_holding_area, "link data holding area");
+{
+    deallocate_memory_list(&link_data_holding_area_memlist);
     deallocate_memory_list(&link_data_area_memlist);
 }
 
