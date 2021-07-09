@@ -74,6 +74,7 @@ int32 *compressed_offsets;             /* The beginning of every string in
                                           the game, relative to the beginning
                                           of the Huffman table. (So entry 0
                                           is equal to compression_table_size)*/
+static memory_list compressed_offsets_memlist;
 
 #define UNICODE_HASH_BUCKETS (64)
 unicode_usage_t *unicode_usage_entries;
@@ -1120,8 +1121,7 @@ void compress_game_text()
     fseek(Temp1_fp, 0, SEEK_SET);
   }
 
-  if (no_strings >= MAX_NUM_STATIC_STRINGS) 
-    memoryerror("MAX_NUM_STATIC_STRINGS", MAX_NUM_STATIC_STRINGS);
+  ensure_memory_list_available(&compressed_offsets_memlist, no_strings);
 
   for (lx=0, ix=0; lx<no_strings; lx++) {
     int escapelen=0, escapetype=0;
@@ -2484,6 +2484,11 @@ extern void init_text_vars(void)
     static_strings_area = NULL;
     abbreviations_optimal_parse_schedule = NULL;
     abbreviations_optimal_parse_scores = NULL;
+
+    compressed_offsets = NULL;
+    huff_entities = NULL;
+    hufflist = NULL;
+    unicode_usage_entries = NULL;
 }
 
 extern void text_begin_pass(void)
@@ -2561,9 +2566,10 @@ extern void text_allocate_arrays(void)
         for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
           unicode_usage_hash[ix] = NULL;
       }
-      compressed_offsets = my_calloc(sizeof(int32), MAX_NUM_STATIC_STRINGS,
-        "static strings index table");
     }
+    initialise_memory_list(&compressed_offsets_memlist,
+        sizeof(int32), 0, (void**)&compressed_offsets,
+        "static strings index table");
 }
 
 extern void text_free_arrays(void)
@@ -2582,7 +2588,7 @@ extern void text_free_arrays(void)
 
     my_free(&dictionary,"dictionary");
 
-    my_free(&compressed_offsets, "static strings index table");
+    deallocate_memory_list(&compressed_offsets_memlist);
     my_free(&hufflist, "huffman node list");
     my_free(&huff_entities, "huffman entities");
     my_free(&unicode_usage_entries, "unicode entity entities");
