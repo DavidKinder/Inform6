@@ -290,7 +290,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
     store_the_text;                 /* when set, record game text to a chunk
-                                       of memory (used by both -r & -k) */
+                                       of memory (used by -u) */
 static int r_e_c_s_set;             /* has -S been explicitly set? */
 
 int glulx_mode;                     /* -G */
