@@ -73,7 +73,9 @@ int32 compression_string_size;         /* Length of the compressed string
 int32 *compressed_offsets;             /* The beginning of every string in
                                           the game, relative to the beginning
                                           of the Huffman table. (So entry 0
-                                          is equal to compression_table_size)*/
+                                          is equal to compression_table_size).
+                                          Allocated to no_strings at
+                                          compress_game_text() time.         */
 static memory_list compressed_offsets_memlist;
 
 #define UNICODE_HASH_BUCKETS (64)

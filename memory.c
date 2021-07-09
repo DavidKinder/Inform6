@@ -272,7 +272,6 @@ int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int NUM_ATTR_BYTES;
 int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
-int32 MAX_NUM_STATIC_STRINGS;
 int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
@@ -319,9 +318,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
         MEMORY_MAP_EXTENSION);
     if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MAX_NUM_STATIC_STRINGS",
-        MAX_NUM_STATIC_STRINGS);
-    if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
     printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
@@ -356,7 +352,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LOW_STRINGS = 2048;
 
         MAX_TRANSCRIPT_SIZE = 200000;
-        MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
@@ -374,7 +369,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LOW_STRINGS = 2048;
 
         MAX_TRANSCRIPT_SIZE = 200000;
-        MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
@@ -392,7 +386,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_LOW_STRINGS = 1024;
 
         MAX_TRANSCRIPT_SIZE = 100000;
-        MAX_NUM_STATIC_STRINGS = 10000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
@@ -569,13 +562,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_GLOBAL_VARIABLES is the number of global variables allowed in the \n\
   program. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
-    {
-        printf(
-"  MAX_NUM_STATIC_STRINGS is the maximum number of compiled strings \n\
-  allowed in the program. (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_UNICODE_CHARS")==0)
@@ -828,7 +814,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_LINESPACE")==0)
                 flag=3;
             if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
-                MAX_NUM_STATIC_STRINGS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_STATIC_STRINGS")==0)
             {   MAX_STATIC_STRINGS=j, flag=1;
                 if (2*MAX_QTEXT_SIZE > MAX_STATIC_STRINGS)
