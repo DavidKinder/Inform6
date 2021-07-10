@@ -2558,7 +2558,7 @@ extern void text_allocate_arrays(void)
        4+DICT_ENTRY_BYTE_LENGTH*num for Glulx. But this is just an initial
        allocation; we don't have to be precise. */
     initialise_memory_list(&dictionary_memlist,
-        sizeof(uchar), 1500*DICT_WORD_BYTES, (void**)&dictionary,
+        sizeof(uchar), 1000*DICT_ENTRY_BYTE_LENGTH, (void**)&dictionary,
         "dictionary");
 
     strings_holding_area
