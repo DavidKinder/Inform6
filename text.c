@@ -1584,11 +1584,11 @@ extern void optimise_abbreviations(void)
 /*        <Z-coded text>    <flags>   <verbnumber>     <adjectivenumber>     */
 /*        4 or 6 bytes       byte        byte             byte               */
 /*                                                                           */
-/*   For Glulx, the form is instead: (But see below about Unicode-valued     */
-/*   dictionaries and my heinie.)                                            */
+/*   For Glulx, the form is instead: (See below about Unicode-valued         */
+/*   dictionaries and DICT_WORD_BYTES.)                                      */
 /*                                                                           */
 /*        <tag>  <plain text>    <flags>  <verbnumber>   <adjectivenumber>   */
-/*         $60    DICT_WORD_SIZE  short    short          short              */
+/*         $60    DICT_WORD_BYTES short    short          short              */
 /*                                                                           */
 /*   These records are stored in "accession order" (i.e. in order of their   */
 /*   first being received by these routines) and only alphabetically sorted  */
@@ -1623,20 +1623,20 @@ uchar *dictionary,                    /* (These two pointers are externally
 int dict_entries;                     /* Total number of records entered     */
 
 /* ------------------------------------------------------------------------- */
-/*   dict_word is a typedef for a struct of 6 unsigned chars (defined in     */
-/*   "header.h"): it holds the (4 or) 6 bytes of Z-coded text of a word.     */
+/*   dict_word was originally a typedef for a struct of 6 unsigned chars.    */
+/*   It held the (4 or) 6 bytes of Z-coded text of a word.                   */
 /*   Usefully, because the PAD character 5 is < all alphabetic characters,   */
 /*   alphabetic order corresponds to numeric order.  For this reason, the    */
 /*   dict_word is called the "sort code" of the original text word.          */
 /*                                                                           */
-/*   ###- In modifying the compiler, I've found it easier to discard the     */
+/*   In modifying the compiler for Glulx, I found it easier to discard the   */
 /*   typedef, and operate directly on uchar arrays of length DICT_WORD_SIZE. */
 /*   In Z-code, DICT_WORD_SIZE will be 6, so the Z-code compiler will work   */
 /*   as before. In Glulx, it can be any value up to MAX_DICT_WORD_SIZE.      */
 /*   (That limit is defined as 40 in the header; it exists only for a few    */
 /*   static buffers, and can be increased without using significant memory.) */
 /*                                                                           */
-/*   ###- Well, that certainly bit me on the butt, didn't it. In further     */
+/*   ...Well, that certainly bit me on the butt, didn't it. In further       */
 /*   modifying the compiler to generate a Unicode dictionary, I have to      */
 /*   store four-byte values in the uchar array. This is handled by making    */
 /*   the array size DICT_WORD_BYTES (which is DICT_WORD_SIZE*DICT_CHAR_SIZE).*/
