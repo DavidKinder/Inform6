@@ -2644,7 +2644,7 @@ extern void  link_module(char *filename);
 
 extern size_t malloced_bytes;
 
-extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
+extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
            MAX_ABBREVS,
            MAX_LOW_STRINGS,
            MAX_DYNAMIC_STRINGS;

@@ -257,7 +257,6 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
-int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int32 MAX_STATIC_STRINGS;
@@ -299,7 +298,6 @@ static void list_memory_sizes(void)
     printf("+--------------------------------------+\n");
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
-    printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
@@ -345,8 +343,6 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_DICT_ENTRIES = 2000;
-
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
@@ -362,8 +358,6 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_DICT_ENTRIES = 1300;
-
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
@@ -378,8 +372,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_QTEXT_SIZE  = 4000;
 
         HASH_TAB_SIZE      = 512;
-
-        MAX_DICT_ENTRIES = 700;
 
         MAX_STATIC_STRINGS = 8000;
 
@@ -456,12 +448,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
   symbols banks.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_DICT_ENTRIES")==0)
-    {   printf(
-"  MAX_DICT_ENTRIES is the maximum number of words which can be entered \n\
-  into the game's dictionary.  It costs 29 bytes to increase this by one.\n");
         return;
     }
     if (strcmp(command,"DICT_WORD_SIZE")==0)
@@ -760,7 +746,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ADJECTIVES")==0)
                 flag=3;
             if (strcmp(command,"MAX_DICT_ENTRIES")==0)
-                MAX_DICT_ENTRIES=j, flag=1;
+                flag=3;
             if (strcmp(command,"DICT_WORD_SIZE")==0) 
             {   DICT_WORD_SIZE=j, flag=1;
                 DICT_WORD_SIZE_g=DICT_WORD_SIZE_z=j;

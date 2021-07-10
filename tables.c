@@ -989,12 +989,12 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  dynamic_array_area_size);
 
             printf(
-"%6d verbs                        %6d dictionary entries (maximum %d)\n\
+"%6d verbs                        %6d dictionary entries\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
 %6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %2d)    %6d individual props (unlimited)\n",
                  no_Inform_verbs,
-                 dict_entries, MAX_DICT_ENTRIES,
+                 dict_entries,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
                  no_actions,
@@ -1679,12 +1679,12 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  dynamic_array_area_size);
 
             printf(
-"%6d verbs                        %6d dictionary entries (maximum %d)\n\
+"%6d verbs                        %6d dictionary entries\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
 %6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %3d)   %6d individual props (unlimited)\n",
                  no_Inform_verbs,
-                 dict_entries, MAX_DICT_ENTRIES,
+                 dict_entries,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
                  no_actions,
