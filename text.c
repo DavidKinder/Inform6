@@ -1904,6 +1904,8 @@ static void dictionary_begin_pass(void)
     else
         dictionary_top = 4;
 
+    ensure_memory_list_available(&dictionary_memlist, dictionary_top);
+    
     root = VACANT;
     dict_entries = 0;
 }
