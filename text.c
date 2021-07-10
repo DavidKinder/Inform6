@@ -918,7 +918,7 @@ void compress_game_text()
   huffbitlist_t bits;
 
   if (compression_switch) {
-    max_char_set = 257 + no_abbreviations + MAX_DYNAMIC_STRINGS + MAX_UNICODE_CHARS;
+    max_char_set = 257 + no_abbreviations + no_dynamic_strings + no_unicode_chars;
 
     huff_entities = my_calloc(sizeof(huffentity_t), max_char_set*2+1, 
       "huffman entities");
