@@ -2554,8 +2554,9 @@ extern void text_allocate_arrays(void)
 
     final_dict_order = NULL; /* will be allocated at sort_dictionary() time */
 
-    /* The exact size will be 9*num+7 for Zcode, DICT_ENTRY_BYTE_LENGTH*num+4
-       for Glulx. But this is just an initial guess. */
+    /* The exact size will be 7+7*num for z3, 7+9*num for z4+, 
+       4+DICT_ENTRY_BYTE_LENGTH*num for Glulx. But this is just an initial
+       allocation; we don't have to be precise. */
     initialise_memory_list(&dictionary_memlist,
         sizeof(uchar), 1500*DICT_WORD_BYTES, (void**)&dictionary,
         "dictionary");
