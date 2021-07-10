@@ -175,7 +175,7 @@ static int32 rough_size_of_paged_memory_z(void)
               + 2*no_actions                              /* action routines */
               + 2*no_grammar_token_routines;     /* general parsing routines */
 
-    total += (subtract_pointers(dictionary_top, dictionary))  /* dictionary */
+    total += (dictionary_top)                            /* dictionary size */
              + ((module_switch)?30:0);                        /* module map */
 
     total += static_array_area_size;                       /* static arrays */
@@ -220,7 +220,7 @@ static int32 rough_size_of_paged_memory_g(void)
     total += 4 + no_actions * 4; /* actions functions table */
 
     total += 4;
-    total += subtract_pointers(dictionary_top, dictionary);
+    total += dictionary_top;
 
     while (total % GPAGESIZE)
       total++;

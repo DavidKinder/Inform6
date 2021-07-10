@@ -1615,10 +1615,12 @@ extern void optimise_abbreviations(void)
 /*   fields. (The high bytes are $DICT_WORD_SIZE+1/3/5.)                     */
 /* ------------------------------------------------------------------------- */
 
-uchar *dictionary,                    /* (These two pointers are externally
+uchar *dictionary;                    /* (These two variables are externally
                                          used only in "tables.c" when
                                          building the story-file)            */
-    *dictionary_top;                  /* Pointer to next free record         */
+int32 dictionary_top;                 /* Position of the next free record
+                                         in dictionary (i.e., the current
+                                         number of bytes)                    */
 
 int dict_entries;                     /* Total number of records entered     */
 
@@ -1897,9 +1899,9 @@ static void dictionary_begin_pass(void)
     /*  Glulx has a 4-byte header instead. */
 
     if (!glulx_mode)
-        dictionary_top=dictionary+7;
+        dictionary_top = 7;
     else
-        dictionary_top=dictionary+4;
+        dictionary_top = 4;
 
     root = VACANT;
     dict_entries = 0;
@@ -2484,6 +2486,8 @@ extern void init_text_vars(void)
 
     total_zchars_trans = 0;
 
+    dictionary = NULL;
+    dictionary_top = 0;
     dtree = NULL;
     final_dict_order = NULL;
     dict_sort_codes = NULL;

@@ -2835,7 +2835,8 @@ extern int32 total_chars_trans, total_bytes_trans,
              zchars_trans_in_last_string;
 extern int   put_strings_in_low_memory;
 extern int   dict_entries;
-extern uchar *dictionary, *dictionary_top;
+extern uchar *dictionary;
+extern int32 dictionary_top;
 extern int   *final_dict_order;
 
 extern uchar *static_strings_area;
