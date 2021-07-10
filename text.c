@@ -1885,8 +1885,9 @@ typedef struct dict_tree_node_s
 
 static dict_tree_node *dtree;
 
-int   *final_dict_order;
 static uchar *dict_sort_codes;
+
+int   *final_dict_order;          /* Allocated at sort_dictionary() time */
 
 static void dictionary_begin_pass(void)
 {
@@ -1913,6 +1914,9 @@ static void recursively_sort(int node)
 
 extern void sort_dictionary(void)
 {   int i;
+    
+    final_dict_order = my_calloc(sizeof(int), dict_entries, "final dictionary ordering table");
+    
     if (module_switch)
     {   for (i=0; i<dict_entries; i++)
             final_dict_order[i] = i;
@@ -2532,11 +2536,10 @@ extern void text_allocate_arrays(void)
     
     dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
                                  "red-black tree for dictionary");
-    final_dict_order = my_calloc(sizeof(int),  MAX_DICT_ENTRIES,
-                                 "final dictionary ordering table");
     dict_sort_codes  = my_calloc(DICT_WORD_BYTES, MAX_DICT_ENTRIES,
                                  "dictionary sort codes");
-
+    final_dict_order = NULL; /* will be allocated at sort_dictionary() time */
+    
     if (!glulx_mode)
         dictionary = my_malloc(9*MAX_DICT_ENTRIES+7,
             "dictionary");
@@ -2585,8 +2588,8 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&abbreviations_optimal_parse_scores_memlist);
 
     my_free(&dtree,            "red-black tree for dictionary");
-    my_free(&final_dict_order, "final dictionary ordering table");
     my_free(&dict_sort_codes,  "dictionary sort codes");
+    my_free(&final_dict_order, "final dictionary ordering table");
 
     my_free(&dictionary,"dictionary");
 
