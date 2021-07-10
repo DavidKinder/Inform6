@@ -1618,6 +1618,7 @@ extern void optimise_abbreviations(void)
 uchar *dictionary;                    /* (These two variables are externally
                                          used only in "tables.c" when
                                          building the story-file)            */
+static memory_list dictionary_memlist;
 int32 dictionary_top;                 /* Position of the next free record
                                          in dictionary (i.e., the current
                                          number of bytes)                    */
@@ -2084,6 +2085,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
 
     if (!glulx_mode) {
 
+        ensure_memory_list_available(&dictionary_memlist, dictionary_top + (res+3));
         p = dictionary + (3+res)*dict_entries + 7;
 
         /*  So copy in the 4 (or 6) bytes of Z-coded text and the 3 data 
@@ -2101,6 +2103,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     }
     else {
         int i;
+        ensure_memory_list_available(&dictionary_memlist, dictionary_top + DICT_ENTRY_BYTE_LENGTH);
         p = dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*dict_entries;
         p[0] = 0x60; /* type byte -- dict word */
 
@@ -2548,13 +2551,12 @@ extern void text_allocate_arrays(void)
         "dictionary sort codes");
 
     final_dict_order = NULL; /* will be allocated at sort_dictionary() time */
-    
-    if (!glulx_mode)
-        dictionary = my_malloc(9*MAX_DICT_ENTRIES+7,
-            "dictionary");
-    else
-        dictionary = my_malloc(DICT_ENTRY_BYTE_LENGTH*MAX_DICT_ENTRIES+4,
-            "dictionary");
+
+    /* The exact size will be 9*num+7 for Zcode, DICT_ENTRY_BYTE_LENGTH*num+4
+       for Glulx. But this is just an initial guess. */
+    initialise_memory_list(&dictionary_memlist,
+        sizeof(uchar), 1500*DICT_WORD_BYTES, (void**)&dictionary,
+        "dictionary");
 
     strings_holding_area
          = my_malloc(MAX_STATIC_STRINGS,"static strings holding area");
@@ -2600,7 +2602,7 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&dict_sort_codes_memlist);
     my_free(&final_dict_order, "final dictionary ordering table");
 
-    my_free(&dictionary,"dictionary");
+    deallocate_memory_list(&dictionary_memlist);
 
     deallocate_memory_list(&compressed_offsets_memlist);
     my_free(&hufflist, "huffman node list");
