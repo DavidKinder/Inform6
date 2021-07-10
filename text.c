@@ -1883,9 +1883,11 @@ typedef struct dict_tree_node_s
     char colour;                  /* The colour of the branch to the parent */
 } dict_tree_node;
 
-static dict_tree_node *dtree;
+static dict_tree_node *dtree;     /* Allocated to dict_entries */
+static memory_list dtree_memlist;
 
-static uchar *dict_sort_codes;
+static uchar *dict_sort_codes;  /* Allocated to dict_entries*DICT_WORD_BYTES */
+static memory_list dict_sort_codes_memlist;
 
 int   *final_dict_order;          /* Allocated at sort_dictionary() time */
 
@@ -2069,8 +2071,8 @@ extern int dictionary_add(char *dword, int x, int y, int z)
 
     CreateEntry:
 
-    if (dict_entries==MAX_DICT_ENTRIES)
-        memoryerror("MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
+    ensure_memory_list_available(&dtree_memlist, dict_entries+1);
+    ensure_memory_list_available(&dict_sort_codes_memlist, (dict_entries+1)*DICT_WORD_BYTES);
 
     dtree[dict_entries].branch[0] = VACANT;
     dtree[dict_entries].branch[1] = VACANT;
@@ -2534,10 +2536,13 @@ extern void text_allocate_arrays(void)
         sizeof(int), 0, (void**)&abbreviations_optimal_parse_scores,
         "abbreviations optimal parse scores");
     
-    dtree            = my_calloc(sizeof(dict_tree_node), MAX_DICT_ENTRIES,
-                                 "red-black tree for dictionary");
-    dict_sort_codes  = my_calloc(DICT_WORD_BYTES, MAX_DICT_ENTRIES,
-                                 "dictionary sort codes");
+    initialise_memory_list(&dtree_memlist,
+        sizeof(dict_tree_node), 1500, (void**)&dtree,
+        "red-black tree for dictionary");
+    initialise_memory_list(&dict_sort_codes_memlist,
+        sizeof(uchar), 1500*DICT_WORD_BYTES, (void**)&dict_sort_codes,
+        "dictionary sort codes");
+
     final_dict_order = NULL; /* will be allocated at sort_dictionary() time */
     
     if (!glulx_mode)
@@ -2587,8 +2592,8 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&abbreviations_optimal_parse_schedule_memlist);
     deallocate_memory_list(&abbreviations_optimal_parse_scores_memlist);
 
-    my_free(&dtree,            "red-black tree for dictionary");
-    my_free(&dict_sort_codes,  "dictionary sort codes");
+    deallocate_memory_list(&dtree_memlist);
+    deallocate_memory_list(&dict_sort_codes_memlist);
     my_free(&final_dict_order, "final dictionary ordering table");
 
     my_free(&dictionary,"dictionary");
