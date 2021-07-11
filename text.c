@@ -23,10 +23,13 @@ static uchar *strings_holding_area;    /* Area holding translated strings
                                           a temporary file, or the
                                           static_strings_area below */
 
-char *all_text, *all_text_top;         /* Start and next byte free in (large)
-                                          text buffer holding the entire text
+char *all_text;                        /* Text buffer holding the entire text
                                           of the game, when it is being
-                                          recorded                           */
+                                          recorded
+                                          (Allocated to all_text_top) */
+static memory_list all_text_memlist;
+int32 all_text_top;
+
 int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           constructed when the first non-
                                           abbreviation string is translated:
@@ -112,11 +115,8 @@ int32 total_chars_trans,               /* Number of ASCII chars of text in   */
       zchars_trans_in_last_string;     /* Number of Z-chars in last string:
                                           needed only for abbrev efficiency
                                           calculation in "directs.c"         */
-static int32 total_zchars_trans,       /* Number of Z-chars of text out
+static int32 total_zchars_trans;       /* Number of Z-chars of text out
                                           (only used to calculate the above) */
-      no_chars_transcribed;            /* Number of ASCII chars written to
-                                          the text transcription area (used
-                                          for the -r and -u switches)        */
 
 static int zchars_out_buffer[3],       /* During text translation, a buffer of
                                           3 Z-chars at a time: when it's full
@@ -437,11 +437,11 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     /*  If we're storing the whole game text to memory, then add this text   */
 
     if ((!is_abbreviation) && (store_the_text))
-    {   no_chars_transcribed += strlen(s_text)+2;
-        if (no_chars_transcribed >= MAX_TRANSCRIPT_SIZE)
+    {   int addlen = strlen(s_text)+2;
+        if (all_text_top+addlen >= MAX_TRANSCRIPT_SIZE)
             memoryerror("MAX_TRANSCRIPT_SIZE", MAX_TRANSCRIPT_SIZE);
-        sprintf(all_text_top, "%s\n\n", s_text);
-        all_text_top += strlen(all_text_top);
+        sprintf(all_text+all_text_top, "%s\n\n", s_text);
+        all_text_top += addlen;
     }
 
     if (transcript_switch) {
@@ -1397,7 +1397,7 @@ extern void optimise_abbreviations(void)
     bestyet2[1].text[1]=' ';
     bestyet2[1].text[2]=0;
 
-    for (i=0; all_text+i<all_text_top; i++)
+    for (i=0; i<all_text_top; i++)
     {
         if ((all_text[i]=='.') && (all_text[i+1]==' ') && (all_text[i+2]==' '))
         {   all_text[i]='\n'; all_text[i+1]='\n'; all_text[i+2]='\n';
@@ -1415,10 +1415,10 @@ extern void optimise_abbreviations(void)
         }
     }
 
-    MAX_GTABLE=subtract_pointers(all_text_top,all_text)+1;
+    MAX_GTABLE=all_text_top+1;
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
-    for (i=0, t=0; all_text+i<all_text_top; i++)
+    for (i=0, t=0; i<all_text_top; i++)
     {   test.text[0]=all_text[i];
         test.text[1]=all_text[i+1];
         test.text[2]=all_text[i+2];
@@ -1429,7 +1429,7 @@ extern void optimise_abbreviations(void)
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
         test.occurrences=0;
-        for (j=i+3; all_text+j<all_text_top; j++)
+        for (j=i+3; j<all_text_top; j++)
         {
 #ifdef MAC_FACE
             if (j%((**g_pm_hndl).linespercheck) == 0)
@@ -2476,7 +2476,8 @@ extern void init_text_vars(void)
     tlbtab = NULL;
     grandtable = NULL;
     grandflags = NULL;
-    no_chars_transcribed = 0;
+
+    //###all_text = NULL;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
@@ -2503,7 +2504,7 @@ extern void text_begin_pass(void)
 {   abbrevs_lookup_table_made = FALSE;
     no_abbreviations=0;
     total_chars_trans=0; total_bytes_trans=0;
-    if (store_the_text) all_text_top=all_text;
+    all_text_top=0;
     dictionary_begin_pass();
     low_strings_top = low_strings;
 

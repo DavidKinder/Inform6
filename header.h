@@ -2823,7 +2823,8 @@ extern void write_serial_number(char *buffer);
 /* ------------------------------------------------------------------------- */
 
 extern uchar *low_strings, *low_strings_top;
-extern char  *all_text,    *all_text_top;
+extern char  *all_text;
+extern int32 all_text_top;
 
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
