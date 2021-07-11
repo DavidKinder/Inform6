@@ -2852,7 +2852,7 @@ extern int no_unicode_chars;
 typedef struct unicode_usage_s unicode_usage_t;
 struct unicode_usage_s {
   int32 ch;
-  unicode_usage_t *next;  
+  int next; /* index in unicode_usage_entries of next */
 };
 
 extern unicode_usage_t *unicode_usage_entries;

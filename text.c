@@ -80,7 +80,7 @@ static memory_list compressed_offsets_memlist;
 
 #define UNICODE_HASH_BUCKETS (64)
 unicode_usage_t *unicode_usage_entries;
-static unicode_usage_t *unicode_usage_hash[UNICODE_HASH_BUCKETS];
+static int unicode_usage_hash[UNICODE_HASH_BUCKETS];
 
 static int unicode_entity_index(int32 unicode);
 
@@ -868,29 +868,25 @@ string; substituting '?'.");
 
 static int unicode_entity_index(int32 unicode)
 {
-  unicode_usage_t *uptr;
   int j;
   int buck = unicode % UNICODE_HASH_BUCKETS;
 
-  for (uptr = unicode_usage_hash[buck]; uptr; uptr=uptr->next) {
-    if (uptr->ch == unicode)
+  for (j = unicode_usage_hash[buck]; j >= 0; j=unicode_usage_entries[j].next) {
+    if (unicode_usage_entries[j].ch == unicode)
       break;
   }
-  if (uptr) {
-    j = (uptr - unicode_usage_entries);
-  }
-  else {
+  if (j < 0) {
     if (no_unicode_chars >= MAX_UNICODE_CHARS) {
       memoryerror("MAX_UNICODE_CHARS", MAX_UNICODE_CHARS);
       j = 0;
     }
     else {
+      unicode_usage_t *uptr = unicode_usage_entries + no_unicode_chars;
       j = no_unicode_chars;
       no_unicode_chars++;
-      uptr = unicode_usage_entries + j;
       uptr->ch = unicode;
       uptr->next = unicode_usage_hash[buck];
-      unicode_usage_hash[buck] = uptr;
+      unicode_usage_hash[buck] = j;
     }
   }
 
@@ -2583,7 +2579,7 @@ extern void text_allocate_arrays(void)
         unicode_usage_entries = my_calloc(sizeof(unicode_usage_t), 
           MAX_UNICODE_CHARS, "unicode entity entries");
         for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
-          unicode_usage_hash[ix] = NULL;
+          unicode_usage_hash[ix] = -1;
       }
     }
     initialise_memory_list(&compressed_offsets_memlist,
