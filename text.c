@@ -78,8 +78,10 @@ int32 *compressed_offsets;             /* The beginning of every string in
                                           compress_game_text() time.         */
 static memory_list compressed_offsets_memlist;
 
+unicode_usage_t *unicode_usage_entries; /* Allocated to no_unicode_chars     */
+static memory_list unicode_usage_entries_memlist;
+
 #define UNICODE_HASH_BUCKETS (64)
-unicode_usage_t *unicode_usage_entries;
 static int unicode_usage_hash[UNICODE_HASH_BUCKETS];
 
 static int unicode_entity_index(int32 unicode);
@@ -876,18 +878,11 @@ static int unicode_entity_index(int32 unicode)
       break;
   }
   if (j < 0) {
-    if (no_unicode_chars >= MAX_UNICODE_CHARS) {
-      memoryerror("MAX_UNICODE_CHARS", MAX_UNICODE_CHARS);
-      j = 0;
-    }
-    else {
-      unicode_usage_t *uptr = unicode_usage_entries + no_unicode_chars;
-      j = no_unicode_chars;
-      no_unicode_chars++;
-      uptr->ch = unicode;
-      uptr->next = unicode_usage_hash[buck];
-      unicode_usage_hash[buck] = j;
-    }
+    ensure_memory_list_available(&unicode_usage_entries_memlist, no_unicode_chars+1);
+    j = no_unicode_chars++;
+    unicode_usage_entries[j].ch = unicode;
+    unicode_usage_entries[j].next = unicode_usage_hash[buck];
+    unicode_usage_hash[buck] = j;
   }
 
   return j;
@@ -2522,6 +2517,8 @@ extern void text_begin_pass(void)
 
 extern void text_allocate_arrays(void)
 {
+    int ix;
+    
     initialise_memory_list(&static_strings_area_memlist,
         sizeof(uchar), 128, (void**)&static_strings_area,
         "static strings area");
@@ -2572,16 +2569,16 @@ extern void text_allocate_arrays(void)
     compression_table_size = 0;
     compressed_offsets = NULL;
 
-    if (glulx_mode) {
-      if (compression_switch) {
-        int ix;
-        /* hufflist and huff_entities will be allocated at compress_game_text() time. */
-        unicode_usage_entries = my_calloc(sizeof(unicode_usage_t), 
-          MAX_UNICODE_CHARS, "unicode entity entries");
-        for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
-          unicode_usage_hash[ix] = -1;
-      }
-    }
+    initialise_memory_list(&unicode_usage_entries_memlist,
+        sizeof(unicode_usage_t), 0, (void**)&unicode_usage_entries,
+        "unicode entity entries");
+
+    /* hufflist and huff_entities will be allocated at compress_game_text() time. */
+
+    /* This hash table is only used in Glulx */
+    for (ix=0; ix<UNICODE_HASH_BUCKETS; ix++)
+        unicode_usage_hash[ix] = -1;
+    
     initialise_memory_list(&compressed_offsets_memlist,
         sizeof(int32), 0, (void**)&compressed_offsets,
         "static strings index table");
@@ -2606,7 +2603,8 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&compressed_offsets_memlist);
     my_free(&hufflist, "huffman node list");
     my_free(&huff_entities, "huffman entities");
-    my_free(&unicode_usage_entries, "unicode entity entities");
+    
+    deallocate_memory_list(&unicode_usage_entries_memlist);
 
     deallocate_memory_list(&static_strings_area_memlist);
 }
