@@ -23,12 +23,12 @@ static uchar *strings_holding_area;    /* Area holding translated strings
                                           a temporary file, or the
                                           static_strings_area below */
 
-char *all_text;                        /* Text buffer holding the entire text
+static char *all_text;                 /* Text buffer holding the entire text
                                           of the game, when it is being
                                           recorded
                                           (Allocated to all_text_top) */
-memory_list all_text_memlist;
-int32 all_text_top;
+static memory_list all_text_memlist;
+static int32 all_text_top;
 
 int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
                                           constructed when the first non-
@@ -1251,6 +1251,9 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 /*   for compatibility with previous releases.                               */
 /* ------------------------------------------------------------------------- */
 
+static char *opttext;
+static int32 opttextlen;
+
 typedef struct tlb_s
 {   char text[4];
     int32 intab, occurrences;
@@ -1285,9 +1288,7 @@ static void optimise_pass(void)
             if (i%((**g_pm_hndl).linespercheck) == 0)
             {   ProcessEvents (&g_proc);
                 if (g_proc != true)
-                {   free_arrays();
-                    if (store_the_text)
-                        my_free(&all_text,"transcription text");
+                {   ao_free_arrays();
                     longjmp (g_fallback, 1);
                 }
             }
@@ -1302,7 +1303,7 @@ static void optimise_pass(void)
                 while ((noflags>=2)&&(nl<=62))
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
-                        if (all_text[grandtable[tlbtab[i].intab+j]+j2]=='\n')
+                        if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
                             goto FinishEarly;
                     matches=0;
                     for (j2=j; j2<tlbtab[i].occurrences; j2++)
@@ -1310,8 +1311,8 @@ static void optimise_pass(void)
                         {   x=grandtable[tlbtab[i].intab+j2]
                               - grandtable[tlbtab[i].intab+j];
                          if (((x>-nl)&&(x<nl))
-                            || (memcmp(all_text+grandtable[tlbtab[i].intab+j],
-                                       all_text+grandtable[tlbtab[i].intab+j2],
+                            || (memcmp(opttext+grandtable[tlbtab[i].intab+j],
+                                       opttext+grandtable[tlbtab[i].intab+j2],
                                        nl)!=0))
                             {   grandflags[j2]=0; noflags--; }
                             else matches++;
@@ -1320,7 +1321,7 @@ static void optimise_pass(void)
                     scrabble=0;
                     for (k=0; k<nl; k++)
                     {   scrabble++;
-                        c=all_text[grandtable[tlbtab[i].intab+j+k]];
+                        c=opttext[grandtable[tlbtab[i].intab+j+k]];
                         if (c!=(int) ' ')
                         {   if (iso_to_alphabet_grid[c]<0)
                                 scrabble+=2;
@@ -1333,8 +1334,8 @@ static void optimise_pass(void)
                     min=score;
                     for (j2=0; j2<256; j2++)
                     {   if ((nl==bestyet[j2].length)
-                                && (memcmp(all_text+bestyet[j2].location,
-                                       all_text+grandtable[tlbtab[i].intab+j],
+                                && (memcmp(opttext+bestyet[j2].location,
+                                       opttext+grandtable[tlbtab[i].intab+j],
                                        nl)==0))
                         {   j2=256; min=score; }
                         else
@@ -1379,6 +1380,9 @@ extern void optimise_abbreviations(void)
     int32 j2, selected, available, maxat=0, nl;
     tlb test;
 
+    if (opttext == NULL)
+        return;
+    
     printf("Beginning calculation of optimal abbreviations...\n");
 
     pass_no = 0;
@@ -1396,31 +1400,31 @@ extern void optimise_abbreviations(void)
     bestyet2[1].text[1]=' ';
     bestyet2[1].text[2]=0;
 
-    for (i=0; i<all_text_top; i++)
+    for (i=0; i<opttextlen; i++)
     {
-        if ((all_text[i]=='.') && (all_text[i+1]==' ') && (all_text[i+2]==' '))
-        {   all_text[i]='\n'; all_text[i+1]='\n'; all_text[i+2]='\n';
+        if ((opttext[i]=='.') && (opttext[i+1]==' ') && (opttext[i+2]==' '))
+        {   opttext[i]='\n'; opttext[i+1]='\n'; opttext[i+2]='\n';
             bestyet2[0].popularity++;
         }
 
-        if ((all_text[i]=='.') && (all_text[i+1]==' '))
-        {   all_text[i]='\n'; all_text[i+1]='\n';
+        if ((opttext[i]=='.') && (opttext[i+1]==' '))
+        {   opttext[i]='\n'; opttext[i+1]='\n';
             bestyet2[0].popularity++;
         }
 
-        if ((all_text[i]==',') && (all_text[i+1]==' '))
-        {   all_text[i]='\n'; all_text[i+1]='\n';
+        if ((opttext[i]==',') && (opttext[i+1]==' '))
+        {   opttext[i]='\n'; opttext[i+1]='\n';
             bestyet2[1].popularity++;
         }
     }
 
-    MAX_GTABLE=all_text_top+1;
+    MAX_GTABLE=opttextlen+1;
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
-    for (i=0, t=0; i<all_text_top; i++)
-    {   test.text[0]=all_text[i];
-        test.text[1]=all_text[i+1];
-        test.text[2]=all_text[i+2];
+    for (i=0, t=0; i<opttextlen; i++)
+    {   test.text[0]=opttext[i];
+        test.text[1]=opttext[i+1];
+        test.text[2]=opttext[i+2];
         test.text[3]=0;
         if ((test.text[0]=='\n')||(test.text[1]=='\n')||(test.text[2]=='\n'))
             goto DontKeep;
@@ -1428,22 +1432,20 @@ extern void optimise_abbreviations(void)
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
         test.occurrences=0;
-        for (j=i+3; j<all_text_top; j++)
+        for (j=i+3; j<opttextlen; j++)
         {
 #ifdef MAC_FACE
             if (j%((**g_pm_hndl).linespercheck) == 0)
             {   ProcessEvents (&g_proc);
                 if (g_proc != true)
-                {   free_arrays();
-                    if (store_the_text)
-                        my_free(&all_text,"transcription text");
+                {   ao_free_arrays();
                     longjmp (g_fallback, 1);
                 }
             }
 #endif
-            if ((all_text[i]==all_text[j])
-                 && (all_text[i+1]==all_text[j+1])
-                 && (all_text[i+2]==all_text[j+2]))
+            if ((opttext[i]==opttext[j])
+                 && (opttext[i+1]==opttext[j+1])
+                 && (opttext[i+2]==opttext[j+2]))
                  {   grandtable[t+test.occurrences]=j;
                      test.occurrences++;
                      if (t+test.occurrences==MAX_GTABLE)
@@ -1491,7 +1493,7 @@ extern void optimise_abbreviations(void)
             {   available++;
                 nl=bestyet[i].length;
                 for (j2=0; j2<nl; j2++) bestyet[i].text[j2]=
-                    all_text[bestyet[i].location+j2];
+                    opttext[bestyet[i].location+j2];
                 bestyet[i].text[nl]=0;
             }
 
@@ -1531,10 +1533,10 @@ extern void optimise_abbreviations(void)
 
                 for (j=0; j<tlbtab[i].occurrences; j++)
                 {   if (memcmp(bestyet[maxat].text,
-                               all_text+grandtable[tlbtab[i].intab+j],
+                               opttext+grandtable[tlbtab[i].intab+j],
                                bestyet[maxat].length)==0)
                     {   for (j2=0; j2<bestyet[maxat].length; j2++)
-                            all_text[grandtable[tlbtab[i].intab+j]+j2]='\n';
+                            opttext[grandtable[tlbtab[i].intab+j]+j2]='\n';
                     }
                 }
 
@@ -2470,6 +2472,9 @@ extern void write_dictionary_to_transcript(void)
 
 extern void init_text_vars(void)
 {   int j;
+
+    opttext = NULL;
+    opttextlen = 0;
     bestyet = NULL;
     bestyet2 = NULL;
     tlbtab = NULL;
@@ -2588,6 +2593,21 @@ extern void text_allocate_arrays(void)
         "static strings index table");
 }
 
+extern void extract_all_text()
+{
+    /* optimise_abbreviations() is called after free_arrays(). Therefore,
+       we need to preserve the text transcript where it will not be
+       freed up. We do this by copying the pointer to opttext. */
+    opttext = all_text;
+    opttextlen = all_text_top;
+
+    /* Re-init all_text_memlist. This causes it to forget all about the
+       old pointer. Deallocating it in text_free_arrays() will be a no-op. */
+    initialise_memory_list(&all_text_memlist,
+        sizeof(char), 0, (void**)&all_text,
+        "dummy transcription text");
+}
+
 extern void text_free_arrays(void)
 {
     deallocate_memory_list(&all_text_memlist);
@@ -2616,11 +2636,16 @@ extern void text_free_arrays(void)
 }
 
 extern void ao_free_arrays(void)
-{   my_free (&tlbtab,"tlb table");
+{
+    my_free (&opttext,"stashed transcript for optimisation");
+    my_free (&tlbtab,"tlb table");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
     my_free (&grandflags,"grandflags");
+
+    /* This was re-inited, so we should re-deallocate it. */
+    deallocate_memory_list(&all_text_memlist);
 }
 
 /* ========================================================================= */

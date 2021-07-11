@@ -2823,8 +2823,6 @@ extern void write_serial_number(char *buffer);
 /* ------------------------------------------------------------------------- */
 
 extern uchar *low_strings, *low_strings_top;
-extern char  *all_text;
-extern int32 all_text_top;
 
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
@@ -2891,6 +2889,7 @@ extern void  compress_game_text(void);
 /* end of the Glulx string compression stuff */
 
 extern void  ao_free_arrays(void);
+extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
 extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);

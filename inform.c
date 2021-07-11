@@ -1244,6 +1244,11 @@ compiling modules: disabling -S switch\n");
 
     if (temporary_files_switch && (no_errors>0)) remove_temp_files();
 
+    if (optimise_switch) {
+        /* Pull out all_text so that it will not be freed. */
+        extract_all_text();
+    }
+
     free_arrays();
 
     TIMEVALUE_NOW(&time_end);
@@ -1251,7 +1256,10 @@ compiling modules: disabling -S switch\n");
     
     rennab(duration);
 
-    if (optimise_switch) optimise_abbreviations();
+    if (optimise_switch) {
+        optimise_abbreviations();
+        ao_free_arrays();
+    }
 
     return (no_errors==0)?0:1;
 }
