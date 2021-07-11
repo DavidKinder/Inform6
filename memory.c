@@ -271,7 +271,6 @@ int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int NUM_ATTR_BYTES;
 int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
-int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
@@ -327,9 +326,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
            (long int) MAX_TRANSCRIPT_SIZE);
-    if (glulx_mode)
-      printf("|  %25s = %-7ld |\n","MAX_UNICODE_CHARS",
-           (long int) MAX_UNICODE_CHARS);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("+--------------------------------------+\n");
@@ -400,7 +396,6 @@ extern void set_memory_sizes(int size_flag)
     ZCODE_HEADER_EXT_WORDS = 3;
     ZCODE_HEADER_FLAGS_3 = 0;
     GLULX_OBJECT_EXT_BYTES = 0;
-    MAX_UNICODE_CHARS = 64;
     MEMORY_MAP_EXTENSION = 0;
     /* We estimate the default Glulx stack size at 4096. That's about
        enough for 90 nested function calls with 8 locals each -- the
@@ -548,14 +543,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_GLOBAL_VARIABLES is the number of global variables allowed in the \n\
   program. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_UNICODE_CHARS")==0)
-    {
-        printf(
-"  MAX_UNICODE_CHARS is the maximum number of different Unicode characters \n\
-  (beyond the Latin-1 range, $00..$FF) which the game text can use. \n\
-  (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -840,7 +827,7 @@ extern void memory_command(char *command)
             {   flag=3;
             }
             if (strcmp(command,"MAX_UNICODE_CHARS")==0)
-                MAX_UNICODE_CHARS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_STACK_SIZE")==0)
             {
                 MAX_STACK_SIZE=j, flag=1;
