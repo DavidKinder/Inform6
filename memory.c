@@ -261,7 +261,6 @@ int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int32 MAX_STATIC_STRINGS;
 int MAX_LOW_STRINGS;
-int32 MAX_TRANSCRIPT_SIZE;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -324,8 +323,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
            (long int) MAX_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
-    printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
-           (long int) MAX_TRANSCRIPT_SIZE);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("+--------------------------------------+\n");
@@ -343,8 +340,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_LOW_STRINGS = 2048;
 
-        MAX_TRANSCRIPT_SIZE = 200000;
-
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
     }
@@ -358,8 +353,6 @@ extern void set_memory_sizes(int size_flag)
 
         MAX_LOW_STRINGS = 2048;
 
-        MAX_TRANSCRIPT_SIZE = 200000;
-
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
     }
@@ -372,8 +365,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 1024;
-
-        MAX_TRANSCRIPT_SIZE = 100000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
@@ -518,13 +509,6 @@ static void explain_parameter(char *command)
 "  MAX_LOW_STRINGS is the size in bytes of a buffer to hold all the \n\
   compiled \"low strings\" which are to be written above the synonyms table \n\
   in the Z-machine.  1024 is plenty.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
-    {   printf(
-"  MAX_TRANSCRIPT_SIZE is only allocated for the abbreviations optimisation \n\
-  switch, and has the size in bytes of a buffer to hold the entire text of\n\
-  the game being compiled: it has to be enormous, say 100000 to 200000.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -800,7 +784,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
                 MAX_LOW_STRINGS=j, flag=1;
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
-                MAX_TRANSCRIPT_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_CLASSES")==0)
                 flag=3;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
