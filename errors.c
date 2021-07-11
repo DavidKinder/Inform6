@@ -187,8 +187,6 @@ extern void fatalerror(char *s)
     if (temporary_files_switch) remove_temp_files();
     abort_transcript_file();
     free_arrays();
-    if (store_the_text)
-        my_free(&all_text,"transcription text");
     longjmp(g_fallback, 1);
 #endif
     exit(1);
@@ -258,8 +256,6 @@ static void message(int style, char *s)
     ProcessEvents (&g_proc);
     if (g_proc != true)
     {   free_arrays();
-        if (store_the_text)
-            my_free(&all_text,"transcription text");
         close_all_source ();
         if (temporary_files_switch) remove_temp_files();
         abort_transcript_file();

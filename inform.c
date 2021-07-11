@@ -1253,8 +1253,6 @@ compiling modules: disabling -S switch\n");
 
     if (optimise_switch) optimise_abbreviations();
 
-    if (store_the_text) my_free(&all_text,"transcription text");
-
     return (no_errors==0)?0:1;
 }
 
@@ -1595,19 +1593,8 @@ extern void switches(char *p, int cmode)
         }
     }
 
-    if (optimise_switch && (!store_the_text))
+    if (optimise_switch)
     {   store_the_text=TRUE;
-#ifdef PC_QUICKC
-        if (memout_switch)
-            printf("Allocation %ld bytes for transcription text\n",
-                (long) MAX_TRANSCRIPT_SIZE);
-        all_text = halloc(MAX_TRANSCRIPT_SIZE,1);
-        malloced_bytes += MAX_TRANSCRIPT_SIZE;
-        if (all_text==NULL)
-         fatalerror("Can't hallocate memory for transcription text.  Darn.");
-#else
-        all_text=my_malloc(MAX_TRANSCRIPT_SIZE,"transcription text");
-#endif
     }
 }
 

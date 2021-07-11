@@ -27,7 +27,7 @@ char *all_text;                        /* Text buffer holding the entire text
                                           of the game, when it is being
                                           recorded
                                           (Allocated to all_text_top) */
-static memory_list all_text_memlist;
+memory_list all_text_memlist;
 int32 all_text_top;
 
 int abbrevs_lookup_table_made,         /* The abbreviations lookup table is
@@ -438,8 +438,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
 
     if ((!is_abbreviation) && (store_the_text))
     {   int addlen = strlen(s_text)+2;
-        if (all_text_top+addlen >= MAX_TRANSCRIPT_SIZE)
-            memoryerror("MAX_TRANSCRIPT_SIZE", MAX_TRANSCRIPT_SIZE);
+        ensure_memory_list_available(&all_text_memlist, all_text_top+addlen+1);
         sprintf(all_text+all_text_top, "%s\n\n", s_text);
         all_text_top += addlen;
     }
@@ -2477,7 +2476,7 @@ extern void init_text_vars(void)
     grandtable = NULL;
     grandflags = NULL;
 
-    //###all_text = NULL;
+    all_text = NULL;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
@@ -2519,6 +2518,10 @@ extern void text_begin_pass(void)
 extern void text_allocate_arrays(void)
 {
     int ix;
+
+    initialise_memory_list(&all_text_memlist,
+        sizeof(char), 0, (void**)&all_text,
+        "transcription text for optimise");
     
     initialise_memory_list(&static_strings_area_memlist,
         sizeof(uchar), 128, (void**)&static_strings_area,
@@ -2587,6 +2590,8 @@ extern void text_allocate_arrays(void)
 
 extern void text_free_arrays(void)
 {
+    deallocate_memory_list(&all_text_memlist);
+    
     my_free(&strings_holding_area, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
     deallocate_memory_list(&abbreviations_at_memlist);

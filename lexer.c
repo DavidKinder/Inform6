@@ -1078,8 +1078,6 @@ static void reached_new_line(void)
             close_all_source();
             if (temporary_files_switch)
                 remove_temp_files();
-            if (store_the_text)
-                my_free(&all_text,"transcription text");
             abort_transcript_file();
             longjmp (g_fallback, 1);
         }
