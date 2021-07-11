@@ -434,13 +434,17 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
         && (!is_abbreviation))
         make_abbrevs_lookup();
 
-    /*  If we're storing the whole game text to memory, then add this text   */
+    /*  If we're storing the whole game text to memory, then add this text.
+        We will put two newlines between each text and four at the very end.
+        (The optimise code does a lot of sloppy text[i+2], so the extra
+        two newlines past all_text_top are necessary.) */
 
     if ((!is_abbreviation) && (store_the_text))
-    {   int addlen = strlen(s_text)+2;
-        ensure_memory_list_available(&all_text_memlist, all_text_top+addlen+1);
-        sprintf(all_text+all_text_top, "%s\n\n", s_text);
-        all_text_top += addlen;
+    {   int addlen = strlen(s_text);
+        ensure_memory_list_available(&all_text_memlist, all_text_top+addlen+5);
+        sprintf(all_text+all_text_top, "%s\n\n\n\n", s_text);
+        /* Advance past two newlines. */
+        all_text_top += (addlen+2);
     }
 
     if (transcript_switch) {
@@ -1382,6 +1386,9 @@ extern void optimise_abbreviations(void)
 
     if (opttext == NULL)
         return;
+
+    /* Note that it's safe to access opttext[opttextlen+2]. There are
+       two newlines and a null beyond opttextlen. */
     
     printf("Beginning calculation of optimal abbreviations...\n");
 
