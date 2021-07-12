@@ -257,12 +257,10 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 
 int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
-int MAX_DICT_ENTRIES;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
 int32 MAX_STATIC_STRINGS;
 int MAX_LOW_STRINGS;
-int32 MAX_TRANSCRIPT_SIZE;
 int MAX_LOCAL_VARIABLES;
 int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
@@ -272,8 +270,6 @@ int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int NUM_ATTR_BYTES;
 int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
-int32 MAX_NUM_STATIC_STRINGS;
-int32 MAX_UNICODE_CHARS;
 int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
@@ -300,7 +296,6 @@ static void list_memory_sizes(void)
     printf("+--------------------------------------+\n");
     printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
     printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
-    printf("|  %25s = %-7d |\n","MAX_DICT_ENTRIES",MAX_DICT_ENTRIES);
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
@@ -319,9 +314,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
         MEMORY_MAP_EXTENSION);
     if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MAX_NUM_STATIC_STRINGS",
-        MAX_NUM_STATIC_STRINGS);
-    if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
     printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
@@ -331,11 +323,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
            (long int) MAX_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
-    printf("|  %25s = %-7ld |\n","MAX_TRANSCRIPT_SIZE",
-           (long int) MAX_TRANSCRIPT_SIZE);
-    if (glulx_mode)
-      printf("|  %25s = %-7ld |\n","MAX_UNICODE_CHARS",
-           (long int) MAX_UNICODE_CHARS);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("+--------------------------------------+\n");
@@ -349,14 +336,9 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_DICT_ENTRIES = 2000;
-
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
-
-        MAX_TRANSCRIPT_SIZE = 200000;
-        MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
@@ -367,14 +349,9 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_DICT_ENTRIES = 1300;
-
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
-
-        MAX_TRANSCRIPT_SIZE = 200000;
-        MAX_NUM_STATIC_STRINGS = 20000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 512;
@@ -385,14 +362,9 @@ extern void set_memory_sizes(int size_flag)
 
         HASH_TAB_SIZE      = 512;
 
-        MAX_DICT_ENTRIES = 700;
-
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 1024;
-
-        MAX_TRANSCRIPT_SIZE = 100000;
-        MAX_NUM_STATIC_STRINGS = 10000;
 
         MAX_GLOBAL_VARIABLES_z = 240;
         MAX_GLOBAL_VARIABLES_g = 256;
@@ -415,7 +387,6 @@ extern void set_memory_sizes(int size_flag)
     ZCODE_HEADER_EXT_WORDS = 3;
     ZCODE_HEADER_FLAGS_3 = 0;
     GLULX_OBJECT_EXT_BYTES = 0;
-    MAX_UNICODE_CHARS = 64;
     MEMORY_MAP_EXTENSION = 0;
     /* We estimate the default Glulx stack size at 4096. That's about
        enough for 90 nested function calls with 8 locals each -- the
@@ -463,12 +434,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
   symbols banks.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_DICT_ENTRIES")==0)
-    {   printf(
-"  MAX_DICT_ENTRIES is the maximum number of words which can be entered \n\
-  into the game's dictionary.  It costs 29 bytes to increase this by one.\n");
         return;
     }
     if (strcmp(command,"DICT_WORD_SIZE")==0)
@@ -546,13 +511,6 @@ static void explain_parameter(char *command)
   in the Z-machine.  1024 is plenty.\n");
         return;
     }
-    if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
-    {   printf(
-"  MAX_TRANSCRIPT_SIZE is only allocated for the abbreviations optimisation \n\
-  switch, and has the size in bytes of a buffer to hold the entire text of\n\
-  the game being compiled: it has to be enormous, say 100000 to 200000.\n");
-        return;
-    }
     if (strcmp(command,"INDIV_PROP_START")==0)
     {   printf(
 "  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
@@ -569,21 +527,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_GLOBAL_VARIABLES is the number of global variables allowed in the \n\
   program. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
-    {
-        printf(
-"  MAX_NUM_STATIC_STRINGS is the maximum number of compiled strings \n\
-  allowed in the program. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_UNICODE_CHARS")==0)
-    {
-        printf(
-"  MAX_UNICODE_CHARS is the maximum number of different Unicode characters \n\
-  (beyond the Latin-1 range, $00..$FF) which the game text can use. \n\
-  (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -774,7 +717,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_ADJECTIVES")==0)
                 flag=3;
             if (strcmp(command,"MAX_DICT_ENTRIES")==0)
-                MAX_DICT_ENTRIES=j, flag=1;
+                flag=3;
             if (strcmp(command,"DICT_WORD_SIZE")==0) 
             {   DICT_WORD_SIZE=j, flag=1;
                 DICT_WORD_SIZE_g=DICT_WORD_SIZE_z=j;
@@ -828,7 +771,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_LINESPACE")==0)
                 flag=3;
             if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
-                MAX_NUM_STATIC_STRINGS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_STATIC_STRINGS")==0)
             {   MAX_STATIC_STRINGS=j, flag=1;
                 if (2*MAX_QTEXT_SIZE > MAX_STATIC_STRINGS)
@@ -841,7 +784,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
                 MAX_LOW_STRINGS=j, flag=1;
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
-                MAX_TRANSCRIPT_SIZE=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_CLASSES")==0)
                 flag=3;
             if (strcmp(command,"MAX_INCLUSION_DEPTH")==0)
@@ -868,7 +811,7 @@ extern void memory_command(char *command)
             {   flag=3;
             }
             if (strcmp(command,"MAX_UNICODE_CHARS")==0)
-                MAX_UNICODE_CHARS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_STACK_SIZE")==0)
             {
                 MAX_STACK_SIZE=j, flag=1;

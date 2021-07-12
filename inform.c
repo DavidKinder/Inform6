@@ -290,7 +290,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
     store_the_text;                 /* when set, record game text to a chunk
-                                       of memory (used by both -r & -k) */
+                                       of memory (used by -u) */
 static int r_e_c_s_set;             /* has -S been explicitly set? */
 
 int glulx_mode;                     /* -G */
@@ -1244,6 +1244,11 @@ compiling modules: disabling -S switch\n");
 
     if (temporary_files_switch && (no_errors>0)) remove_temp_files();
 
+    if (optimise_switch) {
+        /* Pull out all_text so that it will not be freed. */
+        extract_all_text();
+    }
+
     free_arrays();
 
     TIMEVALUE_NOW(&time_end);
@@ -1251,9 +1256,10 @@ compiling modules: disabling -S switch\n");
     
     rennab(duration);
 
-    if (optimise_switch) optimise_abbreviations();
-
-    if (store_the_text) my_free(&all_text,"transcription text");
+    if (optimise_switch) {
+        optimise_abbreviations();
+        ao_free_arrays();
+    }
 
     return (no_errors==0)?0:1;
 }
@@ -1595,19 +1601,8 @@ extern void switches(char *p, int cmode)
         }
     }
 
-    if (optimise_switch && (!store_the_text))
+    if (optimise_switch)
     {   store_the_text=TRUE;
-#ifdef PC_QUICKC
-        if (memout_switch)
-            printf("Allocation %ld bytes for transcription text\n",
-                (long) MAX_TRANSCRIPT_SIZE);
-        all_text = halloc(MAX_TRANSCRIPT_SIZE,1);
-        malloced_bytes += MAX_TRANSCRIPT_SIZE;
-        if (all_text==NULL)
-         fatalerror("Can't hallocate memory for transcription text.  Darn.");
-#else
-        all_text=my_malloc(MAX_TRANSCRIPT_SIZE,"transcription text");
-#endif
     }
 }
 

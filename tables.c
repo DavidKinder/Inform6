@@ -175,7 +175,7 @@ static int32 rough_size_of_paged_memory_z(void)
               + 2*no_actions                              /* action routines */
               + 2*no_grammar_token_routines;     /* general parsing routines */
 
-    total += (subtract_pointers(dictionary_top, dictionary))  /* dictionary */
+    total += (dictionary_top)                            /* dictionary size */
              + ((module_switch)?30:0);                        /* module map */
 
     total += static_array_area_size;                       /* static arrays */
@@ -220,7 +220,7 @@ static int32 rough_size_of_paged_memory_g(void)
     total += 4 + no_actions * 4; /* actions functions table */
 
     total += 4;
-    total += subtract_pointers(dictionary_top, dictionary);
+    total += dictionary_top;
 
     while (total % GPAGESIZE)
       total++;
@@ -989,12 +989,12 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  dynamic_array_area_size);
 
             printf(
-"%6d verbs                        %6d dictionary entries (maximum %d)\n\
+"%6d verbs                        %6d dictionary entries\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
 %6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %2d)    %6d individual props (unlimited)\n",
                  no_Inform_verbs,
-                 dict_entries, MAX_DICT_ENTRIES,
+                 dict_entries,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
                  no_actions,
@@ -1679,12 +1679,12 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  dynamic_array_area_size);
 
             printf(
-"%6d verbs                        %6d dictionary entries (maximum %d)\n\
+"%6d verbs                        %6d dictionary entries\n\
 %6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
 %6d actions                      %6d attributes (maximum %2d)\n\
 %6d common props (maximum %3d)   %6d individual props (unlimited)\n",
                  no_Inform_verbs,
-                 dict_entries, MAX_DICT_ENTRIES,
+                 dict_entries,
                  no_grammar_lines, grammar_version_number,
                  no_grammar_tokens,
                  no_actions,
