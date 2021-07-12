@@ -2644,14 +2644,12 @@ extern void  link_module(char *filename);
 
 extern size_t malloced_bytes;
 
-extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,   MAX_DICT_ENTRIES,
+extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
            MAX_ABBREVS,
            MAX_LOW_STRINGS,
            MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STATIC_STRINGS,
-           MAX_TRANSCRIPT_SIZE,
-           MAX_NUM_STATIC_STRINGS, MAX_UNICODE_CHARS,
            MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
 extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
@@ -2824,7 +2822,6 @@ extern void write_serial_number(char *buffer);
 /* ------------------------------------------------------------------------- */
 
 extern uchar *low_strings, *low_strings_top;
-extern char  *all_text,    *all_text_top;
 
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
@@ -2835,7 +2832,8 @@ extern int32 total_chars_trans, total_bytes_trans,
              zchars_trans_in_last_string;
 extern int   put_strings_in_low_memory;
 extern int   dict_entries;
-extern uchar *dictionary, *dictionary_top;
+extern uchar *dictionary;
+extern int32 dictionary_top;
 extern int   *final_dict_order;
 
 extern uchar *static_strings_area;
@@ -2851,7 +2849,7 @@ extern int no_unicode_chars;
 typedef struct unicode_usage_s unicode_usage_t;
 struct unicode_usage_s {
   int32 ch;
-  unicode_usage_t *next;  
+  int next; /* index in unicode_usage_entries of next */
 };
 
 extern unicode_usage_t *unicode_usage_entries;
@@ -2890,6 +2888,7 @@ extern void  compress_game_text(void);
 /* end of the Glulx string compression stuff */
 
 extern void  ao_free_arrays(void);
+extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
 extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
