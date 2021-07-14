@@ -1623,9 +1623,24 @@ static void delete_negations(int n, int context)
 
         (etc) to delete the ~~ operator from the tree.  Since this is
         depth first, the ~~ being deleted has no ~~s beneath it, which
-        is important to make "negate_condition" work.                        */
+        is important to make "negate_condition" work.
+
+        We also do the check for (x <= y or z) here. This must be done
+        before negate_condition.
+    */
 
     int i;
+
+    if (ET[n].operator_number == LE_OP || ET[n].operator_number == GE_OP) {
+        if (ET[n].down != -1
+            && ET[ET[n].down].right != -1
+            && ET[ET[ET[n].down].right].right != -1) {
+            if (ET[n].operator_number == LE_OP)
+                warning("The behavior of (<= or) may be unexpected.");
+            else
+                warning("The behavior of (>= or) may be unexpected.");
+        }
+    }
 
     if (ET[n].right != -1) delete_negations(ET[n].right, context);
     if (ET[n].down == -1) return;
