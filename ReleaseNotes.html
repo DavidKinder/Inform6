@@ -47,6 +47,9 @@ These are the changes delivered in version 6.36 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>The algorithm used to apply abbreviations for Z-code has been replaced with a more efficient dynamic
+programming algorithm, based on the paper by R.A. Wagner "Common phrases and minimum-space text storage",
+Communications of the ACM, 16 (3) (1973).
 <li><p>Inform has been refactored to use dynamic memory allocation rather than fixed size buffers. As a result,
 the following settings are now removed: if the available space is filled, Inform will allocate more memory
 without requiring user intervention.
@@ -98,9 +101,9 @@ explanatory warning:
 <pre>
   DEBUG mode is on, but this story or library does not appear to support it
 </pre>
-<li><p>The algorithm used to apply abbreviations for Z-code has been replaced with a more efficient dynamic
-programming algorithm, based on the paper by R.A. Wagner "Common phrases and minimum-space text storage",
-Communications of the ACM, 16 (3) (1973).
+<li><p>Expressions of the form <tt>(x <= y or z)</tt> or <tt>(x >= y or z)</tt> now produce a warning message:
+while their effect is documented, well defined, and is not being changed, it is not necessarily what a user might
+expect.
 </ul>
 
 <h2>Compiler 6.35</h2>
