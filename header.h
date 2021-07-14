@@ -7,7 +7,7 @@
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
-/*   http://www.ifarchive.org/                                               */
+/*   https://www.ifarchive.org/                                              */
 /*                                                                           */
 /*   For notes on how this program may legally be used, see the Designer's   */
 /*   Manual introduction.  (Any recreational use is fine, and so is some     */
@@ -62,7 +62,7 @@
 /*     #define VMS         -  for VAX or ALPHA under DEC C, but not VAX C    */
 /*                                                                           */
 /*     In most cases executables are already available at                    */
-/*     http://www.ifarchive.org/, and these are sometimes enhanced with      */
+/*     https://www.ifarchive.org/, and these are sometimes enhanced with     */
 /*     e.g. windowed interfaces whose source is not archived with the        */
 /*     main Inform source.]                                                  */
 /*                                                                           */
@@ -70,8 +70,6 @@
 /*   most cases, porting to a new machine is a matter of carefully filling   */
 /*   out a block of definitions like those below.)                           */
 /* ------------------------------------------------------------------------- */
-
-/* #define UNIX */
 
 /* ------------------------------------------------------------------------- */
 /*   The first task is to include the ANSI header files, and typedef         */

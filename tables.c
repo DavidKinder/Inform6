@@ -348,8 +348,7 @@ static void construct_storyfile_z(void)
     /*  -------------------- Objects and Properties ------------------------ */
 
     /* The object table must be word-aligned. The Z-machine spec does not
-       require this, but the RA__Pr() veneer routine does. See 
-       http://inform7.com/mantis/view.php?id=1712.
+       require this, but the RA__Pr() veneer routine does.
     */
     while ((mark%2) != 0) p[mark++]=0;
 

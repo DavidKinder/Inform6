@@ -1128,8 +1128,7 @@ static double pow10_cheap(int expo)
 }
 
 /* Return the IEEE-754 single-precision encoding of a floating-point
- * number. See http://www.psc.edu/general/software/packages/ieee/ieee.php
- * for an explanation.
+ * number.
  *
  * The number is provided in the pieces it was parsed in:
  *    [+|-] intv "." fracv "e" [+|-]expo
