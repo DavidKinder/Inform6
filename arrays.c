@@ -24,9 +24,8 @@
 /*   values of the global variables (in 240x2 = 480 bytes) followed by any   */
 /*   (dynamic) arrays which may be defined.                                  */
 /*                                                                           */
-/*   In Glulx, that 240 is changed to MAX_GLOBAL_VARIABLES, and we take      */
-/*   correspondingly more space for the globals. This *really* ought to be   */
-/*   split into two segments.###                                             */
+/*   In Glulx, we don't keep the global variables in dynamic_array_area.     */
+/*   Array data starts at the start.                                         */
 /*                                                                           */
 /*   We can also store arrays (but not globals) into static memory (ROM).    */
 /*   The storage for these goes, unsurprisingly, into static_array_area.     */
