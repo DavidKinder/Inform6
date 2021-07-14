@@ -199,7 +199,8 @@ static int32 rough_size_of_paged_memory_g(void)
     /* No header for us! */
     total = 1000; /* bit of a fudge factor */
 
-    total += dynamic_array_area_size; /* arrays and global variables */
+    total += no_globals * 4; /* global variables */
+    total += dynamic_array_area_size; /* arrays */
 
     total += no_objects * OBJECT_BYTE_LENGTH; /* object tables */
     total += properties_table_size; /* property tables */
@@ -1288,7 +1289,7 @@ static void construct_storyfile_g(void)
     }
 
     arrays_at = mark;
-    for (i=MAX_GLOBAL_VARIABLES*4; i<dynamic_array_area_size; i++)
+    for (i=0; i<dynamic_array_area_size; i++)
         p[mark++] = dynamic_array_area[i];
 
     /* -------------------------- Dynamic Strings -------------------------- */
