@@ -978,7 +978,7 @@ static int is_property_t(int symbol_type)
 {   return ((symbol_type == PROPERTY_T) || (symbol_type == INDIVIDUAL_PROPERTY_T));
 }
 
-static void mark_top_of_emitter_stack(int marker, token_data t)
+static void mark_top_of_emitter_stack(int marker, const token_data *t)
 {   if (emitter_sp < 1)
     {   compiler_error("SR error: Attempt to add a marker to the top of an empty emitter stack");
         return;
@@ -1010,7 +1010,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
             warning("Ignoring spurious leading comma");
             return;
         }
-        error_named("Missing operand for", t.text);
+        error_named("Missing operand for", t->text);
         ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
@@ -1963,7 +1963,7 @@ extern assembly_operand parse_expression(int context)
                 {
                     case SUBOPEN_TT:
                         if (sr_sp >= 2 && sr_stack[sr_sp-2].type == OP_TT && sr_stack[sr_sp-2].value == FCALL_OP)
-                            mark_top_of_emitter_stack(FUNCTION_VALUE_MARKER, b);
+                            mark_top_of_emitter_stack(FUNCTION_VALUE_MARKER, &b);
                         else
                             add_bracket_layer_to_emitter_stack(0);
                         break;
@@ -1972,7 +1972,7 @@ extern assembly_operand parse_expression(int context)
                             case OR_OP:
                                 if (sr_stack[sr_sp-2].type == OP_TT &&
                                     operators[sr_stack[sr_sp-2].value].precedence == 3)
-                                    mark_top_of_emitter_stack(OR_VALUE_MARKER, b);
+                                    mark_top_of_emitter_stack(OR_VALUE_MARKER, &b);
                                 else
                                 {   error("'or' not between values to the right of a condition");
                                     /* Convert to + for error recovery purposes */
@@ -1988,7 +1988,7 @@ extern assembly_operand parse_expression(int context)
                                     if (shallowest_open_bracket_index > 0 &&
                                         sr_stack[shallowest_open_bracket_index-1].type == OP_TT &&
                                         sr_stack[shallowest_open_bracket_index-1].value == FCALL_OP)
-                                    {   mark_top_of_emitter_stack(ARGUMENT_VALUE_MARKER, b);
+                                    {   mark_top_of_emitter_stack(ARGUMENT_VALUE_MARKER, &b);
                                         break;
                                     }
                                     /* Non-argument-separating commas get treated like any other operator; we fall through to the default case. */
