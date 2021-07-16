@@ -380,7 +380,7 @@ extern void set_memory_sizes(int size_flag)
     NUM_ATTR_BYTES_g = 7;
     MAX_ABBREVS = 64;
     MAX_DYNAMIC_STRINGS_z = 32;
-    MAX_DYNAMIC_STRINGS_g = 64;
+    MAX_DYNAMIC_STRINGS_g = 100;
     /* Backwards-compatible behavior: allow for a unicode table
        whether we need one or not. The user can set this to zero if
        there's no unicode table. */
