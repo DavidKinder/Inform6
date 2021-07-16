@@ -130,10 +130,6 @@ static void select_target(int targ)
       MAX_LOCAL_VARIABLES = 16;
       fatalerror("You cannot change MAX_LOCAL_VARIABLES in Z-code");
     }
-    if (MAX_GLOBAL_VARIABLES != 240) {
-      MAX_GLOBAL_VARIABLES = 240;
-      fatalerror("You cannot change MAX_GLOBAL_VARIABLES in Z-code");
-    }
   }
   else {
     /* Glulx */
