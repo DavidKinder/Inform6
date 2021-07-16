@@ -752,11 +752,11 @@ extern void arrays_begin_pass(void)
            notionally space for the global variables, but that data is
            kept in the global_initial_value array. Nonetheless, all the
            Z-compiler math is set up with the idea that arrays start at
-           WORDSIZE * MAX_GLOBAL_VARIABLES, so we need the blank segment.
+           WORDSIZE * MAX_ZCODE_GLOBAL_VARS, so we need the blank segment.
         */
-        dynamic_array_area_size = WORDSIZE * MAX_GLOBAL_VARIABLES;
+        dynamic_array_area_size = WORDSIZE * MAX_ZCODE_GLOBAL_VARS;
         ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size);
-        for (ix=0; ix<WORDSIZE * MAX_GLOBAL_VARIABLES; ix++)
+        for (ix=0; ix<WORDSIZE * MAX_ZCODE_GLOBAL_VARS; ix++)
             dynamic_array_area[ix] = 0;
     }
     

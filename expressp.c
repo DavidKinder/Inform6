@@ -630,7 +630,7 @@ static int32 value_of_system_constant_z(int t)
         case ipv__end_SC:
             return variables_offset;
         case array__start_SC:
-            return variables_offset + (MAX_GLOBAL_VARIABLES*WORDSIZE);
+            return variables_offset + (MAX_ZCODE_GLOBAL_VARS*WORDSIZE);
         case array__end_SC:
             return static_memory_offset;
 
