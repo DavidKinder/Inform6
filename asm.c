@@ -1455,6 +1455,8 @@ extern int32 assemble_routine_header(int no_locals,
     execution_never_reaches_here = FALSE;
 
     routine_locals = no_locals;
+    
+    ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES);
     for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
     if (no_locals >= 1 
@@ -3197,7 +3199,7 @@ extern void asm_begin_pass(void)
 extern void asm_allocate_arrays(void)
 {
     initialise_memory_list(&variables_memlist,
-        sizeof(variableinfo), 256, (void**)&variables,
+        sizeof(variableinfo), 200, (void**)&variables,
         "variables");
 
     initialise_memory_list(&labels_memlist,

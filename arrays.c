@@ -745,12 +745,32 @@ extern void init_arrays_vars(void)
 
 extern void arrays_begin_pass(void)
 {
+    int ix, totalvar;
+    
     no_arrays = 0; 
-    if (!glulx_mode)
-        no_globals=0; 
-    else
-        no_globals=11;
-
+    if (!glulx_mode) {
+        no_globals = 0;
+        /* The compiler-defined globals start at 239 and go down, so
+           we need to initialize the entire list from the start. */
+        totalvar = MAX_ZCODE_GLOBAL_VARS;
+    }
+    else {
+        /* The compiler-defined globals run from 0 to 10. */
+        no_globals = 11;
+        totalvar = no_globals;
+    }
+    
+    ensure_memory_list_available(&global_initial_value_memlist, totalvar);
+    for (ix=0; ix<totalvar; ix++) {
+        global_initial_value[ix] = 0;
+    }
+    
+    ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES+totalvar);
+    for (ix=0; ix<MAX_LOCAL_VARIABLES+totalvar; ix++) {
+        variables[ix].token = 0;
+        variables[ix].usage = FALSE;
+    }
+    
     dynamic_array_area_size = 0;
 
     if (!glulx_mode) {
