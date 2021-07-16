@@ -488,7 +488,7 @@ const int prec_table[] = {
 
 };
 
-static int find_prec(token_data a, token_data b)
+static int find_prec(const token_data *a, const token_data *b)
 {
     /*  We are comparing the precedence of tokens  a  and  b
         (where a occurs to the left of b).  If the expression is correct,
@@ -506,14 +506,14 @@ static int find_prec(token_data a, token_data b)
 
     int i, j, l1, l2;
 
-    switch(a.type)
+    switch(a->type)
     {   case SUBOPEN_TT:  i=0; break;
         case SUBCLOSE_TT: i=1; break;
         case ENDEXP_TT:   i=2; break;
         case OP_TT:       i=3; break;
         default:          i=4; break;
     }
-    switch(b.type)
+    switch(b->type)
     {   case SUBOPEN_TT:  i+=0; break;
         case SUBCLOSE_TT: i+=5; break;
         case ENDEXP_TT:   i+=10; break;
@@ -523,10 +523,10 @@ static int find_prec(token_data a, token_data b)
 
     j = prec_table[i]; if (j != -1) return j;
 
-    l1 = operators[a.value].precedence;
-    l2 = operators[b.value].precedence;
-    if (operators[b.value].usage == PRE_U) return LOWER_P;
-    if (operators[a.value].usage == POST_U) return GREATER_P;
+    l1 = operators[a->value].precedence;
+    l2 = operators[b->value].precedence;
+    if (operators[b->value].usage == PRE_U) return LOWER_P;
+    if (operators[a->value].usage == POST_U) return GREATER_P;
 
     /*  Anomalous rule to resolve the function call precedence, which is
         different on the right from on the left, e.g., in:
@@ -539,7 +539,7 @@ static int find_prec(token_data a, token_data b)
 
     if (l1 < l2)  return LOWER_P;
     if (l1 > l2)  return GREATER_P;
-    switch(operators[a.value].associativity)
+    switch(operators[a->value].associativity)
     {   case L_A: return GREATER_P;
         case R_A: return LOWER_P;
         case 0:   return e5;
@@ -761,7 +761,7 @@ extern char *name_of_system_constant(int t)
   return system_constants.keywords[t];
 }
 
-static int evaluate_term(token_data t, assembly_operand *o)
+static int evaluate_term(const token_data *t, assembly_operand *o)
 {
     /*  If the given token is a constant, evaluate it into the operand.
         For now, the identifiers are considered variables.
@@ -770,12 +770,12 @@ static int evaluate_term(token_data t, assembly_operand *o)
 
     int32 v;
 
-    o->marker = t.marker;
-    o->symindex = t.symindex;
+    o->marker = t->marker;
+    o->symindex = t->symindex;
 
-    switch(t.type)
+    switch(t->type)
     {   case LARGE_NUMBER_TT:
-             v = t.value;
+             v = t->value;
              if (!glulx_mode) {
                  if (v < 0) v = v + 0x10000;
                  o->type = LONG_CONSTANT_OT;
@@ -787,7 +787,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
              }
              return(TRUE);
         case SMALL_NUMBER_TT:
-             v = t.value;
+             v = t->value;
              if (!glulx_mode) {
                  if (v < 0) v = v + 0x10000;
                  o->type = SHORT_CONSTANT_OT;
@@ -804,7 +804,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = dictionary_add(t.text, 0x80, 0, 0);
+             o->value = dictionary_add(t->text, 0x80, 0, 0);
              return(TRUE);
         case DQ_TT:
              /*  Create as a static string  */
@@ -812,14 +812,14 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = compile_string(t.text, STRCTX_GAME);
+             o->value = compile_string(t->text, STRCTX_GAME);
              return(TRUE);
         case VARIABLE_TT:
              if (!glulx_mode) {
                  o->type = VARIABLE_OT;
              }
              else {
-                 if (t.value >= MAX_LOCAL_VARIABLES) {
+                 if (t->value >= MAX_LOCAL_VARIABLES) {
                      o->type = GLOBALVAR_OT;
                  }
                  else {
@@ -828,21 +828,21 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      o->type = LOCALVAR_OT;
                  }
              }
-             o->value = t.value;
+             o->value = t->value;
              return(TRUE);
         case SYSFUN_TT:
              if (!glulx_mode) {
                  o->type = VARIABLE_OT;
-                 o->value = t.value + 256;
+                 o->value = t->value + 256;
              }
              else {
                  o->type = SYSFUN_OT;
-                 o->value = t.value;
+                 o->value = t->value;
              }
-             system_function_usage[t.value] = 1;
+             system_function_usage[t->value] = 1;
              return(TRUE);
         case ACTION_TT:
-             *o = action_of_name(t.text);
+             *o = action_of_name(t->text);
              return(TRUE);
         case SYSTEM_CONSTANT_TT:
              /*  Certain system constants depend only on the
@@ -851,7 +851,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  them immediately.  */
              if (!glulx_mode) {
                  o->type = LONG_CONSTANT_OT;
-                 switch(t.value)
+                 switch(t->value)
                  {   
                  case version_number_SC:
                      o->type = SHORT_CONSTANT_OT;
@@ -888,7 +888,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      o->type = SHORT_CONSTANT_OT; o->marker = 0;
                      v = oddeven_packing_switch; break;
                  default:
-                     v = t.value;
+                     v = t->value;
                      o->marker = INCON_MV;
                      break;
                  }
@@ -896,7 +896,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
              }
              else {
                  o->type = CONSTANT_OT;
-                 switch(t.value)
+                 switch(t->value)
                  {
                  /* The three dict_par flags point at the lower byte
                     of the flag field, because the library is written
@@ -938,7 +938,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  /* ###fix: need to fill more of these in! */
 
                  default:
-                     v = t.value;
+                     v = t->value;
                      o->marker = INCON_MV;
                      break;
                  }
@@ -1090,7 +1090,7 @@ static void emit_token(token_data t)
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
 
-        if (!evaluate_term(t, &(emitter_stack[emitter_sp++].op)))
+        if (!evaluate_term(&t, &(emitter_stack[emitter_sp++].op)))
             compiler_error_named("Emit token error:", t.text);
         return;
     }
@@ -1949,7 +1949,7 @@ extern assembly_operand parse_expression(int context)
             return(AO);
         }
 
-        switch(find_prec(a,b))
+        switch(find_prec(&a,&b))
         {
             case e5:                 /* Associativity error                  */
                 error_named("Brackets mandatory to clarify order of:",
@@ -2008,7 +2008,7 @@ extern assembly_operand parse_expression(int context)
                 {   pop = sr_stack[sr_sp - 1];
                     emit_token(pop);
                     sr_sp--;
-                } while (find_prec(sr_stack[sr_sp-1], pop) != LOWER_P);
+                } while (find_prec(&sr_stack[sr_sp-1], &pop) != LOWER_P);
                 break;
 
             case e1:                 /* Missing operand error                */
