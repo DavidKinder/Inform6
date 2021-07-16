@@ -1373,7 +1373,7 @@ static int get_next_char_from_pipeline(void)
     lookahead3 = source_to_iso_grid[p[CF->read_pos++]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
     if (current == '\n') reached_new_line();
     return(current);
@@ -1397,7 +1397,7 @@ static int get_next_char_from_string(void)
                     else lookahead3 = source_to_iso_grid[p[3]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
     if (current == '\n') reached_new_line();
     return(current);
