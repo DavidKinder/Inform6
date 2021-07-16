@@ -427,7 +427,7 @@ but not used as a value:", unicode);
     if (token_type_allowable[current_token.type]==0)
     {   if (expr_trace_level >= 3)
         {   printf("Discarding as not allowable: '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
         current_token.type = ENDEXP_TT;
@@ -442,7 +442,7 @@ but not used as a value:", unicode);
             || (operators[current_token.value].usage == PRE_U)))
     {   if (expr_trace_level >= 3)
         {   printf("Discarding as no longer part: '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
         current_token.type = ENDEXP_TT;
@@ -451,7 +451,7 @@ but not used as a value:", unicode);
     {   if (mark_symbol_as_used) symbols[symbol].flags |= USED_SFLAG;
         if (expr_trace_level >= 3)
         {   printf("Expr token = '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
     }

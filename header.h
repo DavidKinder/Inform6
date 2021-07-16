@@ -2596,7 +2596,7 @@ extern debug_location_beginning get_token_location_beginning(void);
 extern void discard_token_location(debug_location_beginning beginning);
 extern debug_locations get_token_location_end(debug_location_beginning beginning);
 
-extern void describe_token(token_data t);
+extern void describe_token(const token_data *t);
 
 extern void construct_local_variable_tables(void);
 extern void declare_systemfile(void);
