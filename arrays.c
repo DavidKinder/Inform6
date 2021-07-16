@@ -18,7 +18,8 @@
 /*    uchar  static_array_area[]          Initial values for the bytes of    */
 /*                                        the static array area              */
 /*    int32  global_initial_value[n]      The initialised value of the nth   */
-/*                                        global variable (counting 0 - 239) */
+/*                                        global variable (counting 0 - 239, */
+/*                                        or higher for Glulx)               */
 /*                                                                           */
 /*   The "dynamic array area" is the Z-machine area holding the current      */
 /*   values of the global variables (in 240x2 = 480 bytes) followed by any   */
@@ -34,7 +35,8 @@ uchar   *dynamic_array_area;           /* See above                          */
 memory_list dynamic_array_area_memlist;
 int dynamic_array_area_size;           /* Size in bytes                      */
 
-int32   *global_initial_value;
+int32   *global_initial_value;         /* Allocated to no_globals            */
+static memory_list global_initial_value_memlist;
 
 int no_globals;                        /* Number of global variables used
                                           by the programmer (Inform itself
@@ -253,7 +255,11 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 /* ------------------------------------------------------------------------- */
 
 extern void set_variable_value(int i, int32 v)
-{   global_initial_value[i]=v;
+{
+    /* This can be called during module-load to create a new global,
+       so we call ensure. */
+    ensure_memory_list_available(&global_initial_value_memlist, i+1);
+    global_initial_value[i]=v;
 }
 
 /*  There are four ways to initialise arrays:                                */
@@ -349,19 +355,20 @@ extern void make_global(int array_flag, int name_only)
             panic_mode_error_recovery();
             return;
         }
-        if (glulx_mode && no_globals==MAX_GLOBAL_VARIABLES)
-        {   discard_token_location(beginning_debug_location);
-            memoryerror("MAX_GLOBAL_VARIABLES", MAX_GLOBAL_VARIABLES);
-            panic_mode_error_recovery();
-            return;
-        }
+        
+        //### variable_tokens_memlist too
 
         variable_tokens[MAX_LOCAL_VARIABLES+no_globals] = i;
         assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
         variable_tokens[symbols[i].value] = i;
 
-        if (name_only) import_symbol(i);
-        else global_initial_value[no_globals++]=0;
+        if (name_only) {
+            import_symbol(i);
+        }
+        else {
+            ensure_memory_list_available(&global_initial_value_memlist, no_globals+1);
+            global_initial_value[no_globals++]=0;
+        }
     }
 
     directive_keywords.enabled = TRUE;
@@ -774,8 +781,9 @@ extern void arrays_allocate_arrays(void)
     initialise_memory_list(&arrays_memlist,
         sizeof(arrayinfo), 64, (void**)&arrays,
         "array info");
-    global_initial_value = my_calloc(sizeof(int32), MAX_GLOBAL_VARIABLES, 
-        "global values");
+    initialise_memory_list(&global_initial_value_memlist,
+        sizeof(int32), 256, (void**)&global_initial_value,
+        "global variable values");
 }
 
 extern void arrays_free_arrays(void)
@@ -783,7 +791,7 @@ extern void arrays_free_arrays(void)
     deallocate_memory_list(&dynamic_array_area_memlist);
     deallocate_memory_list(&static_array_area_memlist);
     deallocate_memory_list(&arrays_memlist);
-    my_free(&global_initial_value, "global values");
+    deallocate_memory_list(&global_initial_value_memlist);
 }
 
 /* ========================================================================= */
