@@ -57,13 +57,10 @@ debug_location statement_debug_location;
                                    /* Location of current statement          */
 
 
-int32 *variable_tokens;            /* The allocated size is 
-                                      (MAX_LOCAL_VARIABLES +
-                                      MAX_GLOBAL_VARIABLES). The entries 
-                                      MAX_LOCAL_VARIABLES and up give the 
-                                      symbol table index for the names of 
-                                      the global variables                   */
-int *variable_usage;               /* TRUE if referred to, FALSE otherwise   */
+variableinfo *variables;           /* The allocated size is 
+                                      (MAX_LOCAL_VARIABLES + no_globals).
+                                      Local variables first, then globals.   */
+memory_list variables_memlist;
 
 assembly_instruction AI;           /* A structure used to hold the full
                                       specification of a single Z-code
@@ -213,7 +210,7 @@ extern char *variable_name(int32 i)
       }
     }
 
-    return (symbols[variable_tokens[i]].name);
+    return (symbols[variables[i].token].name);
 }
 
 /* Print symbolic information about the AO, if there is any. */
@@ -975,7 +972,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
         }
         o1.type = VARIABLE_OT;
         o1.value = AI->store_variable_number;
-        variable_usage[o1.value] = TRUE;
+        variables[o1.value].usage = TRUE;
         o1.marker = 0;
 
         /*  Note that variable numbers 249 to 255 (i.e. globals 233 to 239)
@@ -1458,7 +1455,7 @@ extern int32 assemble_routine_header(int no_locals,
     execution_never_reaches_here = FALSE;
 
     routine_locals = no_locals;
-    for (i=0; i<MAX_LOCAL_VARIABLES; i++) variable_usage[i] = FALSE;
+    for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
     if (no_locals >= 1 
       && !strcmp(local_variables.keywords[0], "_vararg_count")) {
@@ -1793,7 +1790,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     /* Issue warnings about any local variables not used in the routine. */
 
     for (i=1; i<=routine_locals; i++)
-        if (!(variable_usage[i]))
+        if (!(variables[i].usage))
             dbnu_warning("Local variable", variable_name(i),
                 routine_starts_line);
 
@@ -3199,10 +3196,9 @@ extern void asm_begin_pass(void)
 
 extern void asm_allocate_arrays(void)
 {
-    variable_tokens = my_calloc(sizeof(int32),  
-        MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable tokens");
-    variable_usage = my_calloc(sizeof(int),  
-        MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable usage");
+    initialise_memory_list(&variables_memlist,
+        sizeof(variableinfo), 256, (void**)&variables,
+        "variables");
 
     initialise_memory_list(&labels_memlist,
         sizeof(labelinfo), 1000, (void**)&labels,
@@ -3233,8 +3229,7 @@ extern void asm_allocate_arrays(void)
 
 extern void asm_free_arrays(void)
 {
-    my_free(&variable_tokens, "variable tokens");
-    my_free(&variable_usage, "variable usage");
+    deallocate_memory_list(&variables_memlist);
 
     deallocate_memory_list(&labels_memlist);
     deallocate_memory_list(&sequence_points_memlist);

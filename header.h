@@ -768,6 +768,11 @@ typedef struct assembly_operand_t
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
+typedef struct variableinfo_s {
+    int32 token;   /* Symbol table index for variable name */
+    int usage;     /* TRUE if referred to */
+} variableinfo;
+
 typedef struct verbt {
     int lines;
     int *l; /* alloced array */
@@ -2207,9 +2212,9 @@ extern int   uses_unicode_features, uses_memheap_features,
     uses_acceleration_features, uses_float_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
-extern int   *variable_usage;
+extern variableinfo *variables;
+extern memory_list variables_memlist;
 extern int   next_label, no_sequence_points;
-extern int32 *variable_tokens;
 extern assembly_instruction AI;
 extern int32 *named_routine_symbols;
 

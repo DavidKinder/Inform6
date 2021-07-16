@@ -52,8 +52,6 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
            array_init_ambiguity, action_ambiguity,
            etoken_count, inserting_token, bracket_level;
 
-extern int *variable_usage;
-
 int system_function_usage[NUMBER_SYSTEM_FUNCTIONS];
 
 static int get_next_etoken(void)
@@ -80,7 +78,7 @@ static int get_next_etoken(void)
     switch(current_token.type)
     {   case LOCAL_VARIABLE_TT:
             current_token.type = VARIABLE_TT;
-            variable_usage[current_token.value] = TRUE;
+            variables[current_token.value].usage = TRUE;
             break;
 
         case DQ_TT:
@@ -195,7 +193,7 @@ but not used as a value:", unicode);
 
             if (symbols[symbol].type == GLOBAL_VARIABLE_T)
             {   current_token.type = VARIABLE_TT;
-                variable_usage[current_token.value] = TRUE;
+                variables[current_token.value].usage = TRUE;
             }
             break;
 
