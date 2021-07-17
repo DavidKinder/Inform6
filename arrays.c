@@ -802,7 +802,7 @@ extern void arrays_allocate_arrays(void)
         sizeof(arrayinfo), 64, (void**)&arrays,
         "array info");
     initialise_memory_list(&global_initial_value_memlist,
-        sizeof(int32), 256, (void**)&global_initial_value,
+        sizeof(int32), 200, (void**)&global_initial_value,
         "global variable values");
 }
 
