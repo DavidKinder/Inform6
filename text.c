@@ -234,8 +234,9 @@ extern void make_abbreviation(char *text)
 /* ------------------------------------------------------------------------- */
 
 extern int32 compile_string(char *b, int strctx)
-{   int i, j; uchar *c;
-
+{   int32 i, j, k;
+    uchar *c;
+ 
     /* In Z-code, abbreviations go in the low memory pool (0x100). So
        do strings explicitly defined with the Lowstring directive.
        (In Glulx, the in_low_memory flag is ignored.) */
@@ -243,20 +244,19 @@ extern int32 compile_string(char *b, int strctx)
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        low_strings_top=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, strctx);
-        if (!low_strings_top)
+        k=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, strctx);
+        if (k<0)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
+        low_strings_top += k;
         return(0x21+(j/2));
     }
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    c = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, strctx);
-    if (!c)
+    i = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, strctx);
+    if (i < 0)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
-
-    i = subtract_pointers(c, strings_holding_area);
 
     /* Insert null bytes as needed to ensure that the next static string */
     /* also occurs at an address expressible as a packed address         */
@@ -271,7 +271,8 @@ extern int32 compile_string(char *b, int strctx)
         {
             if (i+2 > MAX_STATIC_STRINGS)
                 memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
-            i+=2; *c++ = 0; *c++ = 0;
+            strings_holding_area[i++] = 0;
+            strings_holding_area[i++] = 0;
         }
     }
 
@@ -385,17 +386,17 @@ static int zchar_weight(int c)
 /* ------------------------------------------------------------------------- */
 /*   The main routine "text.c" provides to the rest of Inform: the text      */
 /*   translator. p is the address to write output to, s_text the source text */
-/*   and the return value is the next free address to write output to.       */
+/*   and the return value is the number of bytes translated.                 */
 /*   The return value will not exceed p_limit. If the translation tries to   */
-/*   overflow this boundary, the return value will be NULL (and you should   */
+/*   overflow this boundary, the return value will be -1 (and you should     */
 /*   display an error).                                                      */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
+extern int32 translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
-    unsigned char *text_in;
+    unsigned char *text_in, *orig_pc;
 
     /* For STRCTX_ABBREV, the string being translated is itself an
        abbreviation string, so it can't make use of abbreviations. Set
@@ -413,6 +414,7 @@ extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     text_out_pc = (unsigned char *) p;
     text_out_limit = (unsigned char *) p_limit;
     text_out_overflow = FALSE;
+    orig_pc = text_out_pc;
 
     /*  Remember the Z-chars total so that later we can subtract to find the
         number of Z-chars translated on this string                          */
@@ -866,9 +868,9 @@ string; substituting '?'.");
   }
 
   if (text_out_overflow)
-      return NULL;
+      return -1;
   else
-      return((uchar *) text_out_pc);
+      return subtract_pointers(text_out_pc, orig_pc);
 }
 
 static int unicode_entity_index(int32 unicode)

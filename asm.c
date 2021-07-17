@@ -897,13 +897,11 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp;
         ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
         ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
-        tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area + zcode_ha_size + MAX_STATIC_STRINGS, AI->text, STRCTX_GAMEOPC);
-        if (!tmp)
+        j = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area + zcode_ha_size + MAX_STATIC_STRINGS, AI->text, STRCTX_GAMEOPC);
+        if (j < 0)
             memoryerror("MAX_STATIC_STRINGS", MAX_STATIC_STRINGS);
-        j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));
         for (i=0; i<j; i++) zcode_markers[zcode_ha_size++] = 0;
         zmachine_pc += j;
         goto Instruction_Done;
