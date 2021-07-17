@@ -262,7 +262,6 @@ int MAX_DYNAMIC_STRINGS;
 int32 MAX_STATIC_STRINGS;
 int MAX_LOW_STRINGS;
 int MAX_LOCAL_VARIABLES;
-int MAX_GLOBAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
@@ -280,7 +279,6 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    which have different defaults under Z-code and Glulx. We have to get
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
-static int MAX_GLOBAL_VARIABLES_z, MAX_GLOBAL_VARIABLES_g;
 static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
@@ -300,7 +298,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
     printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
-    printf("|  %25s = %-7d |\n","MAX_GLOBAL_VARIABLES",MAX_GLOBAL_VARIABLES);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_EXT_WORDS",ZCODE_HEADER_EXT_WORDS);
@@ -339,9 +336,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
-
-        MAX_GLOBAL_VARIABLES_z = 240;
-        MAX_GLOBAL_VARIABLES_g = 512;
     }
     if (size_flag == LARGE_SIZE)
     {
@@ -352,9 +346,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 2048;
-
-        MAX_GLOBAL_VARIABLES_z = 240;
-        MAX_GLOBAL_VARIABLES_g = 512;
     }
     if (size_flag == SMALL_SIZE)
     {
@@ -365,9 +356,6 @@ extern void set_memory_sizes(int size_flag)
         MAX_STATIC_STRINGS = 8000;
 
         MAX_LOW_STRINGS = 1024;
-
-        MAX_GLOBAL_VARIABLES_z = 240;
-        MAX_GLOBAL_VARIABLES_g = 256;
     }
 
     /* Regardless of size_flag... */
@@ -380,7 +368,7 @@ extern void set_memory_sizes(int size_flag)
     NUM_ATTR_BYTES_g = 7;
     MAX_ABBREVS = 64;
     MAX_DYNAMIC_STRINGS_z = 32;
-    MAX_DYNAMIC_STRINGS_g = 64;
+    MAX_DYNAMIC_STRINGS_g = 100;
     /* Backwards-compatible behavior: allow for a unicode table
        whether we need one or not. The user can set this to zero if
        there's no unicode table. */
@@ -404,7 +392,6 @@ extern void set_memory_sizes(int size_flag)
 extern void adjust_memory_sizes()
 {
   if (!glulx_mode) {
-    MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_z;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
@@ -412,7 +399,6 @@ extern void adjust_memory_sizes()
     INDIV_PROP_START = 64;
   }
   else {
-    MAX_GLOBAL_VARIABLES = MAX_GLOBAL_VARIABLES_g;
     MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
@@ -521,12 +507,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_LOCAL_VARIABLES is the number of local variables (including \n\
   arguments) allowed in a procedure. (Glulx only)\n");
-        return;
-    }
-    if (strcmp(command,"MAX_GLOBAL_VARIABLES")==0)
-    {   printf(
-"  MAX_GLOBAL_VARIABLES is the number of global variables allowed in the \n\
-  program. (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -804,8 +784,7 @@ extern void memory_command(char *command)
                 MAX_LOCAL_VARIABLES_g=MAX_LOCAL_VARIABLES_z=j;
             }
             if (strcmp(command,"MAX_GLOBAL_VARIABLES")==0)
-            {   MAX_GLOBAL_VARIABLES=j, flag=1;
-                MAX_GLOBAL_VARIABLES_g=MAX_GLOBAL_VARIABLES_z=j;
+            {   flag=3;
             }
             if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
             {   flag=3;

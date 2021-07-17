@@ -570,7 +570,7 @@ extern void errors_begin_pass(void)
 }
 
 extern void errors_allocate_arrays(void)
-{   forerrors_buff = my_malloc(512, "errors buffer");
+{   forerrors_buff = my_malloc(FORERRORS_SIZE, "errors buffer");
 }
 
 extern void errors_free_arrays(void)

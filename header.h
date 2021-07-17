@@ -768,6 +768,11 @@ typedef struct assembly_operand_t
 #define INITAOT(aop, typ) INITAOTV(aop, typ, 0)
 #define INITAO(aop) INITAOTV(aop, 0, 0)
 
+typedef struct variableinfo_s {
+    int32 token;   /* Symbol table index for variable name */
+    int usage;     /* TRUE if referred to */
+} variableinfo;
+
 typedef struct verbt {
     int lines;
     int *l; /* alloced array */
@@ -2173,6 +2178,8 @@ extern void verbs_free_arrays(void);
 /*   Extern definitions for "arrays"                                         */
 /* ------------------------------------------------------------------------- */
 
+#define MAX_ZCODE_GLOBAL_VARS (240)
+
 extern int no_globals, no_arrays;
 extern int dynamic_array_area_size;
 extern uchar *dynamic_array_area;
@@ -2205,9 +2212,9 @@ extern int   uses_unicode_features, uses_memheap_features,
     uses_acceleration_features, uses_float_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
-extern int   *variable_usage;
+extern variableinfo *variables;
+extern memory_list variables_memlist;
 extern int   next_label, no_sequence_points;
-extern int32 *variable_tokens;
 extern assembly_instruction AI;
 extern int32 *named_routine_symbols;
 
@@ -2376,6 +2383,7 @@ extern int  parse_given_directive(int internal_flag);
 /*   Extern definitions for "errors"                                         */
 /* ------------------------------------------------------------------------- */
 
+#define FORERRORS_SIZE (512)
 extern char *forerrors_buff;
 extern int  forerrors_pointer;
 extern int  no_errors, no_warnings, no_suppressed_warnings,
@@ -2596,7 +2604,7 @@ extern debug_location_beginning get_token_location_beginning(void);
 extern void discard_token_location(debug_location_beginning beginning);
 extern debug_locations get_token_location_end(debug_location_beginning beginning);
 
-extern void describe_token(token_data t);
+extern void describe_token(const token_data *t);
 
 extern void construct_local_variable_tables(void);
 extern void declare_systemfile(void);
@@ -2650,7 +2658,7 @@ extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
 extern int32 MAX_STATIC_STRINGS,
            MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
-extern int MAX_LOCAL_VARIABLES, MAX_GLOBAL_VARIABLES;
+extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;

@@ -281,7 +281,7 @@ static int tokens_put_back;             /* Count of the number of backward
                                            moves made from the last-read
                                            token                             */
 
-extern void describe_token(token_data t)
+extern void describe_token(const token_data *t)
 {
     /*  Many of the token types are not set in this file, but later on in
         Inform's higher stages (for example, in the expression evaluator);
@@ -289,51 +289,51 @@ extern void describe_token(token_data t)
 
     printf("{ ");
 
-    switch(t.type)
+    switch(t->type)
     {
         /*  The following token types occur in lexer output:                 */
 
         case SYMBOL_TT:          printf("symbol ");
-                                 describe_symbol(t.value);
+                                 describe_symbol(t->value);
                                  break;
-        case NUMBER_TT:          printf("literal number %d", t.value);
+        case NUMBER_TT:          printf("literal number %d", t->value);
                                  break;
-        case DQ_TT:              printf("string \"%s\"", t.text);
+        case DQ_TT:              printf("string \"%s\"", t->text);
                                  break;
-        case SQ_TT:              printf("string '%s'", t.text);
+        case SQ_TT:              printf("string '%s'", t->text);
                                  break;
-        case SEP_TT:             printf("separator '%s'", t.text);
+        case SEP_TT:             printf("separator '%s'", t->text);
                                  break;
         case EOF_TT:             printf("end of file");
                                  break;
 
-        case STATEMENT_TT:       printf("statement name '%s'", t.text);
+        case STATEMENT_TT:       printf("statement name '%s'", t->text);
                                  break;
-        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", t.text);
+        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", t->text);
                                  break;
-        case DIRECTIVE_TT:       printf("directive name '%s'", t.text);
+        case DIRECTIVE_TT:       printf("directive name '%s'", t->text);
                                  break;
-        case CND_TT:             printf("textual conditional '%s'", t.text);
+        case CND_TT:             printf("textual conditional '%s'", t->text);
                                  break;
-        case OPCODE_NAME_TT:     printf("opcode name '%s'", t.text);
+        case OPCODE_NAME_TT:     printf("opcode name '%s'", t->text);
                                  break;
-        case SYSFUN_TT:          printf("built-in function name '%s'", t.text);
+        case SYSFUN_TT:          printf("built-in function name '%s'", t->text);
                                  break;
-        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", t.text);
+        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", t->text);
                                  break;
-        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", t.text);
+        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", t->text);
                                  break;
-        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", t.text);
+        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", t->text);
                                  break;
-        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", t.text);
+        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", t->text);
                                  break;
-        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", t.text);
+        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", t->text);
                                  break;
 
         /*  The remaining are etoken types, not set by the lexer             */
 
         case OP_TT:              printf("operator '%s'",
-                                     operators[t.value].description);
+                                     operators[t->value].description);
                                  break;
         case ENDEXP_TT:          printf("end of expression");
                                  break;
@@ -341,20 +341,20 @@ extern void describe_token(token_data t)
                                  break;
         case SUBCLOSE_TT:        printf("close bracket");
                                  break;
-        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",t.text,t.value);
+        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",t->text,t->value);
                                  break;
-        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",t.text,t.value);
+        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",t->text,t->value);
                                  break;
-        case VARIABLE_TT:        printf("variable '%s'=%d", t.text, t.value);
+        case VARIABLE_TT:        printf("variable '%s'=%d", t->text, t->value);
                                  break;
-        case DICTWORD_TT:        printf("dictionary word '%s'", t.text);
+        case DICTWORD_TT:        printf("dictionary word '%s'", t->text);
                                  break;
-        case ACTION_TT:          printf("action name '%s'", t.text);
+        case ACTION_TT:          printf("action name '%s'", t->text);
                                  break;
 
         default:
             printf("** unknown token type %d, text='%s', value=%d **",
-            t.type, t.text, t.value);
+            t->type, t->text, t->value);
     }
     printf(" }");
 }
@@ -1373,7 +1373,7 @@ static int get_next_char_from_pipeline(void)
     lookahead3 = source_to_iso_grid[p[CF->read_pos++]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
     if (current == '\n') reached_new_line();
     return(current);
@@ -1397,7 +1397,7 @@ static int get_next_char_from_string(void)
                     else lookahead3 = source_to_iso_grid[p[3]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
     if (current == '\n') reached_new_line();
     return(current);
@@ -1763,7 +1763,7 @@ extern void get_next_token(void)
     {   if (tokens_trace_level == 1)
             printf("'%s' ", circle[i].text);
         else
-        {   printf("-> "); describe_token(circle[i]);
+        {   printf("-> "); describe_token(&circle[i]);
             printf(" ");
             if (tokens_trace_level > 2) print_context(token_contexts[i]);
             printf("\n");

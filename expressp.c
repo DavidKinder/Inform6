@@ -52,8 +52,6 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
            array_init_ambiguity, action_ambiguity,
            etoken_count, inserting_token, bracket_level;
 
-extern int *variable_usage;
-
 int system_function_usage[NUMBER_SYSTEM_FUNCTIONS];
 
 static int get_next_etoken(void)
@@ -80,7 +78,7 @@ static int get_next_etoken(void)
     switch(current_token.type)
     {   case LOCAL_VARIABLE_TT:
             current_token.type = VARIABLE_TT;
-            variable_usage[current_token.value] = TRUE;
+            variables[current_token.value].usage = TRUE;
             break;
 
         case DQ_TT:
@@ -195,7 +193,7 @@ but not used as a value:", unicode);
 
             if (symbols[symbol].type == GLOBAL_VARIABLE_T)
             {   current_token.type = VARIABLE_TT;
-                variable_usage[current_token.value] = TRUE;
+                variables[current_token.value].usage = TRUE;
             }
             break;
 
@@ -427,7 +425,7 @@ but not used as a value:", unicode);
     if (token_type_allowable[current_token.type]==0)
     {   if (expr_trace_level >= 3)
         {   printf("Discarding as not allowable: '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
         current_token.type = ENDEXP_TT;
@@ -442,7 +440,7 @@ but not used as a value:", unicode);
             || (operators[current_token.value].usage == PRE_U)))
     {   if (expr_trace_level >= 3)
         {   printf("Discarding as no longer part: '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
         current_token.type = ENDEXP_TT;
@@ -451,7 +449,7 @@ but not used as a value:", unicode);
     {   if (mark_symbol_as_used) symbols[symbol].flags |= USED_SFLAG;
         if (expr_trace_level >= 3)
         {   printf("Expr token = '%s' ", current_token.text);
-            describe_token(current_token);
+            describe_token(&current_token);
             printf("\n");
         }
     }
@@ -488,7 +486,7 @@ const int prec_table[] = {
 
 };
 
-static int find_prec(token_data a, token_data b)
+static int find_prec(const token_data *a, const token_data *b)
 {
     /*  We are comparing the precedence of tokens  a  and  b
         (where a occurs to the left of b).  If the expression is correct,
@@ -506,14 +504,14 @@ static int find_prec(token_data a, token_data b)
 
     int i, j, l1, l2;
 
-    switch(a.type)
+    switch(a->type)
     {   case SUBOPEN_TT:  i=0; break;
         case SUBCLOSE_TT: i=1; break;
         case ENDEXP_TT:   i=2; break;
         case OP_TT:       i=3; break;
         default:          i=4; break;
     }
-    switch(b.type)
+    switch(b->type)
     {   case SUBOPEN_TT:  i+=0; break;
         case SUBCLOSE_TT: i+=5; break;
         case ENDEXP_TT:   i+=10; break;
@@ -523,10 +521,10 @@ static int find_prec(token_data a, token_data b)
 
     j = prec_table[i]; if (j != -1) return j;
 
-    l1 = operators[a.value].precedence;
-    l2 = operators[b.value].precedence;
-    if (operators[b.value].usage == PRE_U) return LOWER_P;
-    if (operators[a.value].usage == POST_U) return GREATER_P;
+    l1 = operators[a->value].precedence;
+    l2 = operators[b->value].precedence;
+    if (operators[b->value].usage == PRE_U) return LOWER_P;
+    if (operators[a->value].usage == POST_U) return GREATER_P;
 
     /*  Anomalous rule to resolve the function call precedence, which is
         different on the right from on the left, e.g., in:
@@ -539,7 +537,7 @@ static int find_prec(token_data a, token_data b)
 
     if (l1 < l2)  return LOWER_P;
     if (l1 > l2)  return GREATER_P;
-    switch(operators[a.value].associativity)
+    switch(operators[a->value].associativity)
     {   case L_A: return GREATER_P;
         case R_A: return LOWER_P;
         case 0:   return e5;
@@ -630,7 +628,7 @@ static int32 value_of_system_constant_z(int t)
         case ipv__end_SC:
             return variables_offset;
         case array__start_SC:
-            return variables_offset + (MAX_GLOBAL_VARIABLES*WORDSIZE);
+            return variables_offset + (MAX_ZCODE_GLOBAL_VARS*WORDSIZE);
         case array__end_SC:
             return static_memory_offset;
 
@@ -761,7 +759,7 @@ extern char *name_of_system_constant(int t)
   return system_constants.keywords[t];
 }
 
-static int evaluate_term(token_data t, assembly_operand *o)
+static int evaluate_term(const token_data *t, assembly_operand *o)
 {
     /*  If the given token is a constant, evaluate it into the operand.
         For now, the identifiers are considered variables.
@@ -770,12 +768,12 @@ static int evaluate_term(token_data t, assembly_operand *o)
 
     int32 v;
 
-    o->marker = t.marker;
-    o->symindex = t.symindex;
+    o->marker = t->marker;
+    o->symindex = t->symindex;
 
-    switch(t.type)
+    switch(t->type)
     {   case LARGE_NUMBER_TT:
-             v = t.value;
+             v = t->value;
              if (!glulx_mode) {
                  if (v < 0) v = v + 0x10000;
                  o->type = LONG_CONSTANT_OT;
@@ -787,7 +785,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
              }
              return(TRUE);
         case SMALL_NUMBER_TT:
-             v = t.value;
+             v = t->value;
              if (!glulx_mode) {
                  if (v < 0) v = v + 0x10000;
                  o->type = SHORT_CONSTANT_OT;
@@ -804,7 +802,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = dictionary_add(t.text, 0x80, 0, 0);
+             o->value = dictionary_add(t->text, 0x80, 0, 0);
              return(TRUE);
         case DQ_TT:
              /*  Create as a static string  */
@@ -812,14 +810,14 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = compile_string(t.text, STRCTX_GAME);
+             o->value = compile_string(t->text, STRCTX_GAME);
              return(TRUE);
         case VARIABLE_TT:
              if (!glulx_mode) {
                  o->type = VARIABLE_OT;
              }
              else {
-                 if (t.value >= MAX_LOCAL_VARIABLES) {
+                 if (t->value >= MAX_LOCAL_VARIABLES) {
                      o->type = GLOBALVAR_OT;
                  }
                  else {
@@ -828,21 +826,21 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      o->type = LOCALVAR_OT;
                  }
              }
-             o->value = t.value;
+             o->value = t->value;
              return(TRUE);
         case SYSFUN_TT:
              if (!glulx_mode) {
                  o->type = VARIABLE_OT;
-                 o->value = t.value + 256;
+                 o->value = t->value + 256;
              }
              else {
                  o->type = SYSFUN_OT;
-                 o->value = t.value;
+                 o->value = t->value;
              }
-             system_function_usage[t.value] = 1;
+             system_function_usage[t->value] = 1;
              return(TRUE);
         case ACTION_TT:
-             *o = action_of_name(t.text);
+             *o = action_of_name(t->text);
              return(TRUE);
         case SYSTEM_CONSTANT_TT:
              /*  Certain system constants depend only on the
@@ -851,7 +849,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  them immediately.  */
              if (!glulx_mode) {
                  o->type = LONG_CONSTANT_OT;
-                 switch(t.value)
+                 switch(t->value)
                  {   
                  case version_number_SC:
                      o->type = SHORT_CONSTANT_OT;
@@ -888,7 +886,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                      o->type = SHORT_CONSTANT_OT; o->marker = 0;
                      v = oddeven_packing_switch; break;
                  default:
-                     v = t.value;
+                     v = t->value;
                      o->marker = INCON_MV;
                      break;
                  }
@@ -896,7 +894,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
              }
              else {
                  o->type = CONSTANT_OT;
-                 switch(t.value)
+                 switch(t->value)
                  {
                  /* The three dict_par flags point at the lower byte
                     of the flag field, because the library is written
@@ -938,7 +936,7 @@ static int evaluate_term(token_data t, assembly_operand *o)
                  /* ###fix: need to fill more of these in! */
 
                  default:
-                     v = t.value;
+                     v = t->value;
                      o->marker = INCON_MV;
                      break;
                  }
@@ -978,7 +976,7 @@ static int is_property_t(int symbol_type)
 {   return ((symbol_type == PROPERTY_T) || (symbol_type == INDIVIDUAL_PROPERTY_T));
 }
 
-static void mark_top_of_emitter_stack(int marker, token_data t)
+static void mark_top_of_emitter_stack(int marker, const token_data *t)
 {   if (emitter_sp < 1)
     {   compiler_error("SR error: Attempt to add a marker to the top of an empty emitter stack");
         return;
@@ -1010,7 +1008,7 @@ static void mark_top_of_emitter_stack(int marker, token_data t)
             warning("Ignoring spurious leading comma");
             return;
         }
-        error_named("Missing operand for", t.text);
+        error_named("Missing operand for", t->text);
         ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
@@ -1040,13 +1038,13 @@ static void remove_bracket_layer_from_emitter_stack()
     --emitter_stack[emitter_sp-2].bracket_count;
 }
 
-static void emit_token(token_data t)
+static void emit_token(const token_data *t)
 {   assembly_operand o1, o2; int arity, stack_size, i;
     int op_node_number, operand_node_number, previous_node_number;
     int32 x = 0;
 
     if (expr_trace_level >= 2)
-    {   printf("Output: %-19s%21s ", t.text, "");
+    {   printf("Output: %-19s%21s ", t->text, "");
         for (i=0; i<emitter_sp; i++)
         {   print_operand(&emitter_stack[i].op, FALSE); printf(" ");
             if (emitter_stack[i].marker == FUNCTION_VALUE_MARKER) printf(":FUNCTION ");
@@ -1057,7 +1055,7 @@ static void emit_token(token_data t)
         printf("\n");
     }
 
-    if (t.type == SUBOPEN_TT) return;
+    if (t->type == SUBOPEN_TT) return;
 
     stack_size = 0;
     while ((stack_size < emitter_sp) &&
@@ -1065,7 +1063,7 @@ static void emit_token(token_data t)
            !emitter_stack[emitter_sp-stack_size-1].bracket_count)
         stack_size++;
 
-    if (t.type == SUBCLOSE_TT)
+    if (t->type == SUBCLOSE_TT)
     {   if (stack_size < emitter_sp && emitter_stack[emitter_sp-stack_size-1].bracket_count)
         {   if (stack_size == 0)
             {   error("No expression between brackets '(' and ')'");
@@ -1084,14 +1082,14 @@ static void emit_token(token_data t)
         return;
     }
 
-    if (t.type != OP_TT)
+    if (t->type != OP_TT)
     {
         ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
         emitter_stack[emitter_sp].marker = 0;
         emitter_stack[emitter_sp].bracket_count = 0;
 
         if (!evaluate_term(t, &(emitter_stack[emitter_sp++].op)))
-            compiler_error_named("Emit token error:", t.text);
+            compiler_error_named("Emit token error:", t->text);
         return;
     }
 
@@ -1099,7 +1097,7 @@ static void emit_token(token_data t)
        call, since we ignore spurious leading commas in function argument lists)
        with no intervening brackets.  Function calls are variadic, so we don't
        apply argument-separating commas. */
-    if (t.value == COMMA_OP &&
+    if (t->value == COMMA_OP &&
         stack_size < emitter_sp &&
         (emitter_stack[emitter_sp-stack_size-1].marker == ARGUMENT_VALUE_MARKER ||
          emitter_stack[emitter_sp-stack_size-1].marker == FUNCTION_VALUE_MARKER) &&
@@ -1109,11 +1107,11 @@ static void emit_token(token_data t)
         return;
     }
 
-    if (t.value == OR_OP)
+    if (t->value == OR_OP)
         return;
 
     arity = 1;
-    if (t.value == FCALL_OP)
+    if (t->value == FCALL_OP)
     {   if (expr_trace_level >= 3)
         {   printf("FCALL_OP finds marker stack: ");
             for (x=0; x<emitter_sp; x++) printf("%d ", emitter_stack[x].marker);
@@ -1143,9 +1141,9 @@ static void emit_token(token_data t)
     }
     else
     {   arity = 1;
-        if (operators[t.value].usage == IN_U) arity = 2;
+        if (operators[t->value].usage == IN_U) arity = 2;
 
-        if (operators[t.value].precedence == 3)
+        if (operators[t->value].precedence == 3)
         {   arity = 2;
             x = emitter_sp-1;
             if(!emitter_stack[x].marker && !emitter_stack[x].bracket_count)
@@ -1159,7 +1157,7 @@ static void emit_token(token_data t)
         }
 
         if (arity > stack_size)
-        {   error_named("Missing operand for", t.text);
+        {   error_named("Missing operand for", t->text);
             while (arity > stack_size)
             {   ensure_memory_list_available(&emitter_stack_memlist, emitter_sp+1);
                 emitter_stack[emitter_sp].marker = 0;
@@ -1177,7 +1175,7 @@ static void emit_token(token_data t)
         o1 = emitter_stack[emitter_sp - i].op;
         if ((o1.symindex >= 0)
             && is_property_t(symbols[o1.symindex].type)) {
-            switch(t.value) 
+            switch(t->value) 
             {
                 case FCALL_OP:
                 case SETEQUALS_OP: case NOTEQUAL_OP: 
@@ -1204,7 +1202,7 @@ static void emit_token(token_data t)
     {   case 1:
             o1 = emitter_stack[emitter_sp - 1].op;
             if ((o1.marker == 0) && is_constant_ot(o1.type))
-            {   switch(t.value)
+            {   switch(t->value)
                 {   case UNARY_MINUS_OP: x = -o1.value; goto FoldConstant;
                     case ARTNOT_OP: 
                          if (!glulx_mode)
@@ -1236,7 +1234,7 @@ static void emit_token(token_data t)
                   ov2 = (o2.value >= 0x8000) ? (o2.value - 0x10000) : o2.value;
                 }
 
-                switch(t.value)
+                switch(t->value)
                 {
                     case PLUS_OP: x = ov1 + ov2; goto FoldConstantC;
                     case MINUS_OP: x = ov1 - ov2; goto FoldConstantC;
@@ -1246,7 +1244,7 @@ static void emit_token(token_data t)
                         if (ov2 == 0)
                           error("Division of constant by zero");
                         else
-                        if (t.value == DIVIDE_OP) {
+                        if (t->value == DIVIDE_OP) {
                           if (ov2 < 0) {
                             ov1 = -ov1;
                             ov2 = -ov2;
@@ -1300,7 +1298,7 @@ static void emit_token(token_data t)
     ensure_memory_list_available(&ET_memlist, ET_used+1);
     op_node_number = ET_used++;
 
-    ET[op_node_number].operator_number = t.value;
+    ET[op_node_number].operator_number = t->value;
     ET[op_node_number].up = -1;
     ET[op_node_number].down = -1;
     ET[op_node_number].right = -1;
@@ -1355,7 +1353,7 @@ static void emit_token(token_data t)
     {   char folding_error[40];
         int32 ov1 = (o1.value >= 0x8000) ? (o1.value - 0x10000) : o1.value;
         int32 ov2 = (o2.value >= 0x8000) ? (o2.value - 0x10000) : o2.value;
-        switch(t.value)
+        switch(t->value)
         {
             case PLUS_OP:
                 sprintf(folding_error, "%d + %d = %d", ov1, ov2, x);
@@ -1949,7 +1947,7 @@ extern assembly_operand parse_expression(int context)
             return(AO);
         }
 
-        switch(find_prec(a,b))
+        switch(find_prec(&a,&b))
         {
             case e5:                 /* Associativity error                  */
                 error_named("Brackets mandatory to clarify order of:",
@@ -1963,7 +1961,7 @@ extern assembly_operand parse_expression(int context)
                 {
                     case SUBOPEN_TT:
                         if (sr_sp >= 2 && sr_stack[sr_sp-2].type == OP_TT && sr_stack[sr_sp-2].value == FCALL_OP)
-                            mark_top_of_emitter_stack(FUNCTION_VALUE_MARKER, b);
+                            mark_top_of_emitter_stack(FUNCTION_VALUE_MARKER, &b);
                         else
                             add_bracket_layer_to_emitter_stack(0);
                         break;
@@ -1972,7 +1970,7 @@ extern assembly_operand parse_expression(int context)
                             case OR_OP:
                                 if (sr_stack[sr_sp-2].type == OP_TT &&
                                     operators[sr_stack[sr_sp-2].value].precedence == 3)
-                                    mark_top_of_emitter_stack(OR_VALUE_MARKER, b);
+                                    mark_top_of_emitter_stack(OR_VALUE_MARKER, &b);
                                 else
                                 {   error("'or' not between values to the right of a condition");
                                     /* Convert to + for error recovery purposes */
@@ -1988,7 +1986,7 @@ extern assembly_operand parse_expression(int context)
                                     if (shallowest_open_bracket_index > 0 &&
                                         sr_stack[shallowest_open_bracket_index-1].type == OP_TT &&
                                         sr_stack[shallowest_open_bracket_index-1].value == FCALL_OP)
-                                    {   mark_top_of_emitter_stack(ARGUMENT_VALUE_MARKER, b);
+                                    {   mark_top_of_emitter_stack(ARGUMENT_VALUE_MARKER, &b);
                                         break;
                                     }
                                     /* Non-argument-separating commas get treated like any other operator; we fall through to the default case. */
@@ -2006,9 +2004,9 @@ extern assembly_operand parse_expression(int context)
             case GREATER_P:
                 do
                 {   pop = sr_stack[sr_sp - 1];
-                    emit_token(pop);
+                    emit_token(&pop);
                     sr_sp--;
-                } while (find_prec(sr_stack[sr_sp-1], pop) != LOWER_P);
+                } while (find_prec(&sr_stack[sr_sp-1], &pop) != LOWER_P);
                 break;
 
             case e1:                 /* Missing operand error                */

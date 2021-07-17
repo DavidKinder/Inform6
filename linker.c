@@ -275,7 +275,7 @@ static void accept_export(void)
                 IE.symbol_value += no_objects;
                 break;
             case ARRAY_T:
-                IE.symbol_value += dynamic_array_area_size - (MAX_GLOBAL_VARIABLES*2);
+                IE.symbol_value += dynamic_array_area_size - (MAX_ZCODE_GLOBAL_VARS*2);
                 break;
             case GLOBAL_VARIABLE_T:
                 if (no_globals==233)
@@ -456,11 +456,11 @@ static int32 backpatch_backpatch(int32 v)
             break;
 
         case ARRAY_MV:
-            if (v < (MAX_GLOBAL_VARIABLES*2))
+            if (v < (MAX_ZCODE_GLOBAL_VARS*2))
             {   v = 2*(variables_map[v/2 + 16] - 16);
             }
             else
-            {   v += dynamic_array_area_size - (MAX_GLOBAL_VARIABLES*2);
+            {   v += dynamic_array_area_size - (MAX_ZCODE_GLOBAL_VARS*2);
             }
             break;
 
@@ -777,11 +777,11 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
                     case INDIVIDUAL_PROP_ZA:
                         offset += individuals_length; break;
                     case DYNAMIC_ARRAY_ZA:
-                        if (offset < (MAX_GLOBAL_VARIABLES*2))
+                        if (offset < (MAX_ZCODE_GLOBAL_VARS*2))
                         {   offset = 2*(variables_map[offset/2 + 16] - 16);
                         }
                         else
-                        {   offset += dynamic_array_area_size - (MAX_GLOBAL_VARIABLES*2);
+                        {   offset += dynamic_array_area_size - (MAX_ZCODE_GLOBAL_VARS*2);
                         }
                         break;
                 }
@@ -812,16 +812,16 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
 
     /* (10) Glue in the dynamic array data */
 
-    i = m_static_offset - m_vars_offset - MAX_GLOBAL_VARIABLES*2;
+    i = m_static_offset - m_vars_offset - MAX_ZCODE_GLOBAL_VARS*2;
     ensure_memory_list_available(&dynamic_array_area_memlist, dynamic_array_area_size + i);
 
     if (linker_trace_level >= 2)
         printf("Inserting dynamic array area, %04x to %04x, at %04x\n",
-            m_vars_offset + MAX_GLOBAL_VARIABLES*2, m_static_offset,
+            m_vars_offset + MAX_ZCODE_GLOBAL_VARS*2, m_static_offset,
             variables_offset + dynamic_array_area_size);
     for (k=0;k<i;k++)
     {   dynamic_array_area[dynamic_array_area_size+k]
-            = p[m_vars_offset+MAX_GLOBAL_VARIABLES*2+k];
+            = p[m_vars_offset+MAX_ZCODE_GLOBAL_VARS*2+k];
     }
     dynamic_array_area_size+=i;
 
@@ -935,7 +935,7 @@ at strings offset %04x (+%04x)\n",
     /* (15) Glue on the properties */
 
     if (last>m_props_offset)
-    {   i = m_static_offset - m_vars_offset - MAX_GLOBAL_VARIABLES*2;
+    {   i = m_static_offset - m_vars_offset - MAX_ZCODE_GLOBAL_VARS*2;
 
         if (linker_trace_level >= 2)
             printf("Inserting object properties area, %04x to %04x, at +%04x\n",

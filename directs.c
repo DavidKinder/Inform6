@@ -919,7 +919,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
             /*  Inhibit "local variable unused" warnings  */
 
-            for (i=1; i<=k; i++) variable_usage[i] = 1;
+            for (i=1; i<=k; i++) variables[i].usage = 1;
             sequence_point_follows = FALSE;
             assemble_routine_end(FALSE, get_token_locations());
         }
