@@ -284,6 +284,9 @@ static int32 unique_task_id(void)
 #define Temporary_Directory "/tmp"
 /* 6 */
 #define PATHLEN 8192
+#if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+#define USE_C11_TIME_API
+#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   Macintosh block                                                         */
@@ -363,6 +366,9 @@ static int32 unique_task_id(void)
 #endif
 /* 6 */
 #define PATHLEN 8192
+#if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
+#define USE_C11_TIME_API
+#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   PC and PC_QUICKC block                                                  */
@@ -402,6 +408,9 @@ static int32 unique_task_id(void)
 /* 6 */
 #define DEFAULT_ERROR_FORMAT 1
 #define PATHLEN 512
+#if _MSC_VER >= 1920 /* Visual C++ 2019 */
+#define USE_C11_TIME_API
+#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   UNIX block                                                              */
@@ -632,21 +641,26 @@ static int32 unique_task_id(void)
 /*   Definitions for time measurement. TIMEVALUE is a type; TIMEVALUE_NOW()  */
 /*   sets it; TIMEVALUE_DIFFERENCE() determines a difference in seconds,     */
 /*   as a float.                                                             */
-/*   Modern platforms should support timespec_get() or clock_gettime(). If   */
-/*   yours does not, #define USE_OLD_TIME_API to revert to the old           */
-/*   implementation using time(). This can only measure in integer second    */
-/*   counts, but it's better than waiting for gnomon.                        */
+/*   Modern platforms should support timespec_get() or clock_gettime(). To   */
+/*   use timespec_get(), #define USE_C11_TIME_API. To use clock_gettime(),   */
+/*   #define USE_POSIX_TIME_API. To use the old implementation using         */
+/*   time(), #define USE_OLD_TIME_API. This can only measure in integer      */
+/*   second counts, but it's better than waiting for gnomon.                 */
 /* ------------------------------------------------------------------------- */
 
-#ifdef USE_OLD_TIME_API
+#if !defined(USE_C11_TIME_API) && !defined(USE_POSIX_TIME_API) && !defined(USE_OLD_TIME_API)
+#define USE_OLD_TIME_API
+#endif
+
+#if defined(USE_OLD_TIME_API)
   #define TIMEVALUE time_t
   #define TIMEVALUE_NOW(t) (*t) = time(0)
   #define TIMEVALUE_DIFFERENCE(begt, endt) (float)(*(endt) - *(begt))
-#elif __STDC_VERSION__ >= 201112L
+#elif defined(USE_C11_TIME_API)
   #define TIMEVALUE struct timespec
   #define TIMEVALUE_NOW(t) timespec_get((t), TIME_UTC)
   #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0F)
-#else
+#elif defined(USE_POSIX_TIME_API)
   #define TIMEVALUE struct timespec
   #define TIMEVALUE_NOW(t) clock_gettime(CLOCK_REALTIME, (t))
   #define TIMEVALUE_DIFFERENCE(begt, endt) ((float)((endt)->tv_sec - (begt)->tv_sec) + (float)((endt)->tv_nsec - (begt)->tv_nsec) / 1000000000.0F)
