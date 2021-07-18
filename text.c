@@ -355,11 +355,10 @@ static void write_zscii(int zsc)
 /* ------------------------------------------------------------------------- */
 
 static void end_z_chars(void)
-{   unsigned char *p;
+{
     zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
     while (zob_index!=0) write_z_char_z(5);
-    p = (text_out_base+text_out_pos);
-    *(p-2)= *(p-2)+128;
+    text_out_base[text_out_pos-2] += 128;
 }
 
 /* Glulx handles this much more simply -- compression is done elsewhere. */
