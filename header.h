@@ -2910,7 +2910,7 @@ extern void  compress_game_text(void);
 extern void  ao_free_arrays(void);
 extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
-extern int32 translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx);
+extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern void  show_dictionary(void);

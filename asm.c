@@ -899,7 +899,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
     {   int32 i;
         ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
         ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+MAX_STATIC_STRINGS);
-        j = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area + zcode_ha_size + MAX_STATIC_STRINGS, AI->text, STRCTX_GAMEOPC);
+        j = translate_text(zcode_holding_area + zcode_ha_size, MAX_STATIC_STRINGS, AI->text, STRCTX_GAMEOPC);
         if (j < 0)
             memoryerror("MAX_STATIC_STRINGS", MAX_STATIC_STRINGS);
         for (i=0; i<j; i++) zcode_markers[zcode_ha_size++] = 0;

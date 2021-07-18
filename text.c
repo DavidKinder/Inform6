@@ -123,15 +123,17 @@ static int zchars_out_buffer[3],       /* During text translation, a buffer of
                                           these are written as a 2-byte word */
            zob_index;                  /* Index (0 to 2) into it             */
 
-static unsigned char *text_out_pc;     /* The "program counter" during text
-                                          translation: the next address to
+static uchar *text_out_base;           /* The storage array during text
+                                          translation                        */
+static int32 text_out_pos;             /* The "program counter" during text
+                                          translation: the next position to
                                           write Z-coded text output to       */
 
-static unsigned char *text_out_limit;  /* The upper limit of text_out_pc
+static int32 text_out_limit;           /* The upper limit of text_out_pos
                                           during text translation            */
 
 static int text_out_overflow;          /* During text translation, becomes
-                                          true if text_out_pc tries to pass
+                                          true if text_out_pos tries to pass
                                           text_out_limit                     */
 
 /* ------------------------------------------------------------------------- */
@@ -244,7 +246,7 @@ extern int32 compile_string(char *b, int strctx)
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        k=translate_text(low_strings_top, low_strings+MAX_LOW_STRINGS, b, strctx);
+        k=translate_text(low_strings_top, MAX_LOW_STRINGS-j, b, strctx);
         if (k<0)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
         low_strings_top += k;
@@ -254,7 +256,7 @@ extern int32 compile_string(char *b, int strctx)
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    i = translate_text(strings_holding_area, strings_holding_area+MAX_STATIC_STRINGS, b, strctx);
+    i = translate_text(strings_holding_area, MAX_STATIC_STRINGS, b, strctx);
     if (i < 0)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
 
@@ -313,11 +315,11 @@ static void write_z_char_z(int i)
     zob_index=0;
     j= zchars_out_buffer[0]*0x0400 + zchars_out_buffer[1]*0x0020
        + zchars_out_buffer[2];
-    if (text_out_pc+2 > text_out_limit) {
+    if (text_out_pos+2 > text_out_limit) {
         text_out_overflow = TRUE;
         return;
     }
-    text_out_pc[0] = j/256; text_out_pc[1] = j%256; text_out_pc+=2;
+    text_out_base[text_out_pos++] = j/256; text_out_base[text_out_pos++] = j%256;
     total_bytes_trans+=2;
 }
 
@@ -356,7 +358,7 @@ static void end_z_chars(void)
 {   unsigned char *p;
     zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
     while (zob_index!=0) write_z_char_z(5);
-    p=(unsigned char *) text_out_pc;
+    p = (text_out_base+text_out_pos);
     *(p-2)= *(p-2)+128;
 }
 
@@ -364,13 +366,12 @@ static void end_z_chars(void)
 static void write_z_char_g(int i)
 {
     ASSERT_GLULX();
-    if (text_out_pc+1 > text_out_limit) {
+    if (text_out_pos+1 > text_out_limit) {
         text_out_overflow = TRUE;
         return;
     }
     total_zchars_trans++;
-    text_out_pc[0] = i;
-    text_out_pc++;
+    text_out_base[text_out_pos++] = i;
     total_bytes_trans++;  
 }
 
@@ -393,11 +394,16 @@ static int zchar_weight(int c)
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern int32 translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
+extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
-    unsigned char *text_in, *orig_pc;
+    unsigned char *text_in;
 
+    if (p_limit < 2) {
+        /* Avoid one corner case. */
+        p_limit = 0;
+    }
+    
     /* For STRCTX_ABBREV, the string being translated is itself an
        abbreviation string, so it can't make use of abbreviations. Set
        the is_abbreviation flag to indicate this.
@@ -407,14 +413,14 @@ extern int32 translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx)
     int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
 
-    /*  Cast the input and output streams to unsigned char: text_out_pc will
+    /*  Cast the input and output streams to unsigned char: text_out_pos will
         advance as bytes of Z-coded text are written, but text_in doesn't    */
 
     text_in     = (unsigned char *) s_text;
-    text_out_pc = (unsigned char *) p;
-    text_out_limit = (unsigned char *) p_limit;
+    text_out_base = (unsigned char *) p;
+    text_out_pos = 0;
+    text_out_limit = p_limit;
     text_out_overflow = FALSE;
-    orig_pc = text_out_pc;
 
     /*  Remember the Z-chars total so that later we can subtract to find the
         number of Z-chars translated on this string                          */
@@ -870,7 +876,7 @@ string; substituting '?'.");
   if (text_out_overflow)
       return -1;
   else
-      return subtract_pointers(text_out_pc, orig_pc);
+      return text_out_pos;
 }
 
 static int unicode_entity_index(int32 unicode)
