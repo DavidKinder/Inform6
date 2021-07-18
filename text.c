@@ -409,6 +409,10 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
     int32 unicode; int zscii;
     unsigned char *text_in;
 
+    if (p_limit >= 0) {
+        ensure_memory_list_available(&translated_text_memlist, p_limit);
+    }
+    
     /* For STRCTX_ABBREV, the string being translated is itself an
        abbreviation string, so it can't make use of abbreviations. Set
        the is_abbreviation flag to indicate this.
