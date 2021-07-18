@@ -1299,15 +1299,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   
   printf(
 "     $list            list current settings\n\
-     $huge            make standard \"huge game\" settings %s\n\
-     $large           make standard \"large game\" settings %s\n\
-     $small           make standard \"small game\" settings %s\n\
      $?SETTING        explain briefly what SETTING is for\n\
      $SETTING=number  change SETTING to given number\n\
-     $#SYMBOL=number  define SYMBOL as a constant in the story\n\n",
-    (DEFAULT_MEMORY_SIZE==HUGE_SIZE)?"(default)":"",
-    (DEFAULT_MEMORY_SIZE==LARGE_SIZE)?"(default)":"",
-    (DEFAULT_MEMORY_SIZE==SMALL_SIZE)?"(default)":"");
+     $#SYMBOL=number  define SYMBOL as a constant in the story\n\n");
 
   printf(
 "  (filename)    read in a list of commands (in the format above)\n\
@@ -1318,14 +1312,13 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --path PATH=dir\n\
   --addpath PATH=dir\n\
   --list\n\
-  --size huge, --size large, --size small\n\
   --helpopt SETTING\n\
   --opt SETTING=number\n\
   --define SETTING=number\n\
   --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
-    printf("For example: \"inform -dexs $huge curses\".\n\n");
+    printf("For example: \"inform -dexs curses\".\n\n");
 #endif
 
     printf(
@@ -1832,6 +1825,7 @@ static int execute_dashdash_command(char *p, char *p2)
     }
     else if (!strcmp(p, "size")) {
         consumed2 = TRUE;
+        /* We accept these arguments even though they've been withdrawn. */
         if (!(p2 && (!strcmpcis(p2, "HUGE") || !strcmpcis(p2, "LARGE") || !strcmpcis(p2, "SMALL")))) {
             printf("--size must be followed by \"huge\", \"large\", or \"small\"\n");
             return consumed2;
