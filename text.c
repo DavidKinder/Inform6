@@ -358,6 +358,11 @@ static void end_z_chars(void)
 {
     zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
     while (zob_index!=0) write_z_char_z(5);
+    if (text_out_pos < 2) {
+        /* Something went wrong. */
+        text_out_overflow = TRUE;
+        return;
+    }
     text_out_base[text_out_pos-2] += 128;
 }
 
@@ -398,7 +403,7 @@ extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx)
     int32 unicode; int zscii;
     unsigned char *text_in;
 
-    if (p_limit < 2) {
+    if (p_limit < 0) {
         /* Avoid one corner case. */
         p_limit = 0;
     }
