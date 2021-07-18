@@ -2666,7 +2666,6 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
            MAX_ABBREVS,
-           MAX_LOW_STRINGS,
            MAX_DYNAMIC_STRINGS;
 
 extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;

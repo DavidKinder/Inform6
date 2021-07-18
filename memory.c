@@ -259,7 +259,6 @@ int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
-int MAX_LOW_STRINGS;
 int MAX_LOCAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
@@ -305,7 +304,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_LOCAL_VARIABLES",MAX_LOCAL_VARIABLES);
-    printf("|  %25s = %-7d |\n","MAX_LOW_STRINGS",MAX_LOW_STRINGS);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
         MEMORY_MAP_EXTENSION);
@@ -329,24 +327,18 @@ extern void set_memory_sizes(int size_flag)
         MAX_QTEXT_SIZE  = 4000;
 
         HASH_TAB_SIZE      = 512;
-
-        MAX_LOW_STRINGS = 2048;
     }
     if (size_flag == LARGE_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
 
         HASH_TAB_SIZE      = 512;
-
-        MAX_LOW_STRINGS = 2048;
     }
     if (size_flag == SMALL_SIZE)
     {
         MAX_QTEXT_SIZE  = 4000;
 
         HASH_TAB_SIZE      = 512;
-
-        MAX_LOW_STRINGS = 1024;
     }
 
     /* Regardless of size_flag... */
@@ -468,13 +460,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
   (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_LOW_STRINGS")==0)
-    {   printf(
-"  MAX_LOW_STRINGS is the size in bytes of a buffer to hold all the \n\
-  compiled \"low strings\" which are to be written above the synonyms table \n\
-  in the Z-machine.  1024 is plenty.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -738,7 +723,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
-                MAX_LOW_STRINGS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_CLASSES")==0)

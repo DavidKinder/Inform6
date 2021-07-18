@@ -2610,7 +2610,7 @@ extern void text_allocate_arrays(void)
         "dictionary");
 
     initialise_memory_list(&low_strings_memlist,
-        sizeof(uchar), MAX_LOW_STRINGS, (void**)&low_strings,
+        sizeof(uchar), 1024, (void**)&low_strings,
         "low (abbreviation) strings");
 
     d_show_buf = NULL;
