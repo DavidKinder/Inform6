@@ -129,7 +129,8 @@ static int32 text_out_pos;             /* The "program counter" during text
                                           write Z-coded text output to       */
 
 static int32 text_out_limit;           /* The upper limit of text_out_pos
-                                          during text translation            */
+                                          during text translation (or -1
+                                          for no limit)                      */
 
 static int text_out_overflow;          /* During text translation, becomes
                                           true if text_out_pos tries to pass
@@ -315,10 +316,17 @@ static void write_z_char_z(int i)
     zob_index=0;
     j= zchars_out_buffer[0]*0x0400 + zchars_out_buffer[1]*0x0020
        + zchars_out_buffer[2];
-    if (text_out_pos+2 > text_out_limit) {
-        text_out_overflow = TRUE;
-        return;
+    
+    if (text_out_limit >= 0) {
+        if (text_out_pos+2 > text_out_limit) {
+            text_out_overflow = TRUE;
+            return;
+        }
     }
+    else {
+        ensure_memory_list_available(&translated_text_memlist, text_out_pos+2);
+    }
+    
     translated_text[text_out_pos++] = j/256; translated_text[text_out_pos++] = j%256;
     total_bytes_trans+=2;
 }
@@ -370,9 +378,14 @@ static void end_z_chars(void)
 static void write_z_char_g(int i)
 {
     ASSERT_GLULX();
-    if (text_out_pos+1 > text_out_limit) {
-        text_out_overflow = TRUE;
-        return;
+    if (text_out_limit >= 0) {
+        if (text_out_pos+1 > text_out_limit) {
+            text_out_overflow = TRUE;
+            return;
+        }
+    }
+    else {
+        ensure_memory_list_available(&translated_text_memlist, text_out_pos+1);
     }
     total_zchars_trans++;
     translated_text[text_out_pos++] = i;
