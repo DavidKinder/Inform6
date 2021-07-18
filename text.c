@@ -122,7 +122,7 @@ uchar *translated_text;                /* Area holding translated strings
                                           until they are moved into either
                                           a temporary file, or the
                                           static_strings_area below */
-//###static memory_list translated_text_memlist;
+static memory_list translated_text_memlist;
 
 static int32 text_out_pos;             /* The "program counter" during text
                                           translation: the next position to
@@ -393,9 +393,14 @@ static int zchar_weight(int c)
 /*   translator. s_text is the source text and the return value is the       */
 /*   number of bytes translated.                                             */
 /*   The translated text will be stored in translated_text.                  */
+/*                                                                           */
 /*   If p_limit is >= 0, the text length will not exceed that many bytes.    */
 /*   If the translation tries to overflow this boundary, the return value    */
 /*   will be -1. (You should display an error and not read translated_text.) */
+/*                                                                           */
+/*   If p_limit is negative, any amount of text is accepted (up to int32     */
+/*   anyway).                                                                */
+/*                                                                           */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
@@ -404,11 +409,6 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
     int32 unicode; int zscii;
     unsigned char *text_in;
 
-    if (p_limit < 0) {
-        /* Avoid one corner case. */
-        p_limit = 0;
-    }
-    
     /* For STRCTX_ABBREV, the string being translated is itself an
        abbreviation string, so it can't make use of abbreviations. Set
        the is_abbreviation flag to indicate this.
@@ -2543,6 +2543,10 @@ extern void text_allocate_arrays(void)
 {
     int ix;
 
+    initialise_memory_list(&translated_text_memlist,
+        sizeof(uchar), 8000, (void**)&translated_text,
+        "translated text holding area");
+    
     initialise_memory_list(&all_text_memlist,
         sizeof(char), 0, (void**)&all_text,
         "transcription text for optimise");
@@ -2582,9 +2586,7 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 1000*DICT_ENTRY_BYTE_LENGTH, (void**)&dictionary,
         "dictionary");
 
-    //###
-    translated_text
-         = my_malloc(MAX_STATIC_STRINGS,"static strings holding area");
+    //### memlist this
     low_strings = my_malloc(MAX_LOW_STRINGS,"low (abbreviation) strings");
 
     d_show_buf = NULL;
@@ -2630,9 +2632,10 @@ extern void extract_all_text()
 
 extern void text_free_arrays(void)
 {
+    deallocate_memory_list(&translated_text_memlist);
+    
     deallocate_memory_list(&all_text_memlist);
     
-    my_free(&translated_text, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
     deallocate_memory_list(&abbreviations_at_memlist);
     deallocate_memory_list(&abbreviations_memlist);
