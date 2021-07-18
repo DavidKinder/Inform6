@@ -247,11 +247,14 @@ extern int32 compile_string(char *b, int strctx)
 
     if (!glulx_mode && in_low_memory)
     {
-        j = low_strings_top;
-        k = translate_text(MAX_LOW_STRINGS-low_strings_top, b, strctx);
-        if (k<0)
-            memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
+        k = translate_text(-1, b, strctx);
+        if (k<0) {
+            error("text translation failed");
+            k = 0;
+        }
+        ensure_memory_list_available(&low_strings_memlist, low_strings_top+k);
         memcpy(low_strings+low_strings_top, translated_text, k);
+        j = low_strings_top;
         low_strings_top += k;
         return(0x21+(j/2));
     }
