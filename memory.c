@@ -322,26 +322,8 @@ static void list_memory_sizes(void)
 
 extern void set_memory_sizes(int size_flag)
 {
-    if (size_flag == HUGE_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-    }
-    if (size_flag == LARGE_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-    }
-    if (size_flag == SMALL_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-    }
-
-    /* Regardless of size_flag... */
+    MAX_QTEXT_SIZE  = 4000;
+    HASH_TAB_SIZE      = 512;
     MAX_LOCAL_VARIABLES_z = 16;
     MAX_LOCAL_VARIABLES_g = 32;
     DICT_CHAR_SIZE = 1;
