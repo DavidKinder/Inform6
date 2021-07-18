@@ -8,8 +8,9 @@
 
 #include "header.h"
 
-uchar *low_strings, *low_strings_top;  /* Start and next free byte in the low
-                                          strings pool */
+uchar *low_strings;                    /* Allocated to low_strings_top       */
+int32 low_strings_top;
+static memory_list low_strings_memlist;
 
 int32 static_strings_extent;           /* Number of bytes of static strings
                                           made so far */
@@ -245,11 +246,12 @@ extern int32 compile_string(char *b, int strctx)
     int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
     if (!glulx_mode && in_low_memory)
-    {   j=subtract_pointers(low_strings_top,low_strings);
-        k=translate_text(MAX_LOW_STRINGS-j, b, strctx);
+    {
+        int32 j = low_strings_top;
+        k = translate_text(MAX_LOW_STRINGS-low_strings_top, b, strctx);
         if (k<0)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
-        memcpy(low_strings_top, translated_text, k);
+        memcpy(low_strings+low_strings_top, translated_text, k);
         low_strings_top += k;
         return(0x21+(j/2));
     }
@@ -2546,7 +2548,7 @@ extern void text_begin_pass(void)
     total_chars_trans=0; total_bytes_trans=0;
     all_text_top=0;
     dictionary_begin_pass();
-    low_strings_top = low_strings;
+    low_strings_top = 0;
 
     static_strings_extent = 0;
     no_strings = 0;
@@ -2603,8 +2605,9 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 1000*DICT_ENTRY_BYTE_LENGTH, (void**)&dictionary,
         "dictionary");
 
-    //### memlist this
-    low_strings = my_malloc(MAX_LOW_STRINGS,"low (abbreviation) strings");
+    initialise_memory_list(&low_strings_memlist,
+        sizeof(uchar), MAX_LOW_STRINGS, (void**)&low_strings,
+        "low (abbreviation) strings");
 
     d_show_buf = NULL;
     d_show_size = 0;
@@ -2653,7 +2656,7 @@ extern void text_free_arrays(void)
     
     deallocate_memory_list(&all_text_memlist);
     
-    my_free(&low_strings, "low (abbreviation) strings");
+    deallocate_memory_list(&low_strings_memlist);
     deallocate_memory_list(&abbreviations_at_memlist);
     deallocate_memory_list(&abbreviations_memlist);
 

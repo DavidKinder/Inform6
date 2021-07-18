@@ -141,7 +141,7 @@ static int32 rough_size_of_paged_memory_z(void)
     ASSERT_ZCODE();
 
     total = 64                                                     /* header */
-            + 2 + subtract_pointers(low_strings_top, low_strings)
+            + 2 + low_strings_top
                                                          /* low strings pool */
             + 6*32;                                   /* abbreviations table */
 
@@ -279,7 +279,7 @@ static void construct_storyfile_z(void)
     p[mark]=0x80; p[mark+1]=0; mark+=2;        /* Start the low strings pool
                                          with a useful default string, "   " */
 
-    for (i=0; i+low_strings<low_strings_top; mark++, i++) /* Low strings pool */
+    for (i=0; i<low_strings_top; mark++, i++)  /* Low strings pool */
         p[0x42+i]=low_strings[i];
 
     abbrevs_at = mark;
