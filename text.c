@@ -247,7 +247,7 @@ extern int32 compile_string(char *b, int strctx)
 
     if (!glulx_mode && in_low_memory)
     {
-        int32 j = low_strings_top;
+        j = low_strings_top;
         k = translate_text(MAX_LOW_STRINGS-low_strings_top, b, strctx);
         if (k<0)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
