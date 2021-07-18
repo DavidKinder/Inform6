@@ -320,7 +320,7 @@ static void list_memory_sizes(void)
     printf("+--------------------------------------+\n");
 }
 
-extern void set_memory_sizes(int size_flag)
+extern void set_memory_sizes(void)
 {
     MAX_QTEXT_SIZE  = 4000;
     HASH_TAB_SIZE      = 512;
@@ -610,10 +610,16 @@ extern void memory_command(char *command)
     if (command[0]=='?') { explain_parameter(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
 
-    if (strcmp(command, "HUGE")==0) { set_memory_sizes(HUGE_SIZE); return; }
-    if (strcmp(command, "LARGE")==0) { set_memory_sizes(LARGE_SIZE); return; }
-    if (strcmp(command, "SMALL")==0) { set_memory_sizes(SMALL_SIZE); return; }
+    if (strcmp(command, "HUGE")==0
+        || strcmp(command, "LARGE")==0
+        || strcmp(command, "SMALL")==0) {
+        if (!nowarnings_switch)
+            printf("The Inform 6 memory size commands (\"SMALL, LARGE, HUGE\") are no longer needed and has been withdrawn.\n");
+        return;
+    }
+    
     if (strcmp(command, "LIST")==0)  { list_memory_sizes(); return; }
+    
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
         {   command[i]=0;

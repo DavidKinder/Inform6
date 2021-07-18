@@ -2027,7 +2027,7 @@ static int sub_main(int argc, char **argv)
 
     banner();
 
-    set_memory_sizes(DEFAULT_MEMORY_SIZE); set_default_paths();
+    set_memory_sizes(); set_default_paths();
     reset_switch_settings(); select_version(5);
 
     cli_files_specified = 0; no_compilations = 0;
