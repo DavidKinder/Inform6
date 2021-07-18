@@ -262,9 +262,11 @@ extern int32 compile_string(char *b, int strctx)
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    i = translate_text(MAX_STATIC_STRINGS, b, strctx);
-    if (i < 0)
-        memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
+    i = translate_text(-1, b, strctx);
+    if (i < 0) {
+        error("text translation failed");
+        i = 0;
+    }
 
     /* Insert null bytes as needed to ensure that the next static string */
     /* also occurs at an address expressible as a packed address         */
@@ -277,8 +279,7 @@ extern int32 compile_string(char *b, int strctx)
             textalign = scale_factor;
         while ((i%textalign)!=0)
         {
-            if (i+2 > MAX_STATIC_STRINGS)
-                memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
+            ensure_memory_list_available(&translated_text_memlist, i+2);
             translated_text[i++] = 0;
             translated_text[i++] = 0;
         }
