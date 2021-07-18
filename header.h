@@ -2841,6 +2841,8 @@ extern void write_serial_number(char *buffer);
 /*   Extern definitions for "text"                                           */
 /* ------------------------------------------------------------------------- */
 
+extern uchar *translated_text;
+
 extern uchar *low_strings, *low_strings_top;
 
 extern int   no_abbreviations;
@@ -2910,7 +2912,7 @@ extern void  compress_game_text(void);
 extern void  ao_free_arrays(void);
 extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
-extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx);
+extern int32 translate_text(int32 p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern void  show_dictionary(void);

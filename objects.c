@@ -782,11 +782,16 @@ static int write_property_block_z(char *shortname)
     /* printf("Object at %04x\n", mark); */
 
     if (shortname != NULL)
-    {   uchar *nameptr;
+    {
         ensure_memory_list_available(&properties_table_memlist, mark+1+510);
-        nameptr = properties_table + mark+1;
-        i = translate_text(nameptr,510,shortname,STRCTX_OBJNAME);
-        if (i < 0) error ("Short name of object exceeded 765 Z-characters");
+        i = translate_text(510,shortname,STRCTX_OBJNAME);
+        if (i < 0) {
+            error ("Short name of object exceeded 765 Z-characters");
+            i = 0;
+        }
+        else {
+            memcpy(properties_table + mark+1, translated_text, i);
+        }
         properties_table[mark] = i/2;
         mark += i+1;
     }

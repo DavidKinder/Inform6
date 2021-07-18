@@ -18,11 +18,6 @@ uchar *static_strings_area;            /* Used if (!temporary_files_switch) to
                                           Allocated to static_strings_extent */
 memory_list static_strings_area_memlist;
 
-static uchar *strings_holding_area;    /* Area holding translated strings
-                                          until they are moved into either
-                                          a temporary file, or the
-                                          static_strings_area below */
-
 static char *all_text;                 /* Text buffer holding the entire text
                                           of the game, when it is being
                                           recorded
@@ -123,8 +118,12 @@ static int zchars_out_buffer[3],       /* During text translation, a buffer of
                                           these are written as a 2-byte word */
            zob_index;                  /* Index (0 to 2) into it             */
 
-static uchar *text_out_base;           /* The storage array during text
-                                          translation                        */
+uchar *translated_text;                /* Area holding translated strings
+                                          until they are moved into either
+                                          a temporary file, or the
+                                          static_strings_area below */
+//###static memory_list translated_text_memlist;
+
 static int32 text_out_pos;             /* The "program counter" during text
                                           translation: the next position to
                                           write Z-coded text output to       */
@@ -246,9 +245,10 @@ extern int32 compile_string(char *b, int strctx)
 
     if (!glulx_mode && in_low_memory)
     {   j=subtract_pointers(low_strings_top,low_strings);
-        k=translate_text(low_strings_top, MAX_LOW_STRINGS-j, b, strctx);
+        k=translate_text(MAX_LOW_STRINGS-j, b, strctx);
         if (k<0)
             memoryerror("MAX_LOW_STRINGS", MAX_LOW_STRINGS);
+        memcpy(low_strings_top, translated_text, k);
         low_strings_top += k;
         return(0x21+(j/2));
     }
@@ -256,7 +256,7 @@ extern int32 compile_string(char *b, int strctx)
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    i = translate_text(strings_holding_area, MAX_STATIC_STRINGS, b, strctx);
+    i = translate_text(MAX_STATIC_STRINGS, b, strctx);
     if (i < 0)
         memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
 
@@ -273,21 +273,21 @@ extern int32 compile_string(char *b, int strctx)
         {
             if (i+2 > MAX_STATIC_STRINGS)
                 memoryerror("MAX_STATIC_STRINGS",MAX_STATIC_STRINGS);
-            strings_holding_area[i++] = 0;
-            strings_holding_area[i++] = 0;
+            translated_text[i++] = 0;
+            translated_text[i++] = 0;
         }
     }
 
     j = static_strings_extent;
 
     if (temporary_files_switch) {
-        for (c=strings_holding_area; c<strings_holding_area+i;
+        for (c=translated_text; c<translated_text+i;
              c++, static_strings_extent++)
             fputc(*c,Temp1_fp);
     }
     else {
         ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+i);
-        for (c=strings_holding_area; c<strings_holding_area+i;
+        for (c=translated_text; c<translated_text+i;
              c++, static_strings_extent++)
             static_strings_area[static_strings_extent] = *c;
     }
@@ -319,7 +319,7 @@ static void write_z_char_z(int i)
         text_out_overflow = TRUE;
         return;
     }
-    text_out_base[text_out_pos++] = j/256; text_out_base[text_out_pos++] = j%256;
+    translated_text[text_out_pos++] = j/256; translated_text[text_out_pos++] = j%256;
     total_bytes_trans+=2;
 }
 
@@ -363,7 +363,7 @@ static void end_z_chars(void)
         text_out_overflow = TRUE;
         return;
     }
-    text_out_base[text_out_pos-2] += 128;
+    translated_text[text_out_pos-2] += 128;
 }
 
 /* Glulx handles this much more simply -- compression is done elsewhere. */
@@ -375,7 +375,7 @@ static void write_z_char_g(int i)
         return;
     }
     total_zchars_trans++;
-    text_out_base[text_out_pos++] = i;
+    translated_text[text_out_pos++] = i;
     total_bytes_trans++;  
 }
 
@@ -390,15 +390,16 @@ static int zchar_weight(int c)
 
 /* ------------------------------------------------------------------------- */
 /*   The main routine "text.c" provides to the rest of Inform: the text      */
-/*   translator. p is the address to write output to, s_text the source text */
-/*   and the return value is the number of bytes translated.                 */
-/*   The return value will not exceed p_limit. If the translation tries to   */
-/*   overflow this boundary, the return value will be -1 (and you should     */
-/*   display an error).                                                      */
+/*   translator. s_text is the source text and the return value is the       */
+/*   number of bytes translated.                                             */
+/*   The translated text will be stored in translated_text.                  */
+/*   If p_limit is >= 0, the text length will not exceed that many bytes.    */
+/*   If the translation tries to overflow this boundary, the return value    */
+/*   will be -1. (You should display an error and not read translated_text.) */
 /*   Note that the source text may be corrupted by this routine.             */
 /* ------------------------------------------------------------------------- */
 
-extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx)
+extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value;
     int32 unicode; int zscii;
     unsigned char *text_in;
@@ -421,7 +422,6 @@ extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx)
         advance as bytes of Z-coded text are written, but text_in doesn't    */
 
     text_in     = (unsigned char *) s_text;
-    text_out_base = (unsigned char *) p;
     text_out_pos = 0;
     text_out_limit = p_limit;
     text_out_overflow = FALSE;
@@ -558,7 +558,7 @@ extern int32 translate_text(uchar *p, int32 p_limit, char *s_text, int strctx)
             ((j = abbreviations_optimal_parse_schedule[i]) != -1))
         {
             /* Fill with 1s, which will get ignored by everyone else. */
-            p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+            uchar *p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
             for (k=0; p[k]!=0; k++) text_in[i+k]=1;
             /* Actually write the abbreviation in the story file. */
             abbreviations[j].freq++;
@@ -2582,7 +2582,8 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 1000*DICT_ENTRY_BYTE_LENGTH, (void**)&dictionary,
         "dictionary");
 
-    strings_holding_area
+    //###
+    translated_text
          = my_malloc(MAX_STATIC_STRINGS,"static strings holding area");
     low_strings = my_malloc(MAX_LOW_STRINGS,"low (abbreviation) strings");
 
@@ -2631,7 +2632,7 @@ extern void text_free_arrays(void)
 {
     deallocate_memory_list(&all_text_memlist);
     
-    my_free(&strings_holding_area, "static strings holding area");
+    my_free(&translated_text, "static strings holding area");
     my_free(&low_strings, "low (abbreviation) strings");
     deallocate_memory_list(&abbreviations_at_memlist);
     deallocate_memory_list(&abbreviations_memlist);
