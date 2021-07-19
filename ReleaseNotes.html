@@ -69,6 +69,7 @@ without requiring user intervention.
  <li>MAX_LABELS
  <li>MAX_LINESPACE
  <li>MAX_LINK_DATA_SIZE
+ <li>MAX_LOW_STRINGS
  <li>MAX_NUM_STATIC_STRINGS
  <li>MAX_OBJ_PROP_COUNT
  <li>MAX_OBJ_PROP_TABLE_SIZE
@@ -76,6 +77,7 @@ without requiring user intervention.
  <li>MAX_PROP_TABLE_SIZE
  <li>MAX_SOURCE_FILES
  <li>MAX_STATIC_DATA
+ <li>MAX_STATIC_STRINGS
  <li>MAX_SYMBOLS
  <li>MAX_TRANSCRIPT_SIZE
  <li>MAX_UNICODE_CHARS
@@ -83,6 +85,8 @@ without requiring user intervention.
  <li>MAX_VERBSPACE
  <li>MAX_ZCODE_SIZE
  </ul>
+As a result of this, the memory size command line arguments (<tt>$SMALL</tt>, <tt>$LARGE</tt> and <tt>$HUGE</tt>)
+are now redundant, and have been removed.
 <li><p>There are now warnings if the compiler detects that the type used in certain expressions is not correct.
 This only checks expressions that contain defined symbols, and does not change the generated code. The checks are:
  <ul>
