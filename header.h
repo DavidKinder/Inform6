@@ -126,15 +126,8 @@
 /*   HAS_REALPATH        - the POSIX realpath() function is available to     */
 /*                         find the absolute path to a file                  */
 /*                                                                           */
-/*   3. An estimate of the typical amount of memory likely to be free        */
-/*   should be given in DEFAULT_MEMORY_SIZE.                                 */
-/*   For most modern machines, HUGE_SIZE is the appropriate setting, but     */
-/*   some older micros may benefit from SMALL_SIZE.                          */
+/*   3. This was DEFAULT_MEMORY_SIZE, now withdrawn.                         */
 /* ------------------------------------------------------------------------- */
-
-#define LARGE_SIZE   1
-#define SMALL_SIZE   2
-#define HUGE_SIZE    3
 
 /* ------------------------------------------------------------------------- */
 /*   4. Filenaming definitions:                                              */
@@ -196,8 +189,6 @@
 #ifdef AMIGA
 /* 1 */
 #define MACHINE_STRING   "Amiga"
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -219,8 +210,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "RISC OS"
 /* 2 */
 #define CHAR_IS_UNSIGNED
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '.'
 #define STANDARD_DIRECTORIES
@@ -239,8 +228,6 @@ static int32 unique_task_id(void)
 #ifdef ATARIST
 /* 1 */
 #define MACHINE_STRING   "Atari ST"
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -260,8 +247,6 @@ static int32 unique_task_id(void)
 #ifdef BEOS
 /* 1 */
 #define MACHINE_STRING   "BeOS"
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 #define FILE_EXTENSIONS
@@ -276,8 +261,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "Linux"
 /* 2 */
 #define HAS_REALPATH
-/* 3 */
-#define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -311,8 +294,6 @@ static int32 unique_task_id(void)
 #define PROMPT_INPUT
 #endif
 #endif
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP           ':'
 #ifdef MAC_MPW
@@ -335,8 +316,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "OS/2"
 /* 2 */
 #define CHAR_IS_UNSIGNED
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 #endif
@@ -348,8 +327,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "MacOS"
 /* 2 */
 #define HAS_REALPATH
-/* 3 */
-#define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -382,12 +359,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "PC"
 /* 2 */
 #define USE_TEMPORARY_FILES
-/* 3 */
-#ifdef PC_QUICKC
-#define DEFAULT_MEMORY_SIZE SMALL_SIZE
-#else
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
-#endif
 /* 4 */
 #define FN_SEP '\\'
 /* 6 */
@@ -401,8 +372,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "Win32"
 /* 2 */
 #define HAS_REALPATH
-/* 3 */
-#define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '\\'
 /* 6 */
@@ -422,8 +391,6 @@ static int32 unique_task_id(void)
 #endif
 /* 2 */
 #define HAS_REALPATH
-/* 3 */
-#define DEFAULT_MEMORY_SIZE HUGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 /* 5 */
@@ -453,8 +420,6 @@ static int32 unique_task_id(void)
 #endif
 /* 2 */
 #define CHAR_IS_UNSIGNED
-/* 3 */
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 /* 4 */
 #define FN_SEP '/'
 #define Code_Extension   ".zip"
@@ -602,10 +567,6 @@ static int32 unique_task_id(void)
 
 #ifndef DEFAULT_ERROR_FORMAT
 #define DEFAULT_ERROR_FORMAT 0
-#endif
-
-#ifndef DEFAULT_MEMORY_SIZE
-#define DEFAULT_MEMORY_SIZE LARGE_SIZE
 #endif
 
 #ifndef CHAR_IS_UNSIGNED
@@ -2666,11 +2627,9 @@ extern size_t malloced_bytes;
 
 extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
            MAX_ABBREVS,
-           MAX_LOW_STRINGS,
            MAX_DYNAMIC_STRINGS;
 
-extern int32 MAX_STATIC_STRINGS,
-           MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
+extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
 extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
@@ -2697,7 +2656,7 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     size_t howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
-extern void set_memory_sizes(int size_flag);
+extern void set_memory_sizes(void);
 extern void adjust_memory_sizes(void);
 extern void memory_command(char *command);
 extern void print_memory_usage(void);
@@ -2841,7 +2800,10 @@ extern void write_serial_number(char *buffer);
 /*   Extern definitions for "text"                                           */
 /* ------------------------------------------------------------------------- */
 
-extern uchar *low_strings, *low_strings_top;
+extern uchar *translated_text;
+
+extern uchar *low_strings;
+extern int32 low_strings_top;
 
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
@@ -2910,7 +2872,7 @@ extern void  compress_game_text(void);
 extern void  ao_free_arrays(void);
 extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
-extern uchar *translate_text(uchar *p, uchar *p_limit, char *s_text, int strctx);
+extern int32 translate_text(int32 p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern void  show_dictionary(void);

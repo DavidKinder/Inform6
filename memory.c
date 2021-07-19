@@ -259,8 +259,6 @@ int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
-int32 MAX_STATIC_STRINGS;
-int MAX_LOW_STRINGS;
 int MAX_LOCAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
@@ -306,7 +304,6 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MAX_LOCAL_VARIABLES",MAX_LOCAL_VARIABLES);
-    printf("|  %25s = %-7d |\n","MAX_LOW_STRINGS",MAX_LOW_STRINGS);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
         MEMORY_MAP_EXTENSION);
@@ -317,48 +314,16 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7ld |\n","MAX_STACK_SIZE",
            (long int) MAX_STACK_SIZE);
-    printf("|  %25s = %-7ld |\n","MAX_STATIC_STRINGS",
-           (long int) MAX_STATIC_STRINGS);
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("+--------------------------------------+\n");
 }
 
-extern void set_memory_sizes(int size_flag)
+extern void set_memory_sizes(void)
 {
-    if (size_flag == HUGE_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-
-        MAX_STATIC_STRINGS = 8000;
-
-        MAX_LOW_STRINGS = 2048;
-    }
-    if (size_flag == LARGE_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-
-        MAX_STATIC_STRINGS = 8000;
-
-        MAX_LOW_STRINGS = 2048;
-    }
-    if (size_flag == SMALL_SIZE)
-    {
-        MAX_QTEXT_SIZE  = 4000;
-
-        HASH_TAB_SIZE      = 512;
-
-        MAX_STATIC_STRINGS = 8000;
-
-        MAX_LOW_STRINGS = 1024;
-    }
-
-    /* Regardless of size_flag... */
+    MAX_QTEXT_SIZE  = 4000;
+    HASH_TAB_SIZE      = 512;
     MAX_LOCAL_VARIABLES_z = 16;
     MAX_LOCAL_VARIABLES_g = 32;
     DICT_CHAR_SIZE = 1;
@@ -412,8 +377,7 @@ static void explain_parameter(char *command)
     if (strcmp(command,"MAX_QTEXT_SIZE")==0)
     {   printf(
 "  MAX_QTEXT_SIZE is the maximum length of a quoted string.  Increasing\n\
-   by 1 costs 5 bytes (for lexical analysis memory).  Inform automatically\n\
-   ensures that MAX_STATIC_STRINGS is at least twice the size of this.");
+   by 1 costs 5 bytes (for lexical analysis memory)\n.");
         return;
     }
     if (strcmp(command,"HASH_TAB_SIZE")==0)
@@ -478,23 +442,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
   (\"@00\").  It is not allowed to exceed 96 in Z-code or 100 in Glulx.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_STATIC_STRINGS")==0)
-    {
-        printf(
-"  MAX_STATIC_STRINGS is the size in bytes of a buffer to hold compiled\n\
-  strings before they're written into longer-term storage.  2000 bytes is \n\
-  plenty, allowing string constants of up to about 3000 characters long.\n\
-  Inform automatically ensures that this is at least twice the size of\n\
-  MAX_QTEXT_SIZE, to be on the safe side.");
-        return;
-    }
-    if (strcmp(command,"MAX_LOW_STRINGS")==0)
-    {   printf(
-"  MAX_LOW_STRINGS is the size in bytes of a buffer to hold all the \n\
-  compiled \"low strings\" which are to be written above the synonyms table \n\
-  in the Z-machine.  1024 is plenty.\n");
         return;
     }
     if (strcmp(command,"INDIV_PROP_START")==0)
@@ -663,10 +610,16 @@ extern void memory_command(char *command)
     if (command[0]=='?') { explain_parameter(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
 
-    if (strcmp(command, "HUGE")==0) { set_memory_sizes(HUGE_SIZE); return; }
-    if (strcmp(command, "LARGE")==0) { set_memory_sizes(LARGE_SIZE); return; }
-    if (strcmp(command, "SMALL")==0) { set_memory_sizes(SMALL_SIZE); return; }
+    if (strcmp(command, "HUGE")==0
+        || strcmp(command, "LARGE")==0
+        || strcmp(command, "SMALL")==0) {
+        if (!nowarnings_switch)
+            printf("The Inform 6 memory size commands (\"SMALL, LARGE, HUGE\") are no longer needed and has been withdrawn.\n");
+        return;
+    }
+    
     if (strcmp(command, "LIST")==0)  { list_memory_sizes(); return; }
+    
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
         {   command[i]=0;
@@ -677,8 +630,6 @@ extern void memory_command(char *command)
                 flag=2;
             if (strcmp(command,"MAX_QTEXT_SIZE")==0)
             {   MAX_QTEXT_SIZE=j, flag=1;
-                if (2*MAX_QTEXT_SIZE > MAX_STATIC_STRINGS)
-                    MAX_STATIC_STRINGS = 2*MAX_QTEXT_SIZE;
             }
             if (strcmp(command,"MAX_SYMBOLS")==0)
                 flag=3;
@@ -753,16 +704,14 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
                 flag=3;
             if (strcmp(command,"MAX_STATIC_STRINGS")==0)
-            {   MAX_STATIC_STRINGS=j, flag=1;
-                if (2*MAX_QTEXT_SIZE > MAX_STATIC_STRINGS)
-                    MAX_STATIC_STRINGS = 2*MAX_QTEXT_SIZE;
+            {   flag=3;
             }
             if (strcmp(command,"MAX_ZCODE_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LOW_STRINGS")==0)
-                MAX_LOW_STRINGS=j, flag=1;
+                flag=3;
             if (strcmp(command,"MAX_TRANSCRIPT_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_CLASSES")==0)
