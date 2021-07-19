@@ -32,7 +32,7 @@ int next_token_begins_syntax_line;      /* When TRUE, start a new syntax
 int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 
 /* ------------------------------------------------------------------------- */
-/*   The lexer's output is a sequence of triples, each called a "token",     */
+/*   The lexer's output is a sequence of structs, each called a "token",     */
 /*   representing one lexical unit (or "lexeme") each.  Instead of providing */
 /*   "lookahead" (that is, always having available the next token after the  */
 /*   current one, so that syntax analysers higher up in Inform can have      */
@@ -43,9 +43,13 @@ int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 /*   For example, the lexeme "$1e3" is understood by Inform as a hexadecimal */
 /*   number, and translated to the token:                                    */
 /*     type NUMBER_TT, value 483, text "$1e3"                                */
+/*   (The token_data struct has several more optional fields which are used  */
+/*   for type-checking and error reporting.)                                 */
 /* ------------------------------------------------------------------------- */
 /*   These three variables are set to the current token on a call to         */
 /*   get_next_token() (but are not changed by a call to put_token_back()).   */
+/*   (It would be tidier to use a token_data structure, rather than having   */
+/*   get_next_token() unpack three values. But this is the way it is.)       */
 /* ------------------------------------------------------------------------- */
 
 int token_type;
@@ -751,6 +755,9 @@ static void interpret_identifier(int pos, int dirs_only_flag)
 
     circle[pos].value = symbol_index(p, hashcode);
     circle[pos].type = SYMBOL_TT;
+    /* The symindex, etc fields get set in expressp.c. Although there's
+       no particular reason they couldn't be set here, if get_next_token()
+       returned them, which currently it doesn't. */
 }
 
 
