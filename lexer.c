@@ -252,8 +252,21 @@ static int token_contexts[CIRCLE_SIZE];
 /*   no problem.                                                             */
 /* ------------------------------------------------------------------------- */
 
-static char *lexeme_memory;
-static char *lex_p;                     /* Current write position            */
+typedef struct lextext_s {
+    char *text;
+    size_t size; /* Allocated size (including terminal null)
+                    This is always at least MAX_IDENTIFIER_LENGTH+1         */
+} lextext;
+
+static lextext *lextexts; /* Allocated to no_lextexts */
+static memory_list lextexts_memlist;
+static int no_lextexts;
+
+static int cur_lextexts;    /* Number of lextexts in current use
+                               (cur_lextexts <= no_lextexts)                 */
+
+static int lex_index;       /* Index of lextext being written to             */
+static int lex_pos;         /* Current write position in that lextext        */
 
 /* ------------------------------------------------------------------------- */
 /*   The lexer itself needs up to 3 characters of lookahead (it uses an      */
@@ -683,8 +696,8 @@ extern void construct_local_variable_tables(void)
       local_variable_texts[i] = "<no such local variable>";
 }
 
-static void interpret_identifier(int pos, int dirs_only_flag)
-{   int index, hashcode; char *p = circle[pos].text;
+static void interpret_identifier(char *p, int pos, int dirs_only_flag)
+{   int index, hashcode;
 
     /*  An identifier is either a keyword or a "symbol", a name which the
         lexical analyser leaves to higher levels of Inform to understand.    */
@@ -1445,10 +1458,45 @@ assumption inside Inform");
     }
 }
 
+static void lexaddc(char ch)
+{
+    if (lex_pos >= lextexts[lex_index].size) {
+        size_t newsize = lextexts[lex_index].size * 2;
+        my_realloc(&lextexts[lex_index].text, lextexts[lex_index].size, newsize, "one lexeme text");
+        lextexts[lex_index].size = newsize;
+    }
+    lextexts[lex_index].text[lex_pos++] = ch;
+}
+
+static void lexdelc(void)
+{
+    if (lex_pos > 0) {
+        lex_pos--;
+    }
+    lextexts[lex_index].text[lex_pos] = 0;
+}
+
+static char lexlastc(void)
+{
+    if (lex_pos == 0) {
+        return 0;
+    }
+    return lextexts[lex_index].text[lex_pos-1];
+}
+
+static void lexadds(char *str)
+{
+    while (*str) {
+        lexaddc(*str);
+        str++;
+    }
+    lexaddc(0);
+}
+
 extern void get_next_token(void)
 {   int d, i, j, k, quoted_size, e, radix, context; int32 n; char *r;
     int returning_a_put_back_token = TRUE;
-
+    
     context = lexical_context();
 
     if (tokens_put_back > 0)
@@ -1458,7 +1506,7 @@ extern void get_next_token(void)
         if (context != token_contexts[i])
         {   j = circle[i].type;
             if ((j==0) || ((j>=100) && (j<200)))
-                interpret_identifier(i, FALSE);
+                interpret_identifier(circle[i].text, i, FALSE);
         }
         goto ReturnBack;
     }
@@ -1467,12 +1515,20 @@ extern void get_next_token(void)
     if (circle_position == CIRCLE_SIZE-1) circle_position = 0;
     else circle_position++;
 
-    if (lex_p > lexeme_memory + 4*MAX_QTEXT_SIZE)
-        lex_p = lexeme_memory;
-
-    circle[circle_position].text = lex_p;
+    lex_index = cur_lextexts++;
+    if (lex_index >= no_lextexts) {
+        /* fresh lextext block; must init it */
+        no_lextexts = lex_index+1;
+        ensure_memory_list_available(&lextexts_memlist, no_lextexts);
+        lextexts[lex_index].size = MAX_IDENTIFIER_LENGTH + 1;
+        lextexts[lex_index].text = my_malloc(lextexts[lex_index].size, "one lexeme text");
+    }
+    lex_pos = 0;
+    lextexts[lex_index].text[0] = 0; /* start with an empty string */
+    
+    circle[circle_position].text = NULL; /* will fill in later */
     circle[circle_position].value = 0;
-    *lex_p = 0;
+    circle[circle_position].type = 0;
 
     StartTokenAgain:
     d = (*get_next_char)();
@@ -1503,8 +1559,7 @@ extern void get_next_token(void)
 
         case EOF_CODE:
             circle[circle_position].type = EOF_TT;
-            strcpy(lex_p, "<end of file>");
-            lex_p += strlen(lex_p) + 1;
+            lexadds("<end of file>");
             break;
 
         case DIGIT_CODE:
@@ -1513,11 +1568,11 @@ extern void get_next_token(void)
             n=0;
             do
             {   n = n*radix + character_digit_value[d];
-                *lex_p++ = d;
+                lexaddc(d);
             } while ((character_digit_value[lookahead] < radix)
                      && (d = (*get_next_char)(), TRUE));
 
-            *lex_p++ = 0;
+            lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
             circle[circle_position].value = n;
             break;
@@ -1526,38 +1581,38 @@ extern void get_next_token(void)
             {   int expo=0; double intv=0, fracv=0;
                 int expocount=0, intcount=0, fraccount=0;
                 int signbit = (d == '-');
-                *lex_p++ = d;
+                lexaddc(d);
                 while (character_digit_value[lookahead] < 10) {
                     intv = 10.0*intv + character_digit_value[lookahead];
                     intcount++;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                 }
                 if (lookahead == '.') {
                     double fracpow = 1.0;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                     while (character_digit_value[lookahead] < 10) {
                         fracpow *= 0.1;
                         fracv = fracv + fracpow*character_digit_value[lookahead];
                         fraccount++;
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                 }
                 if (lookahead == 'e' || lookahead == 'E') {
                     int exposign = 0;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                     if (lookahead == '+' || lookahead == '-') {
                         exposign = (lookahead == '-');
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                     while (character_digit_value[lookahead] < 10) {
                         expo = 10*expo + character_digit_value[lookahead];
                         expocount++;
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                     if (expocount == 0)
@@ -1568,7 +1623,7 @@ extern void get_next_token(void)
                     error("Floating-point literal must have digits");
                 n = construct_float(signbit, intv, fracv, expo);
             }
-            *lex_p++ = 0;
+            lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
             circle[circle_position].value = n;
             if (!glulx_mode && dont_enter_into_symbol_table != -2) error("Floating-point literals are not available in Z-code");
@@ -1589,15 +1644,15 @@ extern void get_next_token(void)
         case QUOTE_CODE:     /* Single-quotes: scan a literal string */
             quoted_size=0;
             do
-            {   e = d; d = (*get_next_char)(); *lex_p++ = d;
+            {   e = d; d = (*get_next_char)(); lexaddc(d);
                 if (quoted_size++==64)
                 {   error(
                     "Too much text for one pair of quotations '...' to hold");
-                    *lex_p='\''; break;
+                    lexaddc('\''); break;
                 }
                 if ((d == '\'') && (e != '@'))
                 {   if (quoted_size == 1)
-                    {   d = (*get_next_char)(); *lex_p++ = d;
+                    {   d = (*get_next_char)(); lexaddc(d);
                         if (d != '\'')
                             error("No text between quotation marks ''");
                     }
@@ -1605,29 +1660,29 @@ extern void get_next_token(void)
                 }
             } while (d != EOF);
             if (d==EOF) ebf_error("'\''", "end of file");
-            *(lex_p-1) = 0;
+            lexdelc();
             circle[circle_position].type = SQ_TT;
             break;
 
         case DQUOTE_CODE:    /* Double-quotes: scan a literal string */
             quoted_size=0;
             do
-            {   d = (*get_next_char)(); *lex_p++ = d;
+            {   d = (*get_next_char)(); lexaddc(d);
                 if (quoted_size++==MAX_QTEXT_SIZE)
                 {   memoryerror("MAX_QTEXT_SIZE", MAX_QTEXT_SIZE);
                     break;
                 }
                 if (d == '\n')
-                {   lex_p--;
-                    while (*(lex_p-1) == ' ') lex_p--;
-                    if (*(lex_p-1) != '^') *lex_p++ = ' ';
+                {   lex_pos--;
+                    while (lexlastc() == ' ') lex_pos--;
+                    if (lexlastc() != '^') lexaddc(' ');
                     while ((lookahead != EOF) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                     (*get_next_char)();
                 }
                 else if (d == '\\')
                 {   int newline_passed = FALSE;
-                    lex_p--;
+                    lex_pos--;
                     while ((lookahead != EOF) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                         if ((d = (*get_next_char)()) == '\n')
@@ -1642,40 +1697,40 @@ extern void get_next_token(void)
                 }
             }   while ((d != EOF) && (d!='\"'));
             if (d==EOF) ebf_error("'\"'", "end of file");
-            *(lex_p-1) = 0;
+            lexdelc();
             circle[circle_position].type = DQ_TT;
             break;
 
         case IDENTIFIER_CODE:    /* Letter or underscore: an identifier */
 
-            *lex_p++ = d; n=1;
+            lexaddc(d); n=1;
             while ((n<=MAX_IDENTIFIER_LENGTH)
                    && ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                    || (tokeniser_grid[lookahead] == DIGIT_CODE)))
-                n++, *lex_p++ = (*get_next_char)();
+                n++, lexaddc((*get_next_char)());
 
-            *lex_p++ = 0;
+            lexaddc(0);
 
             if (n > MAX_IDENTIFIER_LENGTH)
             {   char bad_length[100];
                 sprintf(bad_length,
                     "Name exceeds the maximum length of %d characters:",
                          MAX_IDENTIFIER_LENGTH);
-                error_named(bad_length, circle[circle_position].text);
+                error_named(bad_length, lextexts[lex_index].text);
                 /* Trim token so that it doesn't violate
                    MAX_IDENTIFIER_LENGTH during error recovery */
-                circle[circle_position].text[MAX_IDENTIFIER_LENGTH] = 0;
+                lextexts[lex_index].text[MAX_IDENTIFIER_LENGTH] = 0;
             }
 
             if (dont_enter_into_symbol_table)
             {   circle[circle_position].type = DQ_TT;
                 circle[circle_position].value = 0;
                 if (dont_enter_into_symbol_table == -2)
-                    interpret_identifier(circle_position, TRUE);
+                    interpret_identifier(lextexts[lex_index].text, circle_position, TRUE);
                 break;
             }
 
-            interpret_identifier(circle_position, FALSE);
+            interpret_identifier(lextexts[lex_index].text, circle_position, FALSE);
             break;
 
         default:
@@ -1685,24 +1740,25 @@ extern void get_next_token(void)
             for (j=e>>4, k=j+(e&0x0f); j<k; j++)
             {   r = (char *) separators[j];
                 if (r[1]==0)
-                {   *lex_p++=d; *lex_p++=0;
+                {   lexaddc(d);
+                    lexaddc(0);
                     goto SeparatorMatched;
                 }
                 else
                 if (r[2]==0)
                 {   if (*(r+1) == lookahead)
-                    {   *lex_p++=d;
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=0;
+                    {   lexaddc(d);
+                        lexaddc((*get_next_char)());
+                        lexaddc(0);
                         goto SeparatorMatched;
                     }
                 }
                 else
                 {   if ((*(r+1) == lookahead) && (*(r+2) == lookahead2))
-                    {   *lex_p++=d;
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=0;
+                    {   lexaddc(d);
+                        lexaddc((*get_next_char)());
+                        lexaddc((*get_next_char)());
+                        lexaddc(0);
                         goto SeparatorMatched;
                     }
                 }
@@ -1711,9 +1767,10 @@ extern void get_next_token(void)
             /*  The following contingency never in fact arises with the
                 current set of separators, but might in future  */
 
-            *lex_p++ = d; *lex_p++ = lookahead; *lex_p++ = lookahead2;
-            *lex_p++ = 0;
-            error_named("Unrecognised combination in source:", lex_p);
+            lexaddc(d); lexaddc(lookahead); lexaddc(lookahead2);
+            lexaddc(0);
+            error_named("Unrecognised combination in source:",
+                lextexts[lex_index].text);
             goto StartTokenAgain;
 
             SeparatorMatched:
@@ -1726,15 +1783,15 @@ extern void get_next_token(void)
                 case HASHWDOLLAR_SEP:
                     if (tokeniser_grid[lookahead] == WHITESPACE_CODE)
                     {   error_named("Character expected after",
-                            circle[circle_position].text);
+                            lextexts[lex_index].text);
                         break;
                     }
-                    lex_p--;
-                    *lex_p++ = (*get_next_char)();
+                    lex_pos--;
+                    lexaddc((*get_next_char)());
                     while ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                            || (tokeniser_grid[lookahead] == DIGIT_CODE))
-                        *lex_p++ = (*get_next_char)();
-                    *lex_p++ = 0;
+                        lexaddc((*get_next_char)());
+                    lexaddc(0);
                     break;
                 case HASHADOLLAR_SEP:
                 case HASHGDOLLAR_SEP:
@@ -1742,19 +1799,20 @@ extern void get_next_token(void)
                 case HASHHASH_SEP:
                     if (tokeniser_grid[lookahead] != IDENTIFIER_CODE)
                     {   error_named("Alphabetic character expected after",
-                            circle[circle_position].text);
+                            lextexts[lex_index].text);
                         break;
                     }
-                    lex_p--;
+                    lex_pos--;
                     while ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                            || (tokeniser_grid[lookahead] == DIGIT_CODE))
-                        *lex_p++ = (*get_next_char)();
-                    *lex_p++ = 0;
+                        lexaddc((*get_next_char)());
+                    lexaddc(0);
                     break;
             }
             break;
     }
 
+    circle[circle_position].text = lextexts[lex_index].text;
     i = circle_position;
 
     ReturnBack:
@@ -1790,7 +1848,11 @@ extern void restart_lexer(char *lexical_source, char *name)
         token_contexts[i] = 0;
     }
 
-    lex_p = lexeme_memory;
+    cur_lextexts = 0;
+    /* But we leave no_lextexts, so those allocated blocks can be reused */
+    lex_index = -1;
+    lex_pos = -1;
+    
     tokens_put_back = 0;
     forerrors_pointer = 0;
     dont_enter_into_symbol_table = FALSE;
@@ -1827,6 +1889,12 @@ extern void init_lexer_vars(void)
     FileStack_max = 0;
     CF = NULL;
     CurrentLB = NULL;
+
+    lextexts = NULL;
+    no_lextexts = 0;
+    cur_lextexts = 0;
+    lex_index = -1;
+    lex_pos = -1;
     
     blank_brief_location.file_index = -1;
     blank_brief_location.line_number = 0;
@@ -1860,8 +1928,11 @@ extern void lexer_allocate_arrays(void)
         sizeof(Sourcefile), 4, (void**)&FileStack,
         "source file stack");
     FileStack_max = 0;
-    
-    lexeme_memory = my_malloc(5*MAX_QTEXT_SIZE, "lexeme memory");
+
+    initialise_memory_list(&lextexts_memlist,
+        sizeof(lextext), 200, (void**)&lextexts,
+        "lexeme texts list");
+    cur_lextexts = 0;
 
     keywords_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "keyword hash table");
@@ -1901,16 +1972,19 @@ extern void lexer_allocate_arrays(void)
 }
 
 extern void lexer_free_arrays(void)
-{   int i;
+{   int ix;
     CF = NULL;
     CurrentLB = NULL;
 
-    for (i=0; i<FileStack_max; i++)
-    {
-        my_free(&FileStack[i].buffer, "source file buffer");
+    for (ix=0; ix<FileStack_max; ix++) {
+        my_free(&FileStack[ix].buffer, "source file buffer");
     }
     deallocate_memory_list(&FileStack_memlist);
-    my_free(&lexeme_memory, "lexeme memory");
+
+    for (ix=0; ix<no_lextexts; ix++) {
+        my_free(&lextexts[ix].text, "one lexeme text");
+    }
+    deallocate_memory_list(&lextexts_memlist);
 
     my_free(&keywords_hash_table, "keyword hash table");
     my_free(&keywords_hash_ends_table, "keyword hash end table");
