@@ -2595,6 +2595,7 @@ extern brief_location blank_brief_location;
 
 extern void put_token_back(void);
 extern void get_next_token(void);
+extern void release_token_texts(void);
 extern void restart_lexer(char *lexical_source, char *name);
 
 extern keyword_group directives, statements, segment_markers,

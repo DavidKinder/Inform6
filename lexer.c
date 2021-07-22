@@ -1440,6 +1440,17 @@ static int get_next_char_from_string(void)
 /*                                   otherwise, to read from this string.    */
 /* ------------------------------------------------------------------------- */
 
+extern void release_token_texts(void)
+{
+    printf("### start of directive; %d lextexts allocated (putback %d)\n", no_lextexts, tokens_put_back);
+    if (tokens_put_back > 0) {
+        fatalerror("###");
+    }
+    cur_lextexts = 0;
+
+    //###for (int ix=0; ix<no_lextexts; ix++) lextexts[ix].text[0] = 0; //###
+}
+
 extern void put_token_back(void)
 {   tokens_put_back++;
 
@@ -1462,6 +1473,7 @@ static void lexaddc(char ch)
 {
     if (lex_pos >= lextexts[lex_index].size) {
         size_t newsize = lextexts[lex_index].size * 2;
+        //printf("### realloc lextext %d ('%c' at pos %d) from %ld to %ld: ", lex_index, ch, lex_pos, lextexts[lex_index].size, newsize); fwrite(lextexts[lex_index].text, 1, lextexts[lex_index].size, stdout); printf("\n");
         my_realloc(&lextexts[lex_index].text, lextexts[lex_index].size, newsize, "one lexeme text");
         lextexts[lex_index].size = newsize;
     }
@@ -1985,6 +1997,7 @@ extern void lexer_free_arrays(void)
     }
     deallocate_memory_list(&FileStack_memlist);
 
+    printf("### %d lextexts allocated (cur %d)\n", no_lextexts, cur_lextexts);
     for (ix=0; ix<no_lextexts; ix++) {
         my_free(&lextexts[ix].text, "one lexeme text");
     }
