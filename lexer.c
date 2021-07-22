@@ -1662,6 +1662,10 @@ extern void get_next_token(void)
                     "Name exceeds the maximum length of %d characters:",
                          MAX_IDENTIFIER_LENGTH);
                 error_named(bad_length, circle[circle_position].text);
+                /* Eat any further extra characters in the identifier */
+                while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
+                        || (tokeniser_grid[lookahead] == DIGIT_CODE)))
+                    (*get_next_char)();
                 /* Trim token so that it doesn't violate
                    MAX_IDENTIFIER_LENGTH during error recovery */
                 circle[circle_position].text[MAX_IDENTIFIER_LENGTH] = 0;
