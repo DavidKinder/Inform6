@@ -65,6 +65,9 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
                                        /* In Glulx, of course, that will be
                                           4 instead of 2.                    */
 
+static memory_list current_array_name; /* The name of the global or array
+                                          currently being compiled.          */
+
 /* Complete the array. Fill in the size field (if it has one) and 
    advance foo_array_area_size.
 */
@@ -277,6 +280,7 @@ extern void make_global(int array_flag, int name_only)
         array_flag is always FALSE in that case.                             */
 
     int32 i;
+    int name_length;
     int array_type, data_type;
     int is_static = FALSE;
     assembly_operand AO;
@@ -284,7 +288,6 @@ extern void make_global(int array_flag, int name_only)
     int extraspace;
 
     int32 global_symbol;
-    const char *global_name;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -292,7 +295,10 @@ extern void make_global(int array_flag, int name_only)
     get_next_token();
     i = token_value;
     global_symbol = i;
-    global_name = token_text;
+    
+    name_length = strlen(token_text) + 1;
+    ensure_memory_list_available(&current_array_name, name_length);
+    strncpy(current_array_name.data, token_text, name_length);
 
     if (!glulx_mode) {
         if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
@@ -388,7 +394,9 @@ extern void make_global(int array_flag, int name_only)
         }
         put_token_back();
         if (debugfile_switch && !array_flag)
-        {   debug_file_printf("<global-variable>");
+        {
+            char *global_name = current_array_name.data;
+            debug_file_printf("<global-variable>");
             debug_file_printf("<identifier>%s</identifier>", global_name);
             debug_file_printf("<address>");
             write_debug_global_backpatch(symbols[global_symbol].value);
@@ -417,7 +425,9 @@ extern void make_global(int array_flag, int name_only)
             }
             global_initial_value[no_globals-1] = AO.value;
             if (debugfile_switch)
-            {   debug_file_printf("<global-variable>");
+            {
+                char *global_name = current_array_name.data;
+                debug_file_printf("<global-variable>");
                 debug_file_printf("<identifier>%s</identifier>", global_name);
                 debug_file_printf("<address>");
                 write_debug_global_backpatch(symbols[global_symbol].value);
@@ -676,6 +686,7 @@ advance as part of 'Zcharacter table':", unicode);
     if (debugfile_switch)
     {
         int32 new_area_size;
+        char *global_name = current_array_name.data;
         debug_file_printf("<array>");
         debug_file_printf("<identifier>%s</identifier>", global_name);
         debug_file_printf("<value>");
@@ -804,6 +815,10 @@ extern void arrays_allocate_arrays(void)
     initialise_memory_list(&global_initial_value_memlist,
         sizeof(int32), 200, (void**)&global_initial_value,
         "global variable values");
+
+    initialise_memory_list(&current_array_name,
+        sizeof(char), MAX_IDENTIFIER_LENGTH+1, NULL,
+        "array name currently being defined");
 }
 
 extern void arrays_free_arrays(void)
@@ -812,6 +827,7 @@ extern void arrays_free_arrays(void)
     deallocate_memory_list(&static_array_area_memlist);
     deallocate_memory_list(&arrays_memlist);
     deallocate_memory_list(&global_initial_value_memlist);
+    deallocate_memory_list(&current_array_name);
 }
 
 /* ========================================================================= */
