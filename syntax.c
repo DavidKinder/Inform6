@@ -146,7 +146,7 @@ extern int parse_directive(int internal_flag)
 
     begin_syntax_line(FALSE);
     if (!internal_flag) {
-        //###release_token_texts();
+        release_token_texts();
     }
     get_next_token();
 
@@ -490,7 +490,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
     do
     {   begin_syntax_line(TRUE);
 
-        //###release_token_texts();
+        release_token_texts();
         get_next_token();
 
         if (token_type == EOF_TT)

@@ -1442,11 +1442,23 @@ static int get_next_char_from_string(void)
 
 extern void release_token_texts(void)
 {
+    int ix;
     printf("### start of directive; %d lextexts allocated (putback %d)\n", no_lextexts, tokens_put_back);
-    if (tokens_put_back > 0) {
-        fatalerror("###");
+    if (tokens_put_back == 0) {
+        cur_lextexts = 0;
+        return;
     }
-    cur_lextexts = 0;
+
+    for (ix=0; ix<tokens_put_back; ix++) {
+        lextext temp;
+        int pos = circle_position - tokens_put_back + 1 + ix;
+        if (pos < 0) pos += CIRCLE_SIZE;
+
+        temp = lextexts[ix];
+        lextexts[ix] = lextexts[circle[pos].lextext];
+        lextexts[circle[pos].lextext] = temp;
+    }
+    cur_lextexts = tokens_put_back;
 
     //###for (int ix=0; ix<no_lextexts; ix++) lextexts[ix].text[0] = 0; //###
 }
@@ -1538,6 +1550,7 @@ extern void get_next_token(void)
     lex_pos = 0;
     lextexts[lex_index].text[0] = 0; /* start with an empty string */
     
+    circle[circle_position].lextext = lex_index;
     circle[circle_position].text = NULL; /* will fill in later */
     circle[circle_position].value = 0;
     circle[circle_position].type = 0;

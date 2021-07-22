@@ -886,6 +886,7 @@ typedef struct token_data_s
     int symflags;
     int marker;
     debug_location location;
+    int lextext; //###
 } token_data;
 
 typedef struct symbolinfo_s {
