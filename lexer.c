@@ -1450,13 +1450,16 @@ extern void release_token_texts(void)
     }
 
     for (ix=0; ix<tokens_put_back; ix++) {
+        int oldpos;
         lextext temp;
         int pos = circle_position - tokens_put_back + 1 + ix;
         if (pos < 0) pos += CIRCLE_SIZE;
 
+        oldpos = circle[pos].lextext;
+        circle[pos].lextext = ix;
         temp = lextexts[ix];
-        lextexts[ix] = lextexts[circle[pos].lextext];
-        lextexts[circle[pos].lextext] = temp;
+        lextexts[ix] = lextexts[oldpos];
+        lextexts[oldpos] = temp;
     }
     cur_lextexts = tokens_put_back;
 
@@ -1874,6 +1877,7 @@ extern void restart_lexer(char *lexical_source, char *name)
     {   circle[i].type = 0;
         circle[i].value = 0;
         circle[i].text = "(if this is ever visible, there is a bug)";
+        circle[i].lextext = -1;
         token_contexts[i] = 0;
     }
 
