@@ -1463,8 +1463,8 @@ extern int32 assemble_routine_header(int no_locals,
     ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES);
     for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
-    if (no_locals >= 1 
-      && !strcmp(local_variables.keywords[0], "_vararg_count")) {
+    if (no_locals >= 1
+      && strcmpcis(get_local_variable_name(0), "_vararg_count")==0) {
       stackargs = TRUE;
     }
 

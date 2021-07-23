@@ -610,6 +610,11 @@ static int *keywords_data_table;
 static int *local_variable_hash_table;
 static int *local_variable_hash_codes;
 char **local_variable_texts;
+
+/* Local variable N begins at char N*(MAX_IDENTIFIER_LENGTH+1).
+   (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES.
+   But right now we just allocate the max.)
+ */
 static char *local_variable_text_table;
 
 static char one_letter_locals[128];
@@ -659,25 +664,37 @@ static void make_keywords_tables(void)
     }
 }
 
+extern void set_local_variable_name(int pos, char *val)
+{
+    char *p = local_variable_text_table + pos * (MAX_IDENTIFIER_LENGTH+1);
+    strcpy(p, val);
+}
+
+extern char *get_local_variable_name(int pos)
+{
+    char *p = local_variable_text_table + pos * (MAX_IDENTIFIER_LENGTH+1);
+    return p;
+}
+
 extern void construct_local_variable_tables(void)
-{   int i, h; char *p = local_variable_text_table;
+{   int i, h;
     for (i=0; i<HASH_TAB_SIZE; i++) local_variable_hash_table[i] = -1;
     for (i=0; i<128; i++) one_letter_locals[i] = MAX_LOCAL_VARIABLES;
 
     for (i=0; i<no_locals; i++)
-    {   char *q = local_variables.keywords[i];
-        if (q[1] == 0)
-        {   one_letter_locals[(uchar)q[0]] = i;
-            if (isupper(q[0])) one_letter_locals[tolower(q[0])] = i;
-            if (islower(q[0])) one_letter_locals[toupper(q[0])] = i;
+    {
+        char *p = local_variable_text_table + i * (MAX_IDENTIFIER_LENGTH+1);
+        local_variables.keywords[i] = p;
+        if (p[1] == 0)
+        {   one_letter_locals[(uchar)p[0]] = i;
+            if (isupper(p[0])) one_letter_locals[tolower(p[0])] = i;
+            if (islower(p[0])) one_letter_locals[toupper(p[0])] = i;
         }
-        h = hash_code_from_string(q);
+        h = hash_code_from_string(p);
         if (local_variable_hash_table[h] == -1)
             local_variable_hash_table[h] = i;
         local_variable_hash_codes[i] = h;
         local_variable_texts[i] = p;
-        strcpy(p, q);
-        p += strlen(p)+1;
     }
     for (;i<MAX_LOCAL_VARIABLES-1;i++) 
       local_variable_texts[i] = "<no such local variable>";

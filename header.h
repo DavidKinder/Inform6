@@ -2581,6 +2581,8 @@ extern debug_locations get_token_location_end(debug_location_beginning beginning
 
 extern void describe_token(const token_data *t);
 
+extern void set_local_variable_name(int pos, char *val);
+extern char *get_local_variable_name(int pos);
 extern void construct_local_variable_tables(void);
 extern void declare_systemfile(void);
 extern int  is_systemfile(void);
