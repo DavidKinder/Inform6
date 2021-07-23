@@ -609,13 +609,16 @@ static int *keywords_data_table;
 
 static int *local_variable_hash_table;
 static int *local_variable_hash_codes;
-char **local_variable_texts;
 
 /* Local variable N begins at char N*(MAX_IDENTIFIER_LENGTH+1).
    (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES.
    But right now we just allocate the max.)
  */
 static char *local_variable_text_table;
+
+/* These pointers just point into local_variable_text_table. A bit
+   redundant, but it simplifies life. */
+char **local_variable_texts;
 
 static char one_letter_locals[128];
 
@@ -696,8 +699,11 @@ extern void construct_local_variable_tables(void)
         local_variable_hash_codes[i] = h;
         local_variable_texts[i] = p;
     }
-    for (;i<MAX_LOCAL_VARIABLES-1;i++) 
-      local_variable_texts[i] = "<no such local variable>";
+    for (;i<MAX_LOCAL_VARIABLES-1;i++) {
+        char *p = local_variable_text_table + i * (MAX_IDENTIFIER_LENGTH+1);
+        *p = 0;
+        local_variable_texts[i] = "<no such local variable>";
+    }
 }
 
 static void interpret_identifier(int pos, int dirs_only_flag)
