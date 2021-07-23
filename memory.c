@@ -325,7 +325,7 @@ extern void set_memory_sizes(void)
     MAX_QTEXT_SIZE  = 4000;
     HASH_TAB_SIZE      = 512;
     MAX_LOCAL_VARIABLES_z = 16;
-    MAX_LOCAL_VARIABLES_g = 32;
+    MAX_LOCAL_VARIABLES_g = 119;
     DICT_CHAR_SIZE = 1;
     DICT_WORD_SIZE_z = 6;
     DICT_WORD_SIZE_g = 9;
