@@ -898,16 +898,14 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {
             /*  Give these parameter-receiving local variables names
                 for the benefit of the debugging information file,
-                and for assembly tracing to look sensible.                   */
+                and for assembly tracing to look sensible.
+                (We don't set local_variable.keywords because we're not
+                going to be parsing any code.)                               */
 
-            local_variable_texts[0] = "dummy1";
-            local_variable_texts[1] = "dummy2";
-            local_variable_texts[2] = "dummy3";
-            local_variable_texts[3] = "dummy4";
-            set_local_variable_name(0, local_variable_texts[0]);
-            set_local_variable_name(1, local_variable_texts[1]);
-            set_local_variable_name(2, local_variable_texts[2]);
-            set_local_variable_name(3, local_variable_texts[3]);
+            strcpy(local_variable_names[0].text, "dummy1");
+            strcpy(local_variable_names[1].text, "dummy2");
+            strcpy(local_variable_names[2].text, "dummy3");
+            strcpy(local_variable_names[3].text, "dummy4");
 
             assign_symbol(i,
                 assemble_routine_header(k, FALSE, symbols[i].name, FALSE, i),

@@ -2189,14 +2189,13 @@ static void compile_symbol_table_routine(void)
     assembly_operand AO, AO2, AO3;
 
     /* Assign local var names for the benefit of the debugging information 
-       file. */
-    local_variable_texts[0] = "dummy1";
-    local_variable_texts[1] = "dummy2";
-    set_local_variable_name(0, local_variable_texts[0]);
-    set_local_variable_name(1, local_variable_texts[1]);
+       file. (We don't set local_variable.keywords because we're not
+       going to be parsing any code.)*/
+    strcpy(local_variable_names[0].text, "dummy1");
+    strcpy(local_variable_names[1].text, "dummy2");
 
     if (glulx_mode && last_veneer_stackargs) {
-        set_local_variable_name(0, "_vararg_count");
+        strcpy(local_variable_names[0].text, "_vararg_count");
     }
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
