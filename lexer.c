@@ -552,8 +552,10 @@ keyword_group *keyword_groups[12]
     &directive_keywords, &misc_keywords, &statements, &conditions,
     &system_functions, &system_constants, &opcode_macros};
 
+/* These keywords are set to point to local_variable_names entries when
+   a routine header is parsed. See construct_local_variable_tables().        */
 keyword_group local_variables =
-{ { "" },                                 /* Filled in when routine declared */
+{ { "" },
     LOCAL_VARIABLE_TT, FALSE, FALSE
 };
 
