@@ -2190,11 +2190,13 @@ static void compile_symbol_table_routine(void)
 
     /* Assign local var names for the benefit of the debugging information 
        file. */
-    local_variable_texts[0] = local_variables.keywords[0] = "dummy1";
-    local_variable_texts[1] = local_variables.keywords[1] = "dummy2";
+    local_variable_texts[0] = "dummy1";
+    local_variable_texts[1] = "dummy2";
+    set_local_variable_name(0, local_variable_texts[0]);
+    set_local_variable_name(1, local_variable_texts[1]);
 
     if (glulx_mode && last_veneer_stackargs) {
-        local_variables.keywords[0] = "_vararg_count";
+        set_local_variable_name(0, "_vararg_count");
     }
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);

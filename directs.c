@@ -900,10 +900,14 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 for the benefit of the debugging information file,
                 and for assembly tracing to look sensible.                   */
 
-            local_variable_texts[0] = local_variables.keywords[0] = "dummy1";
-            local_variable_texts[1] = local_variables.keywords[1] = "dummy2";
-            local_variable_texts[2] = local_variables.keywords[2] = "dummy3";
-            local_variable_texts[3] = local_variables.keywords[3] = "dummy4";
+            local_variable_texts[0] = "dummy1";
+            local_variable_texts[1] = "dummy2";
+            local_variable_texts[2] = "dummy3";
+            local_variable_texts[3] = "dummy4";
+            set_local_variable_name(0, local_variable_texts[0]);
+            set_local_variable_name(1, local_variable_texts[1]);
+            set_local_variable_name(2, local_variable_texts[2]);
+            set_local_variable_name(3, local_variable_texts[3]);
 
             assign_symbol(i,
                 assemble_routine_header(k, FALSE, symbols[i].name, FALSE, i),
