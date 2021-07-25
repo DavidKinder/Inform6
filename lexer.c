@@ -612,10 +612,15 @@ static int *keywords_data_table;
 static int *local_variable_hash_table;
 static int *local_variable_hash_codes;
 
+/* Note that MAX_LOCAL_VARIABLES is the maximum number of local variables
+   for this VM, *including* "sp" (the stack pointer "local").
+   This used to be a memory setting. Now it is a constant: 16 for Z-code,
+   119 for Glulx.
+*/
+
 /* Names of local variables in the current routine.
-   This is allocated to MAX_LOCAL_VARIABLES-1. (We sometimes think of
-   the stack pointer as the first "local", but it's not included in this
-   array.)
+   This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
+   is not included in this array.)
 
    (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES-1.
    But right now we just allocate the max.)

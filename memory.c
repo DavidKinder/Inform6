@@ -277,7 +277,6 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    which have different defaults under Z-code and Glulx. We have to get
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
-static int MAX_LOCAL_VARIABLES_z, MAX_LOCAL_VARIABLES_g;
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
@@ -303,8 +302,6 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
     if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MAX_LOCAL_VARIABLES",MAX_LOCAL_VARIABLES);
-    if (glulx_mode)
       printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
         MEMORY_MAP_EXTENSION);
     if (glulx_mode)
@@ -324,8 +321,6 @@ extern void set_memory_sizes(void)
 {
     MAX_QTEXT_SIZE  = 4000;
     HASH_TAB_SIZE      = 512;
-    MAX_LOCAL_VARIABLES_z = 16;
-    MAX_LOCAL_VARIABLES_g = 119;
     DICT_CHAR_SIZE = 1;
     DICT_WORD_SIZE_z = 6;
     DICT_WORD_SIZE_g = 9;
@@ -357,14 +352,12 @@ extern void set_memory_sizes(void)
 extern void adjust_memory_sizes()
 {
   if (!glulx_mode) {
-    MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_z;
     DICT_WORD_SIZE = DICT_WORD_SIZE_z;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_z;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_z;
     INDIV_PROP_START = 64;
   }
   else {
-    MAX_LOCAL_VARIABLES = MAX_LOCAL_VARIABLES_g;
     DICT_WORD_SIZE = DICT_WORD_SIZE_g;
     NUM_ATTR_BYTES = NUM_ATTR_BYTES_g;
     MAX_DYNAMIC_STRINGS = MAX_DYNAMIC_STRINGS_g;
@@ -448,12 +441,6 @@ static void explain_parameter(char *command)
     {   printf(
 "  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
   properties are numbered INDIV_PROP_START and up.\n");
-        return;
-    }
-    if (strcmp(command,"MAX_LOCAL_VARIABLES")==0)
-    {   printf(
-"  MAX_LOCAL_VARIABLES is the number of local variables (including \n\
-  arguments) allowed in a procedure. (Glulx only)\n");
         return;
     }
     if (strcmp(command,"MAX_STACK_SIZE")==0)
@@ -729,8 +716,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
                 flag=3;
             if (strcmp(command,"MAX_LOCAL_VARIABLES")==0)
-            {   MAX_LOCAL_VARIABLES=j, flag=1;
-                MAX_LOCAL_VARIABLES_g=MAX_LOCAL_VARIABLES_z=j;
+            {   flag=3;
             }
             if (strcmp(command,"MAX_GLOBAL_VARIABLES")==0)
             {   flag=3;
