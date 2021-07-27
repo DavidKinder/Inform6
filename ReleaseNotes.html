@@ -111,6 +111,13 @@ while their effect is documented, well defined, and is not being changed, it is 
 expect.
 </ul>
 
+<h3>Bugs fixed</h3>
+<ul>
+<li><p>For Glulx, stub functions (and the veneer function <tt>Symb__Tab()</tt>) are now always compiled as
+local-argument functions (with a type byte of 0xC1). Previously, they were in some cases compiled as stack-argument
+functions (with a type byte of 0xC0).
+</ul>
+
 <h2>Compiler 6.35</h2>
 These are the changes delivered in version 6.35 of the Inform compiler.
 
