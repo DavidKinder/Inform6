@@ -13,8 +13,6 @@
 int veneer_mode;                      /*  Is the code currently being
                                           compiled from the veneer?          */
 
-static int last_veneer_stackargs = FALSE; //###
-
 static debug_locations null_debug_locations =
     { { 0, 0, 0, 0, 0, 0, 0 }, NULL, 0 };
 
@@ -2194,10 +2192,6 @@ static void compile_symbol_table_routine(void)
     strcpy(local_variable_names[0].text, "dummy1");
     strcpy(local_variable_names[1].text, "dummy2");
 
-    if (glulx_mode && last_veneer_stackargs) {
-        strcpy(local_variable_names[0].text, "_vararg_count");
-    }
-
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,
         assemble_routine_header(2, FALSE, "Symb__Tab", FALSE, j),
@@ -2357,7 +2351,6 @@ extern void compile_veneer(void)
             {   j = symbol_index(VRs[i].name, -1);
                 if (symbols[j].flags & UNKNOWN_SFLAG)
                 {   veneer_mode = TRUE;
-                    last_veneer_stackargs = (i == CA__Pr_VR || i == Cl__Ms_VR || i == Glk__Wrap_VR);
                     strcpy(veneer_source_area, VRs[i].source1);
                     strcat(veneer_source_area, VRs[i].source2);
                     strcat(veneer_source_area, VRs[i].source3);
