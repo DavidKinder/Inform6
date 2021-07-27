@@ -2188,8 +2188,8 @@ static void compile_symbol_table_routine(void)
 
     /* Assign local var names for the benefit of the debugging information 
        file. */
-    local_variable_texts[0] = "dummy1";
-    local_variable_texts[1] = "dummy2";
+    local_variable_texts[0] = local_variables.keywords[0] = "dummy1";
+    local_variable_texts[1] = local_variables.keywords[1] = "dummy2";
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,
