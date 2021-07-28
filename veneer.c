@@ -2187,9 +2187,10 @@ static void compile_symbol_table_routine(void)
     assembly_operand AO, AO2, AO3;
 
     /* Assign local var names for the benefit of the debugging information 
-       file. */
-    local_variable_texts[0] = "dummy1";
-    local_variable_texts[1] = "dummy2";
+       file. (We don't set local_variable.keywords because we're not
+       going to be parsing any code.) */
+    strcpy(local_variable_names[0].text, "dummy1");
+    strcpy(local_variable_names[1].text, "dummy2");
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,

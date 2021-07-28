@@ -110,6 +110,8 @@ static void select_target(int targ)
     WORDSIZE = 2;
     MAXINTWORD = 0x7FFF;
 
+    MAX_LOCAL_VARIABLES = 16; /* including "sp" */
+
     if (INDIV_PROP_START != 64) {
         INDIV_PROP_START = 64;
         fatalerror("You cannot change INDIV_PROP_START in Z-code");
@@ -126,16 +128,16 @@ static void select_target(int targ)
       NUM_ATTR_BYTES = 6;
       fatalerror("You cannot change NUM_ATTR_BYTES in Z-code");
     }
-    if (MAX_LOCAL_VARIABLES != 16) {
-      MAX_LOCAL_VARIABLES = 16;
-      fatalerror("You cannot change MAX_LOCAL_VARIABLES in Z-code");
-    }
   }
   else {
     /* Glulx */
     WORDSIZE = 4;
     MAXINTWORD = 0x7FFFFFFF;
     scale_factor = 0; /* It should never even get used in Glulx */
+
+    /* This could really be 120, since the practical limit is the size
+       of local_variables.keywords. But historically it's been 119. */
+    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
 
     if (INDIV_PROP_START < 256) {
         INDIV_PROP_START = 256;
@@ -153,12 +155,6 @@ static void select_target(int targ)
     }
   }
 
-  if (MAX_LOCAL_VARIABLES >= 120) {
-    MAX_LOCAL_VARIABLES = 119;
-    warning("MAX_LOCAL_VARIABLES cannot exceed 119; resetting to 119");
-    /* This is because the keyword table in the lexer only has 120
-       entries. */
-  }
   if (DICT_WORD_SIZE > MAX_DICT_WORD_SIZE) {
     DICT_WORD_SIZE = MAX_DICT_WORD_SIZE;
     warning_numbered(

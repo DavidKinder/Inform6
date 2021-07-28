@@ -565,8 +565,10 @@ keyword_group *keyword_groups[12]
     &directive_keywords, &misc_keywords, &statements, &conditions,
     &system_functions, &system_constants, &opcode_macros};
 
+/* These keywords are set to point to local_variable_names entries when
+   a routine header is parsed. See construct_local_variable_tables().        */
 keyword_group local_variables =
-{ { "" },                                 /* Filled in when routine declared */
+{ { "" },
     LOCAL_VARIABLE_TT, FALSE, FALSE
 };
 
@@ -622,8 +624,21 @@ static int *keywords_data_table;
 
 static int *local_variable_hash_table;
 static int *local_variable_hash_codes;
-char **local_variable_texts;
-static char *local_variable_text_table;
+
+/* Note that MAX_LOCAL_VARIABLES is the maximum number of local variables
+   for this VM, *including* "sp" (the stack pointer "local").
+   This used to be a memory setting. Now it is a constant: 16 for Z-code,
+   119 for Glulx.
+*/
+
+/* Names of local variables in the current routine.
+   This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
+   is not included in this array.)
+
+   (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES-1.
+   But right now we just allocate the max.)
+ */
+identstruct *local_variable_names;
 
 static char one_letter_locals[128];
 
@@ -672,28 +687,33 @@ static void make_keywords_tables(void)
     }
 }
 
+/* Look at the strings stored in local_variable_names (from 0 to no_locals).
+   Set local_variables.keywords to point to these, and also prepare the
+   hash tables. */
 extern void construct_local_variable_tables(void)
-{   int i, h; char *p = local_variable_text_table;
+{   int i, h;
     for (i=0; i<HASH_TAB_SIZE; i++) local_variable_hash_table[i] = -1;
     for (i=0; i<128; i++) one_letter_locals[i] = MAX_LOCAL_VARIABLES;
 
     for (i=0; i<no_locals; i++)
-    {   char *q = local_variables.keywords[i];
-        if (q[1] == 0)
-        {   one_letter_locals[(uchar)q[0]] = i;
-            if (isupper(q[0])) one_letter_locals[tolower(q[0])] = i;
-            if (islower(q[0])) one_letter_locals[toupper(q[0])] = i;
+    {
+        char *p = local_variable_names[i].text;
+        local_variables.keywords[i] = p;
+        if (p[1] == 0)
+        {   one_letter_locals[(uchar)p[0]] = i;
+            if (isupper(p[0])) one_letter_locals[tolower(p[0])] = i;
+            if (islower(p[0])) one_letter_locals[toupper(p[0])] = i;
         }
-        h = hash_code_from_string(q);
+        h = hash_code_from_string(p);
         if (local_variable_hash_table[h] == -1)
             local_variable_hash_table[h] = i;
         local_variable_hash_codes[i] = h;
-        local_variable_texts[i] = p;
-        strcpy(p, q);
-        p += strlen(p)+1;
     }
-    for (;i<MAX_LOCAL_VARIABLES-1;i++) 
-      local_variable_texts[i] = "<no such local variable>";
+    /* Clear the rest. */
+    for (;i<MAX_LOCAL_VARIABLES-1;i++) {
+        local_variables.keywords[i] = "";
+        local_variable_hash_codes[i] = 0;
+    }
 }
 
 static void interpret_identifier(char *p, int pos, int dirs_only_flag)
@@ -728,7 +748,7 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         if (index >= 0)
         {   for (;index<no_locals;index++)
             {   if (hashcode == local_variable_hash_codes[index])
-                {   if (strcmpcis(p, local_variable_texts[index])==0)
+                {   if (strcmpcis(p, local_variable_names[index].text)==0)
                     {   circle[pos].type = LOCAL_VARIABLE_TT;
                         circle[pos].value = index+1;
                         return;
@@ -1973,16 +1993,13 @@ extern void lexer_allocate_arrays(void)
         "keyword hash end table");
     keywords_data_table = my_calloc(sizeof(int), 3*MAX_KEYWORDS,
         "keyword hashing linked list");
+    
+    local_variable_names = my_calloc(sizeof(identstruct), MAX_LOCAL_VARIABLES-1,
+        "text of local variable names");
     local_variable_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "local variable hash table");
-    local_variable_text_table = my_malloc(
-        (MAX_LOCAL_VARIABLES-1)*(MAX_IDENTIFIER_LENGTH+1),
-        "text of local variable names");
-
     local_variable_hash_codes = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES,
         "local variable hash codes");
-    local_variable_texts = my_calloc(sizeof(char *), MAX_LOCAL_VARIABLES,
-        "local variable text pointers");
 
     make_tokeniser_grid();
     make_keywords_tables();
@@ -2023,11 +2040,10 @@ extern void lexer_free_arrays(void)
     my_free(&keywords_hash_table, "keyword hash table");
     my_free(&keywords_hash_ends_table, "keyword hash end table");
     my_free(&keywords_data_table, "keyword hashing linked list");
-    my_free(&local_variable_hash_table, "local variable hash table");
-    my_free(&local_variable_text_table, "text of local variable names");
 
+    my_free(&local_variable_names, "text of local variable names");
+    my_free(&local_variable_hash_table, "local variable hash table");
     my_free(&local_variable_hash_codes, "local variable hash codes");
-    my_free(&local_variable_texts, "local variable text pointers");
 
     cleanup_token_locations(NULL);
 }

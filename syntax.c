@@ -436,7 +436,8 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
     no_locals = 0;
 
-    for (i=0;i<MAX_LOCAL_VARIABLES-1;i++) local_variables.keywords[i] = "";
+    for (i=0;i<MAX_LOCAL_VARIABLES-1;i++)
+        local_variable_names[i].text[0] = 0;
 
     do
     {   statements.enabled = TRUE;
@@ -469,12 +470,15 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             break;
         }
 
-        for (i=0;i<no_locals;i++)
-            if (strcmpcis(token_text, local_variables.keywords[i])==0)
+        for (i=0;i<no_locals;i++) {
+            if (strcmpcis(token_text, local_variable_names[i].text)==0)
                 error_named("Local variable defined twice:", token_text);
-        local_variables.keywords[no_locals++] = token_text;
+        }
+        strcpy(local_variable_names[no_locals++].text, token_text);
     } while(TRUE);
 
+    /* Set up the local variable hash and the local_variables.keywords
+       table. */
     construct_local_variable_tables();
 
     if ((trace_fns_setting==3)
