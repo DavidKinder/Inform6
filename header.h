@@ -732,6 +732,11 @@ typedef struct memory_list_s
     size_t count;       /* number of items allocated */
 } memory_list;
 
+typedef struct identstruct_s
+{
+    char text[MAX_IDENTIFIER_LENGTH+1];
+} identstruct;
+
 typedef struct assembly_operand_t
 {   int   type;     /* ?_OT value */
     int32 value;
@@ -2567,7 +2572,7 @@ extern int  total_source_line_count;
 extern int  dont_enter_into_symbol_table;
 extern int  return_sp_as_variable;
 extern int  next_token_begins_syntax_line;
-extern char **local_variable_texts;
+extern identstruct *local_variable_names;
 
 extern int32 token_value;
 extern int   token_type;
