@@ -255,7 +255,6 @@ void ensure_memory_list_available(memory_list *ML, size_t count)
 /*   Where the memory settings are declared as variables                     */
 /* ------------------------------------------------------------------------- */
 
-int MAX_QTEXT_SIZE;
 int HASH_TAB_SIZE;
 int MAX_ABBREVS;
 int MAX_DYNAMIC_STRINGS;
@@ -307,7 +306,6 @@ static void list_memory_sizes(void)
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
         GLULX_OBJECT_EXT_BYTES);
-    printf("|  %25s = %-7d |\n","MAX_QTEXT_SIZE",MAX_QTEXT_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7ld |\n","MAX_STACK_SIZE",
            (long int) MAX_STACK_SIZE);
@@ -319,7 +317,6 @@ static void list_memory_sizes(void)
 
 extern void set_memory_sizes(void)
 {
-    MAX_QTEXT_SIZE  = 4000;
     HASH_TAB_SIZE      = 512;
     DICT_CHAR_SIZE = 1;
     DICT_WORD_SIZE_z = 6;
@@ -367,12 +364,6 @@ extern void adjust_memory_sizes()
 
 static void explain_parameter(char *command)
 {   printf("\n");
-    if (strcmp(command,"MAX_QTEXT_SIZE")==0)
-    {   printf(
-"  MAX_QTEXT_SIZE is the maximum length of a quoted string.  Increasing\n\
-   by 1 costs 5 bytes (for lexical analysis memory)\n.");
-        return;
-    }
     if (strcmp(command,"HASH_TAB_SIZE")==0)
     {   printf(
 "  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
@@ -616,7 +607,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"BUFFER_LENGTH")==0)
                 flag=2;
             if (strcmp(command,"MAX_QTEXT_SIZE")==0)
-            {   MAX_QTEXT_SIZE=j, flag=1;
+            {   flag=3;
             }
             if (strcmp(command,"MAX_SYMBOLS")==0)
                 flag=3;
