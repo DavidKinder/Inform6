@@ -236,7 +236,7 @@ extern debug_locations get_token_location_end
      old-style "objectloop (a in b)" and a new "objectloop (a in b ...)".)   */
 
 static int circle_position;
-static token_data circle[CIRCLE_SIZE];
+static lexeme_data circle[CIRCLE_SIZE];
 
 static int token_contexts[CIRCLE_SIZE];
 
@@ -298,7 +298,7 @@ static int tokens_put_back;             /* Count of the number of backward
                                            moves made from the last-read
                                            token                             */
 
-extern void describe_token(const token_data *t)
+extern void describe_token_triple(const char *text, int32 value, int type)
 {
     /*  Many of the token types are not set in this file, but later on in
         Inform's higher stages (for example, in the expression evaluator);
@@ -306,51 +306,51 @@ extern void describe_token(const token_data *t)
 
     printf("{ ");
 
-    switch(t->type)
+    switch(type)
     {
         /*  The following token types occur in lexer output:                 */
 
         case SYMBOL_TT:          printf("symbol ");
-                                 describe_symbol(t->value);
+                                 describe_symbol(value);
                                  break;
-        case NUMBER_TT:          printf("literal number %d", t->value);
+        case NUMBER_TT:          printf("literal number %d", value);
                                  break;
-        case DQ_TT:              printf("string \"%s\"", t->text);
+        case DQ_TT:              printf("string \"%s\"", text);
                                  break;
-        case SQ_TT:              printf("string '%s'", t->text);
+        case SQ_TT:              printf("string '%s'", text);
                                  break;
-        case SEP_TT:             printf("separator '%s'", t->text);
+        case SEP_TT:             printf("separator '%s'", text);
                                  break;
         case EOF_TT:             printf("end of file");
                                  break;
 
-        case STATEMENT_TT:       printf("statement name '%s'", t->text);
+        case STATEMENT_TT:       printf("statement name '%s'", text);
                                  break;
-        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", t->text);
+        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", text);
                                  break;
-        case DIRECTIVE_TT:       printf("directive name '%s'", t->text);
+        case DIRECTIVE_TT:       printf("directive name '%s'", text);
                                  break;
-        case CND_TT:             printf("textual conditional '%s'", t->text);
+        case CND_TT:             printf("textual conditional '%s'", text);
                                  break;
-        case OPCODE_NAME_TT:     printf("opcode name '%s'", t->text);
+        case OPCODE_NAME_TT:     printf("opcode name '%s'", text);
                                  break;
-        case SYSFUN_TT:          printf("built-in function name '%s'", t->text);
+        case SYSFUN_TT:          printf("built-in function name '%s'", text);
                                  break;
-        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", t->text);
+        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", text);
                                  break;
-        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", t->text);
+        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", text);
                                  break;
-        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", t->text);
+        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", text);
                                  break;
-        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", t->text);
+        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", text);
                                  break;
-        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", t->text);
+        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", text);
                                  break;
 
         /*  The remaining are etoken types, not set by the lexer             */
 
         case OP_TT:              printf("operator '%s'",
-                                     operators[t->value].description);
+                                     operators[value].description);
                                  break;
         case ENDEXP_TT:          printf("end of expression");
                                  break;
@@ -358,20 +358,20 @@ extern void describe_token(const token_data *t)
                                  break;
         case SUBCLOSE_TT:        printf("close bracket");
                                  break;
-        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",t->text,t->value);
+        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",text,value);
                                  break;
-        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",t->text,t->value);
+        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",text,value);
                                  break;
-        case VARIABLE_TT:        printf("variable '%s'=%d", t->text, t->value);
+        case VARIABLE_TT:        printf("variable '%s'=%d", text, value);
                                  break;
-        case DICTWORD_TT:        printf("dictionary word '%s'", t->text);
+        case DICTWORD_TT:        printf("dictionary word '%s'", text);
                                  break;
-        case ACTION_TT:          printf("action name '%s'", t->text);
+        case ACTION_TT:          printf("action name '%s'", text);
                                  break;
 
         default:
             printf("** unknown token type %d, text='%s', value=%d **",
-            t->type, t->text, t->value);
+            type, text, value);
     }
     printf(" }");
 }
