@@ -1716,10 +1716,6 @@ extern void get_next_token(void)
             quoted_size=0;
             do
             {   d = (*get_next_char)(); lexaddc(d);
-                if (quoted_size++==MAX_QTEXT_SIZE)
-                {   memoryerror("MAX_QTEXT_SIZE", MAX_QTEXT_SIZE);
-                    break;
-                }
                 if (d == '\n')
                 {   lex_pos--;
                     while (lexlastc() == ' ') lex_pos--;
