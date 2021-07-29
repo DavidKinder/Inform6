@@ -125,6 +125,7 @@ more than",
 
     get_next_token();
     i = token_value; name = token_text;
+    /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new attribute name", token_text);
@@ -223,6 +224,7 @@ Advanced game to get an extra 62)");
     get_next_token();
 
     i = token_value; name = token_text;
+    /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new property name", token_text);
