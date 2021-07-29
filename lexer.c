@@ -43,8 +43,6 @@ int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 /*   For example, the lexeme "$1e3" is understood by Inform as a hexadecimal */
 /*   number, and translated to the token:                                    */
 /*     type NUMBER_TT, value 483, text "$1e3"                                */
-/*   (The token_data struct has several more optional fields which are used  */
-/*   for type-checking and error reporting.)                                 */
 /* ------------------------------------------------------------------------- */
 /*   These three variables are set to the current token on a call to         */
 /*   get_next_token() (but are not changed by a call to put_token_back()).   */
@@ -216,6 +214,11 @@ extern debug_locations get_token_location_end
 /*   0 and CIRCLE_SIZE-1.  We only need a circle size as large as the        */
 /*   maximum number of tokens ever put back at once, plus 1 (in effect, the  */
 /*   maximum token lookahead ever needed in syntax analysis, plus 1).        */
+/*                                                                           */
+/*   Note that the circle struct type is lexeme_data, whereas the expression */
+/*   code all works in token_data. They have slightly different needs. The   */
+/*   data is exported through the token_text, token_value, token_type        */
+/*   globals, so there's no need to use the same struct at both levels.      */
 /*                                                                           */
 /*   Unlike some compilers, Inform does not have a context-free lexer: in    */
 /*   fact it has 12288 different possible states.  However, the context only */
@@ -788,9 +791,6 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
 
     circle[pos].value = symbol_index(p, hashcode);
     circle[pos].type = SYMBOL_TT;
-    /* The symindex, etc fields get set in expressp.c. Although there's
-       no particular reason they couldn't be set here, if get_next_token()
-       returned them, which currently it doesn't. */
 }
 
 
