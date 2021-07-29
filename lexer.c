@@ -1463,7 +1463,7 @@ static int get_next_char_from_string(void)
 extern void release_token_texts(void)
 {
     int ix;
-    printf("### start of directive; %d lextexts allocated (putback %d)\n", no_lextexts, tokens_put_back);
+    //printf("### start of directive; %d lextexts allocated (putback %d)\n", no_lextexts, tokens_put_back);
     if (tokens_put_back == 0) {
         cur_lextexts = 0;
         return;
