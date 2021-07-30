@@ -1534,7 +1534,7 @@ assumption inside Inform");
 /* Add one character */
 static void lexaddc(char ch)
 {
-    if (lex_pos >= lextexts[lex_index].size) {
+    if ((size_t)lex_pos >= lextexts[lex_index].size) {
         size_t newsize = lextexts[lex_index].size * 2;
         my_realloc(&lextexts[lex_index].text, lextexts[lex_index].size, newsize, "one lexeme text");
         lextexts[lex_index].size = newsize;
