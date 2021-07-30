@@ -246,11 +246,12 @@ static lexeme_data circle[CIRCLE_SIZE];
 /*   held in Inform's memory for much longer periods: for example, a         */
 /*   dictionary word lexeme (like "'south'") must have its text preserved    */
 /*   until the code generation time for the expression it occurs in, when    */
-/*   the dictionary reference is actually made.  Code generation in general  */
-/*   occurs as early as possible in Inform: pending some better method of    */
-/*   garbage collection, we simply use a buffer so large that unless         */
-/*   expressions spread across 10K of source code are found, there can be    */
-/*   no problem.                                                             */
+/*   the dictionary reference is actually made. We handle this by keeping    */
+/*   all lexeme text until the end of the statement (or, for top-level       */
+/*   directives, until the end of the directive). Then we call               */
+/*   release_token_texts() to start over. The lextexts array will therefore  */
+/*   grow to the largest number of lexemes in a single statement or          */
+/*   directive.                                                              */
 /* ------------------------------------------------------------------------- */
 
 typedef struct lextext_s {
