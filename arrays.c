@@ -575,7 +575,12 @@ extern void make_global(int array_flag, int name_only)
 
             i=0;
             do
-            {   get_next_token();
+            {
+                /* This isn't the start of a statement, but it's safe to
+                   release token texts anyway. Expressions in an array
+                   list are independent of each other. */
+                release_token_texts();
+                get_next_token();
                 if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                     break;
 
@@ -662,7 +667,12 @@ advance as part of 'Zcharacter table':", unicode);
 
             i = 0;
             while (TRUE)
-            {   get_next_token();
+            {
+                /* This isn't the start of a statement, but it's safe to
+                   release token texts anyway. Expressions in an array
+                   list are independent of each other. */
+                release_token_texts();
+                get_next_token();
                 if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
                     continue;
                 if ((token_type == SEP_TT) && (token_value == CLOSE_SQUARE_SEP))
