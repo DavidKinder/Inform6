@@ -179,6 +179,7 @@ more than",
 
 extern void make_property(void)
 {   int32 default_value, i;
+    int namelen;
     int additive_flag=FALSE; char *name;
     assembly_operand AO;
     debug_location_beginning beginning_debug_location =
@@ -244,7 +245,12 @@ Advanced game to get an extra 62)");
     get_next_token();
     directive_keywords.enabled = FALSE;
 
-    if (strcmp(name+strlen(name)-3, "_to") == 0) symbols[i].flags |= STAR_SFLAG;
+    namelen = strlen(name);
+    if (namelen > 3 && strcmp(name+namelen-3, "_to") == 0) {
+        /* Direction properties "n_to", etc are compared in some
+           libraries. They have STAR_SFLAG to tell us to skip a warning. */
+        symbols[i].flags |= STAR_SFLAG;
+    }
 
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   discard_token_location(beginning_debug_location);
