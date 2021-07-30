@@ -1542,7 +1542,7 @@ static void lexaddc(char ch)
     lextexts[lex_index].text[lex_pos++] = ch;
 }
 
-/* Remove the last character */
+/* Remove the last character and ensure it's null-terminated */
 static void lexdelc(void)
 {
     if (lex_pos > 0) {
