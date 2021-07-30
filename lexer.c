@@ -241,8 +241,6 @@ extern debug_locations get_token_location_end
 static int circle_position;
 static lexeme_data circle[CIRCLE_SIZE];
 
-static int token_contexts[CIRCLE_SIZE];
-
 /* ------------------------------------------------------------------------- */
 /*   A complication, however, is that the text of some lexemes needs to be   */
 /*   held in Inform's memory for much longer periods: for example, a         */
@@ -1550,10 +1548,11 @@ extern void get_next_token(void)
     {   i = circle_position - tokens_put_back + 1;
         if (i<0) i += CIRCLE_SIZE;
         tokens_put_back--;
-        if (context != token_contexts[i])
+        if (context != circle[i].context)
         {   j = circle[i].type;
             if ((j==0) || ((j>=100) && (j<200)))
                 interpret_identifier(circle[i].text, i, FALSE);
+            circle[i].context = context;
         }
         goto ReturnBack;
     }
@@ -1577,6 +1576,7 @@ extern void get_next_token(void)
     circle[circle_position].text = NULL; /* will fill in later */
     circle[circle_position].value = 0;
     circle[circle_position].type = 0;
+    circle[circle_position].context = context;
 
     StartTokenAgain:
     d = (*get_next_char)();
@@ -1860,6 +1860,7 @@ extern void get_next_token(void)
             break;
     }
 
+    /* We can now assign the text pointer, since the lextext has finished reallocing. */
     circle[circle_position].text = lextexts[lex_index].text;
     i = circle_position;
 
@@ -1870,7 +1871,6 @@ extern void get_next_token(void)
     if (!returning_a_put_back_token)
     {   set_token_location(circle[i].location);
     }
-    token_contexts[i] = context;
 
     if (tokens_trace_level > 0)
     {   if (tokens_trace_level == 1)
@@ -1878,7 +1878,7 @@ extern void get_next_token(void)
         else
         {   printf("-> "); describe_token(&circle[i]);
             printf(" ");
-            if (tokens_trace_level > 2) print_context(token_contexts[i]);
+            if (tokens_trace_level > 2) print_context(circle[i].context);
             printf("\n");
         }
     }
@@ -1894,11 +1894,11 @@ extern void restart_lexer(char *lexical_source, char *name)
         circle[i].value = 0;
         circle[i].text = "(if this is ever visible, there is a bug)";
         circle[i].lextext = -1;
-        token_contexts[i] = 0;
+        circle[i].context = 0;
     }
 
     cur_lextexts = 0;
-    /* But we leave no_lextexts, so those allocated blocks can be reused */
+    /* But we don't touch no_lextexts; those allocated blocks can be reused */
     lex_index = -1;
     lex_pos = -1;
     
