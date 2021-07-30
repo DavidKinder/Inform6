@@ -2035,7 +2035,6 @@ extern void lexer_free_arrays(void)
     }
     deallocate_memory_list(&FileStack_memlist);
 
-    printf("### %d lextexts allocated (cur %d)\n", no_lextexts, cur_lextexts);
     for (ix=0; ix<no_lextexts; ix++) {
         my_free(&lextexts[ix].text, "one lexeme text");
     }
