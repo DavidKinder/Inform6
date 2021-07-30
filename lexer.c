@@ -300,6 +300,9 @@ static int tokens_put_back;             /* Count of the number of backward
                                            moves made from the last-read
                                            token                             */
 
+/* This gets called for both token_data and lexeme_data structs. It prints
+   a description of the common part (the text, value, type fields). 
+*/
 extern void describe_token_triple(const char *text, int32 value, int type)
 {
     /*  Many of the token types are not set in this file, but later on in

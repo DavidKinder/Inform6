@@ -884,8 +884,8 @@ typedef struct keyword_group_s
 
 typedef struct lexeme_data_s {
     char *text;  /* points at lextexts array */
-    int32 value; /* ###-long */
-    int type;
+    int32 value;
+    int type;    /* a *_TT value */
     debug_location location;
     int lextext; /* index of text string in lextexts */
     int context; /* lexical context used to interpret this token */
@@ -893,8 +893,8 @@ typedef struct lexeme_data_s {
 
 typedef struct token_data_s {
     char *text;
-    int32 value; /* ###-long */
-    int type;
+    int32 value;
+    int type;      /* a *_TT value */
     int symindex;
     int symtype;
     int symflags;
