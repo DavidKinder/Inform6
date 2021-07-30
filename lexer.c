@@ -1453,6 +1453,9 @@ static int get_next_char_from_string(void)
 /*                                       and move the read position forward  */
 /*                                       by one                              */
 /*                                                                           */
+/*       release_token_texts()       discard all the tokens that have been   */
+/*                                       read in, except for put-back ones   */
+/*                                                                           */
 /*       restart_lexer(source, name) if source is NULL, initialise the lexer */
 /*                                       to read from source files;          */
 /*                                   otherwise, to read from this string.    */
@@ -1460,13 +1463,19 @@ static int get_next_char_from_string(void)
 
 extern void release_token_texts(void)
 {
+    /* This is called at the beginning of every (top-level) directive and
+       every statement. It drops all token usage so that the lextexts
+       array can be reused. */
     int ix;
-    //printf("### start of directive; %d lextexts allocated (putback %d)\n", no_lextexts, tokens_put_back);
+    
     if (tokens_put_back == 0) {
         cur_lextexts = 0;
         return;
     }
 
+    /* If any tokens have been put back, we have to preserve their text.
+       Move their lextext usage to the head of the lextexts array. */
+    
     for (ix=0; ix<tokens_put_back; ix++) {
         int oldpos;
         lextext temp;
@@ -1475,13 +1484,12 @@ extern void release_token_texts(void)
 
         oldpos = circle[pos].lextext;
         circle[pos].lextext = ix;
+        /* Swap the entire lextext structure (including size) */
         temp = lextexts[ix];
         lextexts[ix] = lextexts[oldpos];
         lextexts[oldpos] = temp;
     }
     cur_lextexts = tokens_put_back;
-
-    //###for (int ix=0; ix<no_lextexts; ix++) lextexts[ix].text[0] = 0; //###
 }
 
 extern void put_token_back(void)
@@ -1506,7 +1514,6 @@ static void lexaddc(char ch)
 {
     if (lex_pos >= lextexts[lex_index].size) {
         size_t newsize = lextexts[lex_index].size * 2;
-        //printf("### realloc lextext %d ('%c' at pos %d) from %ld to %ld: ", lex_index, ch, lex_pos, lextexts[lex_index].size, newsize); fwrite(lextexts[lex_index].text, 1, lextexts[lex_index].size, stdout); printf("\n");
         my_realloc(&lextexts[lex_index].text, lextexts[lex_index].size, newsize, "one lexeme text");
         lextexts[lex_index].size = newsize;
     }
