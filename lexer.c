@@ -1466,8 +1466,17 @@ extern void release_token_texts(void)
 {
     /* This is called at the beginning of every (top-level) directive and
        every statement. It drops all token usage so that the lextexts
-       array can be reused. */
+       array can be reused.
+
+       Call this immediately before a get_next_token() call.
+
+       This should *not* be called within parse_expression(). Expression
+       code generation relies on token data being retained across the whole
+       expression.
+    */
     int ix;
+
+    token_text = NULL;
     
     if (tokens_put_back == 0) {
         cur_lextexts = 0;
@@ -1511,6 +1520,15 @@ assumption inside Inform");
     }
 }
 
+/* The get_next_token() code reads characters into the current lextext,
+   which is lextexts[lex_index]. It uses these routines to add and remove
+   characters, reallocing when necessary.
+
+   lex_pos is the current number of characters in the lextext. It is
+   not necessarily null-terminated until get_next_token() completes.
+ */
+
+/* Add one character */
 static void lexaddc(char ch)
 {
     if (lex_pos >= lextexts[lex_index].size) {
@@ -1521,6 +1539,7 @@ static void lexaddc(char ch)
     lextexts[lex_index].text[lex_pos++] = ch;
 }
 
+/* Remove the last character */
 static void lexdelc(void)
 {
     if (lex_pos > 0) {
@@ -1529,6 +1548,7 @@ static void lexdelc(void)
     lextexts[lex_index].text[lex_pos] = 0;
 }
 
+/* Return the last character */
 static char lexlastc(void)
 {
     if (lex_pos == 0) {
@@ -1537,6 +1557,7 @@ static char lexlastc(void)
     return lextexts[lex_index].text[lex_pos-1];
 }
 
+/* Add a string of characters (including the null) */
 static void lexadds(char *str)
 {
     while (*str) {
@@ -1873,6 +1894,9 @@ extern void get_next_token(void)
     i = circle_position;
 
     ReturnBack:
+    /* We've either parsed a new token or selected a put-back one.
+       i is the circle-position of the token in question. Time to
+       export the token data where higher-level code can find it. */
     token_value = circle[i].value;
     token_type = circle[i].type;
     token_text = circle[i].text;
