@@ -125,6 +125,7 @@ more than",
 
     get_next_token();
     i = token_value; name = token_text;
+    /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new attribute name", token_text);
@@ -178,6 +179,7 @@ more than",
 
 extern void make_property(void)
 {   int32 default_value, i;
+    int namelen;
     int additive_flag=FALSE; char *name;
     assembly_operand AO;
     debug_location_beginning beginning_debug_location =
@@ -223,6 +225,7 @@ Advanced game to get an extra 62)");
     get_next_token();
 
     i = token_value; name = token_text;
+    /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("new property name", token_text);
@@ -242,7 +245,12 @@ Advanced game to get an extra 62)");
     get_next_token();
     directive_keywords.enabled = FALSE;
 
-    if (strcmp(name+strlen(name)-3, "_to") == 0) symbols[i].flags |= STAR_SFLAG;
+    namelen = strlen(name);
+    if (namelen > 3 && strcmp(name+namelen-3, "_to") == 0) {
+        /* Direction properties "n_to", etc are compared in some
+           libraries. They have STAR_SFLAG to tell us to skip a warning. */
+        symbols[i].flags |= STAR_SFLAG;
+    }
 
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   discard_token_location(beginning_debug_location);
@@ -1174,7 +1182,8 @@ the names '%s' and '%s' actually refer to the same property",
                 }
                 ensure_memory_list_available(&embedded_function_name, strlen(prefix)+strlen(sep)+strlen(sym)+1);
                 sprintf(embedded_function_name.data, "%s%s%s", prefix, sep, sym);
-                
+
+                /* parse_routine() releases lexer text! */
                 AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
                 AO.type = LONG_CONSTANT_OT;
                 AO.marker = IROUTINE_MV;
@@ -1442,6 +1451,7 @@ the names '%s' and '%s' actually refer to the same property",
                 sprintf(embedded_function_name.data, "%s%s%s", prefix, sep, sym);
 
                 INITAOT(&AO, CONSTANT_OT);
+                /* parse_routine() releases lexer text! */
                 AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
                 AO.marker = IROUTINE_MV;
 

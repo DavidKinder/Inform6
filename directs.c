@@ -418,14 +418,17 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {   dont_enter_into_symbol_table = -2; n = 1;
             directives.enabled = TRUE;
             do
-            {   get_next_token();
+            {
+                release_token_texts();
+                get_next_token();
                 if (token_type == EOF_TT)
                 {   error("End of file reached in code 'If...'d out");
                     directives.enabled = FALSE;
                     return TRUE;
                 }
                 if (token_type == DIRECTIVE_TT)
-                {   switch(token_value)
+                {
+                    switch(token_value)
                     {   case ENDIF_CODE:
                             n--; break;
                         case IFV3_CODE:
@@ -498,7 +501,9 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         {   dont_enter_into_symbol_table = -2; n = 1;
             directives.enabled = TRUE;
             do
-            {   get_next_token();
+            {
+                release_token_texts();
+                get_next_token();
                 if (token_type == EOF_TT)
                 {   error("End of file reached in code 'If...'d out");
                     directives.enabled = FALSE;

@@ -74,7 +74,7 @@ static memory_list English_verb_list_memlist;
 
 static int English_verb_list_size;     /* Size of the list in bytes          */
 
-static char **English_verbs_given;     /* Allocated to no_given
+static char *English_verbs_given;      /* Allocated to verbs_given_pos
                                           (Used only within make_verb())     */
 static memory_list English_verbs_given_memlist;
 
@@ -918,7 +918,8 @@ extern void make_verb(void)
 
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
 
-    int no_given = 0, i;
+    int no_given = 0, verbs_given_pos = 0;
+    int i, pos;
 
     directive_keywords.enabled = TRUE;
 
@@ -931,8 +932,11 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        ensure_memory_list_available(&English_verbs_given_memlist, no_given+1);
-        English_verbs_given[no_given++] = token_text;
+        int len = strlen(token_text) + 1;
+        ensure_memory_list_available(&English_verbs_given_memlist, verbs_given_pos + len);
+        strcpy(English_verbs_given+verbs_given_pos, token_text);
+        verbs_given_pos += len;
+        no_given++;
         get_next_token();
     }
 
@@ -963,11 +967,13 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
     }
 
-    for (i=0; i<no_given; i++)
-    {   dictionary_add(English_verbs_given[i],
+    for (i=0, pos=0; i<no_given; i++) {
+        char *wd = English_verbs_given+pos;
+        dictionary_add(wd,
             0x41 + ((meta_verb_flag)?0x02:0x00),
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
-        register_verb(English_verbs_given[i], Inform_verb);
+        register_verb(wd, Inform_verb);
+        pos += (strlen(wd) + 1);
     }
 
     if (!verb_equals_form)
@@ -1162,7 +1168,7 @@ extern void verbs_allocate_arrays(void)
         "register of verbs");
 
     initialise_memory_list(&English_verbs_given_memlist,
-        sizeof(char *), 10, (void**)&English_verbs_given,
+        sizeof(char), 80, (void**)&English_verbs_given,
         "verb words within a single definition");
 }
 

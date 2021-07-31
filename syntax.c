@@ -133,9 +133,9 @@ extern void parse_program(char *source)
 
 extern int parse_directive(int internal_flag)
 {
-    /*  Internal_flag is FALSE if the directive is encountered normally,
-        TRUE if encountered with a # prefix inside a routine or object
-        definition.
+    /*  Internal_flag is FALSE if the directive is encountered normally
+        (at the top level of the program); TRUE if encountered with 
+        a # prefix inside a routine or object definition.
 
         (Only directives like #ifdef are permitted inside a definition.)
 
@@ -145,6 +145,11 @@ extern int parse_directive(int internal_flag)
     int is_renamed;
 
     begin_syntax_line(FALSE);
+    if (!internal_flag) {
+        /* An internal directive can occur in the middle of an expression or
+           object definition. So we only release for top-level directives.   */
+        release_token_texts();
+    }
     get_next_token();
 
     if (token_type == EOF_TT) return(FALSE);
@@ -248,6 +253,7 @@ extern int parse_directive(int internal_flag)
     return !(parse_given_directive(internal_flag));
 }
 
+/* Check what's coming up after a switch case value. */
 static int switch_sign(void)
 {
     if ((token_type == SEP_TT)&&(token_value == COLON_SEP))   return 1;
@@ -490,7 +496,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
     do
     {   begin_syntax_line(TRUE);
-
+        release_token_texts();
         get_next_token();
 
         if (token_type == EOF_TT)
@@ -599,11 +605,13 @@ extern void parse_code_block(int break_label, int continue_label,
         unary_minus_flag;
 
     begin_syntax_line(TRUE);
+    release_token_texts();
     get_next_token();
 
     if (token_type == SEP_TT && token_value == OPEN_BRACE_SEP)
     {   do
         {   begin_syntax_line(TRUE);
+            release_token_texts();
             get_next_token();
             
             if ((token_type == SEP_TT) && (token_value == HASH_SEP))

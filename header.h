@@ -882,15 +882,23 @@ typedef struct keyword_group_s
     int case_sensitive;
 } keyword_group;
 
-typedef struct token_data_s
-{   char *text;
-    int32 value; /* ###-long */
-    int type;
+typedef struct lexeme_data_s {
+    char *text;  /* points at lextexts array */
+    int32 value;
+    int type;    /* a *_TT value */
+    debug_location location;
+    int lextext; /* index of text string in lextexts */
+    int context; /* lexical context used to interpret this token */
+} lexeme_data;
+
+typedef struct token_data_s {
+    char *text;
+    int32 value;
+    int type;      /* a *_TT value */
     int symindex;
     int symtype;
     int symflags;
     int marker;
-    debug_location location;
 } token_data;
 
 typedef struct symbolinfo_s {
@@ -2584,7 +2592,9 @@ extern debug_location_beginning get_token_location_beginning(void);
 extern void discard_token_location(debug_location_beginning beginning);
 extern debug_locations get_token_location_end(debug_location_beginning beginning);
 
-extern void describe_token(const token_data *t);
+extern void describe_token_triple(const char *text, int32 value, int type);
+/* The describe_token() macro works on both token_data and lexeme_data structs. */
+#define describe_token(t) describe_token_triple((t)->text, (t)->value, (t)->type)
 
 extern void construct_local_variable_tables(void);
 extern void declare_systemfile(void);
@@ -2600,6 +2610,7 @@ extern brief_location blank_brief_location;
 
 extern void put_token_back(void);
 extern void get_next_token(void);
+extern void release_token_texts(void);
 extern void restart_lexer(char *lexical_source, char *name);
 
 extern keyword_group directives, statements, segment_markers,
@@ -2630,7 +2641,7 @@ extern void  link_module(char *filename);
 
 extern size_t malloced_bytes;
 
-extern int MAX_QTEXT_SIZE,       HASH_TAB_SIZE,
+extern int HASH_TAB_SIZE,
            MAX_ABBREVS,
            MAX_DYNAMIC_STRINGS;
 
