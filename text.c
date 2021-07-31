@@ -652,12 +652,13 @@ advance as part of 'Zcharacter table':", unicode);
                 else
                 {
                     j = d1*10 + d2;
-                    if (!glulx_mode && j >= 96)
-                    {   error("Z-machine dynamic strings are limited to 96");
+                    if (!glulx_mode && j >= 96) {
+                        error_max_dynamic_strings(j);
                         j = 0;
                     }
                     if (j >= MAX_DYNAMIC_STRINGS) {
-                        memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+                        /* Shouldn't get here with two digits */
+                        error_max_dynamic_strings(j);
                         j = 0;
                     }
                     i+=2;
@@ -800,7 +801,7 @@ string; substituting '   '.");
             i += 2;
             j = d1*10 + d2;
             if (j >= MAX_DYNAMIC_STRINGS) {
-              memoryerror("MAX_DYNAMIC_STRINGS", MAX_DYNAMIC_STRINGS);
+              error_max_dynamic_strings(j);
               j = 0;
             }
             if (j+1 >= no_dynamic_strings)
