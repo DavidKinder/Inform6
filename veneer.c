@@ -14,7 +14,7 @@ int veneer_mode;                      /*  Is the code currently being
                                           compiled from the veneer?          */
 
 static debug_locations null_debug_locations =
-    { { 0, 0, 0, 0, 0, 0, 0 }, NULL, 0 };
+    { { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }, NULL, 0 };
 
 extern void compile_initial_routine(void)
 {
