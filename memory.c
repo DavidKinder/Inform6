@@ -1,6 +1,5 @@
 /* ------------------------------------------------------------------------- */
 /*   "memory" : Memory management and ICL memory setting commands            */
-/*              (For "memoryerror", see "errors.c")                          */
 /*                                                                           */
 /*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */

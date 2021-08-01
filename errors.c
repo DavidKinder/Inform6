@@ -210,16 +210,6 @@ extern void memory_out_error(int32 size, int32 howmany, char *name)
     fatalerror(error_message_buff);
 }
 
-extern void memoryerror(char *s, int32 size)
-{
-    snprintf(error_message_buff, ERROR_BUFLEN,
-        "The memory setting %s (which is %ld at present) has been \
-exceeded.  Try running Inform again with $%s=<some-larger-number> on the \
-command line.",s,(long int) size,s);
-    ellipsize_error_message_buff();
-    fatalerror(error_message_buff);
-}
-
 /* ------------------------------------------------------------------------- */
 /*   Survivable diagnostics:                                                 */
 /*      compilation errors   style 1                                         */
