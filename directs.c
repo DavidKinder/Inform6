@@ -95,11 +95,11 @@ extern int parse_given_directive(int internal_flag)
                return FALSE;
 
            if (!glulx_mode && no_abbreviations==96)
-           {   error("All 96 Z-machine abbreviations already declared");
+           {   error_max_abbreviations(no_abbreviations);
                panic_mode_error_recovery(); return FALSE;
            }
            if (!glulx_mode && no_abbreviations==MAX_ABBREVS)
-           {   error("The number of abbreviations has exceeded the requested limit. You must increase MAX_ABBREVS.");
+           {   error_max_abbreviations(no_abbreviations);
                /* This is no longer a memoryerror(); MAX_ABBREVS is an authoring decision for Z-code games. */
                panic_mode_error_recovery(); return FALSE;
            }

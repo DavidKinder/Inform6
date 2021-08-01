@@ -1,6 +1,5 @@
 /* ------------------------------------------------------------------------- */
 /*   "memory" : Memory management and ICL memory setting commands            */
-/*              (For "memoryerror", see "errors.c")                          */
 /*                                                                           */
 /*   Part of Inform 6.36                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2021                                 */
@@ -607,8 +606,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"BUFFER_LENGTH")==0)
                 flag=2;
             if (strcmp(command,"MAX_QTEXT_SIZE")==0)
-            {   flag=3;
-            }
+                flag=3;
             if (strcmp(command,"MAX_SYMBOLS")==0)
                 flag=3;
             if (strcmp(command,"MAX_BANK_SIZE")==0)
@@ -682,8 +680,7 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_NUM_STATIC_STRINGS")==0)
                 flag=3;
             if (strcmp(command,"MAX_STATIC_STRINGS")==0)
-            {   flag=3;
-            }
+                flag=3;
             if (strcmp(command,"MAX_ZCODE_SIZE")==0)
                 flag=3;
             if (strcmp(command,"MAX_LINK_DATA_SIZE")==0)
@@ -707,14 +704,11 @@ extern void memory_command(char *command)
             if (strcmp(command,"MAX_OBJ_PROP_COUNT")==0)
                 flag=3;
             if (strcmp(command,"MAX_LOCAL_VARIABLES")==0)
-            {   flag=3;
-            }
+                flag=3;
             if (strcmp(command,"MAX_GLOBAL_VARIABLES")==0)
-            {   flag=3;
-            }
+                flag=3;
             if (strcmp(command,"ALLOC_CHUNK_SIZE")==0)
-            {   flag=3;
-            }
+                flag=3;
             if (strcmp(command,"MAX_UNICODE_CHARS")==0)
                 flag=3;
             if (strcmp(command,"MAX_STACK_SIZE")==0)
