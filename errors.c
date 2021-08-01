@@ -382,12 +382,21 @@ extern void error_max_dynamic_strings(index)
     else if (index >= 96 && !glulx_mode)
         snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @95 may be used in Z-code");
     else if (MAX_DYNAMIC_STRINGS == 32 && !glulx_mode)
-        snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @%02d may be used, because $MAX_DYNAMIC_STRINGS has its default value of %d", MAX_DYNAMIC_STRINGS-1, MAX_DYNAMIC_STRINGS);
+        snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @%02d may be used, because $MAX_DYNAMIC_STRINGS has its default value of %d. Increase MAX_DYNAMIC_STRINGS.", MAX_DYNAMIC_STRINGS-1, MAX_DYNAMIC_STRINGS);
     else
-        snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @%02d may be used, because $MAX_DYNAMIC_STRINGS has been set to %d", MAX_DYNAMIC_STRINGS-1, MAX_DYNAMIC_STRINGS);
+        snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @%02d may be used, because $MAX_DYNAMIC_STRINGS has been set to %d. Increase MAX_DYNAMIC_STRINGS.", MAX_DYNAMIC_STRINGS-1, MAX_DYNAMIC_STRINGS);
 
     ellipsize_error_message_buff();
     error(error_message_buff);
+}
+
+extern void error_max_abbreviations(int index)
+{
+    /* This is only called for Z-code. */
+    if (index >= 96)
+        error("The number of abbreviations has exceeded 96, the limit in Z-code");
+    else
+        error("The number of abbreviations has exceeded MAX_ABBREVS. Increase MAX_ABBREVS.");
 }
 
 /* ------------------------------------------------------------------------- */
