@@ -178,8 +178,10 @@ more than",
 }
 
 /* Format:
+   Property [long] [additive] name
    Property [long] [additive] name [alias oldname]
    Property [long] [additive] name [defaultvalue]
+   Property [long] individual name
  */
 extern void make_property(void)
 {   int32 default_value, i;
