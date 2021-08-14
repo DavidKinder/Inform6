@@ -756,7 +756,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         break;
 
     /* --------------------------------------------------------------------- */
-    /*   Property [long] [additive] name [alias oldname]                     */
+    /*   Property [long] [additive] name [alias oldname] [defaultvalue]      */
     /* --------------------------------------------------------------------- */
 
     case PROPERTY_CODE: make_property(); break;           /* See "objects.c" */

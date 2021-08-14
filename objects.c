@@ -177,11 +177,14 @@ more than",
     return;
 }
 
+/* Format:
+   Property [long] [additive] name [alias oldname] [defaultvalue]
+ */
 extern void make_property(void)
 {   int32 default_value, i;
     int namelen;
-    int additive_flag=FALSE; char *name;
-    assembly_operand AO;
+    int additive_flag=FALSE;
+    char *name;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -284,7 +287,8 @@ Advanced game to get 32 more)");
     put_token_back();
 
     if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
-    {   AO = parse_expression(CONSTANT_CONTEXT);
+    {
+        assembly_operand AO = parse_expression(CONSTANT_CONTEXT);
         default_value = AO.value;
         if (AO.marker != 0)
             backpatch_zmachine(AO.marker, PROP_DEFAULTS_ZA, 
