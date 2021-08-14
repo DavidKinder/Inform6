@@ -188,11 +188,14 @@ extern void make_property(void)
     if (!glulx_mode) {
         if (no_properties==((version_number==3)?32:64))
         {   discard_token_location(beginning_debug_location);
+            /* The maximum listed here includes "name" but not the 
+               unused zero value or the two hidden properties (class
+               inheritance and indiv table). */
             if (version_number==3)
-                error("All 30 properties already declared (compile as \
-Advanced game to get an extra 62)");
+                error("All 29 properties already declared (compile as \
+Advanced game to get 32 more)");
             else
-                error("All 62 properties already declared");
+                error("All 61 properties already declared");
             panic_mode_error_recovery();
             put_token_back();
             return;
