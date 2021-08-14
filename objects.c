@@ -253,10 +253,12 @@ Advanced game to get 32 more)");
 
     namelen = strlen(name);
     if (namelen > 3 && strcmp(name+namelen-3, "_to") == 0) {
-        /* Direction properties "n_to", etc are compared in some
+        /* Direction common properties "n_to", etc are compared in some
            libraries. They have STAR_SFLAG to tell us to skip a warning. */
         symbols[i].flags |= STAR_SFLAG;
     }
+
+    /* Now we might have "alias" or a default value (but not both). */
 
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   discard_token_location(beginning_debug_location);
@@ -2191,7 +2193,11 @@ extern void objects_begin_pass(void)
     no_properties = 4;
 
     if (debugfile_switch)
-    {   debug_file_printf("<property>");
+    {
+        /* These two properties are not symbols, so they won't be emitted
+           by emit_debug_information_for_predefined_symbol(). Do it
+           manually. */
+        debug_file_printf("<property>");
         debug_file_printf
             ("<identifier artificial=\"true\">inheritance class</identifier>");
         debug_file_printf("<value>2</value>");
