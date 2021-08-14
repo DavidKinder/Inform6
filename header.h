@@ -1581,6 +1581,7 @@ typedef struct operator_s
 #define WARNING_DK      34
 #define TERMINATING_DK  35
 #define STATIC_DK       36
+#define INDIVIDUAL_DK   37
 
 /*  Index numbers into the keyword group "trace_keywords" (see "lexer.c")  */
 

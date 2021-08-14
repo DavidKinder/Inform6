@@ -178,13 +178,15 @@ more than",
 }
 
 /* Format:
-   Property [long] [additive] name [alias oldname] [defaultvalue]
+   Property [long] [additive] name [alias oldname]
+   Property [long] [additive] name [defaultvalue]
  */
 extern void make_property(void)
 {   int32 default_value, i;
+    char *name;
     int namelen;
     int additive_flag=FALSE;
-    char *name;
+    int indiv_flag=FALSE;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -223,6 +225,9 @@ Advanced game to get 32 more)");
         else
         if ((token_type == DIR_KEYWORD_TT) && (token_value == ADDITIVE_DK))
             additive_flag = TRUE;
+        else
+        if ((token_type == DIR_KEYWORD_TT) && (token_value == INDIVIDUAL_DK))
+            indiv_flag = TRUE;
         else break;
     } while (TRUE);
 
@@ -245,6 +250,29 @@ Advanced game to get 32 more)");
         panic_mode_error_recovery();
         put_token_back();
         return;
+    }
+
+    if (indiv_flag) {
+        int this_identifier_number;
+        
+        if (additive_flag)
+        {   error("'individual' incompatible with 'additive'");
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
+        }
+
+        this_identifier_number = no_individual_properties++;
+        assign_symbol(i, this_identifier_number, INDIVIDUAL_PROPERTY_T);
+        if (debugfile_switch) {
+            debug_file_printf("<property>");
+            debug_file_printf
+                ("<identifier>%s</identifier>", name);
+            debug_file_printf
+                ("<value>%d</value>", this_identifier_number);
+            debug_file_printf("</property>");
+        }
+        return;        
     }
 
     directive_keywords.enabled = TRUE;
