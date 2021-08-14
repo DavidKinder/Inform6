@@ -773,6 +773,16 @@ typedef struct classinfo_s {
     int32 begins_at;
 } classinfo;
 
+/* Common property information. */
+typedef struct commonpropinfo_s {
+    int32 default_value;   /* Common property default value */
+    int is_long;           /* "Long" means "never write a 1-byte value to
+                              this property", and is an obsolete feature:
+                              since Inform 5 all properties have been "long" */
+    int is_additive;       /* "Additive" means that values accumulate rather
+                              than erase each other during class inheritance */
+} commonpropinfo;
+
 /* Property entry record (Z). */
 typedef struct prop {
     uchar l, num;
@@ -2699,6 +2709,7 @@ extern uchar *objectatts;
 extern classinfo *class_info;
 extern memory_list class_info_memlist;
 
+extern commonpropinfo *commonprops;
 extern int32 *prop_default_value;
 extern int *prop_is_long;
 extern int *prop_is_additive;
