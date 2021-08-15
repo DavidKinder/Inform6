@@ -2711,9 +2711,6 @@ extern classinfo *class_info;
 extern memory_list class_info_memlist;
 
 extern commonpropinfo *commonprops;
-extern int32 *prop_default_value;
-extern int *prop_is_long;
-extern int *prop_is_additive;
 extern uchar *properties_table;
 extern memory_list properties_table_memlist;
 extern int properties_table_size;
