@@ -757,8 +757,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     /* --------------------------------------------------------------------- */
     /*   Property [long] [additive] name                                     */
-    /*   Property [long] [additive] name [alias oldname]                     */
-    /*   Property [long] [additive] name [defaultvalue]                      */
+    /*   Property [long] [additive] name alias oldname                       */
+    /*   Property [long] [additive] name defaultvalue                        */
     /*   Property [long] individual name                                     */
     /* --------------------------------------------------------------------- */
 
