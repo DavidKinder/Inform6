@@ -185,10 +185,10 @@ more than",
  */
 extern void make_property(void)
 {   int32 default_value, i;
+    int keywords, prevkeywords;
     char *name;
     int namelen;
-    int additive_flag=FALSE;
-    int indiv_flag=FALSE;
+    int additive_flag, indiv_flag;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -219,24 +219,56 @@ Advanced game to get 32 more)");
         }
     }
 
+    /* The next bit is tricky. We want to accept any number of the keywords
+       "long", "additive", "individual" before the property name. But we
+       also want to accept "Property long" -- that's a legitimate
+       property name.
+       The solution is to keep track of which keywords we've seen in
+       a bitmask, and another for one token previous. That way we
+       can back up one token if there's no name visible. */
+    keywords = prevkeywords = 0;
     do
     {   directive_keywords.enabled = TRUE;
         get_next_token();
-        if ((token_type == DIR_KEYWORD_TT) && (token_value == LONG_DK))
-            obsolete_warning("all properties are now automatically 'long'");
-        else
-        if ((token_type == DIR_KEYWORD_TT) && (token_value == ADDITIVE_DK))
-            additive_flag = TRUE;
-        else
-        if ((token_type == DIR_KEYWORD_TT) && (token_value == INDIVIDUAL_DK))
-            indiv_flag = TRUE;
-        else break;
+        if ((token_type == DIR_KEYWORD_TT) && (token_value == LONG_DK)) {
+            prevkeywords = keywords;
+            keywords |= 1;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == ADDITIVE_DK)) {
+            prevkeywords = keywords;
+            keywords |= 2;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == INDIVIDUAL_DK)) {
+            prevkeywords = keywords;
+            keywords |= 4;
+        }
+        else {
+            break;
+        }
     } while (TRUE);
-
+    
+    /* Re-parse the name with keywords turned off. (This allows us to
+       accept a property name like "table".) */
     put_token_back();
     directive_keywords.enabled = FALSE;
     get_next_token();
 
+    if (token_type != SYMBOL_TT && keywords) {
+        /* This can't be a name. Try putting back the last keyword. */
+        keywords = prevkeywords;
+        put_token_back();
+        put_token_back();
+        get_next_token();
+    }
+
+    additive_flag = indiv_flag = FALSE;
+    if (keywords & 1)
+        obsolete_warning("all properties are now automatically 'long'");
+    if (keywords & 2)
+        additive_flag = TRUE;
+    if (keywords & 4)
+        indiv_flag = TRUE;
+    
     i = token_value; name = token_text;
     /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
