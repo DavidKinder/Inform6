@@ -358,8 +358,8 @@ static void construct_storyfile_z(void)
     p[mark++]=0; p[mark++]=0;
 
     for (i=2; i< ((version_number==3)?32:64); i++)
-    {   p[mark++]=prop_default_value[i]/256;
-        p[mark++]=prop_default_value[i]%256;
+    {   p[mark++]=commonprops[i].default_value/256;
+        p[mark++]=commonprops[i].default_value%256;
     }
 
     object_tree_at = mark;
@@ -1395,7 +1395,7 @@ static void construct_storyfile_g(void)
 
     prop_defaults_at = mark;
     for (i=0; i<no_properties; i++) {
-      k = prop_default_value[i];
+      k = commonprops[i].default_value;
       WriteInt32(p+mark, k);
       mark += 4;
     }

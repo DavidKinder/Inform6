@@ -87,8 +87,8 @@ static void trace_s(char *name, int32 number, int f)
 {   if (!printprops_switch) return;
     printf("%s  %02ld  ",(f==0)?"Attr":"Prop",(long int) number);
     if (f==0) printf("  ");
-    else      printf("%s%s",(prop_is_long[number])?"L":" ",
-                            (prop_is_additive[number])?"A":" ");
+    else      printf("%s%s",(commonprops[number].is_long)?"L":" ",
+                            (commonprops[number].is_additive)?"A":" ");
     printf("  %s\n",name);
 }
 
@@ -177,22 +177,32 @@ more than",
     return;
 }
 
+/* Format:
+   Property [long] [additive] name
+   Property [long] [additive] name alias oldname
+   Property [long] [additive] name defaultvalue
+   Property [long] individual name
+ */
 extern void make_property(void)
 {   int32 default_value, i;
+    int keywords, prevkeywords;
+    char *name;
     int namelen;
-    int additive_flag=FALSE; char *name;
-    assembly_operand AO;
+    int additive_flag, indiv_flag;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
     if (!glulx_mode) {
         if (no_properties==((version_number==3)?32:64))
         {   discard_token_location(beginning_debug_location);
+            /* The maximum listed here includes "name" but not the 
+               unused zero value or the two hidden properties (class
+               inheritance and indiv table). */
             if (version_number==3)
-                error("All 30 properties already declared (compile as \
-Advanced game to get an extra 62)");
+                error("All 29 properties already declared (compile as \
+Advanced game to get 32 more)");
             else
-                error("All 62 properties already declared");
+                error("All 61 properties already declared");
             panic_mode_error_recovery();
             put_token_back();
             return;
@@ -209,21 +219,56 @@ Advanced game to get an extra 62)");
         }
     }
 
+    /* The next bit is tricky. We want to accept any number of the keywords
+       "long", "additive", "individual" before the property name. But we
+       also want to accept "Property long" -- that's a legitimate
+       property name.
+       The solution is to keep track of which keywords we've seen in
+       a bitmask, and another for one token previous. That way we
+       can back up one token if there's no name visible. */
+    keywords = prevkeywords = 0;
     do
     {   directive_keywords.enabled = TRUE;
         get_next_token();
-        if ((token_type == DIR_KEYWORD_TT) && (token_value == LONG_DK))
-            obsolete_warning("all properties are now automatically 'long'");
-        else
-        if ((token_type == DIR_KEYWORD_TT) && (token_value == ADDITIVE_DK))
-            additive_flag = TRUE;
-        else break;
+        if ((token_type == DIR_KEYWORD_TT) && (token_value == LONG_DK)) {
+            prevkeywords = keywords;
+            keywords |= 1;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == ADDITIVE_DK)) {
+            prevkeywords = keywords;
+            keywords |= 2;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == INDIVIDUAL_DK)) {
+            prevkeywords = keywords;
+            keywords |= 4;
+        }
+        else {
+            break;
+        }
     } while (TRUE);
-
+    
+    /* Re-parse the name with keywords turned off. (This allows us to
+       accept a property name like "table".) */
     put_token_back();
     directive_keywords.enabled = FALSE;
     get_next_token();
 
+    if (token_type != SYMBOL_TT && keywords) {
+        /* This can't be a name. Try putting back the last keyword. */
+        keywords = prevkeywords;
+        put_token_back();
+        put_token_back();
+        get_next_token();
+    }
+
+    additive_flag = indiv_flag = FALSE;
+    if (keywords & 1)
+        obsolete_warning("all properties are now automatically 'long'");
+    if (keywords & 2)
+        additive_flag = TRUE;
+    if (keywords & 4)
+        indiv_flag = TRUE;
+    
     i = token_value; name = token_text;
     /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
@@ -241,16 +286,41 @@ Advanced game to get an extra 62)");
         return;
     }
 
+    if (indiv_flag) {
+        int this_identifier_number;
+        
+        if (additive_flag)
+        {   error("'individual' incompatible with 'additive'");
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
+        }
+
+        this_identifier_number = no_individual_properties++;
+        assign_symbol(i, this_identifier_number, INDIVIDUAL_PROPERTY_T);
+        if (debugfile_switch) {
+            debug_file_printf("<property>");
+            debug_file_printf
+                ("<identifier>%s</identifier>", name);
+            debug_file_printf
+                ("<value>%d</value>", this_identifier_number);
+            debug_file_printf("</property>");
+        }
+        return;        
+    }
+
     directive_keywords.enabled = TRUE;
     get_next_token();
     directive_keywords.enabled = FALSE;
 
     namelen = strlen(name);
     if (namelen > 3 && strcmp(name+namelen-3, "_to") == 0) {
-        /* Direction properties "n_to", etc are compared in some
+        /* Direction common properties "n_to", etc are compared in some
            libraries. They have STAR_SFLAG to tell us to skip a warning. */
         symbols[i].flags |= STAR_SFLAG;
     }
+
+    /* Now we might have "alias" or a default value (but not both). */
 
     if ((token_type == DIR_KEYWORD_TT) && (token_value == ALIAS_DK))
     {   discard_token_location(beginning_debug_location);
@@ -281,16 +351,17 @@ Advanced game to get an extra 62)");
     put_token_back();
 
     if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
-    {   AO = parse_expression(CONSTANT_CONTEXT);
+    {
+        assembly_operand AO = parse_expression(CONSTANT_CONTEXT);
         default_value = AO.value;
         if (AO.marker != 0)
             backpatch_zmachine(AO.marker, PROP_DEFAULTS_ZA, 
                 (no_properties-1) * WORDSIZE);
     }
 
-    prop_default_value[no_properties] = default_value;
-    prop_is_long[no_properties] = TRUE;
-    prop_is_additive[no_properties] = additive_flag;
+    commonprops[no_properties].default_value = default_value;
+    commonprops[no_properties].is_long = TRUE;
+    commonprops[no_properties].is_additive = additive_flag;
 
     assign_symbol(i, no_properties++, PROPERTY_T);
 
@@ -310,15 +381,10 @@ Advanced game to get an extra 62)");
 /*   Properties.                                                             */
 /* ------------------------------------------------------------------------- */
 
-int32 *prop_default_value;             /* Default values for properties      */
-int   *prop_is_long,                   /* Property modifiers, TRUE or FALSE:
-                                          "long" means "never write a 1-byte
-                                          value to this property", and is an
-                                          obsolete feature: since Inform 5
-                                          all properties have been "long"    */
-      *prop_is_additive;               /* "additive" means that values
-                                          accumulate rather than erase each
-                                          other during class inheritance     */
+commonpropinfo *commonprops;            /* Info about common properties
+                                           (fixed allocation of 
+                                           INDIV_PROP_START entries) */
+
 uchar *properties_table;               /* Holds the table of property values
                                           (holding one block for each object
                                           and coming immediately after the
@@ -476,7 +542,7 @@ static void property_inheritance_z(void)
 
                     /*  (Note that the built-in "name" property is additive) */
 
-                    if ((prop_number==1) || (prop_is_additive[prop_number]))
+                    if ((prop_number==1) || (commonprops[prop_number].is_additive))
                     {
                         /*  The additive case: we accumulate the class
                             property values onto the end of the full_object
@@ -668,7 +734,7 @@ static void property_inheritance_g(void)
       if (prop_in_current_defn) {
         if ((prop_number==1)
           || (prop_number < INDIV_PROP_START 
-            && prop_is_additive[prop_number])) {
+            && commonprops[prop_number].is_additive)) {
           /*  The additive case: we accumulate the class
               property values onto the end of the full_object
               properties. Remember that k is still the index number
@@ -2150,9 +2216,7 @@ extern void init_objects_vars(void)
 {
     properties_table = NULL;
     individuals_table = NULL;
-    prop_is_long = NULL;
-    prop_is_additive = NULL;
-    prop_default_value = NULL;
+    commonprops = NULL;
 
     objectsz = NULL;
     objectsg = NULL;
@@ -2167,15 +2231,35 @@ extern void init_objects_vars(void)
 extern void objects_begin_pass(void)
 {
     properties_table_size=0;
-    prop_is_long[1] = TRUE; prop_is_additive[1] = TRUE;            /* "name" */
-    prop_is_long[2] = TRUE; prop_is_additive[2] = TRUE;  /* inheritance prop */
-    if (!glulx_mode)
-        prop_is_long[3] = TRUE; prop_is_additive[3] = FALSE;
-                                         /* instance variables table address */
+
+    /* The three predefined common properties: */
+    /* (Entry 0 is not used.) */
+
+    /* "name" */
+    commonprops[1].default_value = 0;
+    commonprops[1].is_long = TRUE;
+    commonprops[1].is_additive = TRUE;
+
+    /* class inheritance property */
+    commonprops[2].default_value = 0;
+    commonprops[2].is_long = TRUE;
+    commonprops[2].is_additive = TRUE;
+
+    /* instance variables table address */
+    /* (This property is only meaningful in Z-code; in Glulx its entry is
+       reserved but never used.) */
+    commonprops[3].default_value = 0;
+    commonprops[3].is_long = TRUE;
+    commonprops[3].is_additive = FALSE;
+                                         
     no_properties = 4;
 
     if (debugfile_switch)
-    {   debug_file_printf("<property>");
+    {
+        /* These two properties are not symbols, so they won't be emitted
+           by emit_debug_information_for_predefined_symbol(). Do it
+           manually. */
+        debug_file_printf("<property>");
         debug_file_printf
             ("<identifier artificial=\"true\">inheritance class</identifier>");
         debug_file_printf("<value>2</value>");
@@ -2217,12 +2301,8 @@ extern void objects_allocate_arrays(void)
     objectsg = NULL;
     objectatts = NULL;
 
-    prop_default_value    = my_calloc(sizeof(int32), INDIV_PROP_START,
-                                "property default values");
-    prop_is_long          = my_calloc(sizeof(int), INDIV_PROP_START,
-                                "property-is-long flags");
-    prop_is_additive      = my_calloc(sizeof(int), INDIV_PROP_START,
-                                "property-is-additive flags");
+    commonprops = my_calloc(sizeof(commonpropinfo), INDIV_PROP_START,
+                                "common property info");
 
     initialise_memory_list(&class_info_memlist,
         sizeof(classinfo), 64, (void**)&class_info,
@@ -2272,10 +2352,8 @@ extern void objects_allocate_arrays(void)
 
 extern void objects_free_arrays(void)
 {
-    my_free(&prop_default_value, "property default values");
-    my_free(&prop_is_long,     "property-is-long flags");
-    my_free(&prop_is_additive, "property-is-additive flags");
-
+    my_free(&commonprops, "common property info");
+    
     deallocate_memory_list(&current_object_name);
     deallocate_memory_list(&embedded_function_name);
     deallocate_memory_list(&objectsz_memlist);

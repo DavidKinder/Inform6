@@ -773,6 +773,16 @@ typedef struct classinfo_s {
     int32 begins_at;
 } classinfo;
 
+/* Common property information. */
+typedef struct commonpropinfo_s {
+    int32 default_value;   /* Common property default value */
+    int is_long;           /* "Long" means "never write a 1-byte value to
+                              this property", and is an obsolete feature:
+                              since Inform 5 all properties have been "long" */
+    int is_additive;       /* "Additive" means that values accumulate rather
+                              than erase each other during class inheritance */
+} commonpropinfo;
+
 /* Property entry record (Z). */
 typedef struct prop {
     uchar l, num;
@@ -1571,6 +1581,7 @@ typedef struct operator_s
 #define WARNING_DK      34
 #define TERMINATING_DK  35
 #define STATIC_DK       36
+#define INDIVIDUAL_DK   37
 
 /*  Index numbers into the keyword group "trace_keywords" (see "lexer.c")  */
 
@@ -2699,9 +2710,7 @@ extern uchar *objectatts;
 extern classinfo *class_info;
 extern memory_list class_info_memlist;
 
-extern int32 *prop_default_value;
-extern int *prop_is_long;
-extern int *prop_is_additive;
+extern commonpropinfo *commonprops;
 extern uchar *properties_table;
 extern memory_list properties_table_memlist;
 extern int properties_table_size;
