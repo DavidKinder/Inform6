@@ -89,6 +89,10 @@ without requiring user intervention.
  </ul>
 As a result of this, the memory size command line arguments (<tt>$SMALL</tt>, <tt>$LARGE</tt> and <tt>$HUGE</tt>)
 are now redundant, and have been removed.
+<li><p>It is now possible to declare an individual property with the <tt>Property</tt> directive:
+<pre>
+  Property individual propname;
+</pre>
 <li><p>There are now warnings if the compiler detects that the type used in certain expressions is not correct.
 This only checks expressions that contain defined symbols, and does not change the generated code. The checks are:
  <ul>
