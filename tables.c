@@ -1126,25 +1126,25 @@ printf("        +---------------------+   %05lx\n",
                                           (long int) prop_defaults_at);
 printf("        |  property defaults  |\n");
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) object_tree_at);
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n", show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) object_props_at);
 printf("        | object short names, |\n");
-printf("        | common prop values  |\n");
+printf("        | common prop values  |   %s\n", show_percentage(class_numbers_offset-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) class_numbers_offset);
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n", show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) identifier_names_offset);
-printf("        | symbol names table  |\n");
+printf("        | symbol names table  |   %s\n", show_percentage(individuals_offset-identifier_names_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) individuals_offset);
-printf("        | indiv prop values   |\n");
+printf("        | indiv prop values   |   %s\n", show_percentage(globals_at-individuals_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) globals_at);
-printf("        |  global variables   |\n");
+printf("        |  global variables   |   %s\n", show_percentage(480, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           ((long int) globals_at)+480L);
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n", show_percentage(grammar_table_at-(globals_at+480), Out_Size));
 printf("        +=====================+   %05lx\n",
                                           (long int) grammar_table_at);
 printf("Readable|    grammar table    |\n");
