@@ -1907,7 +1907,7 @@ printf("        +---------------------+   %06lx\n", (long int) Out_Size);
             else
             {
 printf("        +=====================+   %06lx\n", (long int) Out_Size);
-printf("Runtime |       (empty)       |\n");
+printf("Runtime |       (empty)       |\n");   /* no percentage */
 printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_MAP_EXTENSION);
             }
 
