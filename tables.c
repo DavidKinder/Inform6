@@ -109,6 +109,19 @@ extern void write_serial_number(char *buffer)
 #endif
 }
 
+static char percentage_buffer[16];
+
+static char *show_percentage(int32 x, int32 total)
+{
+    if (!percentages_switch) {
+        percentage_buffer[0] = '\0';
+    }
+    else {
+        sprintf(percentage_buffer, "  (%2d.%d%%)", x*100/total,(x*1000/total)%10);
+    }
+    return percentage_buffer;
+}
+
 static void percentage(char *name, int32 x, int32 total)
 {   printf("   %-20s %2d.%d%%\n",name,x*100/total,(x*1000/total)%10);
 }
@@ -1089,6 +1102,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
     if (memory_map_switch)
     {
+        int32 addr;
         {
 printf("Dynamic +---------------------+   00000\n");
 printf("memory  |       header        |\n");
@@ -1155,10 +1169,11 @@ printf("        +---------------------+   %05lx\n", (long int) static_arrays_at)
 printf("        |    static arrays    |\n");
 }
 printf("        +=====================+   %05lx\n", (long int) Write_Code_At);
-printf("Above   |       Z-code        |\n");
+printf("Above   |       Z-code        |   %s\n", show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("readable+---------------------+   %05lx\n",
                                           (long int) Write_Strings_At);
-printf("memory  |       strings       |\n");
+addr = (module_switch ? link_table_at : Out_Size);
+printf("memory  |       strings       |   %s\n", show_percentage(addr-Write_Strings_At, Out_Size));
 if (module_switch)
 {
 printf("        +=====================+   %05lx\n", (long int) link_table_at);
