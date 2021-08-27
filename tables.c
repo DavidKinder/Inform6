@@ -1858,13 +1858,16 @@ printf("        |    static arrays    |   %s\n",
             }
 printf("        +=====================+   %06lx\n", 
   (long int) (Write_RAM_At+globals_at));
-printf("Dynamic |  global variables   |\n");
+printf("Dynamic |  global variables   |   %s\n",
+    show_percentage(arrays_at-globals_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+arrays_at));
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n",
+    show_percentage(abbrevs_at-arrays_at, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+abbrevs_at));
-printf("        | printing variables  |\n");
+printf("        | printing variables  |   %s\n",
+    show_percentage(object_tree_at-abbrevs_at, Out_Size));
             if (alphabet_modified)
             {
 printf("        + - - - - - - - - - - +   %06lx\n", 
