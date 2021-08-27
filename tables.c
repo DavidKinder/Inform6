@@ -1163,16 +1163,22 @@ printf("        |       arrays        |   %s\n",
     show_percentage(grammar_table_at-(globals_at+480), Out_Size));
 printf("        +=====================+   %05lx\n",
                                           (long int) grammar_table_at);
-printf("Readable|    grammar table    |\n");
+printf("Readable|    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %05lx\n", (long int) actions_at);
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(preactions_at-actions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) preactions_at);
-printf("        |   parsing routines  |\n");
+printf("        |   parsing routines  |   %s\n",
+    show_percentage(adjectives_offset-preactions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) adjectives_offset);
-printf("        |     adjectives      |\n");
+printf("        |     adjectives      |   %s\n",
+    show_percentage(dictionary_at-adjectives_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) dictionary_at);
-printf("        |     dictionary      |\n");
+addr = (module_switch ? map_of_module : (static_array_area_size ? static_arrays_at : Write_Code_At));
+printf("        |     dictionary      |   %s\n",
+    show_percentage(addr-dictionary_at, Out_Size));
 if (module_switch)
 {
 printf("        + - - - - - - - - - - +   %05lx\n",
