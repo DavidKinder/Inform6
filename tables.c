@@ -1870,13 +1870,16 @@ printf("        | printing variables  |   %s\n",
     show_percentage(object_tree_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) (Write_RAM_At+object_tree_at));
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n",
+    show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+object_props_at));
-printf("        |   property values   |\n");
+printf("        |   property values   |   %s\n",
+    show_percentage(prop_defaults_at-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+prop_defaults_at));
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n",
+    show_percentage(class_numbers_offset-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+class_numbers_offset));
 printf("        | class numbers table |\n");
