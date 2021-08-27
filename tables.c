@@ -117,7 +117,7 @@ static char *show_percentage(int32 x, int32 total)
         percentage_buffer[0] = '\0';
     }
     else {
-        sprintf(percentage_buffer, "  (%2d.%d%%)", x*100/total,(x*1000/total)%10);
+        sprintf(percentage_buffer, "  (%.1f%%)", (float)x * 100.0 / (float)total);
     }
     return percentage_buffer;
 }
@@ -1124,7 +1124,7 @@ printf("        |    Unicode table    |\n");
             }
 printf("        +---------------------+   %05lx\n",
                                           (long int) prop_defaults_at);
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n", show_percentage(object_tree_at-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) object_tree_at);
 printf("        |       objects       |   %s\n", show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
