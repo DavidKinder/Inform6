@@ -1183,12 +1183,15 @@ if (module_switch)
 {
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) map_of_module);
-printf("        | map of module addrs |\n");
+addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
+printf("        | map of module addrs |   %s\n",
+    show_percentage(addr-map_of_module, Out_Size));
 }
 if (static_array_area_size)
 {
 printf("        +---------------------+   %05lx\n", (long int) static_arrays_at);
-printf("        |    static arrays    |\n");
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_Code_At-static_arrays_at, Out_Size));
 }
 printf("        +=====================+   %05lx\n", (long int) Write_Code_At);
 printf("Above   |       Z-code        |   %s\n",
