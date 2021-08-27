@@ -1868,18 +1868,6 @@ printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+abbrevs_at));
 printf("        | printing variables  |   %s\n",
     show_percentage(object_tree_at-abbrevs_at, Out_Size));
-            if (alphabet_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+charset_at));
-printf("        |   alphabets table   |\n");
-            }
-            if (zscii_defn_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+unicode_at));
-printf("        |    Unicode table    |\n");
-            }
 printf("        +---------------------+   %06lx\n", 
   (long int) (Write_RAM_At+object_tree_at));
 printf("        |       objects       |\n");
