@@ -1204,7 +1204,8 @@ printf("memory  |       strings       |   %s\n",
 if (module_switch)
 {
 printf("        +=====================+   %05lx\n", (long int) link_table_at);
-printf("        | module linking data |\n");
+printf("        | module linking data |   %s\n",
+    show_percentage(Out_Size-link_table_at, Out_Size));
 }
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
