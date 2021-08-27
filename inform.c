@@ -1310,7 +1310,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --list\n\
   --helpopt SETTING\n\
   --opt SETTING=number\n\
-  --define SETTING=number\n\
+  --define SYMBOL=number\n\
   --config filename      (setup file)\n\n");
 
 #ifndef PROMPT_INPUT
