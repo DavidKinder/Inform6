@@ -1882,19 +1882,24 @@ printf("        |  property defaults  |   %s\n",
     show_percentage(class_numbers_offset-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+class_numbers_offset));
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n",
+    show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+identifier_names_offset));
-printf("        |   id names table    |\n");
+printf("        |   id names table    |   %s\n",
+    show_percentage(grammar_table_at-identifier_names_offset, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+grammar_table_at));
-printf("        |    grammar table    |\n");
+printf("        |    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n", 
   (long int) (Write_RAM_At+actions_at));
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(dictionary_offset-(Write_RAM_At+actions_at), Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) dictionary_offset);
-printf("        |     dictionary      |\n");
+printf("        |     dictionary      |   %s\n",
+    show_percentage(Out_Size-dictionary_offset, Out_Size));
             if (MEMORY_MAP_EXTENSION == 0)
             {
 printf("        +---------------------+   %06lx\n", (long int) Out_Size);
