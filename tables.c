@@ -1105,22 +1105,24 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         int32 addr;
         {
 printf("Dynamic +---------------------+   00000\n");
-printf("memory  |       header        |\n");
+printf("memory  |       header        |   %s\n", show_percentage(0x40, Out_Size));
 printf("        +---------------------+   00040\n");
-printf("        |    abbreviations    |\n");
+printf("        |    abbreviations    |   %s\n", show_percentage(abbrevs_at-0x40, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) abbrevs_at);
-printf("        | abbreviations table |\n");
+printf("        | abbreviations table |   %s\n", show_percentage(headerext_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) headerext_at);
-printf("        |  header extension   |\n");
+addr = (alphabet_modified ? charset_at : (zscii_defn_modified ? unicode_at : prop_defaults_at));
+printf("        |  header extension   |   %s\n", show_percentage(addr-headerext_at, Out_Size));
             if (alphabet_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) charset_at);
-printf("        |   alphabets table   |\n");
+addr = (zscii_defn_modified ? unicode_at : prop_defaults_at);
+printf("        |   alphabets table   |   %s\n", show_percentage(addr-charset_at, Out_Size));
             }
             if (zscii_defn_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) unicode_at);
-printf("        |    Unicode table    |\n");
+printf("        |    Unicode table    |   %s\n", show_percentage(prop_defaults_at-unicode_at, Out_Size));
             }
 printf("        +---------------------+   %05lx\n",
                                           (long int) prop_defaults_at);
