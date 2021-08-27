@@ -1829,25 +1829,32 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
     if (memory_map_switch)
     {
-
+        int32 addr;
         {
 printf("        +---------------------+   000000\n");
-printf("Read-   |       header        |\n");
+printf("Read-   |       header        |   %s\n",
+    show_percentage(GLULX_HEADER_SIZE, Out_Size));
 printf(" only   +=====================+   %06lx\n", (long int) GLULX_HEADER_SIZE);
-printf("memory  |  memory layout id   |\n");
+printf("memory  |  memory layout id   |   %s\n",
+    show_percentage(Write_Code_At-GLULX_HEADER_SIZE, Out_Size));
 printf("        +---------------------+   %06lx\n", (long int) Write_Code_At);
-printf("        |        code         |\n");
+printf("        |        code         |   %s\n",
+    show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) Write_Strings_At);
-printf("        | string decode table |\n");
+printf("        | string decode table |   %s\n",
+    show_percentage(compression_table_size, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) Write_Strings_At + compression_table_size);
-printf("        |       strings       |\n");
+addr = (static_array_area_size ? static_arrays_at : Write_RAM_At+globals_at);
+printf("        |       strings       |   %s\n",
+    show_percentage(addr-(Write_Strings_At + compression_table_size), Out_Size));
             if (static_array_area_size)
             {
 printf("        +---------------------+   %06lx\n", 
   (long int) (static_arrays_at));
-printf("        |    static arrays    |\n");
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_RAM_At+globals_at-static_arrays_at, Out_Size));
             }
 printf("        +=====================+   %06lx\n", 
   (long int) (Write_RAM_At+globals_at));
