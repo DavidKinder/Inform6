@@ -1232,8 +1232,7 @@ static void construct_storyfile_g(void)
     int32 i, j, k, l, mark, strings_length, limit;
     int32 globals_at, dictionary_at, actions_at, preactions_at,
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
-          grammar_table_at, charset_at, headerext_at,
-        unicode_at, arrays_at, static_arrays_at;
+          grammar_table_at, arrays_at, static_arrays_at;
     int32 threespaces, code_length;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -1327,16 +1326,6 @@ static void construct_storyfile_g(void)
       WriteInt32(p+mark, j);
       mark += 4;
     }
-
-    /* ---------------- Various Things I'm Not Sure About ------------------ */
-    /* Actually, none of these are relevant to Glulx. */
-    headerext_at = mark;
-    charset_at = 0;
-    if (alphabet_modified)
-      charset_at = mark;
-    unicode_at = 0;
-    if (zscii_defn_modified)
-      unicode_at = mark;
 
     /*  -------------------- Objects and Properties ------------------------ */
 
