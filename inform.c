@@ -1593,7 +1593,10 @@ extern void switches(char *p, int cmode)
         memory_map_switch = TRUE;
     }
     if (optimise_switch)
-    {   store_the_text=TRUE;
+    {
+        /* store_the_text is equivalent to optimise_switch; -u sets both.
+           We could simplify this. */
+        store_the_text=TRUE;
     }
 }
 
