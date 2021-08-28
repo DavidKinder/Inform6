@@ -122,10 +122,6 @@ static char *show_percentage(int32 x, int32 total)
     return percentage_buffer;
 }
 
-static void percentage(char *name, int32 x, int32 total)
-{   printf("   %-20s %2d.%d%%\n",name,x*100/total,(x*1000/total)%10);
-}
-
 static char *version_name(int v)
 {
   if (!glulx_mode) {
@@ -1210,21 +1206,7 @@ printf("        | module linking data |   %s\n",
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
     }
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Z-code",             code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      total_bytes_trans,Out_Size);
-    }
+
     if (frequencies_switch)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");
@@ -1916,21 +1898,6 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
     }
 
 
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Code",               code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      strings_length,Out_Size);
-    }
     if (frequencies_switch)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");
