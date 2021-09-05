@@ -1295,13 +1295,12 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 static char *opttext;
 static int32 opttextlen;
 
-#define MAX_TLBS 8000
-
 typedef struct tlb_s
 {   char text[4];
     int32 intab, occurrences;
 } tlb;
-static tlb *tlbtab; /* Three-letter blocks (up to no_occs, max of MAX_TLBS) */
+static tlb *tlbtab; /* Three-letter blocks (allocated up to no_occs) */
+static memory_list tlbtab_memlist;
 static int32 no_occs;
 
 static int32 *grandtable;
@@ -1430,8 +1429,12 @@ extern void optimise_abbreviations(void)
     printf("Beginning calculation of optimal abbreviations...\n");
 
     pass_no = 0;
-    tlbtab=my_calloc(sizeof(tlb), MAX_TLBS, "tlb table"); no_occs=0;
-    for (i=0; i<MAX_TLBS; i++) tlbtab[i].occurrences=0;
+
+    initialise_memory_list(&tlbtab_memlist,
+        sizeof(tlb), 1000, (void**)&tlbtab,
+        "three-letter-blocks buffer");
+    
+    no_occs=0;
 
     bestyet=my_calloc(sizeof(optab), 256, "bestyet");
     bestyet2=my_calloc(sizeof(optab), 64, "bestyet2");
@@ -1503,16 +1506,13 @@ extern void optimise_abbreviations(void)
                  }
         }
         if (test.occurrences>=2)
-        {   tlbtab[no_occs]=test;
+        {
+            ensure_memory_list_available(&tlbtab_memlist, no_occs+1);
+            tlbtab[no_occs]=test;
             tlbtab[no_occs].intab=t; t+=tlbtab[no_occs].occurrences;
             if (max<tlbtab[no_occs].occurrences)
                 max=tlbtab[no_occs].occurrences;
             no_occs++;
-            if (no_occs==MAX_TLBS)
-            {   printf("All %d three-letter-blocks used\n",
-                    MAX_TLBS);
-                goto Built;
-            }
         }
         DontKeep: ;
     }
@@ -2691,13 +2691,16 @@ extern void text_free_arrays(void)
 
 extern void ao_free_arrays(void)
 {
+    /* Called only after optimise_abbreviations() runs. */
+    
     my_free (&opttext,"stashed transcript for optimisation");
-    my_free (&tlbtab,"tlb table");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
     my_free (&grandflags,"grandflags");
 
+    deallocate_memory_list(&tlbtab_memlist);
+    
     /* This was re-inited, so we should re-deallocate it. */
     deallocate_memory_list(&all_text_memlist);
 }
