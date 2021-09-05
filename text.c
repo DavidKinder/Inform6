@@ -1291,14 +1291,17 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 /*   for compatibility with previous releases.                               */
 /* ------------------------------------------------------------------------- */
 
+/* The complete game text. */
 static char *opttext;
 static int32 opttextlen;
+
+#define MAX_TLBS 8000
 
 typedef struct tlb_s
 {   char text[4];
     int32 intab, occurrences;
 } tlb;
-static tlb *tlbtab;
+static tlb *tlbtab; /* Three-letter blocks (up to no_occs, max of MAX_TLBS) */
 static int32 no_occs;
 
 static int32 *grandtable;
@@ -1310,7 +1313,8 @@ typedef struct optab_s
     int32  location;
     char text[MAX_ABBREV_LENGTH];
 } optab;
-static optab *bestyet, *bestyet2;
+static optab *bestyet; /* High-score entries (up to 256) */
+static optab *bestyet2; /* The selected entries (up to 64) */
 
 static int pass_no;
 
@@ -1340,7 +1344,7 @@ static void optimise_pass(void)
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
-                while ((noflags>=2)&&(nl<=62))
+                while ((noflags>=2)&&(nl<MAX_ABBREV_LENGTH-1))
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
                         if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
@@ -1413,12 +1417,9 @@ static int any_overlap(char *s1, char *s2)
     return(0);
 }
 
-#define MAX_TLBS 8000
-
 extern void optimise_abbreviations(void)
 {   int32 i, j, t, max=0, MAX_GTABLE;
     int32 j2, selected, available, maxat=0, nl;
-    tlb test;
 
     if (opttext == NULL)
         return;
@@ -1465,7 +1466,9 @@ extern void optimise_abbreviations(void)
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
     for (i=0, t=0; i<opttextlen; i++)
-    {   test.text[0]=opttext[i];
+    {
+        tlb test;
+        test.text[0]=opttext[i];
         test.text[1]=opttext[i+1];
         test.text[2]=opttext[i+2];
         test.text[3]=0;
@@ -1475,6 +1478,7 @@ extern void optimise_abbreviations(void)
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
         test.occurrences=0;
+        test.intab=0;
         for (j=i+3; j<opttextlen; j++)
         {
 #ifdef MAC_FACE
@@ -1557,7 +1561,9 @@ extern void optimise_abbreviations(void)
                 }
 
             if (max>0)
-            {   bestyet2[selected++]=bestyet[maxat];
+            {
+                char testtext[4];
+                bestyet2[selected++]=bestyet[maxat];
 
                 printf(
                     "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
@@ -1565,13 +1571,13 @@ extern void optimise_abbreviations(void)
                     (long int) bestyet[maxat].popularity,
                     (long int) bestyet[maxat].score);
 
-                test.text[0]=bestyet[maxat].text[0];
-                test.text[1]=bestyet[maxat].text[1];
-                test.text[2]=bestyet[maxat].text[2];
-                test.text[3]=0;
+                testtext[0]=bestyet[maxat].text[0];
+                testtext[1]=bestyet[maxat].text[1];
+                testtext[2]=bestyet[maxat].text[2];
+                testtext[3]=0;
 
                 for (i=0; i<no_occs; i++)
-                    if (strcmp(test.text,tlbtab[i].text)==0)
+                    if (strcmp(testtext,tlbtab[i].text)==0)
                         break;
 
                 for (j=0; j<tlbtab[i].occurrences; j++)
