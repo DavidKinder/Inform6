@@ -1312,8 +1312,9 @@ typedef struct optab_s
     int32  location;
     char text[MAX_ABBREV_LENGTH];
 } optab;
-static optab *bestyet; /* High-score entries (up to 256) */
-static optab *bestyet2; /* The selected entries (up to 64) */
+static int32 MAX_BESTYET;
+static optab *bestyet; /* High-score entries (up to MAX_BESTYET) */
+static optab *bestyet2; /* The selected entries (up to MAX_ABBREVS) */
 
 static int pass_no;
 
@@ -1323,7 +1324,7 @@ static void optimise_pass(void)
     float duration;
     int32 i;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
-    for (i=0; i<256; i++) bestyet[i].length=0;
+    for (i=0; i<MAX_BESTYET; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
     {   if ((*(tlbtab[i].text)!=(int) '\n')&&(tlbtab[i].occurrences!=0))
         {
@@ -1375,12 +1376,12 @@ static void optimise_pass(void)
                     }
                     score=(matches-1)*(scrabble-2);
                     min=score;
-                    for (j2=0; j2<256; j2++)
+                    for (j2=0; j2<MAX_BESTYET; j2++)
                     {   if ((nl==bestyet[j2].length)
                                 && (memcmp(opttext+bestyet[j2].location,
                                        opttext+grandtable[tlbtab[i].intab+j],
                                        nl)==0))
-                        {   j2=256; min=score; }
+                        {   j2=MAX_BESTYET; min=score; }
                         else
                         {   if (bestyet[j2].score<min)
                             {   min=bestyet[j2].score; minat=j2;
@@ -1423,6 +1424,10 @@ extern void optimise_abbreviations(void)
     if (opttext == NULL)
         return;
 
+    /* We insist that the first two abbreviations will be ". " and ", ". */
+    if (MAX_ABBREVS < 2)
+        return;
+
     /* Note that it's safe to access opttext[opttextlen+2]. There are
        two newlines and a null beyond opttextlen. */
     
@@ -1436,8 +1441,11 @@ extern void optimise_abbreviations(void)
     
     no_occs=0;
 
-    bestyet=my_calloc(sizeof(optab), 256, "bestyet");
-    bestyet2=my_calloc(sizeof(optab), 64, "bestyet2");
+    /* Not sure what the optimal size is here. The original code used MAX_BESTYET=256 and MAX_ABBREVS=64. */
+    MAX_BESTYET = 4 * MAX_ABBREVS;
+    
+    bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
+    bestyet2=my_calloc(sizeof(optab), MAX_ABBREVS, "bestyet2");
 
     bestyet2[0].text[0]='.';
     bestyet2[0].text[1]=' ';
@@ -1528,14 +1536,14 @@ extern void optimise_abbreviations(void)
                 tlbtab[i].occurrences);
     */
 
-    for (i=0; i<64; i++) bestyet2[i].length=0; selected=2;
-    available=256;
-    while ((available>0)&&(selected<64))
+    for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0; selected=2;
+    available=MAX_BESTYET;
+    while ((available>0)&&(selected<MAX_ABBREVS))
     {   printf("Pass %d\n", ++pass_no);
 
         optimise_pass();
         available=0;
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score!=0)
             {   available++;
                 nl=bestyet[i].length;
@@ -1546,7 +1554,7 @@ extern void optimise_abbreviations(void)
 
     /*  printf("End of pass results:\n");
         printf("\nno   score  freq   string\n");
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score>0)
                 printf("%02d:  %4d   %4d   '%s'\n", i, bestyet[i].score,
                     bestyet[i].popularity, bestyet[i].text);
@@ -1554,7 +1562,7 @@ extern void optimise_abbreviations(void)
 
         do
         {   max=0;
-            for (i=0; i<256; i++)
+            for (i=0; i<MAX_BESTYET; i++)
                 if (max<bestyet[i].score)
                 {   max=bestyet[i].score;
                     maxat=i;
@@ -1589,7 +1597,7 @@ extern void optimise_abbreviations(void)
                     }
                 }
 
-                for (i=0; i<256; i++)
+                for (i=0; i<MAX_BESTYET; i++)
                     if ((bestyet[i].score>0)&&
                         (any_overlap(bestyet[maxat].text,bestyet[i].text)==1))
                     {   bestyet[i].score=0;
@@ -1597,7 +1605,7 @@ extern void optimise_abbreviations(void)
                             bestyet[i].text); */
                     }
             }
-        } while ((max>0)&&(available>0)&&(selected<64));
+        } while ((max>0)&&(available>0)&&(selected<MAX_ABBREVS));
     }
 
     printf("\nChosen abbreviations (in Inform syntax):\n\n");
