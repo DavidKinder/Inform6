@@ -1418,7 +1418,7 @@ static int any_overlap(char *s1, char *s2)
 }
 
 extern void optimise_abbreviations(void)
-{   int32 i, j, t, max=0, MAX_GTABLE;
+{   int32 i, j, tcount, max=0, MAX_GTABLE;
     int32 j2, selected, available, maxat=0, nl;
 
     if (opttext == NULL)
@@ -1478,7 +1478,7 @@ extern void optimise_abbreviations(void)
     MAX_GTABLE=opttextlen+1;
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
-    for (i=0, t=0; i<opttextlen; i++)
+    for (i=0, tcount=0; i<opttextlen; i++)
     {
         tlb test;
         test.text[0]=opttext[i];
@@ -1506,9 +1506,9 @@ extern void optimise_abbreviations(void)
             if ((opttext[i]==opttext[j])
                  && (opttext[i+1]==opttext[j+1])
                  && (opttext[i+2]==opttext[j+2]))
-                 {   grandtable[t+test.occurrences]=j;
+                 {   grandtable[tcount+test.occurrences]=j;
                      test.occurrences++;
-                     if (t+test.occurrences==MAX_GTABLE)
+                     if (tcount+test.occurrences==MAX_GTABLE)
                      {   printf("All %ld cross-references used\n",
                              (long int) MAX_GTABLE);
                          goto Built;
@@ -1519,7 +1519,8 @@ extern void optimise_abbreviations(void)
         {
             ensure_memory_list_available(&tlbtab_memlist, no_occs+1);
             tlbtab[no_occs]=test;
-            tlbtab[no_occs].intab=t; t+=tlbtab[no_occs].occurrences;
+            tlbtab[no_occs].intab=tcount;
+            tcount += tlbtab[no_occs].occurrences;
             if (max<tlbtab[no_occs].occurrences)
                 max=tlbtab[no_occs].occurrences;
             no_occs++;
