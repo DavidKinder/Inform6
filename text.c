@@ -1487,9 +1487,10 @@ extern void optimise_abbreviations(void)
         test.text[3]=0;
         if ((test.text[0]=='\n')||(test.text[1]=='\n')||(test.text[2]=='\n'))
             goto DontKeep;
-        for (j=0; j<no_occs; j++)
+        for (j=0; j<no_occs; j++) {
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
+        }
         test.occurrences=0;
         test.intab=0;
         for (j=i+3; j<opttextlen; j++)
