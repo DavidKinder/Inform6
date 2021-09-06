@@ -1313,8 +1313,8 @@ typedef struct optab_s
     char text[MAX_ABBREV_LENGTH];
 } optab;
 static int32 MAX_BESTYET;
-static optab *bestyet; /* High-score entries (up to MAX_BESTYET) */
-static optab *bestyet2; /* The selected entries (up to MAX_ABBREVS) */
+static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
+static optab *bestyet2; /* The selected entries (up to selected used; allocated to MAX_ABBREVS) */
 
 static int pass_no;
 
@@ -1441,7 +1441,7 @@ extern void optimise_abbreviations(void)
     
     no_occs=0;
 
-    /* Not sure what the optimal size is here. The original code used MAX_BESTYET=256 and MAX_ABBREVS=64. */
+    /* Not sure what the optimal size is for MAX_BESTYET. The original code always created 64 abbreviations and used MAX_BESTYET=256. I'm guessing that 4*MAX_ABBREVS is reasonable. */
     MAX_BESTYET = 4 * MAX_ABBREVS;
     
     bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
@@ -1454,6 +1454,8 @@ extern void optimise_abbreviations(void)
     bestyet2[1].text[0]=',';
     bestyet2[1].text[1]=' ';
     bestyet2[1].text[2]=0;
+
+    selected=2;
 
     for (i=0; i<opttextlen; i++)
     {
@@ -1536,7 +1538,7 @@ extern void optimise_abbreviations(void)
                 tlbtab[i].occurrences);
     */
 
-    for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0; selected=2;
+    for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0;
     available=MAX_BESTYET;
     while ((available>0)&&(selected<MAX_ABBREVS))
     {   printf("Pass %d\n", ++pass_no);
