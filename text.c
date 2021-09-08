@@ -1291,6 +1291,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 /*   for compatibility with previous releases.                               */
 /* ------------------------------------------------------------------------- */
 
+/* The complete game text. */
 static char *opttext;
 static int32 opttextlen;
 
@@ -1298,7 +1299,8 @@ typedef struct tlb_s
 {   char text[4];
     int32 intab, occurrences;
 } tlb;
-static tlb *tlbtab;
+static tlb *tlbtab; /* Three-letter blocks (allocated up to no_occs) */
+static memory_list tlbtab_memlist;
 static int32 no_occs;
 
 static int32 *grandtable;
@@ -1310,7 +1312,9 @@ typedef struct optab_s
     int32  location;
     char text[MAX_ABBREV_LENGTH];
 } optab;
-static optab *bestyet, *bestyet2;
+static int32 MAX_BESTYET;
+static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
+static optab *bestyet2; /* The selected entries (up to selected used; allocated to MAX_ABBREVS) */
 
 static int pass_no;
 
@@ -1320,7 +1324,7 @@ static void optimise_pass(void)
     float duration;
     int32 i;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
-    for (i=0; i<256; i++) bestyet[i].length=0;
+    for (i=0; i<MAX_BESTYET; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
     {   if ((*(tlbtab[i].text)!=(int) '\n')&&(tlbtab[i].occurrences!=0))
         {
@@ -1340,7 +1344,7 @@ static void optimise_pass(void)
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
-                while ((noflags>=2)&&(nl<=62))
+                while ((noflags>=2)&&(nl<MAX_ABBREV_LENGTH-1))
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
                         if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
@@ -1372,12 +1376,12 @@ static void optimise_pass(void)
                     }
                     score=(matches-1)*(scrabble-2);
                     min=score;
-                    for (j2=0; j2<256; j2++)
+                    for (j2=0; j2<MAX_BESTYET; j2++)
                     {   if ((nl==bestyet[j2].length)
                                 && (memcmp(opttext+bestyet[j2].location,
                                        opttext+grandtable[tlbtab[i].intab+j],
                                        nl)==0))
-                        {   j2=256; min=score; }
+                        {   j2=MAX_BESTYET; min=score; }
                         else
                         {   if (bestyet[j2].score<min)
                             {   min=bestyet[j2].score; minat=j2;
@@ -1413,14 +1417,15 @@ static int any_overlap(char *s1, char *s2)
     return(0);
 }
 
-#define MAX_TLBS 8000
-
 extern void optimise_abbreviations(void)
-{   int32 i, j, t, max=0, MAX_GTABLE;
+{   int32 i, j, tcount, max=0, MAX_GTABLE;
     int32 j2, selected, available, maxat=0, nl;
-    tlb test;
 
     if (opttext == NULL)
+        return;
+
+    /* We insist that the first two abbreviations will be ". " and ", ". */
+    if (MAX_ABBREVS < 2)
         return;
 
     /* Note that it's safe to access opttext[opttextlen+2]. There are
@@ -1429,11 +1434,18 @@ extern void optimise_abbreviations(void)
     printf("Beginning calculation of optimal abbreviations...\n");
 
     pass_no = 0;
-    tlbtab=my_calloc(sizeof(tlb), MAX_TLBS, "tlb table"); no_occs=0;
-    for (i=0; i<MAX_TLBS; i++) tlbtab[i].occurrences=0;
 
-    bestyet=my_calloc(sizeof(optab), 256, "bestyet");
-    bestyet2=my_calloc(sizeof(optab), 64, "bestyet2");
+    initialise_memory_list(&tlbtab_memlist,
+        sizeof(tlb), 1000, (void**)&tlbtab,
+        "three-letter-blocks buffer");
+    
+    no_occs=0;
+
+    /* Not sure what the optimal size is for MAX_BESTYET. The original code always created 64 abbreviations and used MAX_BESTYET=256. I'm guessing that 4*MAX_ABBREVS is reasonable. */
+    MAX_BESTYET = 4 * MAX_ABBREVS;
+    
+    bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
+    bestyet2=my_calloc(sizeof(optab), MAX_ABBREVS, "bestyet2");
 
     bestyet2[0].text[0]='.';
     bestyet2[0].text[1]=' ';
@@ -1442,6 +1454,8 @@ extern void optimise_abbreviations(void)
     bestyet2[1].text[0]=',';
     bestyet2[1].text[1]=' ';
     bestyet2[1].text[2]=0;
+
+    selected=2;
 
     for (i=0; i<opttextlen; i++)
     {
@@ -1464,17 +1478,21 @@ extern void optimise_abbreviations(void)
     MAX_GTABLE=opttextlen+1;
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
-    for (i=0, t=0; i<opttextlen; i++)
-    {   test.text[0]=opttext[i];
+    for (i=0, tcount=0; i<opttextlen; i++)
+    {
+        tlb test;
+        test.text[0]=opttext[i];
         test.text[1]=opttext[i+1];
         test.text[2]=opttext[i+2];
         test.text[3]=0;
         if ((test.text[0]=='\n')||(test.text[1]=='\n')||(test.text[2]=='\n'))
             goto DontKeep;
-        for (j=0; j<no_occs; j++)
+        for (j=0; j<no_occs; j++) {
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
+        }
         test.occurrences=0;
+        test.intab=0;
         for (j=i+3; j<opttextlen; j++)
         {
 #ifdef MAC_FACE
@@ -1489,9 +1507,9 @@ extern void optimise_abbreviations(void)
             if ((opttext[i]==opttext[j])
                  && (opttext[i+1]==opttext[j+1])
                  && (opttext[i+2]==opttext[j+2]))
-                 {   grandtable[t+test.occurrences]=j;
+                 {   grandtable[tcount+test.occurrences]=j;
                      test.occurrences++;
-                     if (t+test.occurrences==MAX_GTABLE)
+                     if (tcount+test.occurrences==MAX_GTABLE)
                      {   printf("All %ld cross-references used\n",
                              (long int) MAX_GTABLE);
                          goto Built;
@@ -1499,16 +1517,14 @@ extern void optimise_abbreviations(void)
                  }
         }
         if (test.occurrences>=2)
-        {   tlbtab[no_occs]=test;
-            tlbtab[no_occs].intab=t; t+=tlbtab[no_occs].occurrences;
+        {
+            ensure_memory_list_available(&tlbtab_memlist, no_occs+1);
+            tlbtab[no_occs]=test;
+            tlbtab[no_occs].intab=tcount;
+            tcount += tlbtab[no_occs].occurrences;
             if (max<tlbtab[no_occs].occurrences)
                 max=tlbtab[no_occs].occurrences;
             no_occs++;
-            if (no_occs==MAX_TLBS)
-            {   printf("All %d three-letter-blocks used\n",
-                    MAX_TLBS);
-                goto Built;
-            }
         }
         DontKeep: ;
     }
@@ -1524,14 +1540,14 @@ extern void optimise_abbreviations(void)
                 tlbtab[i].occurrences);
     */
 
-    for (i=0; i<64; i++) bestyet2[i].length=0; selected=2;
-    available=256;
-    while ((available>0)&&(selected<64))
+    for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0;
+    available=MAX_BESTYET;
+    while ((available>0)&&(selected<MAX_ABBREVS))
     {   printf("Pass %d\n", ++pass_no);
 
         optimise_pass();
         available=0;
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score!=0)
             {   available++;
                 nl=bestyet[i].length;
@@ -1542,7 +1558,7 @@ extern void optimise_abbreviations(void)
 
     /*  printf("End of pass results:\n");
         printf("\nno   score  freq   string\n");
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score>0)
                 printf("%02d:  %4d   %4d   '%s'\n", i, bestyet[i].score,
                     bestyet[i].popularity, bestyet[i].text);
@@ -1550,14 +1566,16 @@ extern void optimise_abbreviations(void)
 
         do
         {   max=0;
-            for (i=0; i<256; i++)
+            for (i=0; i<MAX_BESTYET; i++)
                 if (max<bestyet[i].score)
                 {   max=bestyet[i].score;
                     maxat=i;
                 }
 
             if (max>0)
-            {   bestyet2[selected++]=bestyet[maxat];
+            {
+                char testtext[4];
+                bestyet2[selected++]=bestyet[maxat];
 
                 printf(
                     "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
@@ -1565,13 +1583,13 @@ extern void optimise_abbreviations(void)
                     (long int) bestyet[maxat].popularity,
                     (long int) bestyet[maxat].score);
 
-                test.text[0]=bestyet[maxat].text[0];
-                test.text[1]=bestyet[maxat].text[1];
-                test.text[2]=bestyet[maxat].text[2];
-                test.text[3]=0;
+                testtext[0]=bestyet[maxat].text[0];
+                testtext[1]=bestyet[maxat].text[1];
+                testtext[2]=bestyet[maxat].text[2];
+                testtext[3]=0;
 
                 for (i=0; i<no_occs; i++)
-                    if (strcmp(test.text,tlbtab[i].text)==0)
+                    if (strcmp(testtext,tlbtab[i].text)==0)
                         break;
 
                 for (j=0; j<tlbtab[i].occurrences; j++)
@@ -1583,7 +1601,7 @@ extern void optimise_abbreviations(void)
                     }
                 }
 
-                for (i=0; i<256; i++)
+                for (i=0; i<MAX_BESTYET; i++)
                     if ((bestyet[i].score>0)&&
                         (any_overlap(bestyet[maxat].text,bestyet[i].text)==1))
                     {   bestyet[i].score=0;
@@ -1591,7 +1609,7 @@ extern void optimise_abbreviations(void)
                             bestyet[i].text); */
                     }
             }
-        } while ((max>0)&&(available>0)&&(selected<64));
+        } while ((max>0)&&(available>0)&&(selected<MAX_ABBREVS));
     }
 
     printf("\nChosen abbreviations (in Inform syntax):\n\n");
@@ -2685,13 +2703,16 @@ extern void text_free_arrays(void)
 
 extern void ao_free_arrays(void)
 {
+    /* Called only after optimise_abbreviations() runs. */
+    
     my_free (&opttext,"stashed transcript for optimisation");
-    my_free (&tlbtab,"tlb table");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
     my_free (&grandflags,"grandflags");
 
+    deallocate_memory_list(&tlbtab_memlist);
+    
     /* This was re-inited, so we should re-deallocate it. */
     deallocate_memory_list(&all_text_memlist);
 }
