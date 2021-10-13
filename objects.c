@@ -1734,7 +1734,7 @@ static void classes_segment(void)
         {   ebf_error("name of an already-declared class", token_text);
             return;
         }
-        if (token_value == current_classname_symbol)
+        if (current_defn_is_class && token_value == current_classname_symbol)
         {   error("A class cannot inherit from itself");
             return;
         }
