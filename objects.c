@@ -47,8 +47,8 @@ static memory_list current_object_name; /* The name of the object currently
 
 static int current_classname_symbol;    /* The symbol index of the class
                                            currently being defined.
-                                           For printing names of embedded
-                                           routines only.                    */
+                                           For error-checking and printing
+                                           names of embedded routines only.  */
 
 static memory_list embedded_function_name; /* Temporary storage for inline
                                               function name in property.     */
@@ -1734,6 +1734,10 @@ static void classes_segment(void)
         {   ebf_error("name of an already-declared class", token_text);
             return;
         }
+        if (current_defn_is_class && token_value == current_classname_symbol)
+        {   error("A class cannot inherit from itself");
+            return;
+        }
 
         symbols[token_value].flags |= USED_SFLAG;
         add_class_to_inheritance_list(symbols[token_value].value);
@@ -1973,6 +1977,9 @@ You may be able to get round this by declaring some of its property names as \
         }
         my_free(&duplicate_name, "temporary storage for object duplicate names");
     }
+
+    /* Finished building the class. */
+    current_classname_symbol = 0;
 }
 
 /* ------------------------------------------------------------------------- */
