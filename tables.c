@@ -1689,7 +1689,7 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  no_grammar_tokens,
                  no_actions,
                  no_attributes, NUM_ATTR_BYTES*8,
-                 no_properties, INDIV_PROP_START,
+                 no_properties-3, INDIV_PROP_START-3,
                  no_individual_properties - INDIV_PROP_START);
 
             if (track_unused_routines)
