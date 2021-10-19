@@ -999,7 +999,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  no_grammar_tokens,
                  no_actions,
                  no_attributes, ((version_number==3)?32:48),
-                 no_properties-2, ((version_number==3)?30:62),
+                 no_properties-3, ((version_number==3)?29:61),
                  no_individual_properties - 64);
 
             if (track_unused_routines)
