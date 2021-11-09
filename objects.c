@@ -192,36 +192,6 @@ extern void make_property(void)
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
-    if (!glulx_mode) {
-        if (no_properties==((version_number==3)?32:64))
-        {   discard_token_location(beginning_debug_location);
-            /* The maximum listed here includes "name" but not the 
-               unused zero value or the two hidden properties (class
-               inheritance and indiv table). */
-            if (version_number==3)
-                error("All 29 properties already declared (compile as \
-Advanced game to get 32 more)");
-            else
-                error("All 61 properties already declared");
-            panic_mode_error_recovery();
-            put_token_back();
-            return;
-        }
-    }
-    else {
-        if (no_properties==INDIV_PROP_START) {
-            char error_b[128];
-            discard_token_location(beginning_debug_location);
-            sprintf(error_b,
-                "All %d properties already declared (increase INDIV_PROP_START to get more)",
-                INDIV_PROP_START-3);
-            error(error_b);
-            panic_mode_error_recovery(); 
-            put_token_back();
-            return;
-        }
-    }
-
     /* The next bit is tricky. We want to accept any number of the keywords
        "long", "additive", "individual" before the property name. But we
        also want to accept "Property long" -- that's a legitimate
@@ -348,6 +318,38 @@ Advanced game to get 32 more)");
         symbols[token_value].flags |= ALIASED_SFLAG;
         symbols[i].flags |= ALIASED_SFLAG;
         return;
+    }
+
+    /* We now know we're allocating a new common property. Make sure 
+       there's room. */
+    if (!glulx_mode) {
+        if (no_properties==((version_number==3)?32:64))
+        {   discard_token_location(beginning_debug_location);
+            /* The maximum listed here includes "name" but not the 
+               unused zero value or the two hidden properties (class
+               inheritance and indiv table). */
+            if (version_number==3)
+                error("All 29 properties already declared (compile as \
+Advanced game to get 32 more)");
+            else
+                error("All 61 properties already declared");
+            panic_mode_error_recovery();
+            put_token_back();
+            return;
+        }
+    }
+    else {
+        if (no_properties==INDIV_PROP_START) {
+            char error_b[128];
+            discard_token_location(beginning_debug_location);
+            sprintf(error_b,
+                "All %d properties already declared (increase INDIV_PROP_START to get more)",
+                INDIV_PROP_START-3);
+            error(error_b);
+            panic_mode_error_recovery(); 
+            put_token_back();
+            return;
+        }
     }
 
     default_value = 0;
