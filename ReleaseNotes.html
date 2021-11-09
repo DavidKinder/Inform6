@@ -125,6 +125,8 @@ local-argument functions (with a type byte of 0xC1). Previously, they were in so
 functions (with a type byte of 0xC0).
 <li><p>Counts of properties in errors and in the statistics report (output with the <tt>-s</tt> switch) are now
 consistent, and reflect how many properties the user can define.
+<li><p>The check that there are not too many common properties defined now correctly excludes individual and alias
+properties.
 <li><p>Inform will now report an error if the "class" line of a class definition mentions the class being defined.
 </ul>
 
