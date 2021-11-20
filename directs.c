@@ -109,10 +109,7 @@ extern int parse_given_directive(int internal_flag)
                panic_mode_error_recovery(); return FALSE;
            }
            if (token_type != DQ_TT)
-               return ebf_error_recover("abbreviation string", token_text);
-           if (strlen(token_text)<2)
-           {   error_named("It's not worth abbreviating", token_text);
-               continue;
+           {   return ebf_error_recover("abbreviation string", token_text);
            }
            /* Abbreviation string with null must fit in a MAX_ABBREV_LENGTH
               array. */
