@@ -226,6 +226,10 @@ extern void make_abbreviation(char *text)
 
     abbreviations[no_abbreviations].quality = zchars_trans_in_last_string - 2;
 
+    if (abbreviations[no_abbreviations].quality < 0) {
+        warning_named("Abbreviation uses more characters than it saves:", text);
+    }
+    
     no_abbreviations++;
 }
 
