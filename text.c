@@ -226,6 +226,10 @@ extern void make_abbreviation(char *text)
 
     abbreviations[no_abbreviations].quality = zchars_trans_in_last_string - 2;
 
+    if (abbreviations[no_abbreviations].quality <= 0) {
+        warning_named("Abbreviation does not save any characters:", text);
+    }
+    
     no_abbreviations++;
 }
 
@@ -502,7 +506,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
     if (economy_switch)
     {   
         uchar *q, c;
-        int l, min_score, from, abbr_length;
+        int l, min_score, from;
         int text_in_length;
 
         text_in_length = strlen( (char*) text_in);
@@ -523,19 +527,16 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
                     (k<no_abbreviations)&&(c==q[0]); k++, q+=MAX_ABBREV_LENGTH)
                 {   
                     /* Let's compare; we also keep track of the length of the abbreviation. */
-                    if (text_in[j+1]==q[1])
-                    {   abbr_length = 2;
-                        for (l=2; q[l]!=0; l++)
-                        {    if (text_in[j+l]!=q[l]) {goto NotMatched;} else {abbr_length++;}
-                        }
-                        /* We have a match, but is it smaller in size? */
-                        if (min_score > 2 + abbreviations_optimal_parse_scores[j+abbr_length])
-                        {   /* It is indeed smaller, so let's write it down in our schedule. */
-                            min_score = 2 + abbreviations_optimal_parse_scores[j+abbr_length];
-                            abbreviations_optimal_parse_schedule[j] = k;
-                        }
-                        NotMatched: ;
+                    for (l=1; q[l]!=0; l++)
+                    {    if (text_in[j+l]!=q[l]) {goto NotMatched;}
                     }
+                    /* We have a match (length l), but is it smaller in size? */
+                    if (min_score > 2 + abbreviations_optimal_parse_scores[j+l])
+                    {   /* It is indeed smaller, so let's write it down in our schedule. */
+                        min_score = 2 + abbreviations_optimal_parse_scores[j+l];
+                        abbreviations_optimal_parse_schedule[j] = k;
+                    }
+                    NotMatched: ;
                 }
             }
             /* We gave it our best, this is the smallest we got. */
