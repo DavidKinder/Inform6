@@ -590,7 +590,6 @@ extern void make_global(int array_flag, int name_only)
                 {   discard_token_location(beginning_debug_location);
                     error("Missing ';' to end the initial array values "
                           "before \"[\" or \"]\"");
-                    return;
                 }
                 put_token_back();
 
