@@ -538,6 +538,9 @@ extern void make_global(int array_flag, int name_only)
     arrays[no_arrays].type = array_type;
     arrays[no_arrays].loc = is_static;
 
+    /* Note that, from this point, we must continue through finish_array().
+       Exiting this routine on error causes problems. */
+    
     switch(data_type)
     {
         case NULLS_AI:
@@ -590,7 +593,6 @@ extern void make_global(int array_flag, int name_only)
                 {   discard_token_location(beginning_debug_location);
                     error("Missing ';' to end the initial array values "
                           "before \"[\" or \"]\"");
-                    return;
                 }
                 put_token_back();
 
