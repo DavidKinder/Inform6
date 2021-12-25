@@ -1085,9 +1085,17 @@ the first constant definition");
             }
 
             if (AO.marker != 0)
-                error("A definite value must be given as version number");
-            else 
-            if (glulx_mode) 
+            {
+              error("A definite value must be given as version number.");
+              break;
+            }
+            else if (no_routines > 1)
+            {
+              /* The built-in Main__ routine is number zero. */
+              error("A 'Version' directive must come before the first routine definition.");
+              break;
+            }
+            else if (glulx_mode) 
             {
               warning("The Version directive does not work in Glulx. Use \
 -vX.Y.Z instead, as either a command-line argument or a header comment.");
