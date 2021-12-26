@@ -2034,8 +2034,10 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         if (n==0)
         {
             if (!glulx_mode) {
-                p = dictionary+7 + at*(3+res) + res;
-                p[0]=(p[0])|x; p[1]=(p[1])|y; p[2]=(p[2])|z;
+                p = dictionary+7 + at*DICT_ENTRY_BYTE_LENGTH + res;
+                p[0]=(p[0])|x; p[1]=(p[1])|y;
+                if (!ZCODE_LESS_DICT_DATA)
+                    p[2]=(p[2])|z;
                 if (x & 128) p[0] = (p[0])|number_and_case;
             }
             else {
@@ -2141,8 +2143,8 @@ extern int dictionary_add(char *dword, int x, int y, int z)
 
     if (!glulx_mode) {
 
-        ensure_memory_list_available(&dictionary_memlist, dictionary_top + (res+3));
-        p = dictionary + (3+res)*dict_entries + 7;
+        ensure_memory_list_available(&dictionary_memlist, dictionary_top + DICT_ENTRY_BYTE_LENGTH);
+        p = dictionary + DICT_ENTRY_BYTE_LENGTH*dict_entries + 7;
 
         /*  So copy in the 4 (or 6) bytes of Z-coded text and the 3 data 
             bytes */
@@ -2154,7 +2156,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[res]=x; p[res+1]=y; p[res+2]=z;
         if (x & 128) p[res] = (p[res])|number_and_case;
 
-        dictionary_top += res+3;
+        dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
     }
     else {
@@ -2196,7 +2198,7 @@ extern void dictionary_set_verb_number(char *dword, int to)
     if (i!=0)
     {   
         if (!glulx_mode) {
-            p=dictionary+7+(i-1)*(3+res)+res; 
+            p=dictionary+7+(i-1)*DICT_ENTRY_BYTE_LENGTH+res; 
             p[1]=to;
         }
         else {
@@ -2343,8 +2345,7 @@ void print_dict_word(int node)
     
     if (!glulx_mode) {
         char textual_form[32];
-        int res = (version_number == 3)?4:6; /* byte length of encoded text */
-        p = (uchar *)dictionary + 7 + (3+res)*node;
+        p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
         
         word_to_ascii(p, textual_form);
         
@@ -2376,7 +2377,7 @@ static void recursively_show_z(int node)
     if (dtree[node].branch[0] != VACANT)
         recursively_show_z(dtree[node].branch[0]);
 
-    p = (uchar *)dictionary + 7 + (3+res)*node;
+    p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
     word_to_ascii(p, textual_form);
 
@@ -2386,7 +2387,7 @@ static void recursively_show_z(int node)
         show_char(' ');
 
     if (d_show_buf == NULL)
-    {   for (i=0; i<3+res; i++) printf("%02x ",p[i]);
+    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
 
         flags = (int) p[res];
         if (flags & 128)
