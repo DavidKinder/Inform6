@@ -315,6 +315,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 else {
                     assembly_operand AO;
                     put_token_back();
+                    if (ZCODE_LESS_DICT_DATA && !glulx_mode)
+                        warning("The ZCODE_LESS_DICT_DATA setting means that the third dictionary field will be ignored");
                     AO = parse_expression(CONSTANT_CONTEXT);
                     if (AO.marker != 0)
                         error("A definite value must be given as a Dictionary flag");
