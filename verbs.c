@@ -448,6 +448,11 @@ static int make_adjective(char *English_word)
         error("Grammar version 1 cannot support more than 255 prepositions");
         return 0;
     }
+    if (ZCODE_LESS_DICT_DATA && !glulx_mode) {
+        /* We need to use #dict_par3 for the preposition number. */
+        error("Grammar version 1 cannot be used with ZCODE_LESS_DICT_DATA");
+        return 0;
+    }
     ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);
     ensure_memory_list_available(&adjective_sort_code_memlist, (no_adjectives+1) * DICT_WORD_BYTES);
 
