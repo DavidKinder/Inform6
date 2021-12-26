@@ -1102,12 +1102,29 @@ the first constant definition");
               break;
             }
             else
-            {   i = AO.value;
+            {
+                int debtok;
+                i = AO.value;
                 if ((i<3) || (i>8))
                 {   error("The version number must be in the range 3 to 8");
                     break;
                 }
                 select_version(i);
+                /* We must now do a small dance to reset the DICT_ENTRY_BYTES
+                   constant, which was defined at startup based on the Z-code
+                   version.
+                   The calculation here is repeated from select_target(). */
+                DICT_ENTRY_BYTE_LENGTH = (version_number==3)?7:9;
+                debtok = symbol_index("DICT_ENTRY_BYTES", -1);
+                if (!(symbols[debtok].flags & UNKNOWN_SFLAG))
+                {
+                    if (!(symbols[debtok].flags & REDEFINABLE_SFLAG))
+                    {
+                        warning("The DICT_ENTRY_BYTES symbol is not marked redefinable");
+                    }
+                    /* Redefine the symbol... */
+                    assign_symbol(debtok, DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
+                }
             }
         }
         break;                                             /* see "inform.c" */
