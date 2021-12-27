@@ -428,7 +428,7 @@ static int zchar_weight(int c)
 /* ------------------------------------------------------------------------- */
 
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
-{   int i, j, k, in_alphabet, lookup_value;
+{   int i, j, k, in_alphabet, lookup_value, is_abbreviation;
     int32 unicode; int zscii;
     unsigned char *text_in;
 
@@ -442,7 +442,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
        The compiler has historically set this flag for the Lowstring
        directive as well -- the in_low_memory and is_abbreviation flag were
        always the same. I am preserving that convention. */
-    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+	is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
 
     /*  Cast the input and output streams to unsigned char: text_out_pos will
