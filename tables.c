@@ -568,7 +568,7 @@ table format requested (producing number 2 format instead)");
 
         for (i=0; i<no_adjectives; i++)
         {   j = final_dict_order[adjectives[no_adjectives-i-1]]
-                *((version_number==3)?7:9)
+                *DICT_ENTRY_BYTE_LENGTH
                 + dictionary_offset + 7;
             p[mark++]=j/256; p[mark++]=j%256; p[mark++]=0;
             p[mark++]=(256-no_adjectives+i);
@@ -588,19 +588,19 @@ table format requested (producing number 2 format instead)");
                      dictionary[2]=',';                 /* force words apart */
                      dictionary[3]='"';
 
-    dictionary[4]=(version_number==3)?7:9;           /* Length of each entry */
+    dictionary[4]=DICT_ENTRY_BYTE_LENGTH;           /* Length of each entry */
     dictionary[5]=(dict_entries/256);                   /* Number of entries */
     dictionary[6]=(dict_entries%256);
 
     for (i=0; i<7; i++) p[mark++] = dictionary[i];
 
     for (i=0; i<dict_entries; i++)
-    {   k = 7 + i*((version_number==3)?7:9);
-        j = mark + final_dict_order[i]*((version_number==3)?7:9);
-        for (l = 0; l<((version_number==3)?7:9); l++)
+    {   k = 7 + i*DICT_ENTRY_BYTE_LENGTH;
+        j = mark + final_dict_order[i]*DICT_ENTRY_BYTE_LENGTH;
+        for (l = 0; l<DICT_ENTRY_BYTE_LENGTH; l++)
             p[j++] = dictionary[k++];
     }
-    mark += dict_entries * ((version_number==3)?7:9);
+    mark += dict_entries * DICT_ENTRY_BYTE_LENGTH;
 
     /*  ------------------------- Module Map ------------------------------- */
 
@@ -929,7 +929,7 @@ or less.");
                         switch(topbits)
                         {   case 1:
                                 value = final_dict_order[value]
-                                        *((version_number==3)?7:9)
+                                        *DICT_ENTRY_BYTE_LENGTH
                                         + dictionary_offset + 7;
                                 break;
                             case 2:

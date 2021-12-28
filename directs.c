@@ -315,6 +315,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 else {
                     assembly_operand AO;
                     put_token_back();
+                    if (ZCODE_LESS_DICT_DATA && !glulx_mode)
+                        warning("The third dictionary field will be ignored because ZCODE_LESS_DICT_DATA is set");
                     AO = parse_expression(CONSTANT_CONTEXT);
                     if (AO.marker != 0)
                         error("A definite value must be given as a Dictionary flag");
@@ -1085,21 +1087,46 @@ the first constant definition");
             }
 
             if (AO.marker != 0)
-                error("A definite value must be given as version number");
-            else 
-            if (glulx_mode) 
+            {
+              error("A definite value must be given as version number.");
+              break;
+            }
+            else if (no_routines > 1)
+            {
+              /* The built-in Main__ routine is number zero. */
+              error("A 'Version' directive must come before the first routine definition.");
+              break;
+            }
+            else if (glulx_mode) 
             {
               warning("The Version directive does not work in Glulx. Use \
 -vX.Y.Z instead, as either a command-line argument or a header comment.");
               break;
             }
             else
-            {   i = AO.value;
+            {
+                int debtok;
+                i = AO.value;
                 if ((i<3) || (i>8))
                 {   error("The version number must be in the range 3 to 8");
                     break;
                 }
                 select_version(i);
+                /* We must now do a small dance to reset the DICT_ENTRY_BYTES
+                   constant, which was defined at startup based on the Z-code
+                   version.
+                   The calculation here is repeated from select_target(). */
+                DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
+                debtok = symbol_index("DICT_ENTRY_BYTES", -1);
+                if (!(symbols[debtok].flags & UNKNOWN_SFLAG))
+                {
+                    if (!(symbols[debtok].flags & REDEFINABLE_SFLAG))
+                    {
+                        warning("The DICT_ENTRY_BYTES symbol is not marked redefinable");
+                    }
+                    /* Redefine the symbol... */
+                    assign_symbol(debtok, DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
+                }
             }
         }
         break;                                             /* see "inform.c" */

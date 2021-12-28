@@ -175,10 +175,8 @@ static void select_target(int targ)
   if (!targ) {
     /* Z-machine */
     DICT_WORD_BYTES = DICT_WORD_SIZE;
-    /* The Z-code generator doesn't use the following variables, although 
-       it would be a little cleaner if it did. */
     OBJECT_BYTE_LENGTH = 0;
-    DICT_ENTRY_BYTE_LENGTH = (version_number==3)?7:9;
+    DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
     DICT_ENTRY_FLAG_POS = 0;
   }
   else {

@@ -759,7 +759,8 @@ static void stockup_symbols(void)
     }
 
     create_symbol("WORDSIZE",        WORDSIZE, CONSTANT_T);
-    create_symbol("DICT_ENTRY_BYTES", DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
+    /* DICT_ENTRY_BYTES must be REDEFINABLE_SFLAG because the Version directive can change it. */
+    create_rsymbol("DICT_ENTRY_BYTES", DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
     if (!glulx_mode) {
         create_symbol("DICT_WORD_SIZE", ((version_number==3)?4:6), CONSTANT_T);
         create_symbol("NUM_ATTR_BYTES", ((version_number==3)?4:6), CONSTANT_T);
