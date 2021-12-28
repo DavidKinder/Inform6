@@ -93,6 +93,9 @@ are now redundant, and have been removed.
 <pre>
   Property individual propname;
 </pre>
+<li><p>A new setting <tt>$ZCODE_LESS_DICT_DATA</tt> has been introduced. When set to a non-zero value, this tells
+the compiler to omit the last byte of Z-code dictionary entries (which can be referred as <tt>#dict_par3</tt>), as this is
+commonly unused.
 <li><p>There are now warnings if the compiler detects that the type used in certain expressions is not correct.
 This only checks expressions that contain defined symbols, and does not change the generated code. The checks are:
  <ul>
