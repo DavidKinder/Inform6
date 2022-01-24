@@ -6,7 +6,7 @@
 </head>
 <body>
 <h1>Inform Release Notes</h1>
-<h3>Inform Compiler 6.30 to 6.36<br>Inform Library 6/11</h3>
+<h3>Inform Compiler 6.30 to 6.36</h3>
 
 <h2>Introduction</h2>
 This is a maintenance release of the Inform system for creating adventure games, intended to address 
@@ -32,8 +32,11 @@ can alternatively generate code for the Glulx VM if you supply the <tt>-G</tt> c
 on this topic in <a href="#Glulx">Support for Glulx</a>.
 Before that, though, we&rsquo;ll summarise the changes to the compiler and to the library files.
 <p>
-If you&rsquo;ve translated the 6/10 library into another language, you may find
+If you&rsquo;ve translated the Inform library into another language, you may find
 <a href="#Translate">Information for translators</a> helpful.
+<p>
+Since the first release of the Inform 6.3 compiler, the Inform 6 library has been split into a separate project,
+maintained at <a href="https://gitlab.com/DavidGriffith/inform6lib">https://gitlab.com/DavidGriffith/inform6lib</a>.
 
 <h2>Acknowledgements</h2>
 Far too many people contributed towards this release &mdash; reporting and resolving bugs, making helpful 
@@ -494,7 +497,7 @@ This defaults to 0: if it is redefined to a larger value then the size of the ga
 the game file, the compiler creates a dictionary table that contains verb numbers. However, despite in Glulx there being space for a verb
 number between 0 and 65535 in this table, only one byte of it (that is, values between 0 and 255) was used. This has been fixed.<p>
 However, this also requires library changes to be useful, as the library makes use of this dictionary table. The library used by Inform 7
-has been adjusted to take advantage of this, but the Inform 6/11 library has not.
+has been adjusted to take advantage of this, but the Inform 6 library has not.
 <li><p>The dictionary of Glulx games can now contain characters outside of ISO 8859-1. There is a new
 memory setting, <tt>$DICT_CHAR_SIZE</tt>: by default this is 1, but setting it to 4 causes the compiler to create a dictionary containing
 32-bit Unicode characters.<p>
@@ -713,7 +716,8 @@ mysteriously large number of instances if <tt>NUM_PEBBLES</tt> isn&rsquo;t defin
 </ul>
 
 <h2>Library 6/11</h2>
-These are the changes delivered in version 6/11 of the Inform library.
+At the same time as the Inform 6.30 release, a new version of the Inform library was made. These are the changes
+delivered in version 6/11 of the Inform library.
 <h3>Features added</h3>
 <ul>
 <li><p>The library automatically defines four constants: <tt>LIBRARY_PARSER</tt> at the end of Parser.h, 
