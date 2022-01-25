@@ -2,7 +2,7 @@
 /*   "verbs" :  Manages actions and grammar tables; parses the directives    */
 /*              Verb and Extend.                                             */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
+/*   Part of Inform 6.37                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
