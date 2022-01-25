@@ -7,7 +7,7 @@
 /*                    specifications for the object-maker.                   */
 /*                                                                           */
 /*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
