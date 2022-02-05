@@ -109,7 +109,7 @@ extern void write_serial_number(char *buffer)
 #endif
 }
 
-static char percentage_buffer[16];
+static char percentage_buffer[32];
 
 static char *show_percentage(int32 x, int32 total)
 {
@@ -117,7 +117,7 @@ static char *show_percentage(int32 x, int32 total)
         percentage_buffer[0] = '\0';
     }
     else {
-        sprintf(percentage_buffer, "  (%.1f%%)", (float)x * 100.0 / (float)total);
+        sprintf(percentage_buffer, "  (%.1f %%)", (float)x * 100.0 / (float)total);
     }
     return percentage_buffer;
 }
