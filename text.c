@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "text" : Text translation, the abbreviations optimiser, the dictionary  */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   Part of Inform 6.37                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -226,6 +226,10 @@ extern void make_abbreviation(char *text)
 
     abbreviations[no_abbreviations].quality = zchars_trans_in_last_string - 2;
 
+    if (abbreviations[no_abbreviations].quality <= 0) {
+        warning_named("Abbreviation does not save any characters:", text);
+    }
+    
     no_abbreviations++;
 }
 
@@ -424,7 +428,7 @@ static int zchar_weight(int c)
 /* ------------------------------------------------------------------------- */
 
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
-{   int i, j, k, in_alphabet, lookup_value;
+{   int i, j, k, in_alphabet, lookup_value, is_abbreviation;
     int32 unicode; int zscii;
     unsigned char *text_in;
 
@@ -438,7 +442,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
        The compiler has historically set this flag for the Lowstring
        directive as well -- the in_low_memory and is_abbreviation flag were
        always the same. I am preserving that convention. */
-    int is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+    is_abbreviation = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
 
     /*  Cast the input and output streams to unsigned char: text_out_pos will
@@ -502,7 +506,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
     if (economy_switch)
     {   
         uchar *q, c;
-        int l, min_score, from, abbr_length;
+        int l, min_score, from;
         int text_in_length;
 
         text_in_length = strlen( (char*) text_in);
@@ -523,19 +527,16 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
                     (k<no_abbreviations)&&(c==q[0]); k++, q+=MAX_ABBREV_LENGTH)
                 {   
                     /* Let's compare; we also keep track of the length of the abbreviation. */
-                    if (text_in[j+1]==q[1])
-                    {   abbr_length = 2;
-                        for (l=2; q[l]!=0; l++)
-                        {    if (text_in[j+l]!=q[l]) {goto NotMatched;} else {abbr_length++;}
-                        }
-                        /* We have a match, but is it smaller in size? */
-                        if (min_score > 2 + abbreviations_optimal_parse_scores[j+abbr_length])
-                        {   /* It is indeed smaller, so let's write it down in our schedule. */
-                            min_score = 2 + abbreviations_optimal_parse_scores[j+abbr_length];
-                            abbreviations_optimal_parse_schedule[j] = k;
-                        }
-                        NotMatched: ;
+                    for (l=1; q[l]!=0; l++)
+                    {    if (text_in[j+l]!=q[l]) {goto NotMatched;}
                     }
+                    /* We have a match (length l), but is it smaller in size? */
+                    if (min_score > 2 + abbreviations_optimal_parse_scores[j+l])
+                    {   /* It is indeed smaller, so let's write it down in our schedule. */
+                        min_score = 2 + abbreviations_optimal_parse_scores[j+l];
+                        abbreviations_optimal_parse_schedule[j] = k;
+                    }
+                    NotMatched: ;
                 }
             }
             /* We gave it our best, this is the smallest we got. */
@@ -1291,6 +1292,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
 /*   for compatibility with previous releases.                               */
 /* ------------------------------------------------------------------------- */
 
+/* The complete game text. */
 static char *opttext;
 static int32 opttextlen;
 
@@ -1298,7 +1300,8 @@ typedef struct tlb_s
 {   char text[4];
     int32 intab, occurrences;
 } tlb;
-static tlb *tlbtab;
+static tlb *tlbtab; /* Three-letter blocks (allocated up to no_occs) */
+static memory_list tlbtab_memlist;
 static int32 no_occs;
 
 static int32 *grandtable;
@@ -1310,7 +1313,9 @@ typedef struct optab_s
     int32  location;
     char text[MAX_ABBREV_LENGTH];
 } optab;
-static optab *bestyet, *bestyet2;
+static int32 MAX_BESTYET;
+static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
+static optab *bestyet2; /* The selected entries (up to selected used; allocated to MAX_ABBREVS) */
 
 static int pass_no;
 
@@ -1320,7 +1325,7 @@ static void optimise_pass(void)
     float duration;
     int32 i;
     int32 j, j2, k, nl, matches, noflags, score, min, minat=0, x, scrabble, c;
-    for (i=0; i<256; i++) bestyet[i].length=0;
+    for (i=0; i<MAX_BESTYET; i++) bestyet[i].length=0;
     for (i=0; i<no_occs; i++)
     {   if ((*(tlbtab[i].text)!=(int) '\n')&&(tlbtab[i].occurrences!=0))
         {
@@ -1340,7 +1345,7 @@ static void optimise_pass(void)
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
-                while ((noflags>=2)&&(nl<=62))
+                while ((noflags>=2)&&(nl<MAX_ABBREV_LENGTH-1))
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
                         if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
@@ -1372,12 +1377,12 @@ static void optimise_pass(void)
                     }
                     score=(matches-1)*(scrabble-2);
                     min=score;
-                    for (j2=0; j2<256; j2++)
+                    for (j2=0; j2<MAX_BESTYET; j2++)
                     {   if ((nl==bestyet[j2].length)
                                 && (memcmp(opttext+bestyet[j2].location,
                                        opttext+grandtable[tlbtab[i].intab+j],
                                        nl)==0))
-                        {   j2=256; min=score; }
+                        {   j2=MAX_BESTYET; min=score; }
                         else
                         {   if (bestyet[j2].score<min)
                             {   min=bestyet[j2].score; minat=j2;
@@ -1413,14 +1418,15 @@ static int any_overlap(char *s1, char *s2)
     return(0);
 }
 
-#define MAX_TLBS 8000
-
 extern void optimise_abbreviations(void)
-{   int32 i, j, t, max=0, MAX_GTABLE;
+{   int32 i, j, tcount, max=0, MAX_GTABLE;
     int32 j2, selected, available, maxat=0, nl;
-    tlb test;
 
     if (opttext == NULL)
+        return;
+
+    /* We insist that the first two abbreviations will be ". " and ", ". */
+    if (MAX_ABBREVS < 2)
         return;
 
     /* Note that it's safe to access opttext[opttextlen+2]. There are
@@ -1429,11 +1435,18 @@ extern void optimise_abbreviations(void)
     printf("Beginning calculation of optimal abbreviations...\n");
 
     pass_no = 0;
-    tlbtab=my_calloc(sizeof(tlb), MAX_TLBS, "tlb table"); no_occs=0;
-    for (i=0; i<MAX_TLBS; i++) tlbtab[i].occurrences=0;
 
-    bestyet=my_calloc(sizeof(optab), 256, "bestyet");
-    bestyet2=my_calloc(sizeof(optab), 64, "bestyet2");
+    initialise_memory_list(&tlbtab_memlist,
+        sizeof(tlb), 1000, (void**)&tlbtab,
+        "three-letter-blocks buffer");
+    
+    no_occs=0;
+
+    /* Not sure what the optimal size is for MAX_BESTYET. The original code always created 64 abbreviations and used MAX_BESTYET=256. I'm guessing that 4*MAX_ABBREVS is reasonable. */
+    MAX_BESTYET = 4 * MAX_ABBREVS;
+    
+    bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
+    bestyet2=my_calloc(sizeof(optab), MAX_ABBREVS, "bestyet2");
 
     bestyet2[0].text[0]='.';
     bestyet2[0].text[1]=' ';
@@ -1442,6 +1455,8 @@ extern void optimise_abbreviations(void)
     bestyet2[1].text[0]=',';
     bestyet2[1].text[1]=' ';
     bestyet2[1].text[2]=0;
+
+    selected=2;
 
     for (i=0; i<opttextlen; i++)
     {
@@ -1464,17 +1479,21 @@ extern void optimise_abbreviations(void)
     MAX_GTABLE=opttextlen+1;
     grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
 
-    for (i=0, t=0; i<opttextlen; i++)
-    {   test.text[0]=opttext[i];
+    for (i=0, tcount=0; i<opttextlen; i++)
+    {
+        tlb test;
+        test.text[0]=opttext[i];
         test.text[1]=opttext[i+1];
         test.text[2]=opttext[i+2];
         test.text[3]=0;
         if ((test.text[0]=='\n')||(test.text[1]=='\n')||(test.text[2]=='\n'))
             goto DontKeep;
-        for (j=0; j<no_occs; j++)
+        for (j=0; j<no_occs; j++) {
             if (strcmp(test.text,tlbtab[j].text)==0)
                 goto DontKeep;
+        }
         test.occurrences=0;
+        test.intab=0;
         for (j=i+3; j<opttextlen; j++)
         {
 #ifdef MAC_FACE
@@ -1489,9 +1508,9 @@ extern void optimise_abbreviations(void)
             if ((opttext[i]==opttext[j])
                  && (opttext[i+1]==opttext[j+1])
                  && (opttext[i+2]==opttext[j+2]))
-                 {   grandtable[t+test.occurrences]=j;
+                 {   grandtable[tcount+test.occurrences]=j;
                      test.occurrences++;
-                     if (t+test.occurrences==MAX_GTABLE)
+                     if (tcount+test.occurrences==MAX_GTABLE)
                      {   printf("All %ld cross-references used\n",
                              (long int) MAX_GTABLE);
                          goto Built;
@@ -1499,16 +1518,14 @@ extern void optimise_abbreviations(void)
                  }
         }
         if (test.occurrences>=2)
-        {   tlbtab[no_occs]=test;
-            tlbtab[no_occs].intab=t; t+=tlbtab[no_occs].occurrences;
+        {
+            ensure_memory_list_available(&tlbtab_memlist, no_occs+1);
+            tlbtab[no_occs]=test;
+            tlbtab[no_occs].intab=tcount;
+            tcount += tlbtab[no_occs].occurrences;
             if (max<tlbtab[no_occs].occurrences)
                 max=tlbtab[no_occs].occurrences;
             no_occs++;
-            if (no_occs==MAX_TLBS)
-            {   printf("All %d three-letter-blocks used\n",
-                    MAX_TLBS);
-                goto Built;
-            }
         }
         DontKeep: ;
     }
@@ -1524,14 +1541,14 @@ extern void optimise_abbreviations(void)
                 tlbtab[i].occurrences);
     */
 
-    for (i=0; i<64; i++) bestyet2[i].length=0; selected=2;
-    available=256;
-    while ((available>0)&&(selected<64))
+    for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0;
+    available=MAX_BESTYET;
+    while ((available>0)&&(selected<MAX_ABBREVS))
     {   printf("Pass %d\n", ++pass_no);
 
         optimise_pass();
         available=0;
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score!=0)
             {   available++;
                 nl=bestyet[i].length;
@@ -1542,7 +1559,7 @@ extern void optimise_abbreviations(void)
 
     /*  printf("End of pass results:\n");
         printf("\nno   score  freq   string\n");
-        for (i=0; i<256; i++)
+        for (i=0; i<MAX_BESTYET; i++)
             if (bestyet[i].score>0)
                 printf("%02d:  %4d   %4d   '%s'\n", i, bestyet[i].score,
                     bestyet[i].popularity, bestyet[i].text);
@@ -1550,14 +1567,16 @@ extern void optimise_abbreviations(void)
 
         do
         {   max=0;
-            for (i=0; i<256; i++)
+            for (i=0; i<MAX_BESTYET; i++)
                 if (max<bestyet[i].score)
                 {   max=bestyet[i].score;
                     maxat=i;
                 }
 
             if (max>0)
-            {   bestyet2[selected++]=bestyet[maxat];
+            {
+                char testtext[4];
+                bestyet2[selected++]=bestyet[maxat];
 
                 printf(
                     "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
@@ -1565,13 +1584,13 @@ extern void optimise_abbreviations(void)
                     (long int) bestyet[maxat].popularity,
                     (long int) bestyet[maxat].score);
 
-                test.text[0]=bestyet[maxat].text[0];
-                test.text[1]=bestyet[maxat].text[1];
-                test.text[2]=bestyet[maxat].text[2];
-                test.text[3]=0;
+                testtext[0]=bestyet[maxat].text[0];
+                testtext[1]=bestyet[maxat].text[1];
+                testtext[2]=bestyet[maxat].text[2];
+                testtext[3]=0;
 
                 for (i=0; i<no_occs; i++)
-                    if (strcmp(test.text,tlbtab[i].text)==0)
+                    if (strcmp(testtext,tlbtab[i].text)==0)
                         break;
 
                 for (j=0; j<tlbtab[i].occurrences; j++)
@@ -1583,7 +1602,7 @@ extern void optimise_abbreviations(void)
                     }
                 }
 
-                for (i=0; i<256; i++)
+                for (i=0; i<MAX_BESTYET; i++)
                     if ((bestyet[i].score>0)&&
                         (any_overlap(bestyet[maxat].text,bestyet[i].text)==1))
                     {   bestyet[i].score=0;
@@ -1591,7 +1610,7 @@ extern void optimise_abbreviations(void)
                             bestyet[i].text); */
                     }
             }
-        } while ((max>0)&&(available>0)&&(selected<64));
+        } while ((max>0)&&(available>0)&&(selected<MAX_ABBREVS));
     }
 
     printf("\nChosen abbreviations (in Inform syntax):\n\n");
@@ -2015,8 +2034,10 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         if (n==0)
         {
             if (!glulx_mode) {
-                p = dictionary+7 + at*(3+res) + res;
-                p[0]=(p[0])|x; p[1]=(p[1])|y; p[2]=(p[2])|z;
+                p = dictionary+7 + at*DICT_ENTRY_BYTE_LENGTH + res;
+                p[0]=(p[0])|x; p[1]=(p[1])|y;
+                if (!ZCODE_LESS_DICT_DATA)
+                    p[2]=(p[2])|z;
                 if (x & 128) p[0] = (p[0])|number_and_case;
             }
             else {
@@ -2122,8 +2143,8 @@ extern int dictionary_add(char *dword, int x, int y, int z)
 
     if (!glulx_mode) {
 
-        ensure_memory_list_available(&dictionary_memlist, dictionary_top + (res+3));
-        p = dictionary + (3+res)*dict_entries + 7;
+        ensure_memory_list_available(&dictionary_memlist, dictionary_top + DICT_ENTRY_BYTE_LENGTH);
+        p = dictionary + DICT_ENTRY_BYTE_LENGTH*dict_entries + 7;
 
         /*  So copy in the 4 (or 6) bytes of Z-coded text and the 3 data 
             bytes */
@@ -2135,7 +2156,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[res]=x; p[res+1]=y; p[res+2]=z;
         if (x & 128) p[res] = (p[res])|number_and_case;
 
-        dictionary_top += res+3;
+        dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
     }
     else {
@@ -2177,7 +2198,7 @@ extern void dictionary_set_verb_number(char *dword, int to)
     if (i!=0)
     {   
         if (!glulx_mode) {
-            p=dictionary+7+(i-1)*(3+res)+res; 
+            p=dictionary+7+(i-1)*DICT_ENTRY_BYTE_LENGTH+res; 
             p[1]=to;
         }
         else {
@@ -2324,8 +2345,7 @@ void print_dict_word(int node)
     
     if (!glulx_mode) {
         char textual_form[32];
-        int res = (version_number == 3)?4:6; /* byte length of encoded text */
-        p = (uchar *)dictionary + 7 + (3+res)*node;
+        p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
         
         word_to_ascii(p, textual_form);
         
@@ -2357,7 +2377,7 @@ static void recursively_show_z(int node)
     if (dtree[node].branch[0] != VACANT)
         recursively_show_z(dtree[node].branch[0]);
 
-    p = (uchar *)dictionary + 7 + (3+res)*node;
+    p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
     word_to_ascii(p, textual_form);
 
@@ -2367,7 +2387,7 @@ static void recursively_show_z(int node)
         show_char(' ');
 
     if (d_show_buf == NULL)
-    {   for (i=0; i<3+res; i++) printf("%02x ",p[i]);
+    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
 
         flags = (int) p[res];
         if (flags & 128)
@@ -2685,13 +2705,16 @@ extern void text_free_arrays(void)
 
 extern void ao_free_arrays(void)
 {
+    /* Called only after optimise_abbreviations() runs. */
+    
     my_free (&opttext,"stashed transcript for optimisation");
-    my_free (&tlbtab,"tlb table");
     my_free (&bestyet,"bestyet");
     my_free (&bestyet2,"bestyet2");
     my_free (&grandtable,"grandtable");
     my_free (&grandflags,"grandflags");
 
+    deallocate_memory_list(&tlbtab_memlist);
+    
     /* This was re-inited, so we should re-deallocate it. */
     deallocate_memory_list(&all_text_memlist);
 }

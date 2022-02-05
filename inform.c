@@ -2,8 +2,8 @@
 /*   "inform" :  The top level of Inform: switches, pathnames, filenaming    */
 /*               conventions, ICL (Inform Command Line) files, main          */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   Part of Inform 6.37                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -175,10 +175,8 @@ static void select_target(int targ)
   if (!targ) {
     /* Z-machine */
     DICT_WORD_BYTES = DICT_WORD_SIZE;
-    /* The Z-code generator doesn't use the following variables, although 
-       it would be a little cleaner if it did. */
     OBJECT_BYTE_LENGTH = 0;
-    DICT_ENTRY_BYTE_LENGTH = (version_number==3)?7:9;
+    DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
     DICT_ENTRY_FLAG_POS = 0;
   }
   else {
@@ -1265,7 +1263,7 @@ static void cli_print_help(int help_level)
     printf(
 "\nThis program is a compiler of Infocom format (also called \"Z-machine\")\n\
 story files, as well as \"Glulx\" story files:\n\
-Copyright (c) Graham Nelson 1993 - 2021.\n\n");
+Copyright (c) Graham Nelson 1993 - 2022.\n\n");
 
    /* For people typing just "inform", a summary only: */
 

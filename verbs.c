@@ -2,8 +2,8 @@
 /*   "verbs" :  Manages actions and grammar tables; parses the directives    */
 /*              Verb and Extend.                                             */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   Part of Inform 6.37                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -446,6 +446,11 @@ static int make_adjective(char *English_word)
 
     if (no_adjectives >= 255) {
         error("Grammar version 1 cannot support more than 255 prepositions");
+        return 0;
+    }
+    if (ZCODE_LESS_DICT_DATA && !glulx_mode) {
+        /* We need to use #dict_par3 for the preposition number. */
+        error("Grammar version 1 cannot be used with ZCODE_LESS_DICT_DATA");
         return 0;
     }
     ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);

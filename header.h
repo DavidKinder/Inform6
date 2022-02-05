@@ -1,10 +1,10 @@
 /* ------------------------------------------------------------------------- */
 /*   Header file for Inform:  Z-machine ("Infocom" format) compiler          */
 /*                                                                           */
-/*                              Inform 6.36                                  */
+/*                              Inform 6.37                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   https://www.ifarchive.org/                                              */
@@ -32,7 +32,7 @@
 
 /* For releases, set to the release date in the form "1st January 2000" */
 #define RELEASE_DATE "in development"
-#define RELEASE_NUMBER 1636
+#define RELEASE_NUMBER 1637
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
@@ -2662,6 +2662,7 @@ extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
+extern int ZCODE_LESS_DICT_DATA;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 extern int TRANSCRIPT_FORMAT;

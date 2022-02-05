@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "expressp" :  The expression parser                                     */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   Part of Inform 6.37                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -866,6 +866,8 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                  case dict_par3_SC:
                      o->type = SHORT_CONSTANT_OT;
                      o->marker = 0;
+                     if (ZCODE_LESS_DICT_DATA)
+                         error("#dict_par3 is unavailable when ZCODE_LESS_DICT_DATA is set");
                      v = (version_number==3)?6:8; break;
                  case lowest_attribute_number_SC:
                  case lowest_action_number_SC:

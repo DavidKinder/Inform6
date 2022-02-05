@@ -2,8 +2,8 @@
 /*   "errors" : Warnings, errors and fatal errors                            */
 /*              (with error throwback code for RISC OS machines)             */
 /*                                                                           */
-/*   Part of Inform 6.36                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2021                                 */
+/*   Part of Inform 6.37                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -365,7 +365,7 @@ extern void unicode_char_error(char *s, int32 uni)
     error(error_message_buff);
 }
 
-extern void error_max_dynamic_strings(index)
+extern void error_max_dynamic_strings(int index)
 {
     if (index >= 100)
         snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @99 may be used in Inform");
