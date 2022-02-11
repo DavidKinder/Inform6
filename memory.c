@@ -580,7 +580,35 @@ static void add_predefined_symbol(char *command)
 
 static void set_trace_option(char *command)
 {
-    printf("### trace '%s'\n", command);
+    char *cx;
+    int value = 1;
+    
+    if (!strlen(command)) {
+        printf("### trace help\n");
+        //### list all (with current values if set?)
+        return;
+    }
+
+    for (cx=command; *cx && *cx != '='; cx++) {
+        if (!(*cx >= 'A' && *cx <= 'Z')) {
+            printf("Invalid $! trace command \"%s\"\n", command);
+            return;
+        }
+    }
+
+    if (*cx == '=') {
+        char *ex;
+        value = strtol(cx+1, &ex, 10);
+        
+        if (ex == cx+1 || *ex != '\0' || value < 0) {
+            printf("Bad numerical setting in $! trace command \"%s\"\n", command);
+            return;
+        }
+        
+        *cx = '\0';
+    }
+
+    printf("### trace parsed '%s' = %d\n", command, value);
 }
 
 /* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
