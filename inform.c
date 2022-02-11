@@ -1295,7 +1295,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 "     $list            list current settings\n\
      $?SETTING        explain briefly what SETTING is for\n\
      $SETTING=number  change SETTING to given number\n\
-     $!TRACE=number   set trace option TRACE to given number (default 1)\n\
+     $!TRACEOPT       set trace option TRACEOPT\n\
+                      (or $!TRACEOPT=2, 3, etc for more tracing;\n\
+                      $! by itself to list all trace options)\n\
      $#SYMBOL=number  define SYMBOL as a constant in the story\n\n");
 
   printf(
@@ -1309,7 +1311,9 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --list                 (list current settings)\n\
   --helpopt SETTING      (explain setting)\n\
   --opt SETTING=number   (change setting)\n\
-  --trace TRACE=number   (set trace option)\n\
+  --helptrace            (list all trace options)\n\
+  --trace TRACEOPT       (set trace option)\n\
+  --trace TRACEOPT=N     (more tracing)\n\
   --define SYMBOL=number (define constant)\n\
   --config filename      (read setup file)\n\n");
 
@@ -1892,9 +1896,14 @@ static int execute_dashdash_command(char *p, char *p2)
     }
     else if (!strcmp(p, "trace")) {
         consumed2 = TRUE;
+        if (!p2) {
+            printf("--trace must be followed by \"traceopt\" or \"traceopt=N\"\n");
+            return consumed2;
+        }
+        snprintf(cli_buff, CMD_BUF_SIZE, "$!%s", p2);
+    }
+    else if (!strcmp(p, "helptrace")) {
         strcpy(cli_buff, "$!");
-        if (p2)
-            strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
     else {
         printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
