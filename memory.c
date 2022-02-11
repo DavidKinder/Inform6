@@ -578,6 +578,11 @@ static void add_predefined_symbol(char *command)
     add_config_symbol_definition(command, value);
 }
 
+static void set_trace_option(char *command)
+{
+    printf("### trace '%s'\n", command);
+}
+
 /* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
    The option may come from the command line, an ICL file, or a header
    comment.
@@ -596,6 +601,7 @@ extern void memory_command(char *command)
 
     if (command[0]=='?') { explain_parameter(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
+    if (command[0]=='!') { set_trace_option(command+1); return; }
 
     if (strcmp(command, "HUGE")==0
         || strcmp(command, "LARGE")==0

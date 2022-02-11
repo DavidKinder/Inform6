@@ -1598,6 +1598,7 @@ extern void switches(char *p, int cmode)
     }
 }
 
+/* Check whether the string looks like an ICL command. */
 static int icl_command(char *p)
 {   if ((p[0]=='+')||(p[0]=='-')||(p[0]=='$')
         || ((p[0]=='(')&&(p[strlen(p)-1]==')')) ) return TRUE;
@@ -1886,6 +1887,12 @@ static int execute_dashdash_command(char *p, char *p2)
             return consumed2;
         }
         snprintf(cli_buff, CMD_BUF_SIZE, "(%s)", p2);
+    }
+    else if (!strcmp(p, "trace")) {
+        consumed2 = TRUE;
+        strcpy(cli_buff, "$!");
+        if (p2)
+            strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
     }
     else {
         printf("Option \"--%s\" unknown (try \"inform -h\")\n", p);
