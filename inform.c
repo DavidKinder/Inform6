@@ -1295,6 +1295,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 "     $list            list current settings\n\
      $?SETTING        explain briefly what SETTING is for\n\
      $SETTING=number  change SETTING to given number\n\
+     $!TRACE=number   set trace option TRACE to given number (default 1)\n\
      $#SYMBOL=number  define SYMBOL as a constant in the story\n\n");
 
   printf(
@@ -1308,6 +1309,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --list                 (list current settings)\n\
   --helpopt SETTING      (explain setting)\n\
   --opt SETTING=number   (change setting)\n\
+  --trace TRACE=number   (set trace option)\n\
   --define SYMBOL=number (define constant)\n\
   --config filename      (read setup file)\n\n");
 
