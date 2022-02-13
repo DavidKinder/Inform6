@@ -1312,7 +1312,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --opt SETTING=number   (change setting)\n\
   --helptrace            (list all trace options)\n\
   --trace TRACEOPT       (set trace option)\n\
-  --trace TRACEOPT=N     (more tracing)\n\
+  --trace TRACEOPT=num   (more tracing)\n\
   --define SYMBOL=number (define constant)\n\
   --config filename      (read setup file)\n\n");
 

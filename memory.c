@@ -586,8 +586,11 @@ static void set_trace_option(char *command)
     /* Parse options of the form STRING or STRING=NUM. (The $! has already been eaten.) If the string is null or empty, show help. */
     
     if (!command || *command == '\0') {
-        printf("### trace help\n");
-        //### list all (with current values if set?)
+        printf("The full list of trace options:\n\n");
+        printf("  MAP: print memory map of the virtual machine (same as -z)\n");
+        printf("  MAP=2: ...also show percentage of VM that each segment occupies\n");
+        printf("  STATS: give compilation statistics (same as -s)\n");
+        //### more
         return;
     }
 
