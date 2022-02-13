@@ -1503,7 +1503,7 @@ extern void switches(char *p, int cmode)
         case 'w': nowarnings_switch = state; break;
         case 'x': hash_switch = state; break;
         case 'y': s=2; linker_trace_setting=p[i+1]-'0'; break;
-        case 'z': memory_map_switch = state; break;
+        case 'z': memory_map_switch = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
         case 'C': s=2;
                   if (p[i+1] == 'u') {
