@@ -25,11 +25,14 @@ int32 zmachine_pc;                 /* PC position of assembly (byte offset
                                       from start of Z-code area)             */
 
 int32 no_instructions;             /* Number of instructions assembled       */
-int execution_never_reaches_here,  /* TRUE if the current PC value in the
+int execution_never_reaches_here;  /* 1 if the current PC value in the
                                       code area cannot be reached: e.g. if
                                       the previous instruction was a "quit"
-                                      opcode and no label is set to here     */
-    next_label,                    /* Used to count the labels created all
+                                      opcode and no label is set to here
+                                      2 if the PC cannot be reached but it's
+                                      because of "if (true)"; we suppress
+                                      warnings in this case */
+int next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
 int no_sequence_points;            /* Total over all routines; kept for
@@ -830,6 +833,12 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
     ASSERT_ZCODE();
 
+    if (execution_never_reaches_here) {
+        if (execution_never_reaches_here == 1)
+            warning("This statement can never be reached");
+        return;
+    }
+
     offset = zmachine_pc;
 
     no_instructions++;
@@ -854,9 +863,6 @@ extern void assemblez_instruction(const assembly_instruction *AI)
             opcode_names.keywords[AI->internal_number]);
         return;
     }
-
-    if (execution_never_reaches_here)
-        warning("This statement can never be reached");
 
     operand_rules = opco.op_rules;
     execution_never_reaches_here = ((opco.flags & Rf) != 0);
@@ -1146,6 +1152,12 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 
     ASSERT_GLULX();
 
+    if (execution_never_reaches_here) {
+        if (execution_never_reaches_here == 1)
+            warning("This statement can never be reached");
+        return;
+    }
+
     offset = zmachine_pc;
 
     no_instructions++;
@@ -1165,9 +1177,6 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     }
 
     opco = internal_number_to_opcode_g(AI->internal_number);
-
-    if (execution_never_reaches_here)
-        warning("This statement can never be reached");
 
     execution_never_reaches_here = ((opco.flags & Rf) != 0);
 
@@ -2623,9 +2632,9 @@ void assembleg_1_branch(int internal_number,
         if ((internal_number == jz_gc && o1.value == 0)
           || (internal_number == jnz_gc && o1.value != 0)) {
             assembleg_0_branch(jump_gc, label);
-            /* We clear the "can't reach statement" flag here, 
+            /* We set the "can't reach statement" flag to did-it-on-purpose, 
                so that "if (1)" doesn't produce that warning. */
-            execution_never_reaches_here = 0;
+            execution_never_reaches_here = 2;
             return;
         }
         if ((internal_number == jz_gc && o1.value != 0)
