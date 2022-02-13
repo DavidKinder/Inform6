@@ -819,7 +819,7 @@ static void write_operand(assembly_operand op)
     }
 }
 
-extern void assemblez_instruction(assembly_instruction *AI)
+extern void assemblez_instruction(const assembly_instruction *AI)
 {
     int32 operands_pc;
     int32 start_pc;
@@ -1081,7 +1081,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
-static void assembleg_macro(assembly_instruction *AI)
+static void assembleg_macro(const assembly_instruction *AI)
 {
     /* validate macro syntax first */
     int ix, no_operands_given;
@@ -1135,7 +1135,7 @@ static void assembleg_macro(assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
-extern void assembleg_instruction(assembly_instruction *AI)
+extern void assembleg_instruction(const assembly_instruction *AI)
 {
     int32 opmodes_pc;
     int32 start_pc;
