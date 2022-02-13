@@ -582,8 +582,10 @@ static void set_trace_option(char *command)
 {
     char *cx;
     int value = 1;
+
+    /* Parse options of the form STRING or STRING=NUM. (The $! has already been eaten.) */
     
-    if (!strlen(command)) {
+    if (!command || *command == '\0') {
         printf("### trace help\n");
         //### list all (with current values if set?)
         return;
