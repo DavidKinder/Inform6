@@ -1568,6 +1568,7 @@ extern int32 assemble_routine_header(int no_locals,
         assemble_label_no(ln);
         sprintf(fnt, ") ]^"); AI.text = fnt;
         assemblez_0(print_zc);
+        AI.text = NULL;
         assemble_label_no(ln2);
       }
 
@@ -2837,9 +2838,11 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
         {   assemblez_instruction(&AI);
+            AI.text = NULL;
             return;
         }
         ebf_error("semicolon ';' after print string", token_text);
+        AI.text = NULL;
         put_token_back();
         return;
     }
@@ -3020,6 +3023,7 @@ static void parse_assembly_g(void)
   int error_flag = FALSE, is_macro = FALSE;
 
   AI.operand_count = 0;
+  AI.text = NULL;
 
   opcode_names.enabled = TRUE;
   opcode_macros.enabled = TRUE;
