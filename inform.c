@@ -248,7 +248,6 @@ int bothpasses_switch,              /* -b */
     memout_switch,                  /* -m */
     printprops_switch,              /* -n */
     offsets_switch,                 /* -o */
-    percentages_switch,             /* -p */
     obsolete_switch,                /* -q */
     transcript_switch,              /* -r */
     statistics_switch,              /* $!STATS, -s */
@@ -256,7 +255,7 @@ int bothpasses_switch,              /* -b */
     version_set_switch,             /* -v */
     nowarnings_switch,              /* -w */
     hash_switch,                    /* -x */
-    memory_map_switch,              /* -z */
+    memory_map_switch,              /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
     temporary_files_switch,         /* -F */
@@ -305,7 +304,6 @@ static void reset_switch_settings(void)
     memout_switch = FALSE;
     printprops_switch = FALSE;
     offsets_switch = FALSE;
-    percentages_switch = FALSE;
     obsolete_switch = FALSE;
     transcript_switch = FALSE;
     statistics_switch = FALSE;
@@ -1359,7 +1357,6 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
           Debugging_Name);
    printf("\
   o   print offset addresses\n\
-  p   give percentage breakdown of story file\n\
   q   keep quiet about obsolete usages\n\
   r   record all the text to \"%s\"\n\
   s   give statistics\n\
@@ -1474,7 +1471,6 @@ extern void switches(char *p, int cmode)
         case 'm': memout_switch = state; break;
         case 'n': printprops_switch = state; break;
         case 'o': offsets_switch = state; break;
-        case 'p': percentages_switch = state; break;
         case 'q': obsolete_switch = state; break;
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");
@@ -1590,12 +1586,6 @@ extern void switches(char *p, int cmode)
         }
     }
 
-    if (percentages_switch)
-    {
-        /* -p is now treated like an extended -z. It will be renamed to
-           something like -TMAP=2 in the future. */
-        memory_map_switch = TRUE;
-    }
     if (optimise_switch)
     {
         /* store_the_text is equivalent to optimise_switch; -u sets both.

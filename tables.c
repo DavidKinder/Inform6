@@ -113,7 +113,7 @@ static char percentage_buffer[32];
 
 static char *show_percentage(int32 x, int32 total)
 {
-    if (!percentages_switch) {
+    if (memory_map_switch < 2) {
         percentage_buffer[0] = '\0';
     }
     else {
