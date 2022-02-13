@@ -2544,7 +2544,7 @@ extern int
     offsets_switch,         obsolete_switch,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
-    memory_map_switch,      module_switch,        temporary_files_switch,
+    memory_map_setting,     module_switch,        temporary_files_switch,
     define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
     runtime_error_checking_switch;
 

@@ -113,7 +113,7 @@ static char percentage_buffer[32];
 
 static char *show_percentage(int32 x, int32 total)
 {
-    if (memory_map_switch < 2) {
+    if (memory_map_setting < 2) {
         percentage_buffer[0] = '\0';
     }
     else {
@@ -639,7 +639,7 @@ table format requested (producing number 2 format instead)");
 size of the Z-machine format. See the memory map below: the start \
 of the area marked \"above readable memory\" must be brought down to $FFFE \
 or less.");
-        memory_map_switch = TRUE;
+        memory_map_setting = 1;
         /* Backpatching the grammar tables requires us to trust some of the */
         /* addresses we've written into Z-machine memory, but they may have */
         /* been truncated to 16 bits, so we can't do it.                    */
@@ -1096,7 +1096,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         end_writing_debug_sections(Out_Size);
     }
 
-    if (memory_map_switch)
+    if (memory_map_setting)
     {
         int32 addr;
         {
@@ -1798,7 +1798,7 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         end_writing_debug_sections(Out_Size + MEMORY_MAP_EXTENSION);
     }
 
-    if (memory_map_switch)
+    if (memory_map_setting)
     {
         int32 addr;
         {

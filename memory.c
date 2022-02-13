@@ -617,7 +617,7 @@ static void set_trace_option(char *command)
         statistics_switch = value;
     }
     else if (strcmp(command, "MAP")==0) {
-        memory_map_switch = value;
+        memory_map_setting = value;
     }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);

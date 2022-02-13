@@ -235,6 +235,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
 
 /* ------------------------------------------------------------------------- */
 /*   On/off switch variables (by default all FALSE); other switch settings   */
+/*   (Some of these have become numerical settings now)                      */
 /* ------------------------------------------------------------------------- */
 
 int bothpasses_switch,              /* -b */
@@ -255,7 +256,7 @@ int bothpasses_switch,              /* -b */
     version_set_switch,             /* -v */
     nowarnings_switch,              /* -w */
     hash_switch,                    /* -x */
-    memory_map_switch,              /* $!MAP, -z */
+    memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
     temporary_files_switch,         /* -F */
@@ -311,7 +312,7 @@ static void reset_switch_settings(void)
     version_set_switch = FALSE;
     nowarnings_switch = FALSE;
     hash_switch = FALSE;
-    memory_map_switch = FALSE;
+    memory_map_setting = FALSE;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
 #ifdef USE_TEMPORARY_FILES
@@ -1503,7 +1504,7 @@ extern void switches(char *p, int cmode)
         case 'w': nowarnings_switch = state; break;
         case 'x': hash_switch = state; break;
         case 'y': s=2; linker_trace_setting=p[i+1]-'0'; break;
-        case 'z': memory_map_switch = (state ? 1 : 0); break;
+        case 'z': memory_map_setting = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
         case 'C': s=2;
                   if (p[i+1] == 'u') {
