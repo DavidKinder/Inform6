@@ -2282,7 +2282,20 @@ void assemblez_1_to(int internal_number,
 
 void assemblez_1_branch(int internal_number,
     assembly_operand o1, int label, int flag)
-{   AI.internal_number = internal_number;
+{
+    if (o1.marker == 0 && is_constant_ot(o1.type)) {
+        /* A constant is always or never equal to zero. */
+        if (internal_number == jz_zc) {
+            if ((flag && o1.value == 0) || (!flag && o1.value != 0)) {
+                assemblez_jump(label);
+                /* We set the "can't reach statement" flag to did-it-on-purpose, 
+                   so that "if (1)" doesn't produce that warning. */
+                execution_never_reaches_here = 2;
+                return;
+            }
+        }
+    }
+    AI.internal_number = internal_number;
     AI.operand_count = 1;
     AI.operand[0] = o1;
     AI.branch_label_number = label;
