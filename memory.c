@@ -581,9 +581,9 @@ static void add_predefined_symbol(char *command)
 static void set_trace_option(char *command)
 {
     char *cx;
-    int value = 1;
+    int value;
 
-    /* Parse options of the form STRING or STRING=NUM. (The $! has already been eaten.) */
+    /* Parse options of the form STRING or STRING=NUM. (The $! has already been eaten.) If the string is null or empty, show help. */
     
     if (!command || *command == '\0') {
         printf("### trace help\n");
@@ -598,6 +598,7 @@ static void set_trace_option(char *command)
         }
     }
 
+    value = 1;
     if (*cx == '=') {
         char *ex;
         value = strtol(cx+1, &ex, 10);
@@ -611,6 +612,13 @@ static void set_trace_option(char *command)
     }
 
     printf("### trace parsed '%s' = %d\n", command, value);
+
+    if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
+        statistics_switch = value;
+    }
+    else {
+        printf("Unrecognized $! trace command \"%s\"\n", command);
+    }
 }
 
 /* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.

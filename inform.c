@@ -251,7 +251,7 @@ int bothpasses_switch,              /* -b */
     percentages_switch,             /* -p */
     obsolete_switch,                /* -q */
     transcript_switch,              /* -r */
-    statistics_switch,              /* -s */
+    statistics_switch,              /* $!STATS, -s */
     optimise_switch,                /* -u */
     version_set_switch,             /* -v */
     nowarnings_switch,              /* -w */
