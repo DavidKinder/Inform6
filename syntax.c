@@ -599,6 +599,17 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
     return packed_address;
 }
 
+/* Parse one block of code (a statement or brace-delimited stanza).
+   This is used by the IF, DO, FOR, OBJECTLOOP, SWITCH, and WHILE
+   statements.
+   (Note that this is *not* called by the top-level parse_routine() 
+   handler.)
+   The break_label and continue_label arguments are the labels in
+   the calling block to jump to on "break" or "continue". -1 means
+   we can't "break"/"continue" here (because we're not in a loop/switch).
+   If switch_rule is true, we're in a switch block; case labels are
+   accepted.
+*/
 extern void parse_code_block(int break_label, int continue_label,
     int switch_rule)
 {   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label = 0,
@@ -609,7 +620,9 @@ extern void parse_code_block(int break_label, int continue_label,
     get_next_token();
 
     if (token_type == SEP_TT && token_value == OPEN_BRACE_SEP)
-    {   do
+    {
+        /* Parse a braced stanza of statements. */
+        do
         {   begin_syntax_line(TRUE);
             release_token_texts();
             get_next_token();
@@ -711,6 +724,7 @@ extern void parse_code_block(int break_label, int continue_label,
     if (switch_rule != 0)
         ebf_error("braced code block after 'switch'", token_text);
 
+    /* Parse a single statement. */
     parse_statement(break_label, continue_label);
     return;
 }
