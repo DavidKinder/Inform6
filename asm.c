@@ -1447,7 +1447,7 @@ extern void assemble_label_no(int n)
         printf("%5d  +%05lx    .L%d\n", ErrorReport.line_number,
             ((long int) zmachine_pc), n);
     set_label_offset(n, zmachine_pc);
-    execution_never_reaches_here = FALSE;
+    execution_never_reaches_here = 0;
 }
 
 extern void define_symbol_label(int symbol)
@@ -1465,7 +1465,7 @@ extern int32 assemble_routine_header(int no_locals,
     int stackargs = FALSE;
     int name_length;
 
-    execution_never_reaches_here = FALSE;
+    execution_never_reaches_here = 0;
 
     routine_locals = no_locals;
     
