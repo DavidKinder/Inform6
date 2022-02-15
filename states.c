@@ -738,6 +738,7 @@ static void parse_statement_z(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
+            statement_is_unreachable = 0;
             if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
                 symbols[token_value].flags |= USED_SFLAG;
@@ -770,6 +771,7 @@ static void parse_statement_z(int break_label, int continue_label)
             {   put_token_back(); return;
             }
             statement_debug_location = get_token_location();
+            /* Got the label; now restart the parse_statement() for the statement itself. */
             parse_statement(break_label, continue_label);
             return;
         }
@@ -1168,6 +1170,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  code_generate(AO, CONDITION_CONTEXT, ln);
+                 //### if ln was not used (because a jz got optimized out), we should skip the assemble_label_no() below. check for zmachine_pc not changing?
 
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
@@ -1717,6 +1720,7 @@ static void parse_statement_g(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
+            statement_is_unreachable = 0;
             if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
                 symbols[token_value].flags |= USED_SFLAG;
@@ -1751,6 +1755,7 @@ static void parse_statement_g(int break_label, int continue_label)
             /* The following line prevents labels from influencing the positions
                of sequence points. */
             statement_debug_location = get_token_location();
+            /* Got the label; now restart the parse_statement() for the statement itself. */
             parse_statement(break_label, continue_label);
             return;
         }
@@ -2673,10 +2678,15 @@ static void parse_statement_g(int break_label, int continue_label)
 
 extern void parse_statement(int break_label, int continue_label)
 {
-  if (!glulx_mode)
-    parse_statement_z(break_label, continue_label);
-  else
-    parse_statement_g(break_label, continue_label);
+    int saved_unreachable = statement_is_unreachable;
+    statement_is_unreachable = execution_never_reaches_here;
+    
+    if (!glulx_mode)
+        parse_statement_z(break_label, continue_label);
+    else
+        parse_statement_g(break_label, continue_label);
+
+    statement_is_unreachable = saved_unreachable;
 }
 
 /* ========================================================================= */

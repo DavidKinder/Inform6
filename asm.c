@@ -32,6 +32,7 @@ int execution_never_reaches_here;  /* 1 if the current PC value in the
                                       2 if the PC cannot be reached but it's
                                       because of "if (true)"; we suppress
                                       warnings in this case */
+int statement_is_unreachable;      /* ### */
 int next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
@@ -113,6 +114,14 @@ static void set_label_offset(int label, int32 offset)
     ensure_memory_list_available(&labels_memlist, label+1);
 
     labels[label].offset = offset;
+    labels[label].symbol = -1;
+    if (offset < 0) {
+        /* Mark this label as invalid and don't put it in the linked list. */
+        labels[label].prev = -1;
+        labels[label].next = -1;
+        return;
+    }
+    
     if (last_label == -1)
     {   labels[label].prev = -1;
         first_label = label;
@@ -123,7 +132,6 @@ static void set_label_offset(int label, int32 offset)
     }
     last_label = label;
     labels[label].next = -1;
-    labels[label].symbol = -1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1443,6 +1451,14 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 
 extern void assemble_label_no(int n)
 {
+    if (statement_is_unreachable) {
+        if (asm_trace_level > 0) printf("%5d  +%05lx    ###OMIT .L%d\n", ErrorReport.line_number, ((long int) zmachine_pc), n); //###
+        /* We're not going to compile this label at all. Set a negative
+           offset, which will trip an error if this label is jumped to. */
+        set_label_offset(n, -1);
+        return;
+    }
+
     if (asm_trace_level > 0)
         printf("%5d  +%05lx    .L%d\n", ErrorReport.line_number,
             ((long int) zmachine_pc), n);
@@ -1466,6 +1482,7 @@ extern int32 assemble_routine_header(int no_locals,
     int name_length;
 
     execution_never_reaches_here = 0;
+    statement_is_unreachable = 0;
 
     routine_locals = no_locals;
     
@@ -1933,7 +1950,13 @@ static void transfer_routine_z(void)
             branch_on_true = ((zcode_holding_area[i]) & 0x80);
             offset_of_next = new_pc + long_form + 1;
 
-            addr = labels[j].offset - offset_of_next + 2;
+            if (labels[j].offset < 0) {
+                error("Attempt to jump to an unreachable label");
+                addr = 0;
+            }
+            else {
+                addr = labels[j].offset - offset_of_next + 2;
+            }
             if (addr<-0x2000 || addr>0x1fff) 
                 fatalerror("Branch out of range: divide the routine up?");
             if (addr<0) addr+=(int32) 0x10000L;
@@ -2140,7 +2163,13 @@ static void transfer_routine_g(void)
            after it. */
         offset_of_next = new_pc + form_len;
 
-        addr = (labels[j].offset - offset_of_next) + 2;
+        if (labels[j].offset < 0) {
+            error("Attempt to jump to an unreachable label");
+            addr = 0;
+        }
+        else {
+            addr = (labels[j].offset - offset_of_next) + 2;
+        }
         if (asm_trace_level >= 4) {
             printf("Branch at offset %04x: %04x (%s)\n",
                 new_pc, addr, ((form_len == 1) ? "byte" :
@@ -3228,6 +3257,8 @@ extern void asm_begin_pass(void)
     next_label = 0;
     next_sequence_point = 0;
     zcode_ha_size = 0;
+    execution_never_reaches_here = -1;
+    statement_is_unreachable = -1;
 }
 
 extern void asm_allocate_arrays(void)

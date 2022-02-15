@@ -596,6 +596,9 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
     } while (TRUE);
 
+    execution_never_reaches_here = -1;
+    statement_is_unreachable = -1;
+    
     return packed_address;
 }
 

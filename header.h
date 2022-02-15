@@ -2211,6 +2211,7 @@ extern int   uses_unicode_features, uses_memheap_features,
     uses_acceleration_features, uses_float_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
+extern int   statement_is_unreachable;
 extern variableinfo *variables;
 extern memory_list variables_memlist;
 extern int   next_label, no_sequence_points;
