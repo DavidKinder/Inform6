@@ -2293,6 +2293,10 @@ void assemblez_1_branch(int internal_number,
                 execution_never_reaches_here = 2;
                 return;
             }
+            else {
+                /* assemble nothing at all! */
+                return;
+            }
         }
     }
     AI.internal_number = internal_number;
