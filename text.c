@@ -2153,7 +2153,8 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[2]=prepared_sort[2]; p[3]=prepared_sort[3];
         if (version_number > 3)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
-        p[res]=x; p[res+1]=y; p[res+2]=z;
+        p[res]=x; p[res+1]=y;
+        if (!ZCODE_LESS_DICT_DATA) p[res+2]=z;
         if (x & 128) p[res] = (p[res])|number_and_case;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
