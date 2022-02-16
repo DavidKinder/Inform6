@@ -2226,6 +2226,7 @@ extern int  is_variable_ot(int otval);
 extern void assemblez_instruction(const assembly_instruction *a);
 extern void assembleg_instruction(const assembly_instruction *a);
 extern void assemble_label_no(int n);
+extern void assemble_forward_label_no(int n);
 extern void assemble_jump(int n);
 extern void define_symbol_label(int symbol);
 extern int32 assemble_routine_header(int no_locals, int debug_flag,

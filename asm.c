@@ -141,6 +141,7 @@ static void set_label_offset(int label, int32 offset)
 
 static void mark_label_used(int label)
 {
+    //printf("### branch used: L%d\n", label);
     if (label < 0)
         return;
 
@@ -1468,6 +1469,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
+/* Set up this label at zmachine_pc.
+   ### Explanation...
+*/
 extern void assemble_label_no(int n)
 {
     if (statement_is_unreachable) {
@@ -1483,6 +1487,23 @@ extern void assemble_label_no(int n)
             ((long int) zmachine_pc), n);
     set_label_offset(n, zmachine_pc);
     execution_never_reaches_here = 0;
+}
+
+/* This is the same as assemble_label_no, except we only set up the label
+   if there has been a forward branch to it.
+   Only use this for labels which never have backwards branches!
+*/
+extern void assemble_forward_label_no(int n)
+{
+    if (n >= 0 && n < labeluse_size && labeluse[n]) {
+        assemble_label_no(n);
+    }
+    else {
+        /* There were no forward branches to this label and we promise
+           there will be no backwards branches to it. Set a negative
+           offset, which will trip an error if we break our promise. */
+        set_label_offset(n, -1);
+    }
 }
 
 extern void define_symbol_label(int symbol)
