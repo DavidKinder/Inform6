@@ -1170,7 +1170,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  code_generate(AO, CONDITION_CONTEXT, ln);
-                 //### if ln was not used (because a jz got optimized out), we should skip the assemble_label_no() below. check for zmachine_pc not changing?
 
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
@@ -1204,7 +1203,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else put_token_back();
 
-                 if (ln >= 0) assemble_label_no(ln);
+                 if (ln >= 0) assemble_forward_label_no(ln);
 
                  if (flag)
                  {   parse_code_block(break_label, continue_label, 0);
@@ -2166,8 +2165,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  code_generate(AO, CONDITION_CONTEXT, ln);
-                 //### if ln was not used (because a jz got optimized out), we should skip the assemble_label_no() below. check for zmachine_pc not changing?
-                 //### same for WHILE, DO-UNTIL loops
 
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
@@ -2201,7 +2198,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  else put_token_back();
 
-                 if (ln >= 0) assemble_label_no(ln);
+                 if (ln >= 0) assemble_forward_label_no(ln);
 
                  if (flag)
                  {   parse_code_block(break_label, continue_label, 0);
