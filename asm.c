@@ -1842,6 +1842,8 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     }
     no_sequence_points += next_sequence_point;
     next_label = 0; next_sequence_point = 0;
+    execution_never_reaches_here = -1;
+    statement_is_unreachable = -1;
 }
 
 /* ------------------------------------------------------------------------- */
