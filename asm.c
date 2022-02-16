@@ -104,6 +104,11 @@ static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
 static memory_list labels_memlist;
 static int first_label, last_label;
 
+static int *labeluse;     /* Flags indicating whether a given label has been
+                             used as a branch target yet. */
+static memory_list labeluse_memlist;
+static int labeluse_size; /* Entries up to here are initialized */
+
 static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
                                               Only used when debugfile_switch
                                               is set.                        */
@@ -132,6 +137,18 @@ static void set_label_offset(int label, int32 offset)
     }
     last_label = label;
     labels[label].next = -1;
+}
+
+static void mark_label_used(int label)
+{
+    if (label < 0)
+        return;
+
+    ensure_memory_list_available(&labeluse_memlist, label+1);
+    for (; labeluse_size < label+1; labeluse_size++) {
+        labeluse[labeluse_size] = FALSE;
+    }
+    labeluse[label] = TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -905,6 +922,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
     if (operand_rules==LABEL)
     {   j = (AI->operand[0]).value;
+        mark_label_used(j);
         byteout(j/256, LABEL_MV); byteout(j%256, 0);
         goto Instruction_Done;
     }
@@ -1007,7 +1025,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     if (AI->branch_label_number != -1)
     {   int32 addr, long_form;
         int branch_on_true = (AI->branch_flag)?1:0;
-
+        mark_label_used(AI->branch_label_number);
         switch (AI->branch_label_number)
         {   case -2: addr = 2; branch_on_true = 0; long_form = 0; break;
                                                  /* branch nowhere, carry on */
@@ -1250,6 +1268,7 @@ extern void assembleg_instruction(const assembly_instruction *AI)
                 compiler_error("Assembling branch without BRANCH_MV marker");
                 goto OpcodeSyntaxError; 
             }
+            mark_label_used(k);
             if (k == -2) {
                 k = 2; /* branch no-op */
                 type = BYTECONSTANT_OT;
@@ -1547,6 +1566,7 @@ extern int32 assemble_routine_header(int no_locals,
           for (i=0; i<no_locals; i++) { byteout(0,0); byteout(0,0); }
 
       next_label = 0; next_sequence_point = 0; last_label = -1;
+      labeluse_size = 0;
 
       /*  Compile code to print out text like "a=3, b=4, c=5" when the       */
       /*  function is called, if it's required.                              */
@@ -1631,6 +1651,7 @@ extern int32 assemble_routine_header(int no_locals,
       }
 
       next_label = 0; next_sequence_point = 0; last_label = -1; 
+      labeluse_size = 0;
 
       if ((routine_asterisked) || (define_INFIX_switch)) {
         int ix;
@@ -1842,6 +1863,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     }
     no_sequence_points += next_sequence_point;
     next_label = 0; next_sequence_point = 0;
+    labeluse_size = 0;
     execution_never_reaches_here = -1;
     statement_is_unreachable = -1;
 }
@@ -3257,6 +3279,7 @@ extern void asm_begin_pass(void)
     zmachine_pc = 0;
     no_sequence_points = 0;
     next_label = 0;
+    labeluse_size = 0;
     next_sequence_point = 0;
     zcode_ha_size = 0;
     execution_never_reaches_here = -1;
@@ -3272,6 +3295,9 @@ extern void asm_allocate_arrays(void)
     initialise_memory_list(&labels_memlist,
         sizeof(labelinfo), 1000, (void**)&labels,
         "labels");
+    initialise_memory_list(&labeluse_memlist,
+        sizeof(int), 1000, (void**)&labeluse,
+        "labeluse");
     initialise_memory_list(&sequence_points_memlist,
         sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
         "sequence points");
