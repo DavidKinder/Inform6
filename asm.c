@@ -2023,7 +2023,13 @@ static void transfer_routine_z(void)
 
           case LABEL_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
-            addr = labels[j].offset - new_pc;
+            if (labels[j].offset < 0) {
+                error("Attempt to jump to an unreachable label");
+                addr = 0;
+            }
+            else {
+                addr = labels[j].offset - new_pc;
+            }
             if (addr<-0x8000 || addr>0x7fff) 
                 fatalerror("Jump out of range: divide the routine up?");
             if (addr<0) addr += (int32) 0x10000L;
