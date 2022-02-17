@@ -860,8 +860,11 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     ASSERT_ZCODE();
 
     if (execution_never_reaches_here) {
-        if (execution_never_reaches_here == 1)
+        if (execution_never_reaches_here == 1) {
             warning("This statement can never be reached");
+            /* only show the warning once */
+            execution_never_reaches_here = 2;
+        }
         return;
     }
 
@@ -1180,8 +1183,11 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     ASSERT_GLULX();
 
     if (execution_never_reaches_here) {
-        if (execution_never_reaches_here == 1)
+        if (execution_never_reaches_here == 1) {
             warning("This statement can never be reached");
+            /* only show the warning once */
+            execution_never_reaches_here = 2;
+        }
         return;
     }
 
