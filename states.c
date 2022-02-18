@@ -725,56 +725,71 @@ static void parse_print_g(int finally_return)
     }
 }
 
+/* Parse any number of ".Label;" lines before a statement.
+   Returns whether a statement can in fact follow. */
+static int parse_named_label_statements()
+{
+    while ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
+    {   /*  That is, a full stop, signifying a label  */
+
+        get_next_token();
+        if (token_type != SYMBOL_TT)
+        {
+            ebf_error("label name", token_text);
+            return TRUE;
+        }
+        
+        if (symbols[token_value].flags & UNKNOWN_SFLAG)
+        {   assign_symbol(token_value, next_label, LABEL_T);
+            symbols[token_value].flags |= USED_SFLAG;
+            assemble_label_no(next_label);
+            define_symbol_label(token_value);
+            next_label++;
+        }
+        else
+        {   if (symbols[token_value].type != LABEL_T) {
+                ebf_error("label name", token_text);
+                return TRUE;
+            }
+            if (symbols[token_value].flags & CHANGE_SFLAG)
+            {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
+                assemble_label_no(symbols[token_value].value);
+                define_symbol_label(token_value);
+            }
+            else error_named("Duplicate definition of label:", token_text);
+        }
+
+        get_next_token();
+        if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
+        {   ebf_error("';'", token_text);
+            put_token_back(); return FALSE;
+        }
+
+        /*  Interesting point of Inform grammar: a statement can only
+            consist solely of a label when it is immediately followed
+            by a "}".                                                    */
+
+        get_next_token();
+        if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
+        {   put_token_back(); return FALSE;
+        }
+        /* The following line prevents labels from influencing the positions
+           of sequence points. */
+        statement_debug_location = get_token_location();
+        
+        /* Another label might follow */
+    }
+
+    /* On with the statement */
+    return TRUE;
+}
+
 static void parse_statement_z(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
     ASSERT_ZCODE();
-
-    if ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
-    {   /*  That is, a full stop, signifying a label  */
-
-        get_next_token();
-        if (token_type == SYMBOL_TT)
-        {
-            if (symbols[token_value].flags & UNKNOWN_SFLAG)
-            {   assign_symbol(token_value, next_label, LABEL_T);
-                symbols[token_value].flags |= USED_SFLAG;
-                assemble_label_no(next_label);
-                define_symbol_label(token_value);
-                next_label++;
-            }
-            else
-            {   if (symbols[token_value].type != LABEL_T) goto LabelError;
-                if (symbols[token_value].flags & CHANGE_SFLAG)
-                {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
-                    assemble_label_no(symbols[token_value].value);
-                    define_symbol_label(token_value);
-                }
-                else error_named("Duplicate definition of label:", token_text);
-            }
-
-            get_next_token();
-            if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-            {   ebf_error("';'", token_text);
-                put_token_back(); return;
-            }
-
-            /*  Interesting point of Inform grammar: a statement can only
-                consist solely of a label when it is immediately followed
-                by a "}".                                                    */
-
-            get_next_token();
-            if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
-            {   put_token_back(); return;
-            }
-            statement_debug_location = get_token_location();
-            parse_statement(break_label, continue_label);
-            return;
-        }
-        LabelError: ebf_error("label name", token_text);
-    }
 
     if ((token_type == SEP_TT) && (token_value == HASH_SEP))
     {   parse_directive(TRUE);
@@ -1711,52 +1726,6 @@ static void parse_statement_g(int break_label, int continue_label)
 
     ASSERT_GLULX();
 
-    if ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
-    {   /*  That is, a full stop, signifying a label  */
-
-        get_next_token();
-        if (token_type == SYMBOL_TT)
-        {
-            if (symbols[token_value].flags & UNKNOWN_SFLAG)
-            {   assign_symbol(token_value, next_label, LABEL_T);
-                symbols[token_value].flags |= USED_SFLAG;
-                assemble_label_no(next_label);
-                define_symbol_label(token_value);
-                next_label++;
-            }
-            else
-            {   if (symbols[token_value].type != LABEL_T) goto LabelError;
-                if (symbols[token_value].flags & CHANGE_SFLAG)
-                {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
-                    assemble_label_no(symbols[token_value].value);
-                    define_symbol_label(token_value);
-                }
-                else error_named("Duplicate definition of label:", token_text);
-            }
-
-            get_next_token();
-            if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-            {   ebf_error("';'", token_text);
-                put_token_back(); return;
-            }
-
-            /*  Interesting point of Inform grammar: a statement can only
-                consist solely of a label when it is immediately followed
-                by a "}".                                                    */
-
-            get_next_token();
-            if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
-            {   put_token_back(); return;
-            }
-            /* The following line prevents labels from influencing the positions
-               of sequence points. */
-            statement_debug_location = get_token_location();
-            parse_statement(break_label, continue_label);
-            return;
-        }
-        LabelError: ebf_error("label name", token_text);
-    }
-
     if ((token_type == SEP_TT) && (token_value == HASH_SEP))
     {   parse_directive(TRUE);
         parse_statement(break_label, continue_label); return;
@@ -2673,10 +2642,15 @@ static void parse_statement_g(int break_label, int continue_label)
 
 extern void parse_statement(int break_label, int continue_label)
 {
-  if (!glulx_mode)
-    parse_statement_z(break_label, continue_label);
-  else
-    parse_statement_g(break_label, continue_label);
+    int res = parse_named_label_statements();
+    if (!res) {
+        return;
+    }
+    
+    if (!glulx_mode)
+        parse_statement_z(break_label, continue_label);
+    else
+        parse_statement_g(break_label, continue_label);
 }
 
 /* ========================================================================= */
