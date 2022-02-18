@@ -738,7 +738,7 @@ static void parse_statement_z(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
-            statement_is_unreachable = 0;
+            statement_is_unreachable = 0; /*###?*/
             if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
                 symbols[token_value].flags |= USED_SFLAG;
@@ -1719,7 +1719,7 @@ static void parse_statement_g(int break_label, int continue_label)
         get_next_token();
         if (token_type == SYMBOL_TT)
         {
-            statement_is_unreachable = 0;
+            statement_is_unreachable = 0; /*###?*/
             if (symbols[token_value].flags & UNKNOWN_SFLAG)
             {   assign_symbol(token_value, next_label, LABEL_T);
                 symbols[token_value].flags |= USED_SFLAG;
