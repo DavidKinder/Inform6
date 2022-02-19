@@ -615,6 +615,9 @@ extern void parse_code_block(int break_label, int continue_label,
 {   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label = 0,
         unary_minus_flag;
 
+    int saved_unreachable = statement_is_unreachable;
+    statement_is_unreachable = execution_never_reaches_here;
+
     begin_syntax_line(TRUE);
     release_token_texts();
     get_next_token();
@@ -634,10 +637,12 @@ extern void parse_code_block(int break_label, int continue_label,
             if (token_type == SEP_TT && token_value == CLOSE_BRACE_SEP)
             {   if (switch_clause_made && (!default_clause_made))
                     assemble_label_no(switch_label);
-                return;
+                break;
             }
             if (token_type == EOF_TT)
-            {   ebf_error("'}'", token_text); return; }
+            {   ebf_error("'}'", token_text);
+                break;
+            }
 
             if (switch_rule != 0)
             {
@@ -720,13 +725,15 @@ extern void parse_code_block(int break_label, int continue_label,
         }
         while(TRUE);
     }
+    else {
+        if (switch_rule != 0)
+            ebf_error("braced code block after 'switch'", token_text);
+        
+        /* Parse a single statement. */
+        parse_statement(break_label, continue_label);
+    }
 
-    if (switch_rule != 0)
-        ebf_error("braced code block after 'switch'", token_text);
-
-    /* Parse a single statement. */
-    parse_statement(break_label, continue_label);
-    return;
+    statement_is_unreachable = saved_unreachable;
 }
 
 /* ========================================================================= */
