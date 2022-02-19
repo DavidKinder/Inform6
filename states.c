@@ -1220,7 +1220,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
                  if (flag)
                  {   parse_code_block(break_label, continue_label, 0);
-                     if (ln >= 0) assemble_label_no(ln2);
+                     if (ln >= 0) assemble_forward_label_no(ln2);
                  }
 
                  return;
@@ -2167,7 +2167,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  if (flag)
                  {   parse_code_block(break_label, continue_label, 0);
-                     if (ln >= 0) assemble_label_no(ln2);
+                     if (ln >= 0) assemble_forward_label_no(ln2);
                  }
 
                  return;
