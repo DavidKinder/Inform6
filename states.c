@@ -1003,7 +1003,7 @@ static void parse_statement_z(int break_label, int continue_label)
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
                                  assemblez_jump(ln);
-                             assemble_label_no(ln2);
+                             assemble_forward_label_no(ln2);
                              return;
                          }
                          goto ParseUpdate;
@@ -1917,7 +1917,7 @@ static void parse_statement_g(int break_label, int continue_label)
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
                                  assembleg_jump(ln);
-                             assemble_label_no(ln2);
+                             assemble_forward_label_no(ln2);
                              return;
                          }
                          goto ParseUpdate;
