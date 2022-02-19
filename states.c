@@ -907,7 +907,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
                  if ((token_type == STATEMENT_TT)
                      && (token_value == UNTIL_CODE))
-                 {   assemble_label_no(ln2);
+                 {   assemble_forward_label_no(ln2);
                      match_open_bracket();
                      AO = parse_expression(CONDITION_CONTEXT);
                      match_close_bracket();
@@ -915,7 +915,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else error("'do' without matching 'until'");
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  break;
 
     /*  -------------------------------------------------------------------- */
@@ -1839,7 +1839,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
                  if ((token_type == STATEMENT_TT)
                      && (token_value == UNTIL_CODE))
-                 {   assemble_label_no(ln2);
+                 {   assemble_forward_label_no(ln2);
                      match_open_bracket();
                      AO = parse_expression(CONDITION_CONTEXT);
                      match_close_bracket();
@@ -1847,7 +1847,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  else error("'do' without matching 'until'");
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  break;
 
     /*  -------------------------------------------------------------------- */
