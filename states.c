@@ -1112,7 +1112,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      }
                  }
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -2030,7 +2030,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      }
                  }
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  return;
 
     /*  -------------------------------------------------------------------- */
