@@ -1891,8 +1891,8 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     no_sequence_points += next_sequence_point;
     next_label = 0; next_sequence_point = 0;
     labeluse_size = 0;
-    execution_never_reaches_here = -1;
-    statement_is_unreachable = -1;
+    execution_never_reaches_here = 0;
+    statement_is_unreachable = 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -3315,8 +3315,8 @@ extern void asm_begin_pass(void)
     labeluse_size = 0;
     next_sequence_point = 0;
     zcode_ha_size = 0;
-    execution_never_reaches_here = -1;
-    statement_is_unreachable = -1;
+    execution_never_reaches_here = 0;
+    statement_is_unreachable = 0;
 }
 
 extern void asm_allocate_arrays(void)
