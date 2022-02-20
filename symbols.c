@@ -1101,6 +1101,9 @@ extern void df_note_function_symbol(int symbol)
        of a function being defined.) */
     if (df_dont_note_global_symbols)
         return;
+    /* If we're compiling an unreachable statement, no reference. */
+    if (execution_never_reaches_here)
+        return;
 
     /* We are only interested in functions, or forward-declared symbols
        that might turn out to be functions. */
