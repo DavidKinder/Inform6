@@ -1678,7 +1678,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  assemblez_store(AO2, AO);
 
                  parse_code_block(ln = next_label++, continue_label, 1);
-                 assemble_label_no(ln);
+                 assemble_forward_label_no(ln);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -2590,7 +2590,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  assembleg_store(temp_var1, AO); 
 
                  parse_code_block(ln = next_label++, continue_label, 1);
-                 assemble_label_no(ln);
+                 assemble_forward_label_no(ln);
                  return;
 
     /*  -------------------------------------------------------------------- */
