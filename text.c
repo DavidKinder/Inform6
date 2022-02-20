@@ -250,7 +250,7 @@ extern int32 compile_string(char *b, int strctx)
         if (strctx == STRCTX_GAME || strctx == STRCTX_GAMEOPC || strctx == STRCTX_LOWSTRING || strctx == STRCTX_INFIX) {
             /* VENEER and VENEEROPC are only used at the translate_text level,
                so we don't have to catch them here. */
-            printf("### skipping string %s\n", b);
+            printf("### skipping string '%s'\n", b);
             return 0;
         }
     }
