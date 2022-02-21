@@ -167,7 +167,10 @@ static memory_list sequence_points_memlist;
    If the DOSTUFF constant is false, the entire "while" loop is definitely
    unreachable. So we should skip .TopLabel, .ExitLabel, and everything
    in between. To ensure this, we set EXECSTATE_ENTIRE upon entering the
-   "if {...}" braced block, and clear it upon leaving.
+   "if {...}" braced block, and reset it upon leaving.
+
+   (See parse_code_block() and parse_statement() for the (slightly fugly)
+   bit-fidding that accomplishes this.)
 
    As an added optimization, some labels are known to be "forward"; they
    are only reached by forward jumps. (.ExitLabel above is an example.)
