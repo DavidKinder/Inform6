@@ -2051,6 +2051,19 @@ typedef struct operator_s
 #define STRCTX_SYMBOL    9  /* prop/attr/etc names */
 #define STRCTX_INFIX    10  /* text printed in asterisk traces */
 
+/* ------------------------------------------------------------------------- */
+/*   Bit-flags applying to the execution_never_reaches_here variable.        */
+/* ------------------------------------------------------------------------- */
+
+#define EXECSTATE_REACHABLE   0  /* compile normally */
+#define EXECSTATE_UNREACHABLE 1  /* execution cannot reach this line
+                                    (this bit is present if the value is
+                                    nonzero at all) */
+#define EXECSTATE_ENTIRE      2  /* execution cannot reach this entire
+                                    statement or code block */
+#define EXECSTATE_NOWARN      4  /* do not print a warning about unreachable
+                                    code */
+
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
 /*                                                                           */
@@ -2211,7 +2224,6 @@ extern int   uses_unicode_features, uses_memheap_features,
     uses_acceleration_features, uses_float_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
-extern int   statement_is_unreachable;
 extern variableinfo *variables;
 extern memory_list variables_memlist;
 extern int   next_label, no_sequence_points;

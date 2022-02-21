@@ -25,14 +25,11 @@ int32 zmachine_pc;                 /* PC position of assembly (byte offset
                                       from start of Z-code area)             */
 
 int32 no_instructions;             /* Number of instructions assembled       */
-int execution_never_reaches_here;  /* 1 if the current PC value in the
+int execution_never_reaches_here;  /* nonzero if the current PC value in the
                                       code area cannot be reached: e.g. if
                                       the previous instruction was a "quit"
                                       opcode and no label is set to here
-                                      2 if the PC cannot be reached but it's
-                                      because of "if (true)"; we suppress
-                                      warnings in this case */
-int statement_is_unreachable;      /* ### */
+                                      (see EXECSTATE flags for more) */
 int next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
@@ -860,10 +857,10 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     ASSERT_ZCODE();
 
     if (execution_never_reaches_here) {
-        if (execution_never_reaches_here == 1) {
+        if (!(execution_never_reaches_here & EXECSTATE_NOWARN)) {
             warning("This statement can never be reached");
             /* only show the warning once */
-            execution_never_reaches_here = 2;
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
         }
         return;
     }
@@ -894,7 +891,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     }
 
     operand_rules = opco.op_rules;
-    execution_never_reaches_here = ((opco.flags & Rf) != 0);
+    execution_never_reaches_here = ((opco.flags & Rf) ? EXECSTATE_UNREACHABLE : EXECSTATE_REACHABLE);
 
     if (opco.flags2_set != 0) flags2_requirements[opco.flags2_set] = 1;
 
@@ -1183,10 +1180,10 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     ASSERT_GLULX();
 
     if (execution_never_reaches_here) {
-        if (execution_never_reaches_here == 1) {
+        if (!(execution_never_reaches_here & EXECSTATE_NOWARN)) {
             warning("This statement can never be reached");
             /* only show the warning once */
-            execution_never_reaches_here = 2;
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
         }
         return;
     }
@@ -1211,7 +1208,7 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 
     opco = internal_number_to_opcode_g(AI->internal_number);
 
-    execution_never_reaches_here = ((opco.flags & Rf) != 0);
+    execution_never_reaches_here = ((opco.flags & Rf) ? EXECSTATE_UNREACHABLE : EXECSTATE_REACHABLE);
 
     if (opco.op_rules & GOP_Unicode) {
         uses_unicode_features = TRUE;
@@ -1480,7 +1477,7 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 */
 extern void assemble_label_no(int n)
 {
-    if (statement_is_unreachable) {
+    if (execution_never_reaches_here & EXECSTATE_ENTIRE) {
         if (asm_trace_level > 0) printf("%5d  +%05lx    ###OMIT .L%d\n", ErrorReport.line_number, ((long int) zmachine_pc), n); //###
         /* We're not going to compile this label at all. Set a negative
            offset, which will trip an error if this label is jumped to. */
@@ -1492,7 +1489,7 @@ extern void assemble_label_no(int n)
         printf("%5d  +%05lx    .L%d\n", ErrorReport.line_number,
             ((long int) zmachine_pc), n);
     set_label_offset(n, zmachine_pc);
-    execution_never_reaches_here = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 }
 
 /* This is the same as assemble_label_no, except we only set up the label
@@ -1527,8 +1524,7 @@ extern int32 assemble_routine_header(int no_locals,
     int stackargs = FALSE;
     int name_length;
 
-    execution_never_reaches_here = 0;
-    statement_is_unreachable = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 
     routine_locals = no_locals;
     
@@ -1891,8 +1887,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
     no_sequence_points += next_sequence_point;
     next_label = 0; next_sequence_point = 0;
     labeluse_size = 0;
-    execution_never_reaches_here = 0;
-    statement_is_unreachable = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2376,7 +2371,7 @@ void assemblez_1_branch(int internal_number,
                 assemblez_jump(label);
                 /* We set the "can't reach statement" flag to did-it-on-purpose, 
                    so that "if (1)" doesn't produce that warning. */
-                execution_never_reaches_here = 2;
+                execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
                 return;
             }
             else {
@@ -2737,7 +2732,7 @@ void assembleg_1_branch(int internal_number,
             assembleg_0_branch(jump_gc, label);
             /* We set the "can't reach statement" flag to did-it-on-purpose, 
                so that "if (1)" doesn't produce that warning. */
-            execution_never_reaches_here = 2;
+            execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
             return;
         }
         if ((internal_number == jz_gc && o1.value != 0)
@@ -3315,8 +3310,7 @@ extern void asm_begin_pass(void)
     labeluse_size = 0;
     next_sequence_point = 0;
     zcode_ha_size = 0;
-    execution_never_reaches_here = 0;
-    statement_is_unreachable = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 }
 
 extern void asm_allocate_arrays(void)

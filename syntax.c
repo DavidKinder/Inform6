@@ -612,11 +612,12 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 */
 extern void parse_code_block(int break_label, int continue_label,
     int switch_rule)
-{   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label = 0,
-        unary_minus_flag;
+{   int switch_clause_made = FALSE, default_clause_made = FALSE, switch_label = 0;
+    int unary_minus_flag, saved_entire_flag;
 
-    int saved_unreachable = statement_is_unreachable;
-    statement_is_unreachable = execution_never_reaches_here;
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
 
     begin_syntax_line(TRUE);
     release_token_texts();
@@ -733,7 +734,10 @@ extern void parse_code_block(int break_label, int continue_label,
         parse_statement(break_label, continue_label);
     }
 
-    statement_is_unreachable = saved_unreachable;
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
 }
 
 /* ========================================================================= */

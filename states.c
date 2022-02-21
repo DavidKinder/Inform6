@@ -2643,21 +2643,25 @@ static void parse_statement_g(int break_label, int continue_label)
 extern void parse_statement(int break_label, int continue_label)
 {
     int res;
-    int saved_unreachable;
+    int saved_entire_flag;
     
     res = parse_named_label_statements();
     if (!res)
         return;
 
-    saved_unreachable = statement_is_unreachable;
-    statement_is_unreachable = execution_never_reaches_here;
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
  
     if (!glulx_mode)
         parse_statement_z(break_label, continue_label);
     else
         parse_statement_g(break_label, continue_label);
 
-    statement_is_unreachable = saved_unreachable;
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
 }
 
 /* ========================================================================= */
