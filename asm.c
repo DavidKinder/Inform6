@@ -111,6 +111,9 @@ static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
                                               is set.                        */
 static memory_list sequence_points_memlist;
 
+/* Set the position of the given label. The offset will be the current
+   zmachine_pc, or -1 if the label is definitely unused.
+*/
 static void set_label_offset(int label, int32 offset)
 {
     ensure_memory_list_available(&labels_memlist, label+1);
@@ -136,11 +139,15 @@ static void set_label_offset(int label, int32 offset)
     labels[label].next = -1;
 }
 
+/* Set a flag indicating that the given label has been jumped to. */
 static void mark_label_used(int label)
 {
     if (label < 0)
         return;
 
+    /* Entries from 0 to labeluse_size have meaningful values.
+       If we have to increase labeluse_size, initialize the new
+       entries to FALSE. */
     ensure_memory_list_available(&labeluse_memlist, label+1);
     for (; labeluse_size < label+1; labeluse_size++) {
         labeluse[labeluse_size] = FALSE;
