@@ -138,7 +138,6 @@ static void set_label_offset(int label, int32 offset)
 
 static void mark_label_used(int label)
 {
-    //printf("### branch used: L%d\n", label);
     if (label < 0)
         return;
 
@@ -1478,7 +1477,6 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 extern void assemble_label_no(int n)
 {
     if (execution_never_reaches_here & EXECSTATE_ENTIRE) {
-        if (asm_trace_level > 0) printf("%5d  +%05lx    ###OMIT .L%d\n", ErrorReport.line_number, ((long int) zmachine_pc), n); //###
         /* We're not going to compile this label at all. Set a negative
            offset, which will trip an error if this label is jumped to. */
         set_label_offset(n, -1);
