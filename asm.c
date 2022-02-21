@@ -1472,7 +1472,10 @@ extern void assembleg_instruction(const assembly_instruction *AI)
 }
 
 /* Set up this label at zmachine_pc.
-   ### Explanation...
+   This resets the execution_never_reaches_here flag, since every label
+   is assumed to be reachable. 
+   However, if EXECSTATE_ENTIRE is set, that's not true. The entire
+   statement is being skipped, so we can safely skip all labels within it.
 */
 extern void assemble_label_no(int n)
 {
