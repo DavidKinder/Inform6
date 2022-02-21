@@ -200,6 +200,12 @@ static memory_list sequence_points_memlist;
 
 /* Set the position of the given label. The offset will be the current
    zmachine_pc, or -1 if the label is definitely unused.
+
+   This adds the label to a linked list (via first_label, last_label).
+
+   The linked list must be in increasing PC order. We know this will
+   be true because we call this as we run through the function, so
+   zmachine_pc always increases.
 */
 static void set_label_offset(int label, int32 offset)
 {
@@ -2038,12 +2044,21 @@ static void transfer_routine_z(void)
                 printf("Branch detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
             if (asm_trace_level >= 4)
-                printf("To label %d, which is %d from here\n",
+                printf("...To label %d, which is %d from here\n",
                     j, labels[j].offset-pc);
             if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
-            {   if (asm_trace_level >= 4) printf("Short form\n");
+            {   if (asm_trace_level >= 4) printf("...Using short form\n");
                 zcode_markers[i+1] = DELETED_MV;
             }
+        }
+        else if (zcode_markers[i] == LABEL_MV)
+        {
+            if (asm_trace_level >= 4)
+                printf("Jump detected at offset %04x\n", pc);
+            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            if (asm_trace_level >= 4)
+                printf("...To label %d, which is %d from here\n",
+                    j, labels[j].offset-pc);
         }
     }
 
@@ -2063,6 +2078,7 @@ static void transfer_routine_z(void)
                     i, labels[i].offset, labels[i].next, labels[i].prev);
         }
 
+        /* label will advance through the linked list as pc increases. */
         for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
             i<zcode_ha_size; i++, pc++)
         {   while ((label != -1) && (labels[label].offset == pc))
@@ -2269,6 +2285,7 @@ static void transfer_routine_g(void)
                 i, labels[i].offset, labels[i].next, labels[i].prev);
       }
 
+      /* label will advance through the linked list as pc increases. */
       for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
         i<zcode_ha_size; 
         i++, pc++) {
