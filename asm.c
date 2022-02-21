@@ -2377,8 +2377,9 @@ void assemblez_1_branch(int internal_number,
         if (internal_number == jz_zc) {
             if ((flag && o1.value == 0) || (!flag && o1.value != 0)) {
                 assemblez_jump(label);
-                /* We set the "can't reach statement" flag to did-it-on-purpose, 
-                   so that "if (1)" doesn't produce that warning. */
+                /* The jump opcode always sets UNREACHABLE. But we also set
+                   the NOWARN flag so that "if (1)" / "if (0)" doesn't produce
+                   any warning. */
                 execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
                 return;
             }
@@ -2738,8 +2739,9 @@ void assembleg_1_branch(int internal_number,
         if ((internal_number == jz_gc && o1.value == 0)
           || (internal_number == jnz_gc && o1.value != 0)) {
             assembleg_0_branch(jump_gc, label);
-            /* We set the "can't reach statement" flag to did-it-on-purpose, 
-               so that "if (1)" doesn't produce that warning. */
+            /* The jump opcode always sets UNREACHABLE. But we also set
+               the NOWARN flag so that "if (1)" / "if (0)" doesn't produce
+               any warning. */
             execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
             return;
         }
