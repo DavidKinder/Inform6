@@ -2053,12 +2053,12 @@ typedef struct operator_s
 
 /* ------------------------------------------------------------------------- */
 /*   Bit-flags applying to the execution_never_reaches_here variable.        */
+/*   Note that if any flags are set, UNREACHABLE is set, so we can easily    */
+/*   test "if (execution_never_reaches_here)..."                             */
 /* ------------------------------------------------------------------------- */
 
 #define EXECSTATE_REACHABLE   0  /* compile normally */
-#define EXECSTATE_UNREACHABLE 1  /* execution cannot reach this line
-                                    (this bit is present if the value is
-                                    nonzero at all) */
+#define EXECSTATE_UNREACHABLE 1  /* execution cannot reach this line */
 #define EXECSTATE_ENTIRE      2  /* execution cannot reach this entire
                                     statement or code block */
 #define EXECSTATE_NOWARN      4  /* do not print a warning about unreachable
