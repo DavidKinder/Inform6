@@ -111,6 +111,90 @@ static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
                                               is set.                        */
 static memory_list sequence_points_memlist;
 
+/* ------------------------------------------------------------------------- */
+/*   Label management                                                        */
+/* ------------------------------------------------------------------------- */
+
+/* The stripping of unreachable code requires a bit of explanation.
+
+   As we compile a function, we update the execution_never_reaches_here
+   flag to reflect whether the current line is reachable. If the flag
+   is set (EXECSTATE_UNREACHABLE), we skip generating opcodes,
+   compiling strings, and so on. (See assemblez_instruction(),
+   assembleg_instruction(), and compile_string() for these checks.)
+
+   If we're *between* functions, the execution_never_reaches_here flag
+   is always clear (EXECSTATE_REACHABLE), so global strings are
+   compiled correctly.
+
+   In general, every time we compile a JUMP or RETURN opcode, the flag
+   gets set. Every time we compile a label, the flag gets cleared.
+   This makes sense if you consider a common "while" loop:
+
+     while (true) {
+       ...
+       if (flag) break;
+       ...
+     }
+     ...
+
+   This is compiled as:
+
+     .TopLabel;
+     ...
+     @jnz flag ?ExitLabel;
+     ...
+     @jump TopLabel;
+     .ExitLabel;
+     ...
+   
+   Code after an unconditional JUMP is obviously unreachable. But the
+   next thing that happens is the .ExitLabel, which is the target of a
+   branch, so the next line is reachable again.
+
+   However, if the unreachable flag is set when we *begin* a statement
+   (or braced block of statements), we can get tougher. We set the
+   EXECSTATE_ENTIRE flag for the entire duration of the statement or
+   block. This flag cannot be cleared by compiling labels. An example
+   of this:
+
+     if (DOSTUFF) {
+       while (true) {
+         if (flag) break;
+       }
+     }
+
+   If the DOSTUFF constant is false, the entire "while" loop is definitely
+   unreachable. So we should skip .TopLabel, .ExitLabel, and everything
+   in between. To ensure this, we set EXECSTATE_ENTIRE upon entering the
+   "if {...}" braced block, and clear it upon leaving.
+
+   As an added optimization, some labels are known to be "forward"; they
+   are only reached by forward jumps. (.ExitLabel above is an example.)
+   If we reach a forward label and nothing has in fact jumped there,
+   the label is dead and we can skip it. (And thus also skip clearing
+   the unreachable flag!)
+
+   To understand *that*, consider a "while true" loop with no "break":
+
+     while (true) {
+       ...
+       if (flag) return;
+       ...
+     }
+
+   This never branches to .ExitLabel. So when we reach .ExitLabel,
+   we can say for sure that *nothing* branches there. So we skip
+   compiling that label. The unreachable flag is left set (because we
+   just finished the jump to .TopLabel). Thus, any code following the
+   entire loop is known to be unreachable, and we can righteously
+   complain about it.
+
+   (In contrast, .TopLabel cannot be skipped because it might be the
+   target of a *backwards* branch later on. In fact there might be
+   several -- any "continue" in the loop will jump to .TopLabel.)
+*/
+
 /* Set the position of the given label. The offset will be the current
    zmachine_pc, or -1 if the label is definitely unused.
 */
