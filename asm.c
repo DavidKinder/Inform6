@@ -2036,7 +2036,10 @@ static void transfer_routine_z(void)
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (2nd bytes in branches converted to
-            short form) with DELETED_MV.                                     */
+            short form) with DELETED_MV.
+            We also look for jumps that can be entirely eliminated (because
+            they are jumping to the very next instruction). The opcode and
+            both label bytes get DELETED_MV. */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] == BRANCH_MV)
@@ -2059,6 +2062,12 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d, which is %d from here\n",
                     j, labels[j].offset-pc);
+            if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
+                if (asm_trace_level >= 4) printf("...Deleting jump\n");
+                zcode_markers[i-1] = DELETED_MV;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i+1] = DELETED_MV;
+            }
         }
     }
 
