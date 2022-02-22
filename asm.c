@@ -2234,7 +2234,10 @@ static void transfer_routine_g(void)
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (bytes 2-4 in branches converted to
-            short form) with DELETED_MV.                                     */
+            short form) with DELETED_MV.
+            We also look for branches that can be entirely eliminated (because
+            they are jumping to the very next instruction). The opcode and
+            all label bytes get DELETED_MV. */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
@@ -2248,15 +2251,24 @@ static void transfer_routine_g(void)
             | (zcode_holding_area[i+3]));
         offset_of_next = pc + 4;
         addr = (labels[j].offset - offset_of_next) + 2;
+        opmodebyte = i - ((opmodeoffset+1)/2);
         if (asm_trace_level >= 4)
             printf("To label %d, which is (%d-2) = %d from here\n",
                 j, addr, labels[j].offset - offset_of_next);
-        if (addr >= -0x80 && addr < 0x80) {
+        if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
+            if (asm_trace_level >= 4) printf("...Deleting branch\n");
+            zcode_markers[i-2] = DELETED_MV;
+            zcode_markers[i-1] = DELETED_MV;
+            zcode_markers[i] = DELETED_MV;
+            zcode_markers[i+1] = DELETED_MV;
+            zcode_markers[i+2] = DELETED_MV;
+            zcode_markers[i+3] = DELETED_MV;
+        }
+        else if (addr >= -0x80 && addr < 0x80) {
             if (asm_trace_level >= 4) printf("...Byte form\n");
             zcode_markers[i+1] = DELETED_MV;
             zcode_markers[i+2] = DELETED_MV;
             zcode_markers[i+3] = DELETED_MV;
-            opmodebyte = i - ((opmodeoffset+1)/2);
             if ((opmodeoffset & 1) == 0)
                 zcode_holding_area[opmodebyte] = 
                     (zcode_holding_area[opmodebyte] & 0xF0) | 0x01;
@@ -2268,7 +2280,6 @@ static void transfer_routine_g(void)
             if (asm_trace_level >= 4) printf("...Short form\n");
             zcode_markers[i+2] = DELETED_MV;
             zcode_markers[i+3] = DELETED_MV;
-            opmodebyte = i - ((opmodeoffset+1)/2);
             if ((opmodeoffset & 1) == 0)
                 zcode_holding_area[opmodebyte] = 
                     (zcode_holding_area[opmodebyte] & 0xF0) | 0x02;
