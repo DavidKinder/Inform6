@@ -2253,7 +2253,7 @@ static void transfer_routine_g(void)
         addr = (labels[j].offset - offset_of_next) + 2;
         opmodebyte = i - ((opmodeoffset+1)/2);
         if (asm_trace_level >= 4)
-            printf("To label %d, which is (%d-2) = %d from here\n",
+            printf("...To label %d, which is (%d-2) = %d from here\n",
                 j, addr, labels[j].offset - offset_of_next);
         if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
             if (asm_trace_level >= 4) printf("...Deleting branch\n");
