@@ -593,6 +593,7 @@ int z_system_constant_list[] =
       class_objects_array_SC,
       highest_object_number_SC,
       dictionary_table_SC,
+      grammar_table_SC,
       -1 };
 
 static int32 value_of_system_constant_z(int t)
