@@ -1672,8 +1672,8 @@ typedef struct operator_s
 
 #define oddeven_packing_SC            58
 
-#define grammar_table_SC              59     /* Glulx-only */
-#define dictionary_table_SC           60     /* Glulx-only */
+#define grammar_table_SC              59
+#define dictionary_table_SC           60
 #define dynam_string_table_SC         61     /* Glulx-only */
 
 
