@@ -1587,7 +1587,7 @@ extern void switches(char *p, int cmode)
     if (percentages_switch)
     {
         /* -p is now treated like an extended -z. It will be renamed to
-           something like -TMAP=2 in the future. */
+           something like --trace MAP=2 in the future. */
         memory_map_switch = TRUE;
     }
     if (optimise_switch)
