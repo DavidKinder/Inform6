@@ -116,6 +116,9 @@ static char *show_percentage(int32 x, int32 total)
     if (memory_map_setting < 2) {
         percentage_buffer[0] = '\0';
     }
+    else if (x == 0) {
+        sprintf(percentage_buffer, "  ( --- )");
+    }
     else {
         sprintf(percentage_buffer, "  (%.1f %%)", (float)x * 100.0 / (float)total);
     }
