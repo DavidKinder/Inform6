@@ -591,8 +591,8 @@ static void set_trace_option(char *command)
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
-        printf("  MAKEABBREVS: show selection decisions during abbreviation optimization (-u mode)\n");
-        printf("    MAKEABBREVS=2: also show three-letter-block decisions\n");
+        printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only applies in -u mode)\n");
+        printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
@@ -629,7 +629,7 @@ static void set_trace_option(char *command)
     else if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
     }
-    else if (strcmp(command, "MAKEABBREV")==0 || strcmp(command, "MAKEABBREVS")==0) {
+    else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;
     }
     else {

@@ -277,7 +277,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     error_format,                   /* set by -E */
     asm_trace_setting,              /* $!ASM, -a: initial value of
                                        asm_trace_level */
-    optabbrevs_trace_setting,       /* $!MAKEABBREVS */
+    optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
