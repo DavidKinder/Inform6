@@ -243,7 +243,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
 int bothpasses_switch,              /* -b */
     concise_switch,                 /* -c */
     economy_switch,                 /* -e */
-    frequencies_switch,             /* -f */
+    frequencies_setting,            /* $!FREQ, -f */
     ignore_switches_switch,         /* -i */
     listobjects_switch,             /* -j */
     debugfile_switch,               /* -k */
@@ -298,7 +298,7 @@ static void reset_switch_settings(void)
     concise_switch = FALSE;
     double_space_setting = 0;
     economy_switch = FALSE;
-    frequencies_switch = FALSE;
+    frequencies_setting = 0;
     trace_fns_setting = 0;
     ignore_switches_switch = FALSE;
     listobjects_switch = FALSE;
@@ -1454,7 +1454,7 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'e': economy_switch = state; break;
-        case 'f': frequencies_switch = state; break;
+        case 'f': frequencies_setting = (state?1:0); break;
         case 'g': switch(p[i+1])
                   {   case '1': trace_fns_setting=1; s=2; break;
                       case '2': trace_fns_setting=2; s=2; break;

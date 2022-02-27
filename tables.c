@@ -1185,7 +1185,7 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
     }
 
-    if (frequencies_switch)
+    if (frequencies_setting)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");
@@ -1842,7 +1842,7 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
     }
 
 
-    if (frequencies_switch)
+    if (frequencies_setting)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");
             printf("how many bytes they saved:  ('_' denotes spaces)\n");

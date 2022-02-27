@@ -591,8 +591,9 @@ static void set_trace_option(char *command)
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
-        printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only applies in -u mode)\n");
+        printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
+        printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
@@ -620,17 +621,22 @@ static void set_trace_option(char *command)
         *cx = '\0';
     }
 
-    if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
-        statistics_switch = value;
-    }
-    else if (strcmp(command, "MAP")==0) {
-        memory_map_setting = value;
-    }
-    else if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
+    /* We accept some reasonable synonyms, including plausible singular/plural confusion. */
+    
+    if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
     }
     else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;
+    }
+    else if (strcmp(command, "FREQUENCY")==0 || strcmp(command, "FREQUENCIES")==0 || strcmp(command, "FREQ")==0) {
+        frequencies_setting = value;
+    }
+    else if (strcmp(command, "MAP")==0) {
+        memory_map_setting = value;
+    }
+    else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
+        statistics_switch = value;
     }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);
