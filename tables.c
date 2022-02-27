@@ -1853,7 +1853,7 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
                 for (j=0; abbrev_string[j]!=0; j++)
                     if (abbrev_string[j]==' ') abbrev_string[j]='_';
                 printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
-                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
+                    (abbreviations[i].freq-1)*abbreviations[i].quality);
                 if ((i%3)==2) printf("\n");
             }
             if ((i%3)!=0) printf("\n");
