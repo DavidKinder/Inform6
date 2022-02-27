@@ -627,6 +627,9 @@ static void set_trace_option(char *command)
     else if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
     }
+    else if (strcmp(command, "MAKEABBREV")==0 || strcmp(command, "MAKEABBREVS")==0) {
+        optabbrevs_trace_setting = value;
+    }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);
     }

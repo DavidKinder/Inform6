@@ -1338,9 +1338,11 @@ static void optimise_pass(void)
                 }
             }
 #endif
-            printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
-                pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
-                (long int) tlbtab[i].occurrences);
+            if (optabbrevs_trace_setting >= 2) {
+                printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
+                    pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
+                    (long int) tlbtab[i].occurrences);
+            }
             TIMEVALUE_NOW(&t1);
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
@@ -1398,9 +1400,11 @@ static void optimise_pass(void)
                 }
                 FinishEarly: ;
             }
-            TIMEVALUE_NOW(&t2);
-            duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
-            printf(" (%.4f seconds)\n", duration);
+            if (optabbrevs_trace_setting >= 2) {
+                TIMEVALUE_NOW(&t2);
+                duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
+                printf(" (%.4f seconds)\n", duration);
+            }
         }
     }
 }
@@ -1534,8 +1538,10 @@ extern void optimise_abbreviations(void)
     grandflags=my_calloc(sizeof(int), max, "grandflags");
 
 
-    printf("Cross-reference table (%ld entries) built...\n",
-        (long int) no_occs);
+    if (optabbrevs_trace_setting >= 1) {
+        printf("Cross-reference table (%ld entries) built...\n",
+            (long int) no_occs);
+    }
     /*  for (i=0; i<no_occs; i++)
             printf("%4d %4d '%s' %d\n",i,tlbtab[i].intab,tlbtab[i].text,
                 tlbtab[i].occurrences);
@@ -1544,8 +1550,12 @@ extern void optimise_abbreviations(void)
     for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0;
     available=MAX_BESTYET;
     while ((available>0)&&(selected<MAX_ABBREVS))
-    {   printf("Pass %d\n", ++pass_no);
-
+    {
+        pass_no++;
+        if (optabbrevs_trace_setting >= 1) {
+            printf("Pass %d\n", pass_no);
+        }
+        
         optimise_pass();
         available=0;
         for (i=0; i<MAX_BESTYET; i++)
@@ -1578,11 +1588,13 @@ extern void optimise_abbreviations(void)
                 char testtext[4];
                 bestyet2[selected++]=bestyet[maxat];
 
-                printf(
-                    "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
-                    (long int) selected,bestyet[maxat].text,
-                    (long int) bestyet[maxat].popularity,
-                    (long int) bestyet[maxat].score);
+                if (optabbrevs_trace_setting >= 1) {
+                    printf(
+                        "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
+                        (long int) selected,bestyet[maxat].text,
+                        (long int) bestyet[maxat].popularity,
+                        (long int) bestyet[maxat].score);
+                }
 
                 testtext[0]=bestyet[maxat].text[0];
                 testtext[1]=bestyet[maxat].text[1];

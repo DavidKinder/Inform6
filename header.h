@@ -2541,7 +2541,7 @@ extern int
     economy_switch,         frequencies_switch,
     ignore_switches_switch, listobjects_switch,   debugfile_switch,
     listing_switch,         memout_switch,        printprops_switch,
-    obsolete_switch,
+    obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
     memory_map_setting,     module_switch,        temporary_files_switch,
