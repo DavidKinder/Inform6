@@ -1184,25 +1184,6 @@ printf("        | module linking data |   %s\n",
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
     }
-
-    if (frequencies_setting)
-    {
-        {   printf("How frequently abbreviations were used, and roughly\n");
-            printf("how many bytes they saved:  ('_' denotes spaces)\n");
-            for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[MAX_ABBREV_LENGTH];
-                strcpy(abbrev_string,
-                    (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
-                for (j=0; abbrev_string[j]!=0; j++)
-                    if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
-                    2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3);
-                if ((i%3)==2) printf("\n");
-            }
-            if ((i%3)!=0) printf("\n");
-            if (no_abbreviations==0) printf("None were declared.\n");
-        }
-    }
 }
 
 static void construct_storyfile_g(void)
@@ -1840,34 +1821,52 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
         }
 
     }
+}
 
-
-    if (frequencies_setting)
-    {
-        {   printf("How frequently abbreviations were used, and roughly\n");
-            printf("how many bytes they saved:  ('_' denotes spaces)\n");
-            for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[MAX_ABBREV_LENGTH];
-                strcpy(abbrev_string,
-                    (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
-                for (j=0; abbrev_string[j]!=0; j++)
-                    if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq,
-                    (abbreviations[i].freq-1)*abbreviations[i].quality);
-                if ((i%3)==2) printf("\n");
-            }
-            if ((i%3)!=0) printf("\n");
-            if (no_abbreviations==0) printf("None were declared.\n");
-        }
+static void display_frequencies()
+{
+    int i, j;
+    
+    printf("How frequently abbreviations were used, and roughly\n");
+    printf("how many bytes they saved:  ('_' denotes spaces)\n");
+    
+    for (i=0; i<no_abbreviations; i++) {
+        int32 saving;
+        if (!glulx_mode)
+            saving = 2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3;
+        else
+            saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
+        
+        char abbrev_string[MAX_ABBREV_LENGTH];
+        strcpy(abbrev_string,
+               (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
+        for (j=0; abbrev_string[j]!=0; j++)
+            if (abbrev_string[j]==' ') abbrev_string[j]='_';
+        
+        printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq, saving);
+        
+        if ((i%3)==2) printf("\n");
     }
+    if ((i%3)!=0) printf("\n");
+    
+    if (no_abbreviations==0) printf("None were declared.\n");
 }
 
 extern void construct_storyfile(void)
 {
-  if (!glulx_mode)
-    construct_storyfile_z();
-  else
-    construct_storyfile_g();
+    if (!glulx_mode)
+        construct_storyfile_z();
+    else
+        construct_storyfile_g();
+
+    /* Display all the trace/stats info that came out of compilation.
+
+       (Except for the memory map, which uses a bunch of local variables
+       from construct_storyfile_z/g(), so it's easier to do that above.)
+    */
+    
+    if (frequencies_setting)
+        display_frequencies();
 }
 
 /* ========================================================================= */
