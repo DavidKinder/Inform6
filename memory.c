@@ -618,8 +618,6 @@ static void set_trace_option(char *command)
         *cx = '\0';
     }
 
-    printf("### trace parsed '%s' = %d\n", command, value);
-
     if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;
     }
