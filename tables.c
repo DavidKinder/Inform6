@@ -1045,31 +1045,6 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         }
     }
 
-    if (offsets_switch)
-    {
-        {   printf(
-"\nOffsets in %s:\n\
-%05lx Synonyms     %05lx Defaults     %05lx Objects    %05lx Properties\n\
-%05lx Variables    %05lx Parse table  %05lx Actions    %05lx Preactions\n\
-%05lx Adjectives   %05lx Dictionary   %05lx Code       %05lx Strings\n",
-            output_called,
-            (long int) abbrevs_at,
-            (long int) prop_defaults_at,
-            (long int) object_tree_at,
-            (long int) object_props_at,
-            (long int) globals_at,
-            (long int) grammar_table_at,
-            (long int) actions_at,
-            (long int) preactions_at,
-            (long int) adjectives_offset,
-            (long int) dictionary_at,
-            (long int) Write_Code_At,
-            (long int) Write_Strings_At);
-            if (module_switch)
-                printf("%05lx Linking data\n",(long int) link_table_at);
-        }
-    }
-
     if (debugfile_switch)
     {   begin_writing_debug_sections();
         write_debug_section("abbreviations", 64);
@@ -1738,29 +1713,6 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                  (long int)
                       (((long int) (limit*1024L)) - ((long int) Out_Size)));
 
-        }
-    }
-
-    if (offsets_switch)
-    {
-        {   printf(
-"\nOffsets in %s:\n\
-%05lx Synonyms     %05lx Defaults     %05lx Objects    %05lx Properties\n\
-%05lx Variables    %05lx Parse table  %05lx Actions    %05lx Preactions\n\
-%05lx Adjectives   %05lx Dictionary   %05lx Code       %05lx Strings\n",
-            output_called,
-            (long int) abbrevs_at,
-            (long int) prop_defaults_at,
-            (long int) object_tree_at,
-            (long int) object_props_at,
-            (long int) globals_at,
-            (long int) grammar_table_at,
-            (long int) actions_at,
-            (long int) preactions_at,
-            (long int) adjectives_offset,
-            (long int) dictionary_at,
-            (long int) Write_Code_At,
-            (long int) Write_Strings_At);
         }
     }
 

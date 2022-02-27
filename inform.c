@@ -250,7 +250,6 @@ int bothpasses_switch,              /* -b */
     listing_switch,                 /* -l */
     memout_switch,                  /* -m */
     printprops_switch,              /* -n */
-    offsets_switch,                 /* -o */
     obsolete_switch,                /* -q */
     transcript_switch,              /* -r */
     statistics_switch,              /* $!STATS, -s */
@@ -306,7 +305,6 @@ static void reset_switch_settings(void)
     listing_switch = FALSE;
     memout_switch = FALSE;
     printprops_switch = FALSE;
-    offsets_switch = FALSE;
     obsolete_switch = FALSE;
     transcript_switch = FALSE;
     statistics_switch = FALSE;
@@ -1360,7 +1358,6 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   n   print numbers of properties, attributes and actions\n",
           Debugging_Name);
    printf("\
-  o   print offset addresses\n\
   q   keep quiet about obsolete usages\n\
   r   record all the text to \"%s\"\n\
   s   give statistics\n",
@@ -1480,7 +1477,6 @@ extern void switches(char *p, int cmode)
         case 'l': listing_switch = state; break;
         case 'm': memout_switch = state; break;
         case 'n': printprops_switch = state; break;
-        case 'o': offsets_switch = state; break;
         case 'q': obsolete_switch = state; break;
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");
