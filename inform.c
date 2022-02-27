@@ -227,7 +227,9 @@ static void select_target(int targ)
 /* ------------------------------------------------------------------------- */
 
 int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
-                            only, 2 for full assembly tracing with hex dumps */
+                            only, 2 for full assembly tracing with hex dumps,
+                            3 for branch shortening info, 4 for verbose
+                            branch info                                      */
     line_trace_level,    /* line tracing: 0 off, 1 on                        */
     expr_trace_level,    /* expression tracing: 0 off, 1 full, 2 brief       */
     linker_trace_level,  /* set by -y: 0 to 4 levels of tracing              */
@@ -274,8 +276,8 @@ int compression_switch;             /* set by -H */
 int character_set_setting,          /* set by -C0 through -C9 */
     character_set_unicode,          /* set by -Cu */
     error_format,                   /* set by -E */
-    asm_trace_setting,              /* set by -a and -t: value of
-                                       asm_trace_level to use when tracing */
+    asm_trace_setting,              /* $!ASM, -a: initial value of
+                                       asm_trace_level */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
@@ -1333,7 +1335,8 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
    /* The -h2 (switches) help information: */
 
    printf("Help on the full list of legal switch commands:\n\n\
-  a   trace assembly-language (without hex dumps; see -t)\n\
+  a   trace assembly-language\n\
+  a2  trace assembly with hex dumps\n\
   c   more concise error messages\n\
   d   contract double spaces after full stops in text\n\
   d2  contract double spaces after exclamation and question marks, too\n\
@@ -1360,8 +1363,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   o   print offset addresses\n\
   q   keep quiet about obsolete usages\n\
   r   record all the text to \"%s\"\n\
-  s   give statistics\n\
-  t   trace assembly-language (with full hex dumps; see -a)\n",
+  s   give statistics\n",
       Transcript_Name);
 
    printf("\
@@ -1436,7 +1438,14 @@ extern void switches(char *p, int cmode)
         }
         switch(p[i])
         {
-        case 'a': asm_trace_setting = 1; break;
+        case 'a': switch(p[i+1])
+                  {   case '1': asm_trace_setting=1; s=2; break;
+                      case '2': asm_trace_setting=2; s=2; break;
+                      case '3': asm_trace_setting=3; s=2; break;
+                      case '4': asm_trace_setting=4; s=2; break;
+                      default: asm_trace_setting=1; break;
+                  }
+                  break;
         case 'b': bothpasses_switch = state; break;
         case 'c': concise_switch = state; break;
         case 'd': switch(p[i+1])
@@ -1478,7 +1487,6 @@ extern void switches(char *p, int cmode)
                   else
                       transcript_switch = state; break;
         case 's': statistics_switch = state; break;
-        case 't': asm_trace_setting=2; break;
         case 'u': if (cmode == 0) {
                       error("The switch '-u' can't be set with 'Switches'");
                       break;

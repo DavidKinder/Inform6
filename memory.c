@@ -587,6 +587,10 @@ static void set_trace_option(char *command)
     
     if (!command || *command == '\0') {
         printf("The full list of trace options:\n\n");
+        printf("  ASM: trace assembly (same as -a)\n");
+        printf("  ASM=2: ...also show hex dumps\n");
+        printf("  ASM=3: ...also show branch optimization info\n");
+        printf("  ASM=4: ...more verbose branch info\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("  MAP=2: ...also show percentage of VM that each segment occupies\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
@@ -621,6 +625,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "MAP")==0) {
         memory_map_setting = value;
+    }
+    else if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
+        asm_trace_setting = value;
     }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);
