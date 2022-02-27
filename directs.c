@@ -967,12 +967,14 @@ the first constant definition");
     /* --------------------------------------------------------------------- */
     /*   Trace dictionary                                                    */
     /*         objects                                                       */
-    /*         symbols                                                       */
+    /*         symbols      [on/off/NUM]                                     */
     /*         verbs                                                         */
     /*                      [on/off]                                         */
-    /*         assembly     [on/off]                                         */
-    /*         expressions  [on/off]                                         */
-    /*         lines        [on/off]                                         */
+    /*         assembly     [on/off/NUM]                                     */
+    /*         expressions  [on/off/NUM]                                     */
+    /*         lines        [on/off/NUM]                                     */
+    /*         tokens       [on/off/NUM]                                     */
+    /*         linker       [on/off/NUM]                                     */
     /* --------------------------------------------------------------------- */
 
     case TRACE_CODE:
