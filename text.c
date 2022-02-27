@@ -899,6 +899,7 @@ string; substituting '?'.");
       }
     }
     write_z_char_g(0);
+    zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
 
   }
 
