@@ -591,6 +591,8 @@ static void set_trace_option(char *command)
         printf("  ASM=2: ...also show hex dumps\n");
         printf("  ASM=3: ...also show branch optimization info\n");
         printf("  ASM=4: ...more verbose branch info\n");
+        printf("  MAKEABBREVS: show selection decisions during abbreviation optimization (-u mode)\n");
+        printf("  MAKEABBREVS=2: ...also show three-letter-block decisions\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("  MAP=2: ...also show percentage of VM that each segment occupies\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
