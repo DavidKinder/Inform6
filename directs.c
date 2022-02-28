@@ -991,6 +991,11 @@ the first constant definition");
 
         trace_keywords.enabled = TRUE;
 
+        /* Note that "Trace verbs" doesn't affect list_verbs_setting.
+           It shows the grammar at this point in the code. Setting
+           list_verbs_setting shows the grammar at the end of 
+           compilation. */
+        
         i = token_value; j = 0;
         switch(i)
         {   case DICTIONARY_TK: break;

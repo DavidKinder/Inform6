@@ -281,6 +281,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
+    list_verbs_setting,             /* $!VERBS */
     store_the_text;                 /* when set, record game text to a chunk
                                        of memory (used by -u) */
 static int r_e_c_s_set;             /* has -S been explicitly set? */
@@ -291,6 +292,7 @@ static void reset_switch_settings(void)
 {   asm_trace_setting=0;
     linker_trace_level=0;
     tokens_trace_level=0;
+    list_verbs_setting=0;
 
     store_the_text = FALSE;
 

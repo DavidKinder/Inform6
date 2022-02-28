@@ -597,6 +597,7 @@ static void set_trace_option(char *command)
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
+        printf("  VERBS: display the verb grammar table\n");
         //### more
         return;
     }
@@ -637,6 +638,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;
+    }
+    else if (strcmp(command, "VERBS")==0 || strcmp(command, "VERB")==0) {
+        list_verbs_setting = value;
     }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);

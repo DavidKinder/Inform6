@@ -1885,12 +1885,16 @@ extern void construct_storyfile(void)
     /* Display all the trace/stats info that came out of compilation.
 
        (Except for the memory map, which uses a bunch of local variables
-       from construct_storyfile_z/g(), so it's easier to do that above.)
+       from construct_storyfile_z/g(), so it's easier to do that inside
+       that function.)
     */
     
     if (frequencies_setting)
         display_frequencies();
 
+    if (list_verbs_setting)
+        list_verb_table();
+    
     if (statistics_switch) {
         if (!glulx_mode)
             display_statistics_z();
