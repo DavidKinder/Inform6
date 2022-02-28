@@ -271,6 +271,7 @@ static void list_grammar_line_v2(int mark)
 extern void list_verb_table(void)
 {
     int verb, lx;
+    printf("Grammar table: %d verbs\n", no_Inform_verbs);
     for (verb=0; verb<no_Inform_verbs; verb++) {
         char *verbword = find_verb_by_number(verb);
         printf("Verb '%s'\n", verbword);
