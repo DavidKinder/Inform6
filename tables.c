@@ -1892,6 +1892,9 @@ extern void construct_storyfile(void)
     if (frequencies_setting)
         display_frequencies();
 
+    if (list_dict_setting)
+        show_dictionary(list_dict_setting);
+    
     if (list_verbs_setting)
         list_verb_table();
     

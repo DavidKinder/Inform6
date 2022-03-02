@@ -2383,13 +2383,13 @@ void print_dict_word(int node)
     }
 }
 
-static void recursively_show_z(int node)
+static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[32];
     int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
-        recursively_show_z(dtree[node].branch[0]);
+        recursively_show_z(dtree[node].branch[0], level);
 
     p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
@@ -2401,7 +2401,10 @@ static void recursively_show_z(int node)
         show_char(' ');
 
     if (d_show_buf == NULL)
-    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+    {
+        if (level >= 2) {
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        }
 
         flags = (int) p[res];
         if (flags & 128)
@@ -2429,15 +2432,15 @@ static void recursively_show_z(int node)
     }
 
     if (dtree[node].branch[1] != VACANT)
-        recursively_show_z(dtree[node].branch[1]);
+        recursively_show_z(dtree[node].branch[1], level);
 }
 
-static void recursively_show_g(int node)
+static void recursively_show_g(int node, int level)
 {   int i, cprinted;
     uchar *p;
 
     if (dtree[node].branch[0] != VACANT)
-        recursively_show_g(dtree[node].branch[0]);
+        recursively_show_g(dtree[node].branch[0], level);
 
     p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
 
@@ -2459,7 +2462,9 @@ static void recursively_show_g(int node)
     {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
-        for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        if (level >= 2) {
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        }
         if (flags & 128)
         {   printf("noun ");
             if (flags & 4)  printf("p"); else printf(" ");
@@ -2482,7 +2487,7 @@ static void recursively_show_g(int node)
     }
 
     if (dtree[node].branch[1] != VACANT)
-        recursively_show_g(dtree[node].branch[1]);
+        recursively_show_g(dtree[node].branch[1], level);
 }
 
 static void show_alphabet(int i)
@@ -2501,14 +2506,16 @@ static void show_alphabet(int i)
     printf("\n");
 }
 
-extern void show_dictionary(void)
-{   printf("Dictionary contains %d entries:\n",dict_entries);
+extern void show_dictionary(int level)
+{
+    /* Level 1: show words and flags. Level 2: also show bytes. */
+    printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
     {   d_show_len = 0; d_show_buf = NULL; 
         if (!glulx_mode)    
-            recursively_show_z(root);
+            recursively_show_z(root, level);
         else
-            recursively_show_g(root);
+            recursively_show_g(root, level);
     }
     if (!glulx_mode)
     {
@@ -2533,9 +2540,9 @@ extern void write_dictionary_to_transcript(void)
     if (dict_entries != 0)
     {
         if (!glulx_mode)    
-            recursively_show_z(root);
+            recursively_show_z(root, 1);
         else
-            recursively_show_g(root);
+            recursively_show_g(root, 1);
     }
     if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
 

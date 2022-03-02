@@ -591,6 +591,8 @@ static void set_trace_option(char *command)
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
+        printf("  DICT: display the dictionary table\n");
+        printf("    DICT=2: also the byte encoding of entries\n");
         printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
@@ -626,6 +628,9 @@ static void set_trace_option(char *command)
     
     if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
+    }
+    else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
+        list_dict_setting = value;
     }
     else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;

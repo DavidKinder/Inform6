@@ -994,48 +994,54 @@ the first constant definition");
         /* Note that "Trace verbs" doesn't affect list_verbs_setting.
            It shows the grammar at this point in the code. Setting
            list_verbs_setting shows the grammar at the end of 
-           compilation. */
+           compilation.
+           Same goes for "Trace dictionary" and list_dict_setting. */
         
         i = token_value; j = 0;
+
         switch(i)
-        {   case DICTIONARY_TK: break;
-            case OBJECTS_TK:    break;
-            case VERBS_TK:      break;
-            default:
-                switch(token_value)
-                {   case ASSEMBLY_TK:
-                        trace_level = &asm_trace_level;  break;
-                    case EXPRESSIONS_TK:
-                        trace_level = &expr_trace_level; break;
-                    case LINES_TK:
-                        trace_level = &line_trace_level; break;
-                    case TOKENS_TK:
-                        trace_level = &tokens_trace_level; break;
-                    case LINKER_TK:
-                        trace_level = &linker_trace_level; break;
-                    case SYMBOLS_TK:
-                        trace_level = NULL; break;
-                    default:
-                        put_token_back();
-                        trace_level = &asm_trace_level; break;
-                }
-                j = 1;
-                get_next_token();
-                if ((token_type == SEP_TT) &&
-                    (token_value == SEMICOLON_SEP))
-                {   put_token_back(); break;
-                }
-                if (token_type == NUMBER_TT)
-                {   j = token_value; break; }
-                if ((token_type == TRACE_KEYWORD_TT) && (token_value == ON_TK))
-                {   j = 1; break; }
-                if ((token_type == TRACE_KEYWORD_TT) && (token_value == OFF_TK))
-                {   j = 0; break; }
-                put_token_back(); break;
+        {
+        case ASSEMBLY_TK:
+            trace_level = &asm_trace_level;  break;
+        case EXPRESSIONS_TK:
+            trace_level = &expr_trace_level; break;
+        case LINES_TK:
+            trace_level = &line_trace_level; break;
+        case TOKENS_TK:
+            trace_level = &tokens_trace_level; break;
+        case LINKER_TK:
+            trace_level = &linker_trace_level; break;
+        case DICTIONARY_TK:
+        case SYMBOLS_TK:
+        case OBJECTS_TK:
+        case VERBS_TK:
+            trace_level = NULL; break;
+        default:
+            put_token_back();
+            trace_level = &asm_trace_level; break;
+        }
+        
+        j = 1;
+        get_next_token();
+        if ((token_type == SEP_TT) &&
+            (token_value == SEMICOLON_SEP))
+        {   put_token_back();
+        }
+        else if (token_type == NUMBER_TT)
+        {   j = token_value;
+        }
+        else if ((token_type == TRACE_KEYWORD_TT) && (token_value == ON_TK))
+        {   j = 1;
+        }
+        else if ((token_type == TRACE_KEYWORD_TT) && (token_value == OFF_TK))
+        {   j = 0;
+        }
+        else
+        {   put_token_back();
         }
 
         switch(i)
-        {   case DICTIONARY_TK: show_dictionary();  break;
+        {   case DICTIONARY_TK: show_dictionary(j);  break;
             case OBJECTS_TK:    list_object_tree(); break;
             case SYMBOLS_TK:    list_symbols(j);     break;
             case VERBS_TK:      list_verb_table();  break;

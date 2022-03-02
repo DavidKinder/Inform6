@@ -2547,7 +2547,7 @@ extern int
     memory_map_setting,     module_switch,        temporary_files_switch,
     define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
     runtime_error_checking_switch,
-    list_verbs_setting;
+    list_verbs_setting,     list_dict_setting;
 
 extern int oddeven_packing_switch;
 
@@ -2903,7 +2903,7 @@ extern int32 compile_string(char *b, int strctx);
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
-extern void  show_dictionary(void);
+extern void  show_dictionary(int level);
 extern void  word_to_ascii(uchar *p, char *result);
 extern void  print_dict_word(int node);
 extern void  write_dictionary_to_transcript(void);
