@@ -2400,6 +2400,7 @@ static void recursively_show_z(int node, int level)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
+    /* If level==0, d_show_buf is non-NULL. */
     if (d_show_buf == NULL)
     {
         if (level >= 2) {
@@ -2458,6 +2459,7 @@ static void recursively_show_g(int node, int level)
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
+    /* If level==0, d_show_buf is non-NULL. */
     if (d_show_buf == NULL)
     {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
@@ -2508,7 +2510,8 @@ static void show_alphabet(int i)
 
 extern void show_dictionary(int level)
 {
-    /* Level 1: show words and flags. Level 2: also show bytes. */
+    /* Level 0: show words only. Level 1: show words and flags.
+       Level 2: also show bytes.*/
     printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
     {   d_show_len = 0; d_show_buf = NULL; 
@@ -2540,9 +2543,9 @@ extern void write_dictionary_to_transcript(void)
     if (dict_entries != 0)
     {
         if (!glulx_mode)    
-            recursively_show_z(root, 1);
+            recursively_show_z(root, 0);
         else
-            recursively_show_g(root, 1);
+            recursively_show_g(root, 0);
     }
     if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
 
