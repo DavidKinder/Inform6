@@ -965,16 +965,19 @@ the first constant definition");
         declare_systemfile(); break;                        /* see "files.c" */
 
     /* --------------------------------------------------------------------- */
-    /*   Trace dictionary                                                    */
-    /*         objects                                                       */
-    /*         symbols      [on/off/NUM]                                     */
-    /*         verbs                                                         */
-    /*                      [on/off]                                         */
+    /*   Trace dictionary   [on/NUM]                                         */
+    /*         objects      [on/NUM]                                         */
+    /*         symbols      [on/NUM]                                         */
+    /*         verbs        [on/NUM]                                         */
+    /*                      [on/off/NUM]      {same as "assembly"}           */
     /*         assembly     [on/off/NUM]                                     */
     /*         expressions  [on/off/NUM]                                     */
     /*         lines        [on/off/NUM]                                     */
     /*         tokens       [on/off/NUM]                                     */
     /*         linker       [on/off/NUM]                                     */
+    /*                                                                       */
+    /* The first four trace commands immediately display a compiler table.   */
+    /* The rest set or clear an ongoing trace.                               */
     /* --------------------------------------------------------------------- */
 
     case TRACE_CODE:
@@ -983,9 +986,26 @@ the first constant definition");
         get_next_token();
         trace_keywords.enabled = FALSE;
         directives.enabled = TRUE;
-        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
-        {   asm_trace_level = 1; return FALSE; }
+        
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
+            /* "Trace;" */
+            put_token_back();
+            i = ASSEMBLY_TK;
+            trace_level = &asm_trace_level;
+            j = 1;
+            goto HandleTraceKeyword;
+        }
+        if (token_type == NUMBER_TT) {
+            /* "Trace NUM;" */
+            i = ASSEMBLY_TK;
+            trace_level = &asm_trace_level;
+            j = token_value;
+            goto HandleTraceKeyword;
+        }
 
+        /* Anything else must be "Trace KEYWORD..." Remember that
+           'on' and 'off' are trace keywords. */
+        
         if (token_type != TRACE_KEYWORD_TT)
             return ebf_error_recover("debugging keyword", token_text);
 
@@ -1040,16 +1060,24 @@ the first constant definition");
         {   put_token_back();
         }
 
+        trace_keywords.enabled = FALSE;
+
+        HandleTraceKeyword:
+
+        if (trace_level == NULL && j == 0) {
+            warning_named("Trace directive to display table at 'off' level has no effect: table", trace_keywords.keywords[i]);
+            break;
+        }
+        
         switch(i)
         {   case DICTIONARY_TK: show_dictionary(j);  break;
-            case OBJECTS_TK:    list_object_tree(); break;
+            case OBJECTS_TK:    list_object_tree();  break;
             case SYMBOLS_TK:    list_symbols(j);     break;
-            case VERBS_TK:      list_verb_table();  break;
+            case VERBS_TK:      list_verb_table();   break;
             default:
                 *trace_level = j;
                 break;
         }
-        trace_keywords.enabled = FALSE;
         break;
 
     /* --------------------------------------------------------------------- */
