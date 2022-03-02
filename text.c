@@ -2400,8 +2400,8 @@ static void recursively_show_z(int node, int level)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
-    /* If level==0, d_show_buf is non-NULL. */
-    if (d_show_buf == NULL)
+    /* The level-1 info can only be printfed (d_show_buf must be null). */
+    if (d_show_buf == NULL && level >= 1)
     {
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
@@ -2459,8 +2459,8 @@ static void recursively_show_g(int node, int level)
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
-    /* If level==0, d_show_buf is non-NULL. */
-    if (d_show_buf == NULL)
+    /* The level-1 info can only be printfed (d_show_buf must be null). */
+    if (d_show_buf == NULL && level >= 1)
     {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
