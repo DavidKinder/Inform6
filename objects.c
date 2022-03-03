@@ -459,10 +459,18 @@ memory_list   class_info_memlist;
 
 extern void list_object_tree(void)
 {   int i;
-    printf("obj   par nxt chl   Object tree:\n");
-    for (i=0; i<no_objects; i++)
-        printf("%3d   %3d %3d %3d\n",
-            i+1,objectsz[i].parent,objectsz[i].next, objectsz[i].child);
+    printf("Object tree:\n");
+    printf("obj   par nxt chl:\n");
+    for (i=0; i<no_objects; i++) {
+        if (!glulx_mode) {
+            printf("%3d   %3d %3d %3d\n",
+                i+1,objectsz[i].parent,objectsz[i].next, objectsz[i].child);
+        }
+        else {
+            printf("%3d   %3d %3d %3d\n",
+                i+1,objectsg[i].parent,objectsg[i].next, objectsg[i].child);
+        }
+    }
 }
 
 /* ------------------------------------------------------------------------- */
