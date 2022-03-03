@@ -1892,11 +1892,17 @@ extern void construct_storyfile(void)
     if (frequencies_setting)
         display_frequencies();
 
+    if (list_symbols_setting)
+        list_symbols(list_symbols_setting);
+    
     if (list_dict_setting)
         show_dictionary(list_dict_setting);
     
     if (list_verbs_setting)
         list_verb_table();
+
+    if (list_objects_setting)
+        list_object_tree();
     
     if (statistics_switch) {
         if (!glulx_mode)

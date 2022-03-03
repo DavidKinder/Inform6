@@ -392,7 +392,7 @@ extern void describe_symbol(int k)
 extern void list_symbols(int level)
 {   int k;
     for (k=0; k<no_symbols; k++)
-    {   if ((level==2) ||
+    {   if ((level>=2) ||
             ((symbols[k].flags & (SYSTEM_SFLAG + UNKNOWN_SFLAG + INSF_SFLAG)) == 0))
         {   describe_symbol(k); printf("\n");
         }

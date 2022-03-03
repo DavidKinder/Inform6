@@ -598,7 +598,10 @@ static void set_trace_option(char *command)
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
+        printf("  OBJECTS: display the object table\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
+        printf("  SYMBOLS: display the symbol table\n");
+        printf("    SYMBOLS=2: also show compiler-defined symbols\n");
         printf("  VERBS: display the verb grammar table\n");
         //### more
         return;
@@ -641,8 +644,14 @@ static void set_trace_option(char *command)
     else if (strcmp(command, "MAP")==0) {
         memory_map_setting = value;
     }
+    else if (strcmp(command, "OBJECTS")==0 || strcmp(command, "OBJECT")==0 || strcmp(command, "OBJS")==0 || strcmp(command, "OBJ")==0) {
+        list_objects_setting = value;
+    }
     else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;
+    }
+    else if (strcmp(command, "SYMBOLS")==0 || strcmp(command, "SYMBOL")==0) {
+        list_symbols_setting = value;
     }
     else if (strcmp(command, "VERBS")==0 || strcmp(command, "VERB")==0) {
         list_verbs_setting = value;

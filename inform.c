@@ -283,6 +283,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
     linker_trace_setting,           /* set by -y: ditto for linker_... */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
+    list_objects_setting,           /* $!OBJECTS */
+    list_symbols_setting,           /* $!SYMBOLS */
     store_the_text;                 /* when set, record game text to a chunk
                                        of memory (used by -u) */
 static int r_e_c_s_set;             /* has -S been explicitly set? */
@@ -295,6 +297,8 @@ static void reset_switch_settings(void)
     tokens_trace_level=0;
     list_verbs_setting=0;
     list_dict_setting=0;
+    list_objects_setting=0;
+    list_symbols_setting=0;
 
     store_the_text = FALSE;
 
