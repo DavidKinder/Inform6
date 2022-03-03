@@ -459,6 +459,7 @@ memory_list   class_info_memlist;
 
 extern void list_object_tree(void)
 {   int i;
+    /* TODO: include the object names in this list. */
     printf("Object tree:\n");
     printf("obj   par nxt chl:\n");
     for (i=0; i<no_objects; i++) {
