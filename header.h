@@ -2537,7 +2537,7 @@ extern int asm_trace_level, line_trace_level,     expr_trace_level,
     linker_trace_level,     tokens_trace_level;
 
 extern int
-    bothpasses_switch,      concise_switch,
+    concise_switch,
     economy_switch,         frequencies_setting,
     ignore_switches_switch, debugfile_switch,
     listing_switch,         memout_switch,        printprops_switch,
