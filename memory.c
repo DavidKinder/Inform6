@@ -602,6 +602,7 @@ static void set_trace_option(char *command)
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
+        printf("  MEM: show internal memory allocations\n");
         printf("  OBJECTS: display the object table\n");
         printf("  PROPS: show attributes and properties defined\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
@@ -614,7 +615,6 @@ static void set_trace_option(char *command)
         //### more
         //### LINES (line_trace_level)
         //### LINKER (linker_trace_level, -y)
-        //### MEM (memout_switch, -m)
         //### ? (listing_switch, -l)
         return;
     }
@@ -661,6 +661,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "MAP")==0) {
         memory_map_setting = value;
+    }
+    else if (strcmp(command, "MEM")==0 || strcmp(command, "MEMORY")==0) {
+        memout_switch = value;
     }
     else if (strcmp(command, "OBJECTS")==0 || strcmp(command, "OBJECT")==0 || strcmp(command, "OBJS")==0 || strcmp(command, "OBJ")==0) {
         list_objects_setting = value;
