@@ -610,6 +610,11 @@ static void set_trace_option(char *command)
         printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
         //### more
+        //### LINES (line_trace_level)
+        //### LINKER (linker_trace_level, -y)
+        //### MEM (memout_switch, -m)
+        //### ? (printprops_switch, -n)
+        //### ? (listing_switch, -l)
         return;
     }
 
