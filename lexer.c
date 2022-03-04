@@ -1908,8 +1908,10 @@ extern void get_next_token(void)
     }
 
     if (tokens_trace_level > 0)
-    {   if (tokens_trace_level == 1)
+    {   if (tokens_trace_level == 1) {
             printf("'%s' ", circle[i].text);
+            if (circle[i].type == EOF_TT) printf("\n");
+        }
         else
         {   printf("-> "); describe_token(&circle[i]);
             printf(" ");

@@ -2556,7 +2556,7 @@ extern int glulx_mode, compression_switch;
 extern int32 requested_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
-    expr_trace_setting,
+    expr_trace_setting,     tokens_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
 

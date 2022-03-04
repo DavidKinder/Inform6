@@ -233,7 +233,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
     line_trace_level,    /* line tracing: 0 off, 1 on                        */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
     linker_trace_level,  /* set by -y: 0 to 4 levels of tracing              */
-    tokens_trace_level;  /* lexer output tracing: 0 off, 1 on                */
+    tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
 /*   On/off switch variables (by default all FALSE); other switch settings   */
@@ -278,6 +278,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
                                        asm_trace_level */
     expr_trace_setting,             /* $!EXPR: initial value of
                                        expr_trace_level */
+    tokens_trace_setting,           /* $!TOKENS: initial value of
+                                       tokens_trace_level */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
@@ -293,13 +295,18 @@ static int r_e_c_s_set;             /* has -S been explicitly set? */
 int glulx_mode;                     /* -G */
 
 static void reset_switch_settings(void)
-{   asm_trace_setting=0;
-    linker_trace_level=0;
-    tokens_trace_level=0;
-    list_verbs_setting=0;
-    list_dict_setting=0;
-    list_objects_setting=0;
-    list_symbols_setting=0;
+{   asm_trace_setting = 0;
+    asm_trace_level = 0;
+    linker_trace_setting = 0;
+    linker_trace_level = 0;
+    tokens_trace_setting = 0;
+    tokens_trace_level = 0;
+    expr_trace_setting = 0;
+    expr_trace_level = 0;
+    list_verbs_setting = 0;
+    list_dict_setting = 0;
+    list_objects_setting = 0;
+    list_symbols_setting = 0;
 
     store_the_text = FALSE;
 
@@ -322,7 +329,7 @@ static void reset_switch_settings(void)
     version_set_switch = FALSE;
     nowarnings_switch = FALSE;
     hash_switch = FALSE;
-    memory_map_setting = FALSE;
+    memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
 #ifdef USE_TEMPORARY_FILES
@@ -407,6 +414,7 @@ static void begin_pass(void)
     line_trace_level = 0;
     expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
+    tokens_trace_level = tokens_trace_setting;
     linker_trace_level = linker_trace_setting;
     if (listing_switch) line_trace_level=1;
 
