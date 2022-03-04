@@ -587,6 +587,7 @@ static void set_trace_option(char *command)
     
     if (!command || *command == '\0') {
         printf("The full list of trace options:\n\n");
+        printf("  ACTIONS: show actions defined\n");
         printf("  ASM: trace assembly (same as -a)\n");
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
@@ -602,6 +603,7 @@ static void set_trace_option(char *command)
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
         printf("  OBJECTS: display the object table\n");
+        printf("  PROPS: show attributes and properties defined\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
         printf("  SYMBOLS: display the symbol table\n");
         printf("    SYMBOLS=2: also show compiler-defined symbols\n");
@@ -613,7 +615,6 @@ static void set_trace_option(char *command)
         //### LINES (line_trace_level)
         //### LINKER (linker_trace_level, -y)
         //### MEM (memout_switch, -m)
-        //### ? (printprops_switch, -n)
         //### ? (listing_switch, -l)
         return;
     }
@@ -643,6 +644,9 @@ static void set_trace_option(char *command)
     if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
     }
+    else if (strcmp(command, "ACTION")==0 || strcmp(command, "ACTIONS")==0) {
+        printactions_switch = value;
+    }
     else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
         list_dict_setting = value;
     }
@@ -660,6 +664,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "OBJECTS")==0 || strcmp(command, "OBJECT")==0 || strcmp(command, "OBJS")==0 || strcmp(command, "OBJ")==0) {
         list_objects_setting = value;
+    }
+    else if (strcmp(command, "PROP")==0 || strcmp(command, "PROPERTY")==0 || strcmp(command, "PROPS")==0 || strcmp(command, "PROPERTIES")==0) {
+        printprops_switch = value;
     }
     else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;

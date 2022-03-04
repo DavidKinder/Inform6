@@ -248,7 +248,8 @@ int bothpasses_switch,              /* -b */
     debugfile_switch,               /* -k */
     listing_switch,                 /* -l */
     memout_switch,                  /* -m */
-    printprops_switch,              /* -n */
+    printprops_switch,              /* $!PROPS */
+    printactions_switch,            /* $!ACTIONS */
     obsolete_switch,                /* -q */
     transcript_switch,              /* -r */
     statistics_switch,              /* $!STATS, -s */
@@ -320,7 +321,8 @@ static void reset_switch_settings(void)
     debugfile_switch = FALSE;
     listing_switch = FALSE;
     memout_switch = FALSE;
-    printprops_switch = FALSE;
+    printprops_switch = 0;
+    printactions_switch = 0;
     obsolete_switch = FALSE;
     transcript_switch = FALSE;
     statistics_switch = FALSE;
@@ -1372,8 +1374,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   i   ignore default switches set within the file\n\
   k   output debugging information to \"%s\"\n\
   l   list every statement run through Inform (not implemented)\n\
-  m   say how much memory has been allocated\n\
-  n   print numbers of properties, attributes and actions\n",
+  m   say how much memory has been allocated\n",
           Debugging_Name);
    printf("\
   q   keep quiet about obsolete usages\n\
@@ -1493,7 +1494,6 @@ extern void switches(char *p, int cmode)
                   break;
         case 'l': listing_switch = state; break;
         case 'm': memout_switch = state; break;
-        case 'n': printprops_switch = state; break;
         case 'q': obsolete_switch = state; break;
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");
