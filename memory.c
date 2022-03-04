@@ -593,6 +593,9 @@ static void set_trace_option(char *command)
         printf("    ASM=4: more verbose branch info\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
+        printf("  EXPR: show expression trees\n");
+        printf("    EXPR=2: more verbose\n");
+        printf("    EXPR=3: even more verbose\n");
         printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
@@ -634,6 +637,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
         list_dict_setting = value;
+    }
+    else if (strcmp(command, "EXPR")==0 || strcmp(command, "EXPRESSION")==0 || strcmp(command, "EXPRESSIONS")==0) {
+        expr_trace_setting = value;
     }
     else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;

@@ -2133,9 +2133,6 @@ extern void make_object(int nearby_flag,
     if (internal_name_symbol > 0)
         assign_symbol(internal_name_symbol, no_objects + 1, OBJECT_T);
 
-    if (listobjects_switch)
-        printf("%3d \"%s\"\n", no_objects+1,
-            (textual_name==NULL)?"(with no short name)":textual_name);
     if (textual_name == NULL)
     {   if (internal_name_symbol > 0)
             sprintf(shortname_buffer, "(%s)",

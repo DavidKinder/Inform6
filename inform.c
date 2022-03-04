@@ -231,7 +231,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
     line_trace_level,    /* line tracing: 0 off, 1 on                        */
-    expr_trace_level,    /* expression tracing: 0 off, 1 full, 2 brief       */
+    expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
     linker_trace_level,  /* set by -y: 0 to 4 levels of tracing              */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on                */
 
@@ -245,7 +245,6 @@ int bothpasses_switch,              /* -b */
     economy_switch,                 /* -e */
     frequencies_setting,            /* $!FREQ, -f */
     ignore_switches_switch,         /* -i */
-    listobjects_switch,             /* -j */
     debugfile_switch,               /* -k */
     listing_switch,                 /* -l */
     memout_switch,                  /* -m */
@@ -277,6 +276,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
     error_format,                   /* set by -E */
     asm_trace_setting,              /* $!ASM, -a: initial value of
                                        asm_trace_level */
+    expr_trace_setting,             /* $!EXPR: initial value of
+                                       expr_trace_level */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
@@ -309,7 +310,6 @@ static void reset_switch_settings(void)
     frequencies_setting = 0;
     trace_fns_setting = 0;
     ignore_switches_switch = FALSE;
-    listobjects_switch = FALSE;
     debugfile_switch = FALSE;
     listing_switch = FALSE;
     memout_switch = FALSE;
@@ -404,7 +404,8 @@ static void begin_pass(void)
     files_begin_pass();
 
     endofpass_flag = FALSE;
-    line_trace_level = 0; expr_trace_level = 0;
+    line_trace_level = 0;
+    expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
     linker_trace_level = linker_trace_setting;
     if (listing_switch) line_trace_level=1;
@@ -1361,7 +1362,6 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   i   ignore default switches set within the file\n\
-  j   list objects as constructed\n\
   k   output debugging information to \"%s\"\n\
   l   list every statement run through Inform (not implemented)\n\
   m   say how much memory has been allocated\n\
@@ -1478,7 +1478,6 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'i': ignore_switches_switch = state; break;
-        case 'j': listobjects_switch = state; break;
         case 'k': if (cmode == 0)
                       error("The switch '-k' can't be set with 'Switches'");
                   else

@@ -2539,7 +2539,7 @@ extern int asm_trace_level, line_trace_level,     expr_trace_level,
 extern int
     bothpasses_switch,      concise_switch,
     economy_switch,         frequencies_setting,
-    ignore_switches_switch, listobjects_switch,   debugfile_switch,
+    ignore_switches_switch, debugfile_switch,
     listing_switch,         memout_switch,        printprops_switch,
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
@@ -2556,6 +2556,7 @@ extern int glulx_mode, compression_switch;
 extern int32 requested_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
+    expr_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
 
