@@ -83,13 +83,19 @@ int no_attributes,                 /* Number of attributes defined so far    */
                                       others itself, so the variable begins
                                       the compilation pass set to 4)         */
 
+/* Print a PROPS trace line. The f flag is 0 for an attribute, 1 for
+   a common property, 2 for an individual property. */
 static void trace_s(char *name, int32 number, int f)
 {   if (!printprops_switch) return;
-    printf("%s  %02ld  ",(f==0)?"Attr":"Prop",(long int) number);
-    if (f==0) printf("  ");
+    char *stype = "";
+    if (f == 0) stype = "Attr";
+    else if (f == 1) stype = "Prop";
+    else if (f == 2) stype = "Indiv";
+    printf("%-5s  %02ld  ", stype, (long int) number);
+    if (f != 1) printf("  ");
     else      printf("%s%s",(commonprops[number].is_long)?"L":" ",
                             (commonprops[number].is_additive)?"A":" ");
-    printf("  %s\n",name);
+    printf("  %s\n", name);
 }
 
 extern void make_attribute(void)
@@ -279,6 +285,7 @@ extern void make_property(void)
                 ("<value>%d</value>", this_identifier_number);
             debug_file_printf("</property>");
         }
+        trace_s(name, symbols[i].value, 2);
         return;        
     }
 
@@ -1156,6 +1163,7 @@ static void properties_segment_z(int this_segment)
                     debug_file_printf("</property>");
                 }
 
+                trace_s(token_text, symbols[token_value].value, 2);
             }
             else
             {   if (symbols[token_value].type==INDIVIDUAL_PROPERTY_T)
@@ -1430,6 +1438,7 @@ static void properties_segment_g(int this_segment)
                     debug_file_printf("</property>");
                 }
 
+                trace_s(token_text, symbols[token_value].value, 2);
             }
             else
             {   if (symbols[token_value].type==INDIVIDUAL_PROPERTY_T)
