@@ -1017,7 +1017,7 @@ the first constant definition");
            compilation.
            Same goes for "Trace dictionary" and list_dict_setting, etc. */
         
-        i = token_value; j = 0;
+        i = token_value;
 
         switch(i)
         {
