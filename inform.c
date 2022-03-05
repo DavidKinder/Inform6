@@ -232,7 +232,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             branch info                                      */
     line_trace_level,    /* line tracing: 0 off, 1 on                        */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
-    linker_trace_level,  /* set by -y: 0 to 4 levels of tracing              */
+    linker_trace_level,  /* linker tracing: 0 to 4 levels                    */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
@@ -283,7 +283,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
-    linker_trace_setting,           /* set by -y: ditto for linker_... */
+    linker_trace_setting,           /* $!LINKER: initial value of
+                                       linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
     list_objects_setting,           /* $!OBJECTS */
@@ -1389,7 +1390,6 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   v8  compile to version-8 (expanded \"Advanced\") story file\n\
   w   disable warning messages\n\
   x   print # for every 100 lines compiled\n\
-  y   trace linking system\n\
   z   print memory map of the virtual machine\n\n");
 
 printf("\
@@ -1519,7 +1519,6 @@ extern void switches(char *p, int cmode)
                   break;
         case 'w': nowarnings_switch = state; break;
         case 'x': hash_switch = state; break;
-        case 'y': s=2; linker_trace_setting=p[i+1]-'0'; break;
         case 'z': memory_map_setting = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
         case 'C': s=2;
