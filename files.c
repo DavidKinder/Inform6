@@ -159,7 +159,7 @@ static void close_sourcefile(int file_number)
 
     InputFiles[file_number-1].handle = NULL;
 
-    if (line_trace_level > 0) printf("\nClosing file\n");
+    if (line_trace_level > 0) printf("\nClosing file \"%s\"\n", InputFiles[file_number-1].filename);
 }
 
 extern void close_all_source(void)

@@ -245,7 +245,6 @@ int concise_switch,                 /* -c */
     frequencies_setting,            /* $!FREQ, -f */
     ignore_switches_switch,         /* -i */
     debugfile_switch,               /* -k */
-    listing_switch,                 /* -l */
     memout_switch,                  /* $!MEM */
     printprops_switch,              /* $!PROPS */
     printactions_switch,            /* $!ACTIONS */
@@ -283,6 +282,8 @@ int character_set_setting,          /* set by -C0 through -C9 */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
+    line_trace_setting,             /* $!LINES: initial value of
+                                       line_trace_level */
     linker_trace_setting,           /* $!LINKER: initial value of
                                        linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
@@ -304,6 +305,8 @@ static void reset_switch_settings(void)
     tokens_trace_level = 0;
     expr_trace_setting = 0;
     expr_trace_level = 0;
+    line_trace_level = 0;
+    line_trace_setting = 0;
     list_verbs_setting = 0;
     list_dict_setting = 0;
     list_objects_setting = 0;
@@ -318,7 +321,6 @@ static void reset_switch_settings(void)
     trace_fns_setting = 0;
     ignore_switches_switch = FALSE;
     debugfile_switch = FALSE;
-    listing_switch = FALSE;
     memout_switch = 0;
     printprops_switch = 0;
     printactions_switch = 0;
@@ -412,12 +414,11 @@ static void begin_pass(void)
     files_begin_pass();
 
     endofpass_flag = FALSE;
-    line_trace_level = 0;
+    line_trace_level = line_trace_setting;
     expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
     tokens_trace_level = tokens_trace_setting;
     linker_trace_level = linker_trace_setting;
-    if (listing_switch) line_trace_level=1;
 
     lexer_begin_pass();
     linker_begin_pass();
@@ -1371,8 +1372,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   i   ignore default switches set within the file\n\
-  k   output debugging information to \"%s\"\n\
-  l   list every statement run through Inform (not implemented)\n",
+  k   output debugging information to \"%s\"\n",
           Debugging_Name);
    printf("\
   q   keep quiet about obsolete usages\n\
@@ -1488,7 +1488,6 @@ extern void switches(char *p, int cmode)
                   else
                       debugfile_switch = state;
                   break;
-        case 'l': listing_switch = state; break;
         case 'q': obsolete_switch = state; break;
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");

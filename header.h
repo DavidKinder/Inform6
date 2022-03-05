@@ -2540,7 +2540,7 @@ extern int
     concise_switch,
     economy_switch,         frequencies_setting,
     ignore_switches_switch, debugfile_switch,
-    listing_switch,         memout_switch,        printprops_switch,
+    line_trace_setting,     memout_switch,        printprops_switch,
     printactions_switch,
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
