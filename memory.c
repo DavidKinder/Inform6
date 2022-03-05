@@ -597,10 +597,10 @@ static void set_trace_option(char *command)
         printf("  EXPR: show expression trees\n");
         printf("    EXPR=2: more verbose\n");
         printf("    EXPR=3: even more verbose\n");
+        printf("  FILES: show files opened\n");
         printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
-        printf("  LINES: show lines compiled (currently only Include file begin/end)\n");
         printf("  LINKER: show module linking info\n");
         printf("    LINKER=2: more verbose (or 3, 4 for even more)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
@@ -653,14 +653,14 @@ static void set_trace_option(char *command)
     else if (strcmp(command, "EXPR")==0 || strcmp(command, "EXPRESSION")==0 || strcmp(command, "EXPRESSIONS")==0) {
         expr_trace_setting = value;
     }
+    else if (strcmp(command, "FILE")==0 || strcmp(command, "FILES")==0) {
+        files_trace_setting = value;
+    }
     else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;
     }
     else if (strcmp(command, "FREQUENCY")==0 || strcmp(command, "FREQUENCIES")==0 || strcmp(command, "FREQ")==0) {
         frequencies_setting = value;
-    }
-    else if (strcmp(command, "LINE")==0 || strcmp(command, "LINES")==0) {
-        line_trace_setting = value;
     }
     else if (strcmp(command, "LINK")==0 || strcmp(command, "LINKER")==0) {
         linker_trace_setting = value;

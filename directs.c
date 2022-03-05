@@ -1025,8 +1025,6 @@ the first constant definition");
             trace_level = &asm_trace_level;  break;
         case EXPRESSIONS_TK:
             trace_level = &expr_trace_level; break;
-        case LINES_TK:
-            trace_level = &line_trace_level; break;
         case TOKENS_TK:
             trace_level = &tokens_trace_level; break;
         case LINKER_TK:
@@ -1035,6 +1033,9 @@ the first constant definition");
         case SYMBOLS_TK:
         case OBJECTS_TK:
         case VERBS_TK:
+            trace_level = NULL; break;
+        case LINES_TK:
+            /* never implememented */
             trace_level = NULL; break;
         default:
             put_token_back();
@@ -1074,8 +1075,12 @@ the first constant definition");
             case OBJECTS_TK:    list_object_tree();  break;
             case SYMBOLS_TK:    list_symbols(j);     break;
             case VERBS_TK:      list_verb_table();   break;
+            case LINES_TK:
+                warning("'Trace lines' is not supported");
+                break;                
             default:
-                *trace_level = j;
+                if (trace_level)
+                    *trace_level = j;
                 break;
         }
         break;

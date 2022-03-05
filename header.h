@@ -2533,14 +2533,14 @@ extern int WORDSIZE, INDIV_PROP_START,
     OBJECT_BYTE_LENGTH, DICT_ENTRY_BYTE_LENGTH, DICT_ENTRY_FLAG_POS;
 extern int32 MAXINTWORD;
 
-extern int asm_trace_level, line_trace_level,     expr_trace_level,
+extern int asm_trace_level, expr_trace_level,
     linker_trace_level,     tokens_trace_level;
 
 extern int
     concise_switch,
     economy_switch,         frequencies_setting,
     ignore_switches_switch, debugfile_switch,
-    line_trace_setting,     memout_switch,        printprops_switch,
+    files_trace_setting,    memout_switch,        printprops_switch,
     printactions_switch,
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,

@@ -137,7 +137,7 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
 
     InputFiles[total_files].is_input = TRUE;
 
-    if (line_trace_level > 0) printf("\nOpening file \"%s\"\n",name);
+    if (files_trace_setting > 0) printf("Opening file \"%s\"\n",name);
 
     total_files++;
     total_input_files++;
@@ -159,7 +159,7 @@ static void close_sourcefile(int file_number)
 
     InputFiles[file_number-1].handle = NULL;
 
-    if (line_trace_level > 0) printf("\nClosing file \"%s\"\n", InputFiles[file_number-1].filename);
+    if (files_trace_setting > 0) printf("Closing file \"%s\"\n", InputFiles[file_number-1].filename);
 }
 
 extern void close_all_source(void)

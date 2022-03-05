@@ -230,7 +230,6 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             only, 2 for full assembly tracing with hex dumps,
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
-    line_trace_level,    /* line tracing: 0 off, 1 on                        */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
     linker_trace_level,  /* linker tracing: 0 to 4 levels                    */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
@@ -282,8 +281,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
-    line_trace_setting,             /* $!LINES: initial value of
-                                       line_trace_level */
+    files_trace_setting,            /* $!FILES */
     linker_trace_setting,           /* $!LINKER: initial value of
                                        linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
@@ -305,8 +303,6 @@ static void reset_switch_settings(void)
     tokens_trace_level = 0;
     expr_trace_setting = 0;
     expr_trace_level = 0;
-    line_trace_level = 0;
-    line_trace_setting = 0;
     list_verbs_setting = 0;
     list_dict_setting = 0;
     list_objects_setting = 0;
@@ -317,6 +313,7 @@ static void reset_switch_settings(void)
     concise_switch = FALSE;
     double_space_setting = 0;
     economy_switch = FALSE;
+    files_trace_setting = 0;
     frequencies_setting = 0;
     trace_fns_setting = 0;
     ignore_switches_switch = FALSE;
@@ -414,7 +411,6 @@ static void begin_pass(void)
     files_begin_pass();
 
     endofpass_flag = FALSE;
-    line_trace_level = line_trace_setting;
     expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
     tokens_trace_level = tokens_trace_setting;
