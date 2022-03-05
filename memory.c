@@ -600,7 +600,7 @@ static void set_trace_option(char *command)
         printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
-        printf("  LINES: show lines compiled (not implemented)\n");
+        printf("  LINES: show lines compiled (currently only Include file begin/end)\n");
         printf("  LINKER: show module linking info\n");
         printf("    LINKER=2: more verbose (or 3, 4 for even more)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
@@ -615,6 +615,7 @@ static void set_trace_option(char *command)
         printf("    TOKENS=2: also show token types\n");
         printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
+        //### trace_fns_setting (-g)
         return;
     }
 
