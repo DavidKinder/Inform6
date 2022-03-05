@@ -1684,7 +1684,7 @@ static void display_statistics_z()
     char *k_str = "";
     uchar *p = (uchar *) zmachine_paged_memory;
     char *output_called = (module_switch)?"module":"story file";
-    int limit;
+    int limit = 0;
 
     /* Yeah, we're repeating this calculation from construct_storyfile_z() */
     switch(version_number)
