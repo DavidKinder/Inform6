@@ -1065,6 +1065,11 @@ the first constant definition");
 
         HandleTraceKeyword:
 
+        if (i == LINES_TK) {
+            warning_named("Trace option is not supported:", trace_keywords.keywords[i]);
+            break;
+        }
+        
         if (trace_level == NULL && j == 0) {
             warning_named("Trace directive to display table at 'off' level has no effect: table", trace_keywords.keywords[i]);
             break;
@@ -1075,9 +1080,6 @@ the first constant definition");
             case OBJECTS_TK:    list_object_tree();  break;
             case SYMBOLS_TK:    list_symbols(j);     break;
             case VERBS_TK:      list_verb_table();   break;
-            case LINES_TK:
-                warning("'Trace lines' is not supported");
-                break;                
             default:
                 if (trace_level)
                     *trace_level = j;
