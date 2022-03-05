@@ -1319,6 +1319,8 @@ static void begin_buffering_file(int i, int file_no)
     FileStack[i].file_no = file_no;
     FileStack[i].size = file_load_chars(file_no,
         (char *) p, SOURCE_BUFFER_SIZE);
+    /* If the file is shorter than SOURCE_BUFFER_SIZE, it's now closed already. We still need to set up the file entry though. */
+    
     lookahead  = source_to_iso_grid[p[0]];
     lookahead2 = source_to_iso_grid[p[1]];
     lookahead3 = source_to_iso_grid[p[2]];
@@ -1338,6 +1340,8 @@ static void begin_buffering_file(int i, int file_no)
     FileStack[i].LB.orig_source = NULL; FileStack[i].LB.orig_file = 0; 
     FileStack[i].LB.orig_line = 0; FileStack[i].LB.orig_char = 0;
 
+    InputFiles[file_no-1].initial_buffering = FALSE;
+    
     CurrentLB = &(FileStack[i].LB);
     CF = &(FileStack[i]);
 

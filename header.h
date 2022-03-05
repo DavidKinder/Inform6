@@ -954,6 +954,8 @@ typedef struct FileId_s                 /*  Source code file identifier:     */
                                             parsing? If not, this is an
                                             origsource filename (and handle
                                             is NULL).                        */
+    int initial_buffering;              /* Are we still in the initial
+                                           begin_buffering_file() call?      */
 } FileId;
 
 typedef struct ErrorPosition_s

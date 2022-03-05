@@ -136,8 +136,10 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
         fatalerror_named("Couldn't open source file", name);
 
     InputFiles[total_files].is_input = TRUE;
+    InputFiles[total_files].initial_buffering = TRUE;
 
-    if (files_trace_setting > 0) printf("Opening file \"%s\"\n",name);
+    if (files_trace_setting > 0)
+        printf("Opening file \"%s\"\n",name);
 
     total_files++;
     total_input_files++;
@@ -159,7 +161,10 @@ static void close_sourcefile(int file_number)
 
     InputFiles[file_number-1].handle = NULL;
 
-    if (files_trace_setting > 0) printf("Closing file \"%s\"\n", InputFiles[file_number-1].filename);
+    if (files_trace_setting > 0) {
+        char *str = (InputFiles[file_number-1].initial_buffering ? " (in initial buffering)" : "");
+        printf("Closing file \"%s\"%s\n", InputFiles[file_number-1].filename, str);
+    }
 }
 
 extern void close_all_source(void)
@@ -215,6 +220,7 @@ extern int register_orig_sourcefile(char *filename)
 
     InputFiles[total_files].handle = NULL;
     InputFiles[total_files].is_input = FALSE;
+    InputFiles[total_files].initial_buffering = FALSE;
 
     total_files++;
     current_origsource_file = total_files;
