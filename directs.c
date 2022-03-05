@@ -1015,7 +1015,7 @@ the first constant definition");
            It shows the grammar at this point in the code. Setting
            list_verbs_setting shows the grammar at the end of 
            compilation.
-           Same goes for "Trace dictionary" and list_dict_setting. */
+           Same goes for "Trace dictionary" and list_dict_setting, etc. */
         
         i = token_value; j = 0;
 
