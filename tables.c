@@ -109,8 +109,17 @@ extern void write_serial_number(char *buffer)
 #endif
 }
 
-static void percentage(char *name, int32 x, int32 total)
-{   printf("   %-20s %2d.%d%%\n",name,x*100/total,(x*1000/total)%10);
+static char percentage_buffer[32];
+
+static char *show_percentage(int32 x, int32 total)
+{
+    if (!percentages_switch) {
+        percentage_buffer[0] = '\0';
+    }
+    else {
+        sprintf(percentage_buffer, "  (%.1f %%)", (float)x * 100.0 / (float)total);
+    }
+    return percentage_buffer;
 }
 
 static char *version_name(int v)
@@ -1089,99 +1098,115 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
     if (memory_map_switch)
     {
+        int32 addr;
         {
 printf("Dynamic +---------------------+   00000\n");
-printf("memory  |       header        |\n");
+printf("memory  |       header        |   %s\n",
+    show_percentage(0x40, Out_Size));
 printf("        +---------------------+   00040\n");
-printf("        |    abbreviations    |\n");
+printf("        |    abbreviations    |   %s\n",
+    show_percentage(abbrevs_at-0x40, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) abbrevs_at);
-printf("        | abbreviations table |\n");
+printf("        | abbreviations table |   %s\n",
+    show_percentage(headerext_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) headerext_at);
-printf("        |  header extension   |\n");
+addr = (alphabet_modified ? charset_at : (zscii_defn_modified ? unicode_at : prop_defaults_at));
+printf("        |  header extension   |   %s\n",
+    show_percentage(addr-headerext_at, Out_Size));
             if (alphabet_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) charset_at);
-printf("        |   alphabets table   |\n");
+addr = (zscii_defn_modified ? unicode_at : prop_defaults_at);
+printf("        |   alphabets table   |   %s\n",
+    show_percentage(addr-charset_at, Out_Size));
             }
             if (zscii_defn_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) unicode_at);
-printf("        |    Unicode table    |\n");
+printf("        |    Unicode table    |   %s\n",
+    show_percentage(prop_defaults_at-unicode_at, Out_Size));
             }
 printf("        +---------------------+   %05lx\n",
                                           (long int) prop_defaults_at);
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n",
+    show_percentage(object_tree_at-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) object_tree_at);
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n",
+    show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) object_props_at);
 printf("        | object short names, |\n");
-printf("        | common prop values  |\n");
+printf("        | common prop values  |   %s\n",
+    show_percentage(class_numbers_offset-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) class_numbers_offset);
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n",
+    show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) identifier_names_offset);
-printf("        | symbol names table  |\n");
+printf("        | symbol names table  |   %s\n",
+    show_percentage(individuals_offset-identifier_names_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) individuals_offset);
-printf("        | indiv prop values   |\n");
+printf("        | indiv prop values   |   %s\n",
+    show_percentage(globals_at-individuals_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) globals_at);
-printf("        |  global variables   |\n");
+printf("        |  global variables   |   %s\n",
+    show_percentage(480, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           ((long int) globals_at)+480L);
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n",
+    show_percentage(grammar_table_at-(globals_at+480), Out_Size));
 printf("        +=====================+   %05lx\n",
                                           (long int) grammar_table_at);
-printf("Readable|    grammar table    |\n");
+printf("Readable|    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %05lx\n", (long int) actions_at);
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(preactions_at-actions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) preactions_at);
-printf("        |   parsing routines  |\n");
+printf("        |   parsing routines  |   %s\n",
+    show_percentage(adjectives_offset-preactions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) adjectives_offset);
-printf("        |     adjectives      |\n");
+printf("        |     adjectives      |   %s\n",
+    show_percentage(dictionary_at-adjectives_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) dictionary_at);
-printf("        |     dictionary      |\n");
+addr = (module_switch ? map_of_module : (static_array_area_size ? static_arrays_at : Write_Code_At));
+printf("        |     dictionary      |   %s\n",
+    show_percentage(addr-dictionary_at, Out_Size));
 if (module_switch)
 {
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) map_of_module);
-printf("        | map of module addrs |\n");
+addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
+printf("        | map of module addrs |   %s\n",
+    show_percentage(addr-map_of_module, Out_Size));
 }
 if (static_array_area_size)
 {
 printf("        +---------------------+   %05lx\n", (long int) static_arrays_at);
-printf("        |    static arrays    |\n");
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_Code_At-static_arrays_at, Out_Size));
 }
 printf("        +=====================+   %05lx\n", (long int) Write_Code_At);
-printf("Above   |       Z-code        |\n");
+printf("Above   |       Z-code        |   %s\n",
+    show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("readable+---------------------+   %05lx\n",
                                           (long int) Write_Strings_At);
-printf("memory  |       strings       |\n");
+addr = (module_switch ? link_table_at : Out_Size);
+printf("memory  |       strings       |   %s\n",
+    show_percentage(addr-Write_Strings_At, Out_Size));
 if (module_switch)
 {
 printf("        +=====================+   %05lx\n", (long int) link_table_at);
-printf("        | module linking data |\n");
+printf("        | module linking data |   %s\n",
+    show_percentage(Out_Size-link_table_at, Out_Size));
 }
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
     }
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Z-code",             code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      total_bytes_trans,Out_Size);
-    }
+
     if (frequencies_switch)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");
@@ -1207,8 +1232,7 @@ static void construct_storyfile_g(void)
     int32 i, j, k, l, mark, strings_length, limit;
     int32 globals_at, dictionary_at, actions_at, preactions_at,
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
-          grammar_table_at, charset_at, headerext_at,
-        unicode_at, arrays_at, static_arrays_at;
+          grammar_table_at, arrays_at, static_arrays_at;
     int32 threespaces, code_length;
     char *output_called = (module_switch)?"module":"story file";
 
@@ -1302,16 +1326,6 @@ static void construct_storyfile_g(void)
       WriteInt32(p+mark, j);
       mark += 4;
     }
-
-    /* ---------------- Various Things I'm Not Sure About ------------------ */
-    /* Actually, none of these are relevant to Glulx. */
-    headerext_at = mark;
-    charset_at = 0;
-    if (alphabet_modified)
-      charset_at = mark;
-    unicode_at = 0;
-    if (zscii_defn_modified)
-      unicode_at = mark;
 
     /*  -------------------- Objects and Properties ------------------------ */
 
@@ -1786,71 +1800,77 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 
     if (memory_map_switch)
     {
-
+        int32 addr;
         {
 printf("        +---------------------+   000000\n");
-printf("Read-   |       header        |\n");
+printf("Read-   |       header        |   %s\n",
+    show_percentage(GLULX_HEADER_SIZE, Out_Size));
 printf(" only   +=====================+   %06lx\n", (long int) GLULX_HEADER_SIZE);
-printf("memory  |  memory layout id   |\n");
+printf("memory  |  memory layout id   |   %s\n",
+    show_percentage(Write_Code_At-GLULX_HEADER_SIZE, Out_Size));
 printf("        +---------------------+   %06lx\n", (long int) Write_Code_At);
-printf("        |        code         |\n");
+printf("        |        code         |   %s\n",
+    show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) Write_Strings_At);
-printf("        | string decode table |\n");
+printf("        | string decode table |   %s\n",
+    show_percentage(compression_table_size, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) Write_Strings_At + compression_table_size);
-printf("        |       strings       |\n");
+addr = (static_array_area_size ? static_arrays_at : Write_RAM_At+globals_at);
+printf("        |       strings       |   %s\n",
+    show_percentage(addr-(Write_Strings_At + compression_table_size), Out_Size));
             if (static_array_area_size)
             {
 printf("        +---------------------+   %06lx\n", 
   (long int) (static_arrays_at));
-printf("        |    static arrays    |\n");
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_RAM_At+globals_at-static_arrays_at, Out_Size));
             }
 printf("        +=====================+   %06lx\n", 
   (long int) (Write_RAM_At+globals_at));
-printf("Dynamic |  global variables   |\n");
+printf("Dynamic |  global variables   |   %s\n",
+    show_percentage(arrays_at-globals_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+arrays_at));
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n",
+    show_percentage(abbrevs_at-arrays_at, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+abbrevs_at));
-printf("        | printing variables  |\n");
-            if (alphabet_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+charset_at));
-printf("        |   alphabets table   |\n");
-            }
-            if (zscii_defn_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+unicode_at));
-printf("        |    Unicode table    |\n");
-            }
+printf("        | printing variables  |   %s\n",
+    show_percentage(object_tree_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) (Write_RAM_At+object_tree_at));
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n",
+    show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+object_props_at));
-printf("        |   property values   |\n");
+printf("        |   property values   |   %s\n",
+    show_percentage(prop_defaults_at-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+prop_defaults_at));
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n",
+    show_percentage(class_numbers_offset-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+class_numbers_offset));
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n",
+    show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+identifier_names_offset));
-printf("        |   id names table    |\n");
+printf("        |   id names table    |   %s\n",
+    show_percentage(grammar_table_at-identifier_names_offset, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+grammar_table_at));
-printf("        |    grammar table    |\n");
+printf("        |    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n", 
   (long int) (Write_RAM_At+actions_at));
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(dictionary_offset-(Write_RAM_At+actions_at), Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) dictionary_offset);
-printf("        |     dictionary      |\n");
+printf("        |     dictionary      |   %s\n",
+    show_percentage(Out_Size-dictionary_offset, Out_Size));
             if (MEMORY_MAP_EXTENSION == 0)
             {
 printf("        +---------------------+   %06lx\n", (long int) Out_Size);
@@ -1858,7 +1878,7 @@ printf("        +---------------------+   %06lx\n", (long int) Out_Size);
             else
             {
 printf("        +=====================+   %06lx\n", (long int) Out_Size);
-printf("Runtime |       (empty)       |\n");
+printf("Runtime |       (empty)       |\n");   /* no percentage */
 printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_MAP_EXTENSION);
             }
 
@@ -1867,21 +1887,6 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
     }
 
 
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Code",               code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      strings_length,Out_Size);
-    }
     if (frequencies_switch)
     {
         {   printf("How frequently abbreviations were used, and roughly\n");

@@ -547,7 +547,8 @@ static int find_prec(const token_data *a, const token_data *b)
 
 /* --- Converting token to operand ----------------------------------------- */
 
-/* Must match the switch statement below */
+/* List used to generate gameinfo.dbg.
+   Must match the switch statement below. */
 int z_system_constant_list[] =
     { adjectives_table_SC,
       actions_table_SC,
@@ -591,6 +592,8 @@ int z_system_constant_list[] =
       highest_class_number_SC,
       class_objects_array_SC,
       highest_object_number_SC,
+      dictionary_table_SC,
+      grammar_table_SC,
       -1 };
 
 static int32 value_of_system_constant_z(int t)
@@ -630,6 +633,10 @@ static int32 value_of_system_constant_z(int t)
         case array__start_SC:
             return variables_offset + (MAX_ZCODE_GLOBAL_VARS*WORDSIZE);
         case array__end_SC:
+            return static_memory_offset;
+        case dictionary_table_SC:
+            return dictionary_offset;
+        case grammar_table_SC:
             return static_memory_offset;
 
         case highest_attribute_number_SC:
@@ -692,7 +699,8 @@ static int32 value_of_system_constant_z(int t)
     return(0);
 }
 
-/* Must match the switch statement below */
+/* List used to generate gameinfo.dbg.
+   Must match the switch statement below. */
 int glulx_system_constant_list[] =
     { classes_table_SC,
       identifiers_table_SC,

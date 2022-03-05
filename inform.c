@@ -1303,13 +1303,13 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
   printf("Alternate command-line formats for the above:\n\
   --help                 (this page)\n\
-  --path PATH=dir\n\
-  --addpath PATH=dir\n\
-  --list\n\
-  --helpopt SETTING\n\
-  --opt SETTING=number\n\
-  --define SETTING=number\n\
-  --config filename      (setup file)\n\n");
+  --path PATH=dir        (set path)\n\
+  --addpath PATH=dir     (add to path)\n\
+  --list                 (list current settings)\n\
+  --helpopt SETTING      (explain setting)\n\
+  --opt SETTING=number   (change setting)\n\
+  --define SYMBOL=number (define constant)\n\
+  --config filename      (read setup file)\n\n");
 
 #ifndef PROMPT_INPUT
     printf("For example: \"inform -dexs curses\".\n\n");
@@ -1584,8 +1584,17 @@ extern void switches(char *p, int cmode)
         }
     }
 
+    if (percentages_switch)
+    {
+        /* -p is now treated like an extended -z. It will be renamed to
+           something like --trace MAP=2 in the future. */
+        memory_map_switch = TRUE;
+    }
     if (optimise_switch)
-    {   store_the_text=TRUE;
+    {
+        /* store_the_text is equivalent to optimise_switch; -u sets both.
+           We could simplify this. */
+        store_the_text=TRUE;
     }
 }
 
