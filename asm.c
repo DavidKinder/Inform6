@@ -1597,18 +1597,21 @@ extern void assemble_label_no(int n)
 
 /* This is the same as assemble_label_no, except we only set up the label
    if there has been a forward branch to it.
+   Returns whether the label is created.
    Only use this for labels which never have backwards branches!
 */
-extern void assemble_forward_label_no(int n)
+extern int assemble_forward_label_no(int n)
 {
     if (n >= 0 && n < labeluse_size && labeluse[n]) {
         assemble_label_no(n);
+        return TRUE;
     }
     else {
         /* There were no forward branches to this label and we promise
            there will be no backwards branches to it. Set a negative
            offset, which will trip an error if we break our promise. */
         set_label_offset(n, -1);
+        return FALSE;
     }
 }
 
