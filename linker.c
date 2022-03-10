@@ -505,12 +505,12 @@ static void backpatch_module_image(uchar *p,
 /*   The main routine: linking in a module with the given filename.          */
 /* ------------------------------------------------------------------------- */
 
-char current_module_filename[128];
+char current_module_filename[PATHLEN];
 
 void link_module(char *given_filename)
 {   FILE *fin;
     int record_type;
-    char filename[128];
+    char filename[PATHLEN];
     uchar *p, p0[64];
     int32 last, i, j, k, l, m, vn, len, size, link_offset, module_size, map,
           max_property_identifier, symbols_base = no_symbols;
@@ -631,7 +631,7 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
     no_rr = 0;
 
     if ((linker_trace_level>=1) || transcript_switch)
-    {   char link_banner[128];
+    {   char link_banner[PATHLEN+128];
         sprintf(link_banner,
             "[Linking release %d.%c%c%c%c%c%c of module '%s' (size %dK)]",
             p[2]*256 + p[3], p[18], p[19], p[20], p[21], p[22], p[23],
