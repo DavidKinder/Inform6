@@ -2501,15 +2501,12 @@ void assemblez_1_to(int internal_number,
 void assemblez_1_branch(int internal_number,
     assembly_operand o1, int label, int flag)
 {
+    /* Some clever optimizations first. A constant is always or never equal
+       to zero. */
     if (o1.marker == 0 && is_constant_ot(o1.type)) {
-        /* A constant is always or never equal to zero. */
         if (internal_number == jz_zc) {
             if ((flag && o1.value == 0) || (!flag && o1.value != 0)) {
                 assemblez_jump(label);
-                /* The jump opcode always sets UNREACHABLE. But we also set
-                   the NOWARN flag so that "if (1)" / "if (0)" doesn't produce
-                   any warning. */
-                execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
                 return;
             }
             else {
@@ -2868,10 +2865,6 @@ void assembleg_1_branch(int internal_number,
         if ((internal_number == jz_gc && o1.value == 0)
           || (internal_number == jnz_gc && o1.value != 0)) {
             assembleg_0_branch(jump_gc, label);
-            /* The jump opcode always sets UNREACHABLE. But we also set
-               the NOWARN flag so that "if (1)" / "if (0)" doesn't produce
-               any warning. */
-            execution_never_reaches_here |= (EXECSTATE_UNREACHABLE | EXECSTATE_NOWARN);
             return;
         }
         if ((internal_number == jz_gc && o1.value != 0)
