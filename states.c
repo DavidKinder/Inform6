@@ -786,6 +786,7 @@ static int parse_named_label_statements()
 
 static void parse_statement_z(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag;
+    int pre_unreach;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
@@ -1165,6 +1166,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case IF_CODE:
                  flag = FALSE;
                  ln2 = 0;
+                 pre_unreach = execution_never_reaches_here;
 
                  match_open_bracket();
                  AO = parse_expression(CONDITION_CONTEXT);
@@ -1183,6 +1185,11 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  code_generate(AO, CONDITION_CONTEXT, ln);
+
+                 if (!pre_unreach && execution_never_reaches_here) {
+                     //### cleverness
+                     execution_never_reaches_here |= EXECSTATE_NOWARN;
+                 }
 
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
