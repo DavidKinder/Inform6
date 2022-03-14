@@ -1164,7 +1164,7 @@ static void parse_statement_z(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case IF_CODE:
-                 flag = FALSE;
+                 flag = FALSE; /* set if there's an "else" */
                  ln2 = 0;
                  pre_unreach = execution_never_reaches_here;
 
@@ -1247,6 +1247,13 @@ static void parse_statement_z(int break_label, int continue_label)
                      
                      if (ln >= 0) assemble_forward_label_no(ln2);
                  }
+                 else
+                 {
+                     if (!pre_unreach && execution_never_reaches_here) {
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
+                 }
+                         
 
                  return;
 
