@@ -786,7 +786,7 @@ static int parse_named_label_statements()
 
 static void parse_statement_z(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag;
-    int pre_unreach;
+    int pre_unreach, labelexists;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
@@ -1223,10 +1223,28 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else put_token_back();
 
-                 if (ln >= 0) assemble_forward_label_no(ln);
+                 labelexists = FALSE;
+                 if (ln >= 0) labelexists = assemble_forward_label_no(ln);
 
                  if (flag)
-                 {   parse_code_block(break_label, continue_label, 0);
+                 {
+                     //### more cleverness
+                     // If labelexists is false, then we started with "if (1)". In this case, we don't want a "not reached" warning on the else clause. We temporarily disable the NOWARN flag, and restore it afterwards.
+                     int saved_nowarn = 0;
+                     if (execution_never_reaches_here && !labelexists) {
+                         saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
+                     
+                     parse_code_block(break_label, continue_label, 0);
+
+                     if (execution_never_reaches_here && !labelexists) {
+                         if (saved_nowarn)
+                             execution_never_reaches_here |= EXECSTATE_NOWARN;
+                         else
+                             execution_never_reaches_here &= ~EXECSTATE_NOWARN;
+                     }
+                     
                      if (ln >= 0) assemble_forward_label_no(ln2);
                  }
 
