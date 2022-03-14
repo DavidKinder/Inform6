@@ -1186,7 +1186,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
-                 if (!pre_unreach && execution_never_reaches_here) {
+                 if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
                      //### cleverness
                      execution_never_reaches_here |= EXECSTATE_NOWARN;
                  }
