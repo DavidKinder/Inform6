@@ -1184,6 +1184,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      ln = next_label++;
                  }
 
+                 /* The condition */
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
                  if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
@@ -1191,6 +1192,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      execution_never_reaches_here |= EXECSTATE_NOWARN;
                  }
 
+                 /* The "if" block */
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
                  {   get_next_token();
@@ -1223,6 +1225,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else put_token_back();
 
+                 /* The "else" label (or end of statement, if there is no "else") */
                  labelexists = FALSE;
                  if (ln >= 0) labelexists = assemble_forward_label_no(ln);
 
@@ -1235,7 +1238,8 @@ static void parse_statement_z(int break_label, int continue_label)
                          saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
                          execution_never_reaches_here |= EXECSTATE_NOWARN;
                      }
-                     
+
+                     /* The "else" block */
                      parse_code_block(break_label, continue_label, 0);
 
                      if (execution_never_reaches_here && !labelexists) {
@@ -1244,7 +1248,8 @@ static void parse_statement_z(int break_label, int continue_label)
                          else
                              execution_never_reaches_here &= ~EXECSTATE_NOWARN;
                      }
-                     
+
+                     /* The post-"else" label */
                      if (ln >= 0) assemble_forward_label_no(ln2);
                  }
                  else
