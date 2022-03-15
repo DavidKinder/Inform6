@@ -1765,6 +1765,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
 static void parse_statement_g(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag, onstack;
+    int pre_unreach, labelexists;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
@@ -2154,8 +2155,9 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case IF_CODE:
-                 flag = FALSE;
+                 flag = FALSE; /* set if there's an "else" */
                  ln2 = 0;
+                 pre_unreach = execution_never_reaches_here;
 
                  match_open_bracket();
                  AO = parse_expression(CONDITION_CONTEXT);
@@ -2173,8 +2175,17 @@ static void parse_statement_g(int break_label, int continue_label)
                      ln = next_label++;
                  }
 
+                 /* The condition */
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
+                 if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
+                     /* If the condition never falls through to here, then
+                        it was an "if (0)" test. Our convention is to skip
+                        the "not reached" warnings for this case. */
+                     execution_never_reaches_here |= EXECSTATE_NOWARN;
+                 }
+
+                 /* The "if" block */
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
                  {   get_next_token();
@@ -2207,10 +2218,34 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  else put_token_back();
 
+                 /* The "else" label (or end of statement, if there is no "else") */
+                 labelexists = FALSE;
                  if (ln >= 0) assemble_forward_label_no(ln);
 
                  if (flag)
-                 {   parse_code_block(break_label, continue_label, 0);
+                 {
+                     /* If labelexists is false, then we started with
+                        "if (1)". In this case, we don't want a "not
+                        reached" warning on the "else" block. We
+                        temporarily disable the NOWARN flag, and restore it
+                        afterwards. */
+                     int saved_nowarn = 0;
+                     if (execution_never_reaches_here && !labelexists) {
+                         saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
+
+                     /* The "else" block */
+                     parse_code_block(break_label, continue_label, 0);
+
+                     if (execution_never_reaches_here && !labelexists) {
+                         if (saved_nowarn)
+                             execution_never_reaches_here |= EXECSTATE_NOWARN;
+                         else
+                             execution_never_reaches_here &= ~EXECSTATE_NOWARN;
+                     }
+
+                     /* The post-"else" label */
                      if (ln >= 0) assemble_forward_label_no(ln2);
                  }
 
