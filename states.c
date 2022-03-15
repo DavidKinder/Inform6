@@ -1188,7 +1188,9 @@ static void parse_statement_z(int break_label, int continue_label)
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
                  if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
-                     //### cleverness
+                     /* If the condition never falls through to here, then
+                        it was an "if (0)" test. Our convention is to skip
+                        the "not reached" warnings for this case. */
                      execution_never_reaches_here |= EXECSTATE_NOWARN;
                  }
 
@@ -1231,8 +1233,11 @@ static void parse_statement_z(int break_label, int continue_label)
 
                  if (flag)
                  {
-                     //### more cleverness
-                     // If labelexists is false, then we started with "if (1)". In this case, we don't want a "not reached" warning on the else clause. We temporarily disable the NOWARN flag, and restore it afterwards.
+                     /* If labelexists is false, then we started with
+                        "if (1)". In this case, we don't want a "not
+                        reached" warning on the "else" block. We
+                        temporarily disable the NOWARN flag, and restore it
+                        afterwards. */
                      int saved_nowarn = 0;
                      if (execution_never_reaches_here && !labelexists) {
                          saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
@@ -1254,12 +1259,13 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else
                  {
+                     /* There was no "else". If we're unreachable, then the
+                        "if" block returned. Skip warnings. */
                      if (!pre_unreach && execution_never_reaches_here) {
                          execution_never_reaches_here |= EXECSTATE_NOWARN;
                      }
                  }
                          
-
                  return;
 
     /*  -------------------------------------------------------------------- */
