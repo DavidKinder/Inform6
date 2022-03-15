@@ -1260,7 +1260,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  else
                  {
                      /* There was no "else". If we're unreachable, then the
-                        "if" block returned. Skip warnings. */
+                        statement returned unconditionally, which means 
+                        "if (1) return". Skip warnings. */
                      if (!pre_unreach && execution_never_reaches_here) {
                          execution_never_reaches_here |= EXECSTATE_NOWARN;
                      }
