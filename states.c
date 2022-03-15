@@ -1238,9 +1238,9 @@ static void parse_statement_z(int break_label, int continue_label)
                         reached" warning on the "else" block. We
                         temporarily disable the NOWARN flag, and restore it
                         afterwards. */
-                     int saved_nowarn = 0;
+                     int saved_unreach = 0;
                      if (execution_never_reaches_here && !labelexists) {
-                         saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
+                         saved_unreach = execution_never_reaches_here;
                          execution_never_reaches_here |= EXECSTATE_NOWARN;
                      }
 
@@ -1248,7 +1248,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      parse_code_block(break_label, continue_label, 0);
 
                      if (execution_never_reaches_here && !labelexists) {
-                         if (saved_nowarn)
+                         if (saved_unreach & EXECSTATE_NOWARN)
                              execution_never_reaches_here |= EXECSTATE_NOWARN;
                          else
                              execution_never_reaches_here &= ~EXECSTATE_NOWARN;
@@ -2229,9 +2229,9 @@ static void parse_statement_g(int break_label, int continue_label)
                         reached" warning on the "else" block. We
                         temporarily disable the NOWARN flag, and restore it
                         afterwards. */
-                     int saved_nowarn = 0;
+                     int saved_unreach = 0;
                      if (execution_never_reaches_here && !labelexists) {
-                         saved_nowarn = (execution_never_reaches_here & EXECSTATE_NOWARN);
+                         saved_unreach = execution_never_reaches_here;
                          execution_never_reaches_here |= EXECSTATE_NOWARN;
                      }
 
@@ -2239,7 +2239,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      parse_code_block(break_label, continue_label, 0);
 
                      if (execution_never_reaches_here && !labelexists) {
-                         if (saved_nowarn)
+                         if (saved_unreach & EXECSTATE_NOWARN)
                              execution_never_reaches_here |= EXECSTATE_NOWARN;
                          else
                              execution_never_reaches_here &= ~EXECSTATE_NOWARN;
