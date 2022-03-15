@@ -2220,7 +2220,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  /* The "else" label (or end of statement, if there is no "else") */
                  labelexists = FALSE;
-                 if (ln >= 0) assemble_forward_label_no(ln);
+                 if (ln >= 0) labelexists = assemble_forward_label_no(ln);
 
                  if (flag)
                  {
@@ -2247,6 +2247,15 @@ static void parse_statement_g(int break_label, int continue_label)
 
                      /* The post-"else" label */
                      if (ln >= 0) assemble_forward_label_no(ln2);
+                 }
+                 else
+                 {
+                     /* There was no "else". If we're unreachable, then the
+                        statement returned unconditionally, which means 
+                        "if (1) return". Skip warnings. */
+                     if (!pre_unreach && execution_never_reaches_here) {
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
                  }
 
                  return;
