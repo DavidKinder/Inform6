@@ -1001,7 +1001,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   assembly_operand AO, AO2, AO3;
   int ln;
   int check_sp = FALSE, passed_label, failed_label, last_label;
-
+  int pre_unreach;
+  
   if (veneer_mode) 
     return AO1;
 
@@ -1023,6 +1024,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     return AO1;
   }
 
+  pre_unreach = execution_never_reaches_here;
+  
   passed_label = next_label++;
   failed_label = next_label++;  
 
@@ -1043,6 +1046,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     /* Allow classes */
     /* Test if zero... */
     assembleg_1_branch(jz_gc, AO, failed_label);
+    if (!pre_unreach && execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_NOWARN;
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
     INITAO(&AO3);
@@ -1053,6 +1058,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   else {
     /* Test if zero... */
     assembleg_1_branch(jz_gc, AO, failed_label);
+    if (!pre_unreach && execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_NOWARN;
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
     INITAO(&AO3);
