@@ -29,7 +29,7 @@ static int32 backpatch_value_z(int32 value)
 
     ASSERT_ZCODE();
 
-    if (asm_trace_level >= 4)
+    if (bpatch_trace_setting)
         printf("BP %s applied to %04x giving ",
             describe_mv(backpatch_marker), value);
 
@@ -163,7 +163,7 @@ static int32 backpatch_value_z(int32 value)
             break;
     }
 
-    if (asm_trace_level >= 4) printf(" %04x\n", value);
+    if (bpatch_trace_setting) printf(" %04x\n", value);
 
     return(value);
 }
@@ -174,7 +174,7 @@ static int32 backpatch_value_g(int32 value)
 
     ASSERT_GLULX();
 
-    if (asm_trace_level >= 4)
+    if (bpatch_trace_setting)
         printf("BP %s applied to %04x giving ",
             describe_mv(backpatch_marker), value);
 
@@ -331,7 +331,7 @@ symbol");
             break;
     }
 
-    if (asm_trace_level >= 4) printf(" %04x\n", value);
+    if (bpatch_trace_setting) printf(" %04x\n", value);
 
     return(value);
 }

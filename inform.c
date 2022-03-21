@@ -224,6 +224,8 @@ static void select_target(int targ)
 
 /* ------------------------------------------------------------------------- */
 /*   Tracery: output control variables                                       */
+/*   (These are initially set to foo_trace_setting, but the Trace directive  */
+/*   can change them on the fly)                                             */
 /* ------------------------------------------------------------------------- */
 
 int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
@@ -274,6 +276,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     error_format,                   /* set by -E */
     asm_trace_setting,              /* $!ASM, -a: initial value of
                                        asm_trace_level */
+    bpatch_trace_setting,           /* $!BPATCH */
     expr_trace_setting,             /* $!EXPR: initial value of
                                        expr_trace_level */
     tokens_trace_setting,           /* $!TOKENS: initial value of
@@ -296,13 +299,10 @@ int glulx_mode;                     /* -G */
 
 static void reset_switch_settings(void)
 {   asm_trace_setting = 0;
-    asm_trace_level = 0;
     linker_trace_setting = 0;
-    linker_trace_level = 0;
     tokens_trace_setting = 0;
-    tokens_trace_level = 0;
     expr_trace_setting = 0;
-    expr_trace_level = 0;
+    bpatch_trace_setting = 0;
     list_verbs_setting = 0;
     list_dict_setting = 0;
     list_objects_setting = 0;
@@ -356,6 +356,12 @@ static void reset_switch_settings(void)
     compression_switch = TRUE;
     glulx_mode = FALSE;
     requested_glulx_version = 0;
+
+    /* These aren't switches, but for clarity we reset them too. */
+    asm_trace_level = 0;
+    expr_trace_level = 0;
+    linker_trace_level = 0;
+    tokens_trace_level = 0;
 }
 
 /* ------------------------------------------------------------------------- */
