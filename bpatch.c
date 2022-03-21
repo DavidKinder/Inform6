@@ -354,7 +354,8 @@ static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
         if (mv == ACTION_MV) return;
     }
 
-    /* printf("MV %d ZA %d Off %04x\n", mv, zmachine_area, offset); */
+    if (bpatch_trace_setting >= 2)
+        printf("BP added: MV %d ZA %d Off %04x\n", mv, zmachine_area, offset);
 
     ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+4);
     zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
@@ -378,7 +379,8 @@ static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
    Then the four-byte address.
 */
 
-/*    printf("+MV %d ZA %d Off %06x\n", mv, zmachine_area, offset);  */
+    if (bpatch_trace_setting >= 2)
+        printf("BP added: MV %d ZA %d Off %06x\n", mv, zmachine_area, offset);
 
     ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+6);
     zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
@@ -455,9 +457,7 @@ extern void backpatch_zmachine_image_g(void)
           zmachine_backpatch_table[bm+4];
         offset = (offset << 8) |
           zmachine_backpatch_table[bm+5];
-            bm += 6;
-
-        /* printf("-MV %d ZA %d Off %06x\n", backpatch_marker, zmachine_area, offset);  */
+        bm += 6;
 
             switch(zmachine_area) {   
         case PROP_DEFAULTS_ZA:   addr = prop_defaults_offset+4; break;

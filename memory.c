@@ -603,7 +603,8 @@ static void set_trace_option(char *command)
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
-        printf("  BPATCH: trace backpatch markers\n");
+        printf("  BPATCH: trace backpatch results\n");
+        printf("    BPATCH=2: also show markers added\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
         printf("  EXPR: show expression trees\n");
