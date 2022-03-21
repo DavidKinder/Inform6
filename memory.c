@@ -270,6 +270,7 @@ int32 MAX_STACK_SIZE;
 int32 MEMORY_MAP_EXTENSION;
 int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always */
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
+int STRIP_UNREACHABLE_LABELS; /* 0: no, 1: yes (default) */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
 /* The way memory sizes are set causes great nuisance for those parameters
@@ -314,6 +315,7 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
     printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
+    printf("|  %25s = %-7d |\n","STRIP_UNREACHABLE_LABELS",STRIP_UNREACHABLE_LABELS);
     printf("+--------------------------------------+\n");
 }
 
@@ -344,6 +346,7 @@ extern void set_memory_sizes(void)
     MAX_STACK_SIZE = 4096;
     OMIT_UNUSED_ROUTINES = 0;
     WARN_UNUSED_ROUTINES = 0;
+    STRIP_UNREACHABLE_LABELS = 1;
     TRANSCRIPT_FORMAT = 0;
 
     adjust_memory_sizes();
@@ -478,6 +481,14 @@ static void explain_parameter(char *command)
         printf(
 "  OMIT_UNUSED_ROUTINES, if set to 1, will avoid compiling unused routines \n\
   into the game file.\n");
+        return;
+    }
+    if (strcmp(command,"STRIP_UNREACHABLE_LABELS")==0)
+    {
+        printf(
+"  STRIP_UNREACHABLE_LABELS, if set to 1, will skip labels in unreachable \n\
+  statements. Jumping to a skipped label is an error. If 0, all labels \n\
+  will be compiled, at the cost of less optimized code. The default is 1.\n");
         return;
     }
     if (strcmp(command,"SERIAL")==0)
@@ -869,6 +880,12 @@ extern void memory_command(char *command)
                 OMIT_UNUSED_ROUTINES=j, flag=1;
                 if (OMIT_UNUSED_ROUTINES > 1 || OMIT_UNUSED_ROUTINES < 0)
                     OMIT_UNUSED_ROUTINES = 1;
+            }
+            if (strcmp(command,"STRIP_UNREACHABLE_LABELS")==0)
+            {
+                STRIP_UNREACHABLE_LABELS=j, flag=1;
+                if (STRIP_UNREACHABLE_LABELS > 1 || STRIP_UNREACHABLE_LABELS < 0)
+                    STRIP_UNREACHABLE_LABELS = 1;
             }
             if (strcmp(command,"SERIAL")==0)
             {

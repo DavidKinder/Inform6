@@ -2053,6 +2053,19 @@ typedef struct operator_s
 #define STRCTX_SYMBOL    9  /* prop/attr/etc names */
 #define STRCTX_INFIX    10  /* text printed in asterisk traces */
 
+/* ------------------------------------------------------------------------- */
+/*   Bit-flags applying to the execution_never_reaches_here variable.        */
+/*   Note that if any flags are set, UNREACHABLE is set, so we can easily    */
+/*   test "if (execution_never_reaches_here)..."                             */
+/* ------------------------------------------------------------------------- */
+
+#define EXECSTATE_REACHABLE   0  /* compile normally */
+#define EXECSTATE_UNREACHABLE 1  /* execution cannot reach this line */
+#define EXECSTATE_ENTIRE      2  /* execution cannot reach this entire
+                                    statement or code block */
+#define EXECSTATE_NOWARN      4  /* do not print a warning about unreachable
+                                    code */
+
 /* ========================================================================= */
 /*   Initialisation extern definitions                                       */
 /*                                                                           */
@@ -2224,9 +2237,10 @@ extern char *variable_name(int32 i);
 extern void set_constant_ot(assembly_operand *AO);
 extern int  is_constant_ot(int otval);
 extern int  is_variable_ot(int otval);
-extern void assemblez_instruction(assembly_instruction *a);
-extern void assembleg_instruction(assembly_instruction *a);
+extern void assemblez_instruction(const assembly_instruction *a);
+extern void assembleg_instruction(const assembly_instruction *a);
 extern void assemble_label_no(int n);
+extern int assemble_forward_label_no(int n);
 extern void assemble_jump(int n);
 extern void define_symbol_label(int symbol);
 extern int32 assemble_routine_header(int no_locals, int debug_flag,
@@ -2671,6 +2685,7 @@ extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int ZCODE_LESS_DICT_DATA;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
+extern int STRIP_UNREACHABLE_LABELS;
 extern int TRANSCRIPT_FORMAT;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.

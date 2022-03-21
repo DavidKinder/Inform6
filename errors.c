@@ -487,11 +487,12 @@ extern void print_sorry_message(void)
 "***********************************************************************\n\
 * 'Compiler errors' should never occur if Inform is working properly. *\n\
 * This is version %d.%02d of Inform, dated %20s: so      *\n\
-* if that was more than six months ago, there may be a more recent    *\n\
+* if that was more than a year ago, there may be a more recent        *\n\
 * version available, from which the problem may have been removed.    *\n\
-* If not, please report this fault to:   graham@gnelson.demon.co.uk   *\n\
-* and if at all possible, please include your source code, as faults  *\n\
-* such as these are rare and often difficult to reproduce.  Sorry.    *\n\
+* If not, please report this fault as an issue at                     *\n\
+* https://github.com/DavidKinder/Inform6/ and if at all possible,     *\n\
+* please include your source code, as faults such as these are rare   *\n\
+* and often difficult to reproduce.  Sorry.                           *\n\
 ***********************************************************************\n",
     (RELEASE_NUMBER/100)%10, RELEASE_NUMBER%100, RELEASE_DATE);
 }
