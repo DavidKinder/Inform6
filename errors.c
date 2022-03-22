@@ -226,7 +226,7 @@ char *forerrors_buff;
 int  forerrors_pointer;
 
 static void message(int style, char *s)
-{   int throw_style = style;
+{
     if (hash_printed_since_newline) printf("\n");
     hash_printed_since_newline = FALSE;
     print_preamble();
@@ -234,13 +234,13 @@ static void message(int style, char *s)
     {   case 1: printf("Error: "); no_errors++; break;
         case 2: printf("Warning: "); no_warnings++; break;
         case 3: printf("Error:  [linking '%s']  ", current_module_filename);
-                no_link_errors++; no_errors++; throw_style=1; break;
+                no_link_errors++; no_errors++; break;
         case 4: printf("*** Compiler error: ");
-                no_compiler_errors++; throw_style=1; break;
+                no_compiler_errors++; break;
     }
     printf(" %s\n", s);
 #ifdef ARC_THROWBACK
-    throwback(throw_style, s);
+    throwback(((style <= 2) ? style : 1), s);
 #endif
 #ifdef MAC_FACE
     ProcessEvents (&g_proc);
