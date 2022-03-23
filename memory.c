@@ -603,7 +603,7 @@ static void set_trace_option(char *command)
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
-        printf("  BPATCH: trace backpatch results\n");
+        printf("  BPATCH: show backpatch results\n");
         printf("    BPATCH=2: also show markers added\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
@@ -624,6 +624,7 @@ static void set_trace_option(char *command)
         printf("  STATS: give compilation statistics (same as -s)\n");
         printf("  SYMBOLS: display the symbol table\n");
         printf("    SYMBOLS=2: also show compiler-defined symbols\n");
+        printf("  SYMDEF: show when symbols are noticed and defined\n");
         printf("  TOKENS: show token lexing\n");
         printf("    TOKENS=2: also show token types\n");
         printf("    TOKENS=3: also show lexical context\n");
@@ -698,6 +699,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "SYMBOLS")==0 || strcmp(command, "SYMBOL")==0) {
         list_symbols_setting = value;
+    }
+    else if (strcmp(command, "SYMDEF")==0 || strcmp(command, "SYMBOLDEF")==0) {
+        symdef_trace_setting = value;
     }
     else if (strcmp(command, "TOKEN")==0 || strcmp(command, "TOKENS")==0) {
         tokens_trace_setting = value;

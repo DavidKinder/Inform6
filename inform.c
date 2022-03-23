@@ -277,6 +277,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     asm_trace_setting,              /* $!ASM, -a: initial value of
                                        asm_trace_level */
     bpatch_trace_setting,           /* $!BPATCH */
+    symdef_trace_setting,           /* $!SYMDEF */
     expr_trace_setting,             /* $!EXPR: initial value of
                                        expr_trace_level */
     tokens_trace_setting,           /* $!TOKENS: initial value of
@@ -303,6 +304,7 @@ static void reset_switch_settings(void)
     tokens_trace_setting = 0;
     expr_trace_setting = 0;
     bpatch_trace_setting = 0;
+    symdef_trace_setting = 0;
     list_verbs_setting = 0;
     list_dict_setting = 0;
     list_objects_setting = 0;
