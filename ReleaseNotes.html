@@ -50,6 +50,31 @@ These are the changes delivered in version 6.37 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>The compiler is now capable of dead code elimination, allowing it to:
+ <ul>
+ <li>Discard unreachable opcodes and strings
+ <li>Minimize generated code for dead branches (<tt>if (0)</tt>, <tt>if (1)</tt>)
+ <li>Detect <tt>if</tt> and <tt>switch</tt> statements where every branch returns
+ <li>Detect loops that never exit (or always return)
+ <li>Discard <tt>@jz constant</tt> opcodes where the constant is nonzero
+ <li>Convert <tt>@jz 0</tt> to an unconditional <tt>@jump</tt>
+ <li>Discard a <tt>@jump</tt> to the very next instruction
+ </ul><br>
+When statements that can never be reached are eliminated, a warning is produced.
+<li><p>Dead code elimination does mean that theoretically possible (though very odd) valid code will now
+result in a compilation error. For example,
+<pre>
+  if (DOSTUFF) {
+    while (condition) {
+      ...
+    .MiddleLabel;
+      ...
+    }
+  }
+  jump MiddleLabel; ! error
+</pre>
+This will fail with a compilation error if <tt>DOSTUFF</tt> is defined as a constant zero. This optimization
+can be turned off by setting the compiler setting <tt>$STRIP_UNREACHABLE_LABELS</tt> to zero (its default is one).
 <li><p>The constants <tt>#dictionary_table</tt> and <tt>#grammar_table</tt> are now available when compiling to
 Z-code, as well as Glulx.
 <li><p>The command line switch to display percentages (<tt>-p</tt>) now works with Glulx, and acts as an
@@ -105,7 +130,7 @@ without requiring user intervention.
  <li>MAX_VERBS
  <li>MAX_VERBSPACE
  <li>MAX_ZCODE_SIZE
- </ul>
+ </ul><br>
 As a result of this, the memory size command line arguments (<tt>$SMALL</tt>, <tt>$LARGE</tt> and <tt>$HUGE</tt>)
 are now redundant, and have been removed.
 <li><p>It is now possible to declare an individual property with the <tt>Property</tt> directive:
