@@ -620,12 +620,11 @@ advance as part of 'Zcharacter table':", unicode);
         /*  '@' is the escape character in Inform string notation: the various
             possibilities are:
 
-                (printing only)
                 @@decimalnumber  :  write this ZSCII char (0 to 1023)
-                @twodigits       :  write the abbreviation string with this
-                                    decimal number
-
-                (any string context)
+                @twodigits or    :  write the abbreviation string with this
+                @(digits)           decimal number
+                @(symbol)        :  write the abbreviation string with this
+                                    (constant) value
                 @accentcode      :  this accented character: e.g.,
                                         for @'e write an E-acute
                 @{...}           :  this Unicode char (in hex)              */
@@ -633,7 +632,7 @@ advance as part of 'Zcharacter table':", unicode);
         if (text_in[i]=='@')
         {   if (text_in[i+1]=='@')
             {
-                /*   @@...   */
+                /*   @@... (ascii value)  */
 
                 i+=2; j=atoi((char *) (text_in+i));
                 switch(j)
@@ -650,6 +649,50 @@ advance as part of 'Zcharacter table':", unicode);
                     default:   write_zscii(j); break;
                 }
                 while (isdigit(text_in[i])) i++; i--;
+            }
+            else if (text_in[i+1]=='(')
+            {
+                /*   @(...) (dynamic string)   */
+                char dsymbol[MAX_IDENTIFIER_LENGTH+1];
+                int len = 0, digits = 0;
+                i += 2;
+                /* This accepts "12xyz" as a symbol, which it really isn't,
+                   but that just means it won't be found. */
+                while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+                    char ch = text_in[i++];
+                    if (isdigit(ch)) digits++;
+                    dsymbol[len++] = ch;
+                }
+                dsymbol[len] = '\0';
+                j = -1;
+                /* We would like to parse dsymbol as *either* a decimal
+                   number or a constant symbol. */
+                if (text_in[i] != ')' || len == 0) {
+                    error("'@(...)' abbreviation must contain a symbol");
+                }
+                else if (digits == len) {
+                    int ii;
+                    printf("### digits '%s'\n", dsymbol);
+                    j = 0;
+                    for (ii=0; ii<len; ii++)
+                        j = 10*j + (dsymbol[ii]-'0');
+                }
+                else {
+                    printf("### symbol '%s'\n", dsymbol);
+                    int sym = symbol_index(dsymbol, -1);
+                    if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
+                        error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                    }
+                    else {
+                        symbols[sym].flags |= USED_SFLAG;
+                        j = symbols[sym].value;
+                    }
+                }
+                if (j >= 0) {
+                    printf("### ... value %d\n", j);
+                    //### range check
+                    write_z_char_z(j/32+1); write_z_char_z(j%32);
+                }
             }
             else if (isdigit(text_in[i+1])!=0)
             {   int d1, d2;
