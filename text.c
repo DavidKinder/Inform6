@@ -671,6 +671,7 @@ advance as part of 'Zcharacter table':", unicode);
                     error("'@(...)' abbreviation must contain a symbol");
                 }
                 else if (digits == len) {
+                    /* all digits; parse as decimal */
                     int ii;
                     printf("### digits '%s'\n", dsymbol);
                     j = 0;
@@ -690,7 +691,14 @@ advance as part of 'Zcharacter table':", unicode);
                 }
                 if (j >= 0) {
                     printf("### ... value %d\n", j);
-                    //### range check
+                    if (!glulx_mode && j >= 96) {
+                        error_max_dynamic_strings(j);
+                        j = 0;
+                    }
+                    if (j >= MAX_DYNAMIC_STRINGS) {
+                        error_max_dynamic_strings(j);
+                        j = 0;
+                    }
                     write_z_char_z(j/32+1); write_z_char_z(j%32);
                 }
             }
