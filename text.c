@@ -846,6 +846,56 @@ string.");
           write_z_char_g(j);
           while (isdigit(text_in[i])) i++; i--;
         }
+        else if (text_in[i+1]=='(') {
+            char dsymbol[MAX_IDENTIFIER_LENGTH+1];
+            int len = 0, digits = 0;
+            i += 2;
+            /* This accepts "12xyz" as a symbol, which it really isn't,
+               but that just means it won't be found. */
+            while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+                char ch = text_in[i++];
+                if (isdigit(ch)) digits++;
+                dsymbol[len++] = ch;
+            }
+            dsymbol[len] = '\0';
+            j = -1;
+            /* We would like to parse dsymbol as *either* a decimal
+               number or a constant symbol. */
+            if (text_in[i] != ')' || len == 0) {
+                error("'@(...)' abbreviation must contain a symbol");
+            }
+            else if (digits == len) {
+                /* all digits; parse as decimal */
+                printf("### digits '%s'\n", dsymbol);
+                j = atoi(dsymbol);
+            }
+            else {
+                printf("### symbol '%s'\n", dsymbol);
+                int sym = symbol_index(dsymbol, -1);
+                if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
+                    error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                }
+                else {
+                    symbols[sym].flags |= USED_SFLAG;
+                    j = symbols[sym].value;
+                }
+            }
+            if (j >= 0) {
+                printf("### ... value %d\n", j);
+                if (j >= MAX_DYNAMIC_STRINGS) {
+                    error_max_dynamic_strings(j);
+                    j = 0;
+                }
+                if (j+1 >= no_dynamic_strings)
+                    no_dynamic_strings = j+1;
+                write_z_char_g('@');
+                write_z_char_g('D');
+                write_z_char_g('A' + ((j >>12) & 0x0F));
+                write_z_char_g('A' + ((j >> 8) & 0x0F));
+                write_z_char_g('A' + ((j >> 4) & 0x0F));
+                write_z_char_g('A' + ((j     ) & 0x0F));
+            }
+        }
         else if (isdigit(text_in[i+1])) {
           int d1, d2;
           d1 = character_digit_value[text_in[i+1]];
