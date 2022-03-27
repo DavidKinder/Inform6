@@ -672,11 +672,8 @@ advance as part of 'Zcharacter table':", unicode);
                 }
                 else if (digits == len) {
                     /* all digits; parse as decimal */
-                    int ii;
                     printf("### digits '%s'\n", dsymbol);
-                    j = 0;
-                    for (ii=0; ii<len; ii++)
-                        j = 10*j + (dsymbol[ii]-'0');
+                    j = atoi(dsymbol);
                 }
                 else {
                     printf("### symbol '%s'\n", dsymbol);
