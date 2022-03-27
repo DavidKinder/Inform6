@@ -684,15 +684,13 @@ advance as part of 'Zcharacter table':", unicode);
                         j = symbols[sym].value;
                     }
                 }
-                if (j >= 0) {
-                    if (!glulx_mode && j >= 96) {
-                        error_max_dynamic_strings(j);
-                        j = -1;
-                    }
-                    if (j >= MAX_DYNAMIC_STRINGS) {
-                        error_max_dynamic_strings(j);
-                        j = -1;
-                    }
+                if (!glulx_mode && j >= 96) {
+                    error_max_dynamic_strings(j);
+                    j = -1;
+                }
+                if (j >= MAX_DYNAMIC_STRINGS) {
+                    error_max_dynamic_strings(j);
+                    j = -1;
                 }
                 if (j >= 0) {
                     write_z_char_z(j/32+1); write_z_char_z(j%32);
@@ -885,14 +883,12 @@ string.");
                     j = symbols[sym].value;
                 }
             }
-            if (j >= 0) {
-                if (j >= MAX_DYNAMIC_STRINGS) {
-                    error_max_dynamic_strings(j);
-                    j = -1;
-                }
-                if (j+1 >= no_dynamic_strings)
-                    no_dynamic_strings = j+1;
+            if (j >= MAX_DYNAMIC_STRINGS) {
+                error_max_dynamic_strings(j);
+                j = -1;
             }
+            if (j+1 >= no_dynamic_strings)
+                no_dynamic_strings = j+1;
             if (j >= 0) {
                 write_z_char_g('@');
                 write_z_char_g('D');
