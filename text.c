@@ -672,11 +672,9 @@ advance as part of 'Zcharacter table':", unicode);
                 }
                 else if (digits == len) {
                     /* all digits; parse as decimal */
-                    printf("### digits '%s'\n", dsymbol);
                     j = atoi(dsymbol);
                 }
                 else {
-                    printf("### symbol '%s'\n", dsymbol);
                     int sym = symbol_index(dsymbol, -1);
                     if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
                         error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
@@ -687,7 +685,6 @@ advance as part of 'Zcharacter table':", unicode);
                     }
                 }
                 if (j >= 0) {
-                    printf("### ... value %d\n", j);
                     if (!glulx_mode && j >= 96) {
                         error_max_dynamic_strings(j);
                         j = 0;
@@ -866,11 +863,9 @@ string.");
             }
             else if (digits == len) {
                 /* all digits; parse as decimal */
-                printf("### digits '%s'\n", dsymbol);
                 j = atoi(dsymbol);
             }
             else {
-                printf("### symbol '%s'\n", dsymbol);
                 int sym = symbol_index(dsymbol, -1);
                 if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
                     error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
@@ -881,7 +876,6 @@ string.");
                 }
             }
             if (j >= 0) {
-                printf("### ... value %d\n", j);
                 if (j >= MAX_DYNAMIC_STRINGS) {
                     error_max_dynamic_strings(j);
                     j = 0;
