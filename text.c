@@ -664,7 +664,7 @@ advance as part of 'Zcharacter table':", unicode);
                     dsymbol[len++] = ch;
                 }
                 dsymbol[len] = '\0';
-                j = -1;
+                j = 0;
                 /* We would like to parse dsymbol as *either* a decimal
                    number or a constant symbol. */
                 if (text_in[i] != ')' || len == 0) {
@@ -684,17 +684,15 @@ advance as part of 'Zcharacter table':", unicode);
                         j = symbols[sym].value;
                     }
                 }
-                if (j >= 0) {
-                    if (!glulx_mode && j >= 96) {
-                        error_max_dynamic_strings(j);
-                        j = 0;
-                    }
-                    if (j >= MAX_DYNAMIC_STRINGS) {
-                        error_max_dynamic_strings(j);
-                        j = 0;
-                    }
-                    write_z_char_z(j/32+1); write_z_char_z(j%32);
+                if (!glulx_mode && j >= 96) {
+                    error_max_dynamic_strings(j);
+                    j = 0;
                 }
+                if (j >= MAX_DYNAMIC_STRINGS) {
+                    error_max_dynamic_strings(j);
+                    j = 0;
+                }
+                write_z_char_z(j/32+1); write_z_char_z(j%32);
             }
             else if (isdigit(text_in[i+1])!=0)
             {   int d1, d2;
@@ -855,7 +853,7 @@ string.");
                 dsymbol[len++] = ch;
             }
             dsymbol[len] = '\0';
-            j = -1;
+            j = 0;
             /* We would like to parse dsymbol as *either* a decimal
                number or a constant symbol. */
             if (text_in[i] != ')' || len == 0) {
@@ -875,20 +873,18 @@ string.");
                     j = symbols[sym].value;
                 }
             }
-            if (j >= 0) {
-                if (j >= MAX_DYNAMIC_STRINGS) {
-                    error_max_dynamic_strings(j);
-                    j = 0;
-                }
-                if (j+1 >= no_dynamic_strings)
-                    no_dynamic_strings = j+1;
-                write_z_char_g('@');
-                write_z_char_g('D');
-                write_z_char_g('A' + ((j >>12) & 0x0F));
-                write_z_char_g('A' + ((j >> 8) & 0x0F));
-                write_z_char_g('A' + ((j >> 4) & 0x0F));
-                write_z_char_g('A' + ((j     ) & 0x0F));
+            if (j >= MAX_DYNAMIC_STRINGS) {
+                error_max_dynamic_strings(j);
+                j = 0;
             }
+            if (j+1 >= no_dynamic_strings)
+                no_dynamic_strings = j+1;
+            write_z_char_g('@');
+            write_z_char_g('D');
+            write_z_char_g('A' + ((j >>12) & 0x0F));
+            write_z_char_g('A' + ((j >> 8) & 0x0F));
+            write_z_char_g('A' + ((j >> 4) & 0x0F));
+            write_z_char_g('A' + ((j     ) & 0x0F));
         }
         else if (isdigit(text_in[i+1])) {
           int d1, d2;
