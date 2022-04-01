@@ -75,6 +75,9 @@ result in a compilation error. For example,
 </pre>
 This will fail with a compilation error if <tt>DOSTUFF</tt> is defined as a constant zero. This optimization
 can be turned off by setting the compiler setting <tt>$STRIP_UNREACHABLE_LABELS</tt> to zero (its default is one).
+<li><p>There is a new syntax for dynamic-string interpolations: <tt>"@(N)"</tt>. The original syntax was <tt>"@NN"</tt>,
+which is still supported. In the new syntax <tt>"N"</tt> can be a number, or an already defined numeric constant.
+As a result of this, under Glulx the limit on <tt>$MAX_DYNAMIC_STRINGS</tt> being less than 100 has been removed.
 <li><p>The constants <tt>#dictionary_table</tt> and <tt>#grammar_table</tt> are now available when compiling to
 Z-code, as well as Glulx.
 <li><p>The command line switch to display percentages (<tt>-p</tt>) now works with Glulx, and acts as an
