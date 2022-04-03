@@ -1303,6 +1303,24 @@ static void emit_token(const token_data *t)
                 }
 
             }
+
+            if ((o1.marker == 0)
+                && is_constant_ot(o1.type)
+                && t->value == LOGAND_OP
+                && o1.value == 0)
+            {
+                x = 0;
+                goto FoldConstant;
+            }
+
+            if ((o1.marker == 0)
+                && is_constant_ot(o1.type)
+                && t->value == LOGOR_OP
+                && o1.value != 0)
+            {
+                x = 1;
+                goto FoldConstant;
+            }
     }
 
     ensure_memory_list_available(&ET_memlist, ET_used+1);
