@@ -1304,6 +1304,9 @@ static void emit_token(const token_data *t)
 
             }
 
+            /* We can also fold logical operations if they are certain
+               to short-circuit. */
+            
             if ((o1.marker == 0)
                 && is_constant_ot(o1.type)
                 && t->value == LOGAND_OP
