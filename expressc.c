@@ -2818,8 +2818,10 @@ static void generate_code_from(int n, int void_flag)
             else if (ET[n].true_label != -1)
             {
                 donelabel = next_label++;
-                assemblez_1(push_zc, zero_operand);
-                assemblez_jump(donelabel);
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, zero_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assemblez_1(push_zc, one_operand);
                 assemble_forward_label_no(donelabel);
@@ -2827,8 +2829,10 @@ static void generate_code_from(int n, int void_flag)
             else
             {
                 donelabel = next_label++;
-                assemblez_1(push_zc, one_operand);
-                assemblez_jump(donelabel);
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, one_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assemblez_1(push_zc, zero_operand);
                 assemble_forward_label_no(donelabel);
@@ -2855,8 +2859,10 @@ static void generate_code_from(int n, int void_flag)
             else if (ET[n].true_label != -1)
             {
                 donelabel = next_label++;
-                assembleg_store(stack_pointer, zero_operand);
-                assembleg_jump(donelabel);
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, zero_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assembleg_store(stack_pointer, one_operand);
                 assemble_forward_label_no(donelabel);
@@ -2864,8 +2870,10 @@ static void generate_code_from(int n, int void_flag)
             else
             {
                 donelabel = next_label++;
-                assembleg_store(stack_pointer, one_operand);
-                assembleg_jump(donelabel);
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, one_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assembleg_store(stack_pointer, zero_operand);
                 assemble_forward_label_no(donelabel);
