@@ -2822,7 +2822,7 @@ static void generate_code_from(int n, int void_flag)
                 assemblez_jump(donelabel);
                 assemble_label_no(ET[n].true_label);
                 assemblez_1(push_zc, one_operand);
-                assemble_label_no(donelabel);
+                assemble_forward_label_no(donelabel);
             }
             else
             {
@@ -2831,7 +2831,7 @@ static void generate_code_from(int n, int void_flag)
                 assemblez_jump(donelabel);
                 assemble_label_no(ET[n].false_label);
                 assemblez_1(push_zc, zero_operand);
-                assemble_label_no(donelabel);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
@@ -2859,7 +2859,7 @@ static void generate_code_from(int n, int void_flag)
                 assembleg_jump(donelabel);
                 assemble_label_no(ET[n].true_label);
                 assembleg_store(stack_pointer, one_operand);
-                assemble_label_no(donelabel);
+                assemble_forward_label_no(donelabel);
             }
             else
             {
@@ -2868,7 +2868,7 @@ static void generate_code_from(int n, int void_flag)
                 assembleg_jump(donelabel);
                 assemble_label_no(ET[n].false_label);
                 assembleg_store(stack_pointer, zero_operand);
-                assemble_label_no(donelabel);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
