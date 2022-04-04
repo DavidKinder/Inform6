@@ -1296,6 +1296,12 @@ static void generate_code_from(int n, int void_flag)
 
     if ((opnum == LOGAND_OP) || (opnum == LOGOR_OP))
     {   generate_code_from(below, FALSE);
+        if (execution_never_reaches_here) {
+            /* If the condition never falls through to here, then it
+               was an "... && 0 && ..." test. Our convention is to skip
+               the "not reached" warnings for this case. */
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        }
         generate_code_from(ET[below].right, FALSE);
         goto OperatorGenerated;
     }
