@@ -2811,6 +2811,7 @@ static void generate_code_from(int n, int void_flag)
     OperatorGenerated:
 
     if (!glulx_mode) {
+        
         if (ET[n].to_expression)
         {
             int32 donelabel;
