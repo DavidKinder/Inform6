@@ -1303,6 +1303,26 @@ static void emit_token(const token_data *t)
                 }
 
             }
+
+            /* We can also fold logical operations if they are certain
+               to short-circuit. The right-hand argument is skipped even
+               if it's non-constant or has side effects. */
+            
+            if ((o1.marker == 0)
+                && is_constant_ot(o1.type)) {
+                
+                if (t->value == LOGAND_OP && o1.value == 0)
+                {
+                    x = 0;
+                    goto FoldConstant;
+                }
+
+                if (t->value == LOGOR_OP && o1.value != 0)
+                {
+                    x = 1;
+                    goto FoldConstant;
+                }
+            }
     }
 
     ensure_memory_list_available(&ET_memlist, ET_used+1);

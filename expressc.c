@@ -1296,6 +1296,12 @@ static void generate_code_from(int n, int void_flag)
 
     if ((opnum == LOGAND_OP) || (opnum == LOGOR_OP))
     {   generate_code_from(below, FALSE);
+        if (execution_never_reaches_here) {
+            /* If the condition never falls through to here, then it
+               was an "... && 0 && ..." test. Our convention is to skip
+               the "not reached" warnings for this case. */
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        }
         generate_code_from(ET[below].right, FALSE);
         goto OperatorGenerated;
     }
@@ -2808,6 +2814,7 @@ static void generate_code_from(int n, int void_flag)
 
         if (ET[n].to_expression)
         {
+            int32 donelabel;
             if (void_flag) {
                 warning("Logical expression has no side-effects");
                 if (ET[n].true_label != -1)
@@ -2816,18 +2823,26 @@ static void generate_code_from(int n, int void_flag)
                     assemble_label_no(ET[n].false_label);
             }
             else if (ET[n].true_label != -1)
-            {   assemblez_1(push_zc, zero_operand);
-                assemblez_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, zero_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assemblez_1(push_zc, one_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             else
-            {   assemblez_1(push_zc, one_operand);
-                assemblez_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, one_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assemblez_1(push_zc, zero_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
@@ -2840,6 +2855,7 @@ static void generate_code_from(int n, int void_flag)
 
         if (ET[n].to_expression)
         {   
+            int32 donelabel;
             if (void_flag) {
                 warning("Logical expression has no side-effects");
                 if (ET[n].true_label != -1)
@@ -2848,18 +2864,26 @@ static void generate_code_from(int n, int void_flag)
                     assemble_label_no(ET[n].false_label);
             }
             else if (ET[n].true_label != -1)
-            {   assembleg_store(stack_pointer, zero_operand);
-                assembleg_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, zero_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assembleg_store(stack_pointer, one_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             else
-            {   assembleg_store(stack_pointer, one_operand);
-                assembleg_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, one_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assembleg_store(stack_pointer, zero_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
