@@ -52,15 +52,17 @@ These are the changes delivered in version 6.37 of the Inform compiler.
 <ul>
 <li><p>The compiler is now capable of dead code elimination, allowing it to:
  <ul>
- <li>Discard unreachable opcodes and strings
- <li>Minimize generated code for dead branches (<tt>if (0)</tt>, <tt>if (1)</tt>)
- <li>Detect <tt>if</tt> and <tt>switch</tt> statements where every branch returns
- <li>Detect loops that never exit (or always return)
- <li>Discard <tt>@jz constant</tt> opcodes where the constant is nonzero
- <li>Convert <tt>@jz 0</tt> to an unconditional <tt>@jump</tt>
- <li>Discard a <tt>@jump</tt> to the very next instruction
+ <li>Discard unreachable opcodes and strings.
+ <li>Minimize generated code for dead branches (<tt>if (0)</tt>, <tt>if (1)</tt>).
+ <li>Detect <tt>if</tt> and <tt>switch</tt> statements where every branch returns.
+ <li>Detect loops that never exit (or always return).
+ <li>Discard <tt>@jz constant</tt> opcodes where the constant is non-zero.
+ <li>Convert <tt>@jz 0</tt> to an unconditional <tt>@jump</tt>.
+ <li>Discard a <tt>@jump</tt> to the very next instruction.
+ <li>Discard store opcodes when computing a logical expression as a value, if one case (0 or 1) is impossible.
+ <li>Fold expressions like <tt>(0 && expr)</tt> and <tt>(1 || expr)</tt>, even when <tt>expr</tt> is not a constant.
  </ul><br>
-When statements that can never be reached are eliminated, a warning is produced.
+When statements that can never be reached are eliminated, a warning is produced, where appropriate.
 <li><p>Dead code elimination does mean that theoretically possible (though very odd) valid code will now
 result in a compilation error. For example,
 <pre>
@@ -75,6 +77,9 @@ result in a compilation error. For example,
 </pre>
 This will fail with a compilation error if <tt>DOSTUFF</tt> is defined as a constant zero. This optimization
 can be turned off by setting the compiler setting <tt>$STRIP_UNREACHABLE_LABELS</tt> to zero (its default is one).
+<li><p>There is a new syntax for dynamic-string interpolations: <tt>"@(N)"</tt>. The original syntax was <tt>"@NN"</tt>,
+which is still supported. In the new syntax <tt>"N"</tt> can be a number, or an already defined numeric constant.
+As a result of this, under Glulx the limit on <tt>$MAX_DYNAMIC_STRINGS</tt> being less than 100 has been removed.
 <li><p>The constants <tt>#dictionary_table</tt> and <tt>#grammar_table</tt> are now available when compiling to
 Z-code, as well as Glulx.
 <li><p>The command line switch to display percentages (<tt>-p</tt>) now works with Glulx, and acts as an
