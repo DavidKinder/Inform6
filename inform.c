@@ -212,14 +212,6 @@ static void select_target(int targ)
       MAX_ABBREVS = 64;
     }
   }
-  else {
-    if (MAX_DYNAMIC_STRINGS > 100) {
-      MAX_DYNAMIC_STRINGS = 100;
-      warning("MAX_DYNAMIC_STRINGS cannot exceed 100; resetting to 100");
-      /* This is because they are specified in text literals like "@00",
-         with two digits. */
-    }
-  }
 }
 
 /* ------------------------------------------------------------------------- */

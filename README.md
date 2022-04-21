@@ -1,6 +1,6 @@
 # Inform 6
 
-This is Inform 6.37, copyright (c) Graham Nelson 1993 - 2022, a compiler for
+This is Inform 6.36, copyright (c) Graham Nelson 1993 - 2022, a compiler for
 interactive fiction (text adventure games).
 
 Release notes, manuals, executables and more are available from

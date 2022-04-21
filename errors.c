@@ -226,7 +226,7 @@ char *forerrors_buff;
 int  forerrors_pointer;
 
 static void message(int style, char *s)
-{   int throw_style = style;
+{
     if (hash_printed_since_newline) printf("\n");
     hash_printed_since_newline = FALSE;
     print_preamble();
@@ -234,13 +234,13 @@ static void message(int style, char *s)
     {   case 1: printf("Error: "); no_errors++; break;
         case 2: printf("Warning: "); no_warnings++; break;
         case 3: printf("Error:  [linking '%s']  ", current_module_filename);
-                no_link_errors++; no_errors++; throw_style=1; break;
+                no_link_errors++; no_errors++; break;
         case 4: printf("*** Compiler error: ");
-                no_compiler_errors++; throw_style=1; break;
+                no_compiler_errors++; break;
     }
     printf(" %s\n", s);
 #ifdef ARC_THROWBACK
-    throwback(throw_style, s);
+    throwback(((style <= 2) ? style : 1), s);
 #endif
 #ifdef MAC_FACE
     ProcessEvents (&g_proc);
@@ -367,10 +367,10 @@ extern void unicode_char_error(char *s, int32 uni)
 
 extern void error_max_dynamic_strings(int index)
 {
-    if (index >= 100)
-        snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @99 may be used in Inform");
-    else if (index >= 96 && !glulx_mode)
+    if (index >= 96 && !glulx_mode)
         snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @95 may be used in Z-code");
+    else if (MAX_DYNAMIC_STRINGS == 0)
+        snprintf(error_message_buff, ERROR_BUFLEN, "Dynamic strings may not be used, because $MAX_DYNAMIC_STRINGS has been set to 0. Increase MAX_DYNAMIC_STRINGS.");
     else if (MAX_DYNAMIC_STRINGS == 32 && !glulx_mode)
         snprintf(error_message_buff, ERROR_BUFLEN, "Only dynamic strings @00 to @%02d may be used, because $MAX_DYNAMIC_STRINGS has its default value of %d. Increase MAX_DYNAMIC_STRINGS.", MAX_DYNAMIC_STRINGS-1, MAX_DYNAMIC_STRINGS);
     else
@@ -487,11 +487,12 @@ extern void print_sorry_message(void)
 "***********************************************************************\n\
 * 'Compiler errors' should never occur if Inform is working properly. *\n\
 * This is version %d.%02d of Inform, dated %20s: so      *\n\
-* if that was more than six months ago, there may be a more recent    *\n\
+* if that was more than a year ago, there may be a more recent        *\n\
 * version available, from which the problem may have been removed.    *\n\
-* If not, please report this fault to:   graham@gnelson.demon.co.uk   *\n\
-* and if at all possible, please include your source code, as faults  *\n\
-* such as these are rare and often difficult to reproduce.  Sorry.    *\n\
+* If not, please report this fault as an issue at                     *\n\
+* https://github.com/DavidKinder/Inform6/ and if at all possible,     *\n\
+* please include your source code, as faults such as these are rare   *\n\
+* and often difficult to reproduce.  Sorry.                           *\n\
 ***********************************************************************\n",
     (RELEASE_NUMBER/100)%10, RELEASE_NUMBER%100, RELEASE_DATE);
 }
