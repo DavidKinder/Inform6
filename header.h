@@ -960,6 +960,8 @@ typedef struct FileId_s                 /*  Source code file identifier:     */
                                             parsing? If not, this is an
                                             origsource filename (and handle
                                             is NULL).                        */
+    int initial_buffering;              /* Are we still in the initial
+                                           begin_buffering_file() call?      */
 } FileId;
 
 typedef struct ErrorPosition_s
@@ -2553,14 +2555,15 @@ extern int WORDSIZE, INDIV_PROP_START,
     OBJECT_BYTE_LENGTH, DICT_ENTRY_BYTE_LENGTH, DICT_ENTRY_FLAG_POS;
 extern int32 MAXINTWORD;
 
-extern int asm_trace_level, line_trace_level,     expr_trace_level,
+extern int asm_trace_level, expr_trace_level,
     linker_trace_level,     tokens_trace_level;
 
 extern int
-    bothpasses_switch,      concise_switch,
+    concise_switch,
     economy_switch,         frequencies_setting,
-    ignore_switches_switch, listobjects_switch,   debugfile_switch,
-    listing_switch,         memout_switch,        printprops_switch,
+    ignore_switches_switch, debugfile_switch,
+    files_trace_setting,    memout_switch,        printprops_switch,
+    printactions_switch,
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
@@ -2576,6 +2579,8 @@ extern int glulx_mode, compression_switch;
 extern int32 requested_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
+    expr_trace_setting,     linker_trace_setting, tokens_trace_setting,
+    bpatch_trace_setting,   symdef_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
 

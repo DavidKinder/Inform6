@@ -1104,7 +1104,7 @@ printf("        +---------------------+   %05lx\n", (long int) Out_Size);
 
 static void construct_storyfile_g(void)
 {   uchar *p;
-    int32 i, j, k, l, mark, strings_length, limit;
+    int32 i, j, k, l, mark, strings_length;
     int32 globals_at, dictionary_at, actions_at, preactions_at,
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
           grammar_table_at, arrays_at, static_arrays_at;
@@ -1452,7 +1452,6 @@ table format requested (producing number 2 format instead)");
     RAM_Size = mark;
 
     Out_Size = Write_RAM_At + RAM_Size;
-    limit=1024*1024;
 
     /*  --------------------------- Offsets -------------------------------- */
 
@@ -1684,7 +1683,7 @@ static void display_statistics_z()
     char *k_str = "";
     uchar *p = (uchar *) zmachine_paged_memory;
     char *output_called = (module_switch)?"module":"story file";
-    int limit;
+    int limit = 0;
 
     /* Yeah, we're repeating this calculation from construct_storyfile_z() */
     switch(version_number)

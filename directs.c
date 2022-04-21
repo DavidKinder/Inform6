@@ -1019,9 +1019,9 @@ the first constant definition");
            It shows the grammar at this point in the code. Setting
            list_verbs_setting shows the grammar at the end of 
            compilation.
-           Same goes for "Trace dictionary" and list_dict_setting. */
+           Same goes for "Trace dictionary" and list_dict_setting, etc. */
         
-        i = token_value; j = 0;
+        i = token_value;
 
         switch(i)
         {
@@ -1029,8 +1029,6 @@ the first constant definition");
             trace_level = &asm_trace_level;  break;
         case EXPRESSIONS_TK:
             trace_level = &expr_trace_level; break;
-        case LINES_TK:
-            trace_level = &line_trace_level; break;
         case TOKENS_TK:
             trace_level = &tokens_trace_level; break;
         case LINKER_TK:
@@ -1039,6 +1037,9 @@ the first constant definition");
         case SYMBOLS_TK:
         case OBJECTS_TK:
         case VERBS_TK:
+            trace_level = NULL; break;
+        case LINES_TK:
+            /* never implememented */
             trace_level = NULL; break;
         default:
             put_token_back();
@@ -1068,6 +1069,11 @@ the first constant definition");
 
         HandleTraceKeyword:
 
+        if (i == LINES_TK) {
+            warning_named("Trace option is not supported:", trace_keywords.keywords[i]);
+            break;
+        }
+        
         if (trace_level == NULL && j == 0) {
             warning_named("Trace directive to display table at 'off' level has no effect: table", trace_keywords.keywords[i]);
             break;
@@ -1079,7 +1085,8 @@ the first constant definition");
             case SYMBOLS_TK:    list_symbols(j);     break;
             case VERBS_TK:      list_verb_table();   break;
             default:
-                *trace_level = j;
+                if (trace_level)
+                    *trace_level = j;
                 break;
         }
         break;

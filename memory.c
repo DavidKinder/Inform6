@@ -598,23 +598,38 @@ static void set_trace_option(char *command)
     
     if (!command || *command == '\0') {
         printf("The full list of trace options:\n\n");
+        printf("  ACTIONS: show actions defined\n");
         printf("  ASM: trace assembly (same as -a)\n");
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");
         printf("    ASM=4: more verbose branch info\n");
+        printf("  BPATCH: show backpatch results\n");
+        printf("    BPATCH=2: also show markers added\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
+        printf("  EXPR: show expression trees\n");
+        printf("    EXPR=2: more verbose\n");
+        printf("    EXPR=3: even more verbose\n");
+        printf("  FILES: show files opened\n");
         printf("  FINDABBREVS: show selection decisions during abbreviation optimization\n    (only meaningful with -u)\n");
         printf("    FINDABBREVS=2: also show three-letter-block decisions\n");
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
+        printf("  LINKER: show module linking info\n");
+        printf("    LINKER=2: more verbose (or 3, 4 for even more)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
+        printf("  MEM: show internal memory allocations\n");
         printf("  OBJECTS: display the object table\n");
+        printf("  PROPS: show attributes and properties defined\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
         printf("  SYMBOLS: display the symbol table\n");
         printf("    SYMBOLS=2: also show compiler-defined symbols\n");
+        printf("  SYMDEF: show when symbols are noticed and defined\n");
+        printf("  TOKENS: show token lexing\n");
+        printf("    TOKENS=2: also show token types\n");
+        printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
-        //### more
+        //### trace_fns_setting (-g)
         return;
     }
 
@@ -643,8 +658,20 @@ static void set_trace_option(char *command)
     if (strcmp(command, "ASSEMBLY")==0 || strcmp(command, "ASM")==0) {
         asm_trace_setting = value;
     }
+    else if (strcmp(command, "ACTION")==0 || strcmp(command, "ACTIONS")==0) {
+        printactions_switch = value;
+    }
+    else if (strcmp(command, "BPATCH")==0 || strcmp(command, "BACKPATCH")==0) {
+        bpatch_trace_setting = value;
+    }
     else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
         list_dict_setting = value;
+    }
+    else if (strcmp(command, "EXPR")==0 || strcmp(command, "EXPRESSION")==0 || strcmp(command, "EXPRESSIONS")==0) {
+        expr_trace_setting = value;
+    }
+    else if (strcmp(command, "FILE")==0 || strcmp(command, "FILES")==0) {
+        files_trace_setting = value;
     }
     else if (strcmp(command, "FINDABBREV")==0 || strcmp(command, "FINDABBREVS")==0) {
         optabbrevs_trace_setting = value;
@@ -652,17 +679,32 @@ static void set_trace_option(char *command)
     else if (strcmp(command, "FREQUENCY")==0 || strcmp(command, "FREQUENCIES")==0 || strcmp(command, "FREQ")==0) {
         frequencies_setting = value;
     }
+    else if (strcmp(command, "LINK")==0 || strcmp(command, "LINKER")==0) {
+        linker_trace_setting = value;
+    }
     else if (strcmp(command, "MAP")==0) {
         memory_map_setting = value;
     }
+    else if (strcmp(command, "MEM")==0 || strcmp(command, "MEMORY")==0) {
+        memout_switch = value;
+    }
     else if (strcmp(command, "OBJECTS")==0 || strcmp(command, "OBJECT")==0 || strcmp(command, "OBJS")==0 || strcmp(command, "OBJ")==0) {
         list_objects_setting = value;
+    }
+    else if (strcmp(command, "PROP")==0 || strcmp(command, "PROPERTY")==0 || strcmp(command, "PROPS")==0 || strcmp(command, "PROPERTIES")==0) {
+        printprops_switch = value;
     }
     else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;
     }
     else if (strcmp(command, "SYMBOLS")==0 || strcmp(command, "SYMBOL")==0) {
         list_symbols_setting = value;
+    }
+    else if (strcmp(command, "SYMDEF")==0 || strcmp(command, "SYMBOLDEF")==0) {
+        symdef_trace_setting = value;
+    }
+    else if (strcmp(command, "TOKEN")==0 || strcmp(command, "TOKENS")==0) {
+        tokens_trace_setting = value;
     }
     else if (strcmp(command, "VERBS")==0 || strcmp(command, "VERB")==0) {
         list_verbs_setting = value;

@@ -216,32 +216,31 @@ static void select_target(int targ)
 
 /* ------------------------------------------------------------------------- */
 /*   Tracery: output control variables                                       */
+/*   (These are initially set to foo_trace_setting, but the Trace directive  */
+/*   can change them on the fly)                                             */
 /* ------------------------------------------------------------------------- */
 
 int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             only, 2 for full assembly tracing with hex dumps,
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
-    line_trace_level,    /* line tracing: 0 off, 1 on                        */
-    expr_trace_level,    /* expression tracing: 0 off, 1 full, 2 brief       */
-    linker_trace_level,  /* set by -y: 0 to 4 levels of tracing              */
-    tokens_trace_level;  /* lexer output tracing: 0 off, 1 on                */
+    expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
+    linker_trace_level,  /* linker tracing: 0 to 4 levels                    */
+    tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
 /*   On/off switch variables (by default all FALSE); other switch settings   */
 /*   (Some of these have become numerical settings now)                      */
 /* ------------------------------------------------------------------------- */
 
-int bothpasses_switch,              /* -b */
-    concise_switch,                 /* -c */
+int concise_switch,                 /* -c */
     economy_switch,                 /* -e */
     frequencies_setting,            /* $!FREQ, -f */
     ignore_switches_switch,         /* -i */
-    listobjects_switch,             /* -j */
     debugfile_switch,               /* -k */
-    listing_switch,                 /* -l */
-    memout_switch,                  /* -m */
-    printprops_switch,              /* -n */
+    memout_switch,                  /* $!MEM */
+    printprops_switch,              /* $!PROPS */
+    printactions_switch,            /* $!ACTIONS */
     obsolete_switch,                /* -q */
     transcript_switch,              /* -r */
     statistics_switch,              /* $!STATS, -s */
@@ -269,10 +268,18 @@ int character_set_setting,          /* set by -C0 through -C9 */
     error_format,                   /* set by -E */
     asm_trace_setting,              /* $!ASM, -a: initial value of
                                        asm_trace_level */
+    bpatch_trace_setting,           /* $!BPATCH */
+    symdef_trace_setting,           /* $!SYMDEF */
+    expr_trace_setting,             /* $!EXPR: initial value of
+                                       expr_trace_level */
+    tokens_trace_setting,           /* $!TOKENS: initial value of
+                                       tokens_trace_level */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* set by -g: 0, 1 or 2 */
-    linker_trace_setting,           /* set by -y: ditto for linker_... */
+    files_trace_setting,            /* $!FILES */
+    linker_trace_setting,           /* $!LINKER: initial value of
+                                       linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
     list_objects_setting,           /* $!OBJECTS */
@@ -284,28 +291,30 @@ static int r_e_c_s_set;             /* has -S been explicitly set? */
 int glulx_mode;                     /* -G */
 
 static void reset_switch_settings(void)
-{   asm_trace_setting=0;
-    linker_trace_level=0;
-    tokens_trace_level=0;
-    list_verbs_setting=0;
-    list_dict_setting=0;
-    list_objects_setting=0;
-    list_symbols_setting=0;
+{   asm_trace_setting = 0;
+    linker_trace_setting = 0;
+    tokens_trace_setting = 0;
+    expr_trace_setting = 0;
+    bpatch_trace_setting = 0;
+    symdef_trace_setting = 0;
+    list_verbs_setting = 0;
+    list_dict_setting = 0;
+    list_objects_setting = 0;
+    list_symbols_setting = 0;
 
     store_the_text = FALSE;
 
-    bothpasses_switch = FALSE;
     concise_switch = FALSE;
     double_space_setting = 0;
     economy_switch = FALSE;
+    files_trace_setting = 0;
     frequencies_setting = 0;
     trace_fns_setting = 0;
     ignore_switches_switch = FALSE;
-    listobjects_switch = FALSE;
     debugfile_switch = FALSE;
-    listing_switch = FALSE;
-    memout_switch = FALSE;
-    printprops_switch = FALSE;
+    memout_switch = 0;
+    printprops_switch = 0;
+    printactions_switch = 0;
     obsolete_switch = FALSE;
     transcript_switch = FALSE;
     statistics_switch = FALSE;
@@ -314,7 +323,7 @@ static void reset_switch_settings(void)
     version_set_switch = FALSE;
     nowarnings_switch = FALSE;
     hash_switch = FALSE;
-    memory_map_setting = FALSE;
+    memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
 #ifdef USE_TEMPORARY_FILES
@@ -341,6 +350,12 @@ static void reset_switch_settings(void)
     compression_switch = TRUE;
     glulx_mode = FALSE;
     requested_glulx_version = 0;
+
+    /* These aren't switches, but for clarity we reset them too. */
+    asm_trace_level = 0;
+    expr_trace_level = 0;
+    linker_trace_level = 0;
+    tokens_trace_level = 0;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -396,10 +411,10 @@ static void begin_pass(void)
     files_begin_pass();
 
     endofpass_flag = FALSE;
-    line_trace_level = 0; expr_trace_level = 0;
+    expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
+    tokens_trace_level = tokens_trace_setting;
     linker_trace_level = linker_trace_setting;
-    if (listing_switch) line_trace_level=1;
 
     lexer_begin_pass();
     linker_begin_pass();
@@ -1353,11 +1368,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    printf("\
   i   ignore default switches set within the file\n\
-  j   list objects as constructed\n\
-  k   output debugging information to \"%s\"\n\
-  l   list every statement run through Inform (not implemented)\n\
-  m   say how much memory has been allocated\n\
-  n   print numbers of properties, attributes and actions\n",
+  k   output debugging information to \"%s\"\n",
           Debugging_Name);
    printf("\
   q   keep quiet about obsolete usages\n\
@@ -1375,7 +1386,6 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   v8  compile to version-8 (expanded \"Advanced\") story file\n\
   w   disable warning messages\n\
   x   print # for every 100 lines compiled\n\
-  y   trace linking system\n\
   z   print memory map of the virtual machine\n\n");
 
 printf("\
@@ -1445,7 +1455,6 @@ extern void switches(char *p, int cmode)
                       default: asm_trace_setting=1; break;
                   }
                   break;
-        case 'b': bothpasses_switch = state; break;
         case 'c': concise_switch = state; break;
         case 'd': switch(p[i+1])
                   {   case '1': double_space_setting=1; s=2; break;
@@ -1470,15 +1479,11 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'i': ignore_switches_switch = state; break;
-        case 'j': listobjects_switch = state; break;
         case 'k': if (cmode == 0)
                       error("The switch '-k' can't be set with 'Switches'");
                   else
                       debugfile_switch = state;
                   break;
-        case 'l': listing_switch = state; break;
-        case 'm': memout_switch = state; break;
-        case 'n': printprops_switch = state; break;
         case 'q': obsolete_switch = state; break;
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");
@@ -1509,7 +1514,6 @@ extern void switches(char *p, int cmode)
                   break;
         case 'w': nowarnings_switch = state; break;
         case 'x': hash_switch = state; break;
-        case 'y': s=2; linker_trace_setting=p[i+1]-'0'; break;
         case 'z': memory_map_setting = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
         case 'C': s=2;

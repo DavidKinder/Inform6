@@ -299,7 +299,7 @@ static void new_action(char *b, int c)
         by using make_action above, or the Fake_Action directive, or by
         the linker).  At present just a hook for some tracing code.          */
 
-    if (printprops_switch)
+    if (printactions_switch)
         printf("Action '%s' is numbered %d\n",b,c);
 }
 
