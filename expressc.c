@@ -1887,6 +1887,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF:
                          j=0; i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallZ;
 
                      case CHILDREN_SYSF:
@@ -1962,6 +1963,7 @@ static void generate_code_from(int n, int void_flag)
                  }
                  break;
              }
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
 
              GenFunctionCallZ:
 
@@ -2653,6 +2655,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF: 
                          i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallG;
 
                      case GLK_SYSF: 
@@ -2722,6 +2725,7 @@ static void generate_code_from(int n, int void_flag)
                  break;
              }
 
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
              i = below;
 
              IndirectFunctionCallG:
