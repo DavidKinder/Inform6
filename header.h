@@ -2769,6 +2769,7 @@ extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);
 extern void assign_symbol(int index, int32 value, int type);
 extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *label);
+extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *context);
 extern void issue_unused_warnings(void);
 extern void issue_debug_symbol_warnings(void);
 extern void add_config_symbol_definition(char *symbol, int32 value);
