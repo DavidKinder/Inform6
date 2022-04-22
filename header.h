@@ -1406,6 +1406,11 @@ typedef struct operator_s
 #define FAKE_ACTION_T         11
 #define STATIC_ARRAY_T        12
 
+/* These types never occur in the symbol table; they exist only as
+   type-checking requirements. */
+#define STRING_REQ_T          13
+#define DICT_WORD_REQ_T       14
+
 /* ------------------------------------------------------------------------- */
 /*   Statusline_flag values                                                  */
 /* ------------------------------------------------------------------------- */

@@ -357,6 +357,10 @@ extern char *typename(int type)
         case OBJECT_T:              return("Object");
         case CLASS_T:               return("Class");
         case FAKE_ACTION_T:         return("Fake action");
+            
+        /*  These are not symbol types, but they get printed in errors. */
+        case STRING_REQ_T:          return("String");
+        case DICT_WORD_REQ_T:       return("Dictionary word");
 
         default:                   return("(Unknown type)");
     }
@@ -408,8 +412,16 @@ extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int
     
     if (AO->symindex < 0)
     {
-        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. We don't try to generate type warnings. */
-        /* (We could figure out some warnings for literals -- e.g., "give 0 attr" and "give 'word' attr" are errors. But we currently don't. */
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. */
+        /* We can recognize and type-check some literals. */
+        if (AO->marker == DWORD_MV) {
+            if (wanttype != DICT_WORD_REQ_T && wanttype2 != DICT_WORD_REQ_T)
+                symtype_warning(context, NULL, typename(DICT_WORD_REQ_T), typename(wanttype));
+        }
+        if (AO->marker == STRING_MV) {
+            if (wanttype != STRING_REQ_T && wanttype2 != STRING_REQ_T)
+                symtype_warning(context, NULL, typename(STRING_REQ_T), typename(wanttype));
+        }
         return;
     }
     
@@ -451,8 +463,14 @@ extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *co
     
     if (AO->symindex < 0)
     {
-        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. We don't try to generate type warnings. */
-        /* (We could figure out some warnings for literals -- e.g., "give 0 attr" and "give 'word' attr" are errors. But we currently don't. */
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. */
+        /* We can recognize and type-check some literals. */
+        if (AO->marker == DWORD_MV) {
+            symtype_warning(context, NULL, typename(DICT_WORD_REQ_T), "Object/Class/Routine/String");
+        }
+        if (AO->marker == STRING_MV) {
+            /* Strings are good here. */
+        }
         return;
     }
     
