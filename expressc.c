@@ -1712,6 +1712,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_ADD_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
@@ -1723,6 +1724,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_NUM_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_NUM_RTE);
@@ -1755,10 +1757,12 @@ static void generate_code_from(int n, int void_flag)
              j=1; AI.operand[0] = veneer_routine(RV__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              j=1; AI.operand[0] = veneer_routine(RA__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              j=1; AI.operand[0] = veneer_routine(RL__Pr_VR);
              goto GenFunctionCallZ;
@@ -2441,11 +2445,13 @@ static void generate_code_from(int n, int void_flag)
              goto TwoArgFunctionCall;
         case MPROP_ADD_OP:
         case PROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              AO = veneer_routine(RA__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_NUM_OP:
         case PROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              AO = veneer_routine(RL__Pr_VR);
              goto TwoArgFunctionCall;
