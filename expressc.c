@@ -1768,15 +1768,23 @@ static void generate_code_from(int n, int void_flag)
              j=1; AI.operand[0] = veneer_routine(WV__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              j=1; AI.operand[0] = veneer_routine(IB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              j=1; AI.operand[0] = veneer_routine(DB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              j=1; AI.operand[0] = veneer_routine(IA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              j=1; AI.operand[0] = veneer_routine(DA__Pr_VR);
              goto GenFunctionCallZ;
         case SUPERCLASS_OP:
@@ -2172,6 +2180,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2184,6 +2194,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2196,6 +2208,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2208,6 +2222,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2444,18 +2460,26 @@ static void generate_code_from(int n, int void_flag)
 
         case MESSAGE_INC_OP:
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              AO = veneer_routine(IB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_DEC_OP:
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              AO = veneer_routine(DB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_INC_OP:
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              AO = veneer_routine(IA__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_DEC_OP:
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              AO = veneer_routine(DA__Pr_VR);
              goto TwoArgFunctionCall;
         case SUPERCLASS_OP:
