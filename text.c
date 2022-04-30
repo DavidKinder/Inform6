@@ -243,6 +243,7 @@ extern void make_abbreviation(char *text)
 extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
     uchar *c;
+    int in_low_memory;
 
     if (execution_never_reaches_here) {
         /* No need to put strings into gametext.txt or the static/low
@@ -257,7 +258,7 @@ extern int32 compile_string(char *b, int strctx)
     /* In Z-code, abbreviations go in the low memory pool (0x100). So
        do strings explicitly defined with the Lowstring directive.
        (In Glulx, the in_low_memory flag is ignored.) */
-    int in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
+    in_low_memory = (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING);
 
     if (!glulx_mode && in_low_memory)
     {
