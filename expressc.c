@@ -1712,6 +1712,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_ADD_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
@@ -1723,6 +1724,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_NUM_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_NUM_RTE);
@@ -1737,6 +1739,7 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_OP:
              {
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                        assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
@@ -1749,40 +1752,55 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(RV__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              j=1; AI.operand[0] = veneer_routine(RA__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              j=1; AI.operand[0] = veneer_routine(RL__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(WV__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              j=1; AI.operand[0] = veneer_routine(IB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              j=1; AI.operand[0] = veneer_routine(DB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              j=1; AI.operand[0] = veneer_routine(IA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              j=1; AI.operand[0] = veneer_routine(DA__Pr_VR);
              goto GenFunctionCallZ;
         case SUPERCLASS_OP:
              j=1; AI.operand[0] = veneer_routine(RA__Sc_VR);
              goto GenFunctionCallZ;
         case PROP_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
@@ -1887,6 +1905,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF:
                          j=0; i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallZ;
 
                      case CHILDREN_SYSF:
@@ -1962,6 +1981,7 @@ static void generate_code_from(int n, int void_flag)
                  }
                  break;
              }
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
 
              GenFunctionCallZ:
 
@@ -2019,6 +2039,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              if (!void_flag)
              {   if (runtime_error_checking_switch)
                      assemblez_4_to(call_zc, veneer_routine(RT__ChPS_VR),
@@ -2162,6 +2184,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2174,6 +2198,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2186,6 +2212,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2198,6 +2226,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2409,22 +2439,26 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_OP:
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              AO = veneer_routine(RV__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_ADD_OP:
         case PROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              AO = veneer_routine(RA__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_NUM_OP:
         case PROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              AO = veneer_routine(RL__Pr_VR);
              goto TwoArgFunctionCall;
 
         case PROP_CALL_OP:
         case MESSAGE_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
              check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              AO2 = veneer_routine(CA__Pr_VR);
              i = below;
@@ -2432,18 +2466,26 @@ static void generate_code_from(int n, int void_flag)
 
         case MESSAGE_INC_OP:
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              AO = veneer_routine(IB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_DEC_OP:
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              AO = veneer_routine(DB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_INC_OP:
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              AO = veneer_routine(IA__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_DEC_OP:
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              AO = veneer_routine(DA__Pr_VR);
              goto TwoArgFunctionCall;
         case SUPERCLASS_OP:
@@ -2463,6 +2505,8 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_SETEQUALS_OP:
         case MESSAGE_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              if (runtime_error_checking_switch && (!veneer_mode))
                  AO = veneer_routine(RT__ChPS_VR);
                else
@@ -2653,6 +2697,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF: 
                          i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallG;
 
                      case GLK_SYSF: 
@@ -2722,6 +2767,7 @@ static void generate_code_from(int n, int void_flag)
                  break;
              }
 
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
              i = below;
 
              IndirectFunctionCallG:

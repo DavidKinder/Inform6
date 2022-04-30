@@ -357,6 +357,10 @@ extern char *typename(int type)
         case OBJECT_T:              return("Object");
         case CLASS_T:               return("Class");
         case FAKE_ACTION_T:         return("Fake action");
+            
+        /*  These are not symbol types, but they get printed in errors. */
+        case STRING_REQ_T:          return("String");
+        case DICT_WORD_REQ_T:       return("Dictionary word");
 
         default:                   return("(Unknown type)");
     }
@@ -408,8 +412,16 @@ extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int
     
     if (AO->symindex < 0)
     {
-        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. We don't try to generate type warnings. */
-        /* (We could figure out some warnings for literals -- e.g., "give 0 attr" and "give 'word' attr" are errors. But we currently don't. */
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. */
+        /* We can recognize and type-check some literals. */
+        if (AO->marker == DWORD_MV) {
+            if (wanttype != DICT_WORD_REQ_T && wanttype2 != DICT_WORD_REQ_T)
+                symtype_warning(context, NULL, typename(DICT_WORD_REQ_T), typename(wanttype));
+        }
+        if (AO->marker == STRING_MV) {
+            if (wanttype != STRING_REQ_T && wanttype2 != STRING_REQ_T)
+                symtype_warning(context, NULL, typename(STRING_REQ_T), typename(wanttype));
+        }
         return;
     }
     
@@ -439,6 +451,54 @@ extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int
           || (wanttype2 != 0 && symtype == wanttype2)))
     {
         symtype_warning(context, sym->name, typename(symtype), typename(wanttype));
+    }
+}
+
+/* Similar, but we allow any type that has a metaclass: Object, Class, String, or Routine.
+   Generate a warning if no match. */
+extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *context)
+{
+    symbolinfo *sym;
+    int symtype;
+    
+    if (AO->symindex < 0)
+    {
+        /* This argument is not a symbol; it's a local variable, a literal, or a computed expression. */
+        /* We can recognize and type-check some literals. */
+        if (AO->marker == DWORD_MV) {
+            symtype_warning(context, NULL, typename(DICT_WORD_REQ_T), "Object/Class/Routine/String");
+        }
+        if (AO->marker == STRING_MV) {
+            /* Strings are good here. */
+        }
+        return;
+    }
+    
+    sym = &symbols[AO->symindex];
+    symtype = sym->type;
+    
+    if (symtype == GLOBAL_VARIABLE_T)
+    {
+        /* A global variable could have any value. No way to generate a warning. */
+        return;
+    }
+    if (symtype == CONSTANT_T)
+    {
+        /* A constant could also have any value. This case also includes forward-declared constants (UNKNOWN_SFLAG). */
+        /* We try inferring its type by looking at the backpatch marker. Sadly, this only works for objects. (And not in Z-code, where object values are not backpatched.) */
+        if (sym->marker == OBJECT_MV) {
+            /* Continue with inferred type. */
+            symtype = OBJECT_T;
+        }
+        else {
+            /* Give up. */
+            return;
+        }
+    }
+
+    if (!(symtype == ROUTINE_T || symtype == CLASS_T || symtype == OBJECT_T))
+    {
+        symtype_warning(context, sym->name, typename(symtype), "Object/Class/Routine/String");
     }
 }
 
