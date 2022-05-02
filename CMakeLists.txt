@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.0)
+cmake_minimum_required(VERSION 3.3)
 project(Inform6 VERSION 0.6.37 LANGUAGES C)
 
 find_program(CCACHE_PROGRAM ccache)
