@@ -1,10 +1,6 @@
 name: build-release
 
 on:
-  # XXX: temp trigger for testing
-  push:
-    branches:
-      - master
   release:
     types: [published]
 

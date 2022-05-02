@@ -24,7 +24,7 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
-      # when building on master branch and not a pull request, build and test in release mode (optimised build)
+      # when building on master branch and not a pull request, build in release mode (optimised build)
       - name: Set Build Mode to Release
         shell: bash
         if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
