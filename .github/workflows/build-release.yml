@@ -58,4 +58,5 @@ jobs:
         with:
           # TODO: get current version of Inform6 and insert this into the filename
           name: Inform6_build_${{ github.run_number }}_${{ matrix.platform_name }}
-          path: ${{github.workspace}}/artifacts
+          # ONLY include the /bin subdirectory, as we only want the Inform6 executable
+          path: ${{github.workspace}}/artifacts/bin
