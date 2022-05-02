@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.0)
-project(Inform6 VERSION 0.6.36 LANGUAGES C)
+project(Inform6 VERSION 0.6.37 LANGUAGES C)
 
 find_program(CCACHE_PROGRAM ccache)
 if(CCACHE_PROGRAM)
@@ -42,3 +42,24 @@ add_executable(
         veneer.c
         verbs.c
 )
+
+# try and detect OS with CMake
+set(WINDOWS_PLATFORMS Windows MSYS)
+
+if(INFORM_OS_ID) # if specified manually to CMake at configure-time
+    set(OS_ID ${INFORM_OS_ID})
+# otherwise, try and detect common platforms CMake is documented to know
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Linux") # Linux
+    set(OS_ID LINUX)
+elseif(CMAKE_SYSTEM_NAME STREQUAL "Darwin") # macOS
+    set(OS_ID MACOS)
+elseif(CMAKE_SYSTEM_NAME IN_LIST WINDOWS_PLATFORMS) # Windows
+    set(OS_ID PC_WIN32)
+elseif(UNIX) # Other UNIX, includes BSD, etc...
+    set(OS_ID UNIX)
+endif()
+
+# set macro definitions to tell Inform what OS we're building for
+if(OS_ID)
+    target_compile_definitions(inform6 PRIVATE -D${OS_ID})
+endif()
