@@ -63,3 +63,6 @@ endif()
 if(OS_ID)
     target_compile_definitions(inform6 PRIVATE -D${OS_ID})
 endif()
+
+# install executable if requested
+install(TARGETS inform6)
