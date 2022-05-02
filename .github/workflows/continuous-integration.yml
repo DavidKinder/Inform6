@@ -1,47 +1,47 @@
-# name: continuous-integration
+name: continuous-integration
 
-# on:
-#   push:
-#     branches:
-#       - master
-#   pull_request:
-#     types: [opened, synchronize]
+on:
+  push:
+    branches:
+      - master
+  pull_request:
+    types: [opened, synchronize]
 
-# jobs:
-#   build:
-#     runs-on: ${{ matrix.os }}
-#     env:
-#       BUILD_TYPE: Debug
-#     strategy:
-#       fail-fast: true
-#       matrix:
-#         os: [macos-10.15, ubuntu-20.04]
-#         cc: [gcc-10, clang]
-#         include:
-#           - os: windows-2019
-#             cc: msvc
+jobs:
+  build:
+    runs-on: ${{ matrix.os }}
+    env:
+      BUILD_TYPE: Debug
+    strategy:
+      fail-fast: true
+      matrix:
+        os: [macos-10.15, ubuntu-20.04]
+        cc: [gcc-10, clang]
+        include:
+          - os: windows-2019
+            cc: msvc
 
-#     steps:
-#       - uses: actions/checkout@v2
+    steps:
+      - uses: actions/checkout@v2
 
-#       # when building on master branch and not a pull request, build and test in release mode (optimised build)
-#       - name: Set Build Mode to Release
-#         shell: bash
-#         if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
-#         run: echo "BUILD_TYPE=Release" >> $GITHUB_ENV
+      # when building on master branch and not a pull request, build and test in release mode (optimised build)
+      - name: Set Build Mode to Release
+        shell: bash
+        if: ${{ github.event_name != 'pull_request' && github.ref == 'refs/heads/master' }}
+        run: echo "BUILD_TYPE=Release" >> $GITHUB_ENV
 
-#       - name: Configure CMake
-#         env:
-#           CC: ${{ matrix.cc }}
-#         # Use a bash shell so we can use the same syntax for environment variable
-#         # access regardless of the host operating system
-#         shell: bash
-#         # Note the current convention is to use the -S and -B options here to specify source 
-#         # and build directories, but this is only available with CMake 3.13 and higher.  
-#         # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
-#         run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
+      - name: Configure CMake
+        env:
+          CC: ${{ matrix.cc }}
+        # Use a bash shell so we can use the same syntax for environment variable
+        # access regardless of the host operating system
+        shell: bash
+        # Note the current convention is to use the -S and -B options here to specify source 
+        # and build directories, but this is only available with CMake 3.13 and higher.  
+        # The CMake binaries on the Github Actions machines are (as of this writing) 3.12
+        run: cmake $GITHUB_WORKSPACE -DCMAKE_BUILD_TYPE=$BUILD_TYPE
 
-#       - name: Build
-#         shell: bash
-#         # Execute the build.  You can specify a specific target with "--target <NAME>"
-#         run: cmake --build . --config $BUILD_TYPE
+      - name: Build
+        shell: bash
+        # Execute the build.  You can specify a specific target with "--target <NAME>"
+        run: cmake --build . --config $BUILD_TYPE

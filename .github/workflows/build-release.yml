@@ -63,6 +63,6 @@ jobs:
         uses: actions/upload-artifact@v2
         with:
           # TODO: get current version of Inform6 and insert this into the filename
-          name: Inform${{env.INFORM_RELEASE}}_${{ matrix.platform_name }}
+          name: Inform_${{env.INFORM_RELEASE}}_${{ matrix.platform_name }}
           # ONLY include the /bin subdirectory, as we only want the Inform6 executable
           path: ${{github.workspace}}/artifacts/bin
