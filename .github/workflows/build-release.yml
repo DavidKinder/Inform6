@@ -53,10 +53,13 @@ jobs:
         # Use CMake to "install" build artifacts (only interested in CMake registered targets) to our custom artifacts directory
         run: cmake --install . --config $BUILD_TYPE
 
+      - id: get_version
+        uses: battila7/get-version-action@v2
+
       - name: Upload
         uses: actions/upload-artifact@v2
         with:
           # TODO: get current version of Inform6 and insert this into the filename
-          name: Inform6_build_${{ github.run_number }}_${{ matrix.platform_name }}
+          name: Inform${{steps.get_version.outputs.version-without-v}}_${{ matrix.platform_name }}
           # ONLY include the /bin subdirectory, as we only want the Inform6 executable
           path: ${{github.workspace}}/artifacts/bin
