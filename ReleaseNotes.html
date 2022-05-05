@@ -77,6 +77,13 @@ result in a compilation error. For example,
 </pre>
 This will fail with a compilation error if <tt>DOSTUFF</tt> is defined as a constant zero. This optimization
 can be turned off by setting the compiler setting <tt>$STRIP_UNREACHABLE_LABELS</tt> to zero (its default is one).
+<li><p>There are now further warnings if the compiler detects that the type used in certain expressions is not correct:
+ <ul>
+ <li><tt>X()</tt>, <tt>indirect(X)</tt>: X must be a routine
+ <li><tt>X.Y</tt>, <tt>X.&Y</tt>, <tt>X.#Y</tt>: X must be a class or an object; Y must be a property (the Y checks already existed)
+ <li><tt>X.Y()</tt>: X must be a class, object, string or routine; Y must be a property
+ <li><tt>X.Y++</tt>, <tt>X.Y--</tt>, <tt>++X.Y</tt>, <tt>--X.Y</tt>: X must be a class or an object; Y must be a property
+ </ul>
 <li><p>There is a new syntax for dynamic-string interpolations: <tt>"@(N)"</tt>. The original syntax was <tt>"@NN"</tt>,
 which is still supported. In the new syntax <tt>"N"</tt> can be a number, or an already defined numeric constant.
 As a result of this, under Glulx the limit on <tt>$MAX_DYNAMIC_STRINGS</tt> being less than 100 has been removed.
