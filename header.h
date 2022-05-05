@@ -1408,6 +1408,11 @@ typedef struct operator_s
 #define FAKE_ACTION_T         11
 #define STATIC_ARRAY_T        12
 
+/* These types never occur in the symbol table; they exist only as
+   type-checking requirements. */
+#define STRING_REQ_T          13
+#define DICT_WORD_REQ_T       14
+
 /* ------------------------------------------------------------------------- */
 /*   Statusline_flag values                                                  */
 /* ------------------------------------------------------------------------- */
@@ -2776,6 +2781,7 @@ extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);
 extern void assign_symbol(int index, int32 value, int type);
 extern void check_warn_symbol_type(const assembly_operand *AO, int wanttype, int wanttype2, char *label);
+extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *context);
 extern void issue_unused_warnings(void);
 extern void issue_debug_symbol_warnings(void);
 extern void add_config_symbol_definition(char *symbol, int32 value);
