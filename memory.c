@@ -621,6 +621,9 @@ static void set_trace_option(char *command)
         printf("  MEM: show internal memory allocations\n");
         printf("  OBJECTS: display the object table\n");
         printf("  PROPS: show attributes and properties defined\n");
+        printf("  RUNTIME: show game function calls at runtime (same as -g)\n");
+        printf("    RUNTIME=2: also show library calls (not supported in Glulx)\n");
+        printf("    RUNTIME=3: also show veneer calls (not supported in Glulx)\n");
         printf("  STATS: give compilation statistics (same as -s)\n");
         printf("  SYMBOLS: display the symbol table\n");
         printf("    SYMBOLS=2: also show compiler-defined symbols\n");
@@ -629,7 +632,6 @@ static void set_trace_option(char *command)
         printf("    TOKENS=2: also show token types\n");
         printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
-        //### trace_fns_setting (-g)
         return;
     }
 
@@ -693,6 +695,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "PROP")==0 || strcmp(command, "PROPERTY")==0 || strcmp(command, "PROPS")==0 || strcmp(command, "PROPERTIES")==0) {
         printprops_switch = value;
+    }
+    else if (strcmp(command, "RUNTIME")==0) {
+        trace_fns_setting = value;
     }
     else if (strcmp(command, "STATISTICS")==0 || strcmp(command, "STATS")==0 || strcmp(command, "STAT")==0) {
         statistics_switch = value;
