@@ -1324,7 +1324,7 @@ static int32 construct_double(int wanthigh, int signbit, double intv, double fra
     
  NotANumber:
     if (wanthigh)
-        return sign | 0x7FF00000;
+        return sign | 0x7FF80000;
     else
         return 0x00000001;
 }
@@ -1656,6 +1656,7 @@ static void lexadds(char *str)
 
 extern void get_next_token(void)
 {   int d, i, j, k, quoted_size, e, radix, context; int32 n; char *r;
+    int floatend;
     int returning_a_put_back_token = TRUE;
     
     context = lexical_context();
@@ -1742,6 +1743,9 @@ extern void get_next_token(void)
             break;
 
             FloatNumber:
+            /* When we reach here, d is the sign bit ('+' or '-').
+               If we're constructing a 32-bit float, floatend is 0;
+               for a 64-bit double, floatend is '>' for high, '<' for low. */
             {   int expo=0; double intv=0, fracv=0;
                 int expocount=0, intcount=0, fraccount=0;
                 int signbit = (d == '-');
@@ -1785,7 +1789,12 @@ extern void get_next_token(void)
                 }
                 if (intcount + fraccount == 0)
                     error("Floating-point literal must have digits");
-                n = construct_float(signbit, intv, fracv, expo);
+                if (floatend == '>')
+                    n = construct_double(TRUE, signbit, intv, fracv, expo);
+                else if (floatend == '<')
+                    n = construct_double(FALSE, signbit, intv, fracv, expo);
+                else                    
+                    n = construct_float(signbit, intv, fracv, expo);
             }
             lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
@@ -1795,7 +1804,18 @@ extern void get_next_token(void)
 
         case RADIX_CODE:
             radix = 16; d = (*get_next_char)();
-            if (d == '-' || d == '+') { goto FloatNumber; }
+            if (d == '-' || d == '+') {
+                floatend = 0;
+                goto FloatNumber;
+            }
+            if (d == '<' || d == '>') {
+                floatend = d;
+                d = (*get_next_char)();
+                if (d == '-' || d == '+') {
+                    goto FloatNumber;
+                }
+                error("Signed number expected after '$<' or '$>'");
+            }
             if (d == '$') { d = (*get_next_char)(); radix = 2; }
             if (character_digit_value[d] >= radix)
             {   if (radix == 2)
