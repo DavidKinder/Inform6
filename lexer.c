@@ -1242,6 +1242,7 @@ static int32 construct_float(int signbit, double intv, double fracv, int expo)
         }
     }
 
+    /* At this point, expo is less than 2^8; fbits is less than 2^23; neither is negative. */
     return (sign) | ((int32)(expo << 23)) | (fbits);
 }
 
