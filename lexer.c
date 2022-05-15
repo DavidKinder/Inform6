@@ -666,11 +666,21 @@ static void make_keywords_tables(void)
     }
 
     for (j=0; *(oplist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opcode_list has overflowed opcode_names.keywords");
+            break;
+        }
         opcode_names.keywords[j] = oplist[j];
     }
     opcode_names.keywords[j] = "";
     
     for (j=0; *(maclist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opmacro_list has overflowed opcode_macros.keywords");
+            break;
+        }
         opcode_macros.keywords[j] = maclist[j];
     }
     opcode_macros.keywords[j] = "";
