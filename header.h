@@ -116,8 +116,6 @@
 /*   2. Some miscellaneous #define options (set if the constant is           */
 /*   defined, otherwise not set):                                            */
 /*                                                                           */
-/*   USE_TEMPORARY_FILES - use scratch files for workspace, not memory,      */
-/*                         by default                                        */
 /*   PROMPT_INPUT        - prompt input (don't use Unix-style command line)  */
 /*   TIME_UNAVAILABLE    - don't use ANSI time routines to work out today's  */
 /*                         date                                              */
@@ -357,8 +355,6 @@ static int32 unique_task_id(void)
 #ifdef PC
 /* 1 */
 #define MACHINE_STRING   "PC"
-/* 2 */
-#define USE_TEMPORARY_FILES
 /* 4 */
 #define FN_SEP '\\'
 /* 6 */
@@ -2566,7 +2562,7 @@ extern int
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
-    memory_map_setting,     module_switch,        temporary_files_switch,
+    memory_map_setting,     module_switch,
     define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,

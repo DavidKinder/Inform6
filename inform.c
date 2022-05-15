@@ -251,7 +251,6 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    temporary_files_switch,         /* -F */
     module_switch,                  /* -M */
     runtime_error_checking_switch,  /* -S */
     define_USE_MODULES_switch,      /* -U */
@@ -326,11 +325,6 @@ static void reset_switch_settings(void)
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
-#ifdef USE_TEMPORARY_FILES
-    temporary_files_switch = TRUE;
-#else
-    temporary_files_switch = FALSE;
-#endif
     define_USE_MODULES_switch = FALSE;
     module_switch = FALSE;
 #ifdef ARC_THROWBACK
@@ -1125,10 +1119,6 @@ static void run_pass(void)
     close_all_source();
     if (hash_switch && hash_printed_since_newline) printf("\n");
 
-    if (temporary_files_switch)
-    {   if (module_switch) flush_link_data();
-        check_temp_files();
-    }
     sort_dictionary();
     if (track_unused_routines)
         locate_dead_functions();
@@ -1247,8 +1237,6 @@ compiling modules: disabling -S switch\n");
     if (debugfile_switch)
     {   end_debug_file();
     }
-
-    if (temporary_files_switch && (no_errors>0)) remove_temp_files();
 
     if (optimise_switch) {
         /* Pull out all_text so that it will not be freed. */
@@ -1402,11 +1390,6 @@ printf("  E1  Microsoft-style error messages%s\n",
       (error_format==1)?" (current setting)":"");
 printf("  E2  Macintosh MPW-style error messages%s\n",
       (error_format==2)?" (current setting)":"");
-#ifdef USE_TEMPORARY_FILES
-printf("  F0  use extra memory rather than temporary files\n");
-#else
-printf("  F1  use temporary files to reduce memory consumption\n");
-#endif
 printf("  G   compile a Glulx game file\n");
 printf("  H   use Huffman encoding to compress Glulx strings\n");
 printf("  M   compile as a Module for future linking\n");
@@ -1540,16 +1523,6 @@ extern void switches(char *p, int cmode)
                       case '1': s=2; error_format=1; break;
                       case '2': s=2; error_format=2; break;
                       default:  error_format=1; break;
-                  }
-                  break;
-        case 'F': if (cmode == 0) {
-                      error("The switch '-F' can't be set with 'Switches'");
-                      break;
-                  }
-                  switch(p[i+1])
-                  {   case '0': s=2; temporary_files_switch = FALSE; break;
-                      case '1': s=2; temporary_files_switch = TRUE; break;
-                      default:  temporary_files_switch = state; break;
                   }
                   break;
         case 'M': module_switch = state;

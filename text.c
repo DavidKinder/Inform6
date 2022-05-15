@@ -14,8 +14,8 @@ static memory_list low_strings_memlist;
 
 int32 static_strings_extent;           /* Number of bytes of static strings
                                           made so far */
-uchar *static_strings_area;            /* Used if (!temporary_files_switch) to
-                                          hold the static strings area so far
+uchar *static_strings_area;            /* Used to hold the static strings
+                                          area so far
                                           Allocated to static_strings_extent */
 memory_list static_strings_area_memlist;
 
@@ -302,17 +302,10 @@ extern int32 compile_string(char *b, int strctx)
 
     j = static_strings_extent;
 
-    if (temporary_files_switch) {
-        for (c=translated_text; c<translated_text+i;
-             c++, static_strings_extent++)
-            fputc(*c,Temp1_fp);
-    }
-    else {
-        ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+i);
-        for (c=translated_text; c<translated_text+i;
-             c++, static_strings_extent++)
-            static_strings_area[static_strings_extent] = *c;
-    }
+    ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+i);
+    for (c=translated_text; c<translated_text+i;
+         c++, static_strings_extent++)
+        static_strings_area[static_strings_extent] = *c;
 
     if (!glulx_mode) {
         return(j/scale_factor);
@@ -1128,13 +1121,6 @@ void compress_game_text()
     compression_table_size = 0;
   }
 
-  if (temporary_files_switch) {
-    fclose(Temp1_fp);
-    Temp1_fp=fopen(Temp1_Name,"rb");
-    if (Temp1_fp==NULL)
-      fatalerror("I/O failure: couldn't reopen temporary file 1");
-  }
-
   if (compression_switch) {
 
     for (lx=0, ix=0; lx<no_strings; lx++) {
@@ -1142,10 +1128,7 @@ void compress_game_text()
       int done=FALSE;
       int32 escapeval=0;
       while (!done) {
-        if (temporary_files_switch)
-          ch = fgetc(Temp1_fp);
-        else
-          ch = static_strings_area[ix];
+        ch = static_strings_area[ix];
         ix++;
         if (ix > static_strings_extent || ch < 0)
           compiler_error("Read too much not-yet-compressed text.");
@@ -1270,10 +1253,6 @@ void compress_game_text()
      without actually doing the compression. */
   compression_string_size = 0;
 
-  if (temporary_files_switch) {
-    fseek(Temp1_fp, 0, SEEK_SET);
-  }
-
   ensure_memory_list_available(&compressed_offsets_memlist, no_strings);
 
   for (lx=0, ix=0; lx<no_strings; lx++) {
@@ -1284,10 +1263,7 @@ void compress_game_text()
     compressed_offsets[lx] = compression_table_size + compression_string_size;
     compression_string_size++; /* for the type byte */
     while (!done) {
-      if (temporary_files_switch)
-        ch = fgetc(Temp1_fp);
-      else
-        ch = static_strings_area[ix];
+      ch = static_strings_area[ix];
       ix++;
       if (ix > static_strings_extent || ch < 0)
         compiler_error("Read too much not-yet-compressed text.");

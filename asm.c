@@ -2015,11 +2015,6 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 
 static int32 adjusted_pc;
 
-static void transfer_to_temp_file(uchar *c)
-{   fputc(*c,Temp2_fp);
-    adjusted_pc++;
-}
-
 static void transfer_to_zcode_area(uchar *c)
 {   zcode_area[adjusted_pc++] = *c;
 }
@@ -2027,7 +2022,7 @@ static void transfer_to_zcode_area(uchar *c)
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
-    void (* transfer_byte)(uchar *);
+    void (* transfer_byte)(uchar *); //### rename
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2036,8 +2031,7 @@ static void transfer_routine_z(void)
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
 
-    transfer_byte =
-        (temporary_files_switch)?transfer_to_temp_file:transfer_to_zcode_area;
+    transfer_byte = transfer_to_zcode_area;
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (2nd bytes in branches converted to
@@ -2228,7 +2222,7 @@ static void transfer_routine_z(void)
 static void transfer_routine_g(void)
 {   int32 i, j, pc, new_pc, label, form_len, offset_of_next, addr,
           rstart_pc;
-    void (* transfer_byte)(uchar *);
+    void (* transfer_byte)(uchar *); //### rename
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2237,8 +2231,7 @@ static void transfer_routine_g(void)
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
 
-    transfer_byte =
-        (temporary_files_switch)?transfer_to_temp_file:transfer_to_zcode_area;
+    transfer_byte = transfer_to_zcode_area;
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (bytes 2-4 in branches converted to
