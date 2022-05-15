@@ -1298,6 +1298,8 @@ typedef struct operator_s
 
 #define pull_gm   0
 #define push_gm   1
+#define dload_gm  2
+#define dstore_gm 3
 
 
 #define SYMBOL_TT    0                      /* value = index in symbol table */

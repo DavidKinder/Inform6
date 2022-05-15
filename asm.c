@@ -826,6 +826,8 @@ static opcodeg opcodes_table_g[] = {
 static opcodeg opmacros_table_g[] = {
   { (uchar *) "pull", 0, St, 0, 1 },
   { (uchar *) "push", 0,  0, 0, 1 },
+  { (uchar *) "dload",  0, St|St2, 0, 3 },
+  { (uchar *) "dstore", 0,      0, 0, 3 },
 };
 
 static opcodeg custom_opcode_g;

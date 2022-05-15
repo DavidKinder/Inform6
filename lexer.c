@@ -469,7 +469,7 @@ keyword_group opcode_macros =
 static char *opmacro_list_z[] = { "" };
 
 static char *opmacro_list_g[] = {
-    "pull", "push",
+    "pull", "push", "dload", "dstore",
     ""
 };
 
