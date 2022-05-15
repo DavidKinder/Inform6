@@ -53,6 +53,8 @@ int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
                                       features?                              */
 int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
+int uses_double_features;           /* Makes use of Glulx double-precision (3.1.3)
+                                      features?                              */
 
 debug_location statement_debug_location;
                                    /* Location of current statement          */
@@ -489,6 +491,7 @@ typedef struct opcodeg
 #define GOP_MemHeap      2   /* uses_memheap_features */
 #define GOP_Acceleration 4   /* uses_acceleration_features */
 #define GOP_Float        8   /* uses_float_features */
+#define GOP_Double       16  /* uses_double_features */
 
     /* Codes for the number of operands */
 
@@ -1320,6 +1323,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     }
     if (opco.op_rules & GOP_Float) {
         uses_float_features = TRUE;
+    }
+    if (opco.op_rules & GOP_Double) {
+        uses_double_features = TRUE;
     }
 
     no_operands_given = AI->operand_count;
@@ -3425,6 +3431,7 @@ extern void init_asm_vars(void)
     uses_memheap_features = FALSE;
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
+    uses_double_features = FALSE;
 
     labels = NULL;
     sequence_points = NULL;

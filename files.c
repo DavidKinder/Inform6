@@ -725,6 +725,9 @@ static void output_file_g(void)
     if (uses_float_features) {
       VersionNum = 0x00030102;
     }
+    if (uses_double_features) {
+      VersionNum = 0x00030103;
+    }
 
     /* And check if the user has requested a specific version. */
     if (requested_glulx_version) {

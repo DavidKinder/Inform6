@@ -1182,9 +1182,10 @@ static double pow10_cheap(int expo)
  * lexer should never do that).
  *
  * Note that using a float constant does *not* set the uses_float_features
- * flag (which would cause the game file to be labelled 3.1.2). There's
- * no VM feature here, just an integer. Of course, any use of the float
- * *opcodes* will set the flag.
+ * flag (which would cause the game file to be labelled 3.1.2). Same with 
+ * double constants and the uses_double_features flag. There's no VM
+ * feature here, just an integer. Of course, any use of the float *opcodes*
+ * will set the flag.
  *
  * The math functions in this routine require #including <math.h>, but
  * they should not require linking the math library (-lm). At least,
