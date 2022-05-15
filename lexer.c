@@ -453,6 +453,11 @@ static char *opcode_list_g[] = {
     "sqrt", "exp", "log", "pow",
     "sin", "cos", "tan", "asin", "acos", "atan", "atan2",
     "jfeq", "jfne", "jflt", "jfle", "jfgt", "jfge", "jisnan", "jisinf",
+    "numtod", "dtonumz", "dtonumn", "dceil", "dfloor",
+    "dadd", "dsub", "dmul", "ddiv", "dmodr", "dmodq",
+    "dsqrt", "dexp", "dlog", "dpow",
+    "dsin", "dcos", "dtan", "dasin", "dacos", "datan", "datan2",
+    "jdeq", "jdne", "jdlt", "jdle", "jdgt", "jdge", "jdisnan", "jdisinf",
     ""
 };
 
