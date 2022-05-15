@@ -1289,7 +1289,7 @@ static int32 construct_double(int wanthigh, int signbit, double intv, double fra
         mant -= 1.0; /* Get rid of leading 1 */
     }
 
-    /* fhi receives the high 28 bits; flo the low 24 bits (== 52 bits) */
+    /* fhi receives the high 28 bits; flo the low 24 bits (total 52 bits) */
     mant *= 268435456.0;          /* 2^28 */
     fhi = (uint32)mant;           /* Truncate */
     mant -= (double)fhi;
