@@ -885,7 +885,7 @@ typedef struct debug_location_beginning_s
     int32 orig_beg_char_number;
 } debug_location_beginning;
 
-#define MAX_KEYWORD_GROUP_SIZE (159)
+#define MAX_KEYWORD_GROUP_SIZE (119)
 
 typedef struct keyword_group_s
 {   char *keywords[MAX_KEYWORD_GROUP_SIZE+1]; /* empty-string-terminated */
