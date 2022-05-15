@@ -824,10 +824,10 @@ static opcodeg opcodes_table_g[] = {
 /* The opmacros table is used for fake opcodes. The opcode numbers are
    ignored; this table is only used for argument parsing. */
 static opcodeg opmacros_table_g[] = {
-  { (uchar *) "pull", 0, St, 0, 1 },
-  { (uchar *) "push", 0,  0, 0, 1 },
-  { (uchar *) "dload",  0, St|St2, 0, 3 },
-  { (uchar *) "dstore", 0,      0, 0, 3 },
+  { (uchar *) "pull",   pull_gm,       St, 0, 1 },
+  { (uchar *) "push",   push_gm,        0, 0, 1 },
+  { (uchar *) "dload",  dload_gm,  St|St2, 0, 3 },
+  { (uchar *) "dstore", dstore_gm,      0, 0, 3 },
 };
 
 static opcodeg custom_opcode_g;
@@ -1250,9 +1250,11 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
 static void assembleg_macro(const assembly_instruction *AI)
 {
-    /* validate macro syntax first */
     int ix, no_operands_given;
     opcodeg opco;
+    assembly_operand AMO_0, AMO_1, AMO_2;
+    
+    /* validate macro syntax first */
     
     opco = internal_number_to_opmacro_g(AI->internal_number);
     no_operands_given = AI->operand_count;
@@ -1279,24 +1281,37 @@ static void assembleg_macro(const assembly_instruction *AI)
         }
     }
     
-    /* expand the macro */
-    switch (AI->internal_number) {
+    /* Expand the macro.
+       The assembleg_() functions overwrite AI, so we need to copy out
+       its operands before we call them. */
+    
+    switch (opco.code) {
         case pull_gm:   /* @pull STORE */
-            assembleg_store(AI->operand[0], stack_pointer);
+            AMO_0 = AI->operand[0];
+            assembleg_store(AMO_0, stack_pointer);
             break;
         
         case push_gm:   /* @push LOAD */
-            assembleg_store(stack_pointer, AI->operand[0]);
+            AMO_0 = AI->operand[0];
+            assembleg_store(stack_pointer, AMO_0);
             break;
 
         case dload_gm:   /* @dload LOAD STORELO STOREHI */
-            assembleg_3(aload_gc, AI->operand[0], zero_operand, AI->operand[2]);
-            assembleg_3(aload_gc, AI->operand[0], one_operand, AI->operand[1]);
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            //### stack-pointer case!
+            assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
+            assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
             break;
 
         case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
-            assembleg_3(astore_gc, AI->operand[0], zero_operand, AI->operand[1]);
-            assembleg_3(astore_gc, AI->operand[0], one_operand, AI->operand[2]);
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            //### stack-pointer case!
+            assembleg_3(astore_gc, AMO_0, zero_operand, AMO_1);
+            assembleg_3(astore_gc, AMO_0, one_operand, AMO_2);
             break;
         
         default:
