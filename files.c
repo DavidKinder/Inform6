@@ -77,7 +77,6 @@ static debug_backpatch_accumulator grammar_backpatch_accumulator;
 /*   File handles and names for temporary files.                             */
 /* ------------------------------------------------------------------------- */
 
-FILE *Temp1_fp=NULL, *Temp2_fp=NULL,  *Temp3_fp=NULL;
 char Temp1_Name[PATHLEN], Temp2_Name[PATHLEN], Temp3_Name[PATHLEN];
 
 /* ------------------------------------------------------------------------- */
