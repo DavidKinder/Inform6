@@ -1281,12 +1281,22 @@ static void assembleg_macro(const assembly_instruction *AI)
     
     /* expand the macro */
     switch (AI->internal_number) {
-        case pull_gm:
+        case pull_gm:   /* @pull STORE */
             assembleg_store(AI->operand[0], stack_pointer);
             break;
         
-        case push_gm:
+        case push_gm:   /* @push LOAD */
             assembleg_store(stack_pointer, AI->operand[0]);
+            break;
+
+        case dload_gm:   /* @dload LOAD STORELO STOREHI */
+            assembleg_3(aload_gc, AI->operand[0], zero_operand, AI->operand[2]);
+            assembleg_3(aload_gc, AI->operand[0], one_operand, AI->operand[1]);
+            break;
+
+        case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
+            assembleg_3(astore_gc, AI->operand[0], zero_operand, AI->operand[1]);
+            assembleg_3(astore_gc, AI->operand[0], one_operand, AI->operand[2]);
             break;
         
         default:
