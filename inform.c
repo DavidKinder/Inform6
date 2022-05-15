@@ -276,7 +276,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
                                        tokens_trace_level */
     optabbrevs_trace_setting,       /* $!FINDABBREVS */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
-    trace_fns_setting,              /* set by -g: 0, 1 or 2 */
+    trace_fns_setting,              /* $!RUNTIME, -g: 0, 1, 2, or 3 */
     files_trace_setting,            /* $!FILES */
     linker_trace_setting,           /* $!LINKER: initial value of
                                        linker_trace_level */
