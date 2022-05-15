@@ -1720,58 +1720,6 @@ extern void end_debug_file()
     close_debug_file();
 }
 
-/* ------------------------------------------------------------------------- */
-/*  Temporary storage files:                                                 */
-/*                                                                           */
-/*      Temp file 1 is used to hold the static strings area, as compiled     */
-/*                2 to hold compiled routines of Z-code                      */
-/*                3 to hold the link data table (but only for modules)       */
-/*                                                                           */
-/*  (Though annoying, this procedure typically saves about 200K of memory,   */
-/*  an important point for Amiga and sub-386 PC users of Inform)             */
-/* ------------------------------------------------------------------------- */
-
-//### delete
-extern void open_temporary_files(void)
-{   translate_temp_filename(1);
-    Temp1_fp=fopen(Temp1_Name,"wb");
-    if (Temp1_fp==NULL) fatalerror_named("Couldn't open temporary file 1",
-        Temp1_Name);
-    translate_temp_filename(2);
-    Temp2_fp=fopen(Temp2_Name,"wb");
-    if (Temp2_fp==NULL) fatalerror_named("Couldn't open temporary file 2",
-        Temp2_Name);
-
-    if (!module_switch) return;
-    translate_temp_filename(3);
-    Temp3_fp=fopen(Temp3_Name,"wb");
-    if (Temp3_fp==NULL) fatalerror_named("Couldn't open temporary file 3",
-        Temp3_Name);
-}
-
-extern void check_temp_files(void)
-{
-    if (ferror(Temp1_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 1");
-    if (ferror(Temp2_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 2");
-    if (module_switch && ferror(Temp3_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 3");
-}
-
-extern void remove_temp_files(void)
-{   if (Temp1_fp != NULL) fclose(Temp1_fp);
-    Temp1_fp = NULL;
-    if (Temp2_fp != NULL) fclose(Temp2_fp);
-    Temp2_fp = NULL;
-    remove(Temp1_Name); remove(Temp2_Name);
-    if (module_switch)
-    {   if (Temp3_fp != NULL) fclose(Temp3_fp);
-        Temp3_fp = NULL;
-        remove(Temp3_Name);
-    }
-}
-
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */

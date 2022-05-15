@@ -2487,10 +2487,6 @@ extern FILE *Temp1_fp, *Temp2_fp, *Temp3_fp;
 extern char Temp1_Name[], Temp2_Name[], Temp3_Name[];
 extern int32 total_chars_read;
 
-extern void open_temporary_files(void);
-extern void check_temp_files(void);
-extern void remove_temp_files(void);
-
 extern void open_transcript_file(char *what_of);
 extern void write_to_transcript_file(char *text, int linetype);
 extern void close_transcript_file(void);
