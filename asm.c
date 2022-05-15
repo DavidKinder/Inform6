@@ -16,8 +16,7 @@ static uchar *zcode_markers;       /* Bytes holding marker values for this
 static memory_list zcode_markers_memlist;
 static int zcode_ha_size;          /* Number of bytes in holding area        */
 
-uchar *zcode_area;                 /* Array to hold assembled code (if
-                                      temporary files are not being used)    */
+uchar *zcode_area;                 /* Array to hold assembled code           */
 
 memory_list zcode_area_memlist;    /* Manages zcode_area                     */
 
