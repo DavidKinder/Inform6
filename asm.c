@@ -2219,6 +2219,9 @@ static void transfer_routine_z(void)
                         break;
                     }
 
+                    if (bpatch_trace_setting >= 2)
+                        printf("BP added: MV %d PC %04x\n", zcode_markers[i], new_pc);
+
                     ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+3);
                     zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i] + 32*(new_pc/65536);
                     zcode_backpatch_table[zcode_backpatch_size++] = (new_pc/256)%256;
@@ -2448,6 +2451,8 @@ static void transfer_routine_g(void)
              Then a byte indicating the data size to be patched (1, 2, 4).
              Then the four-byte address (new_pc).
           */
+          if (bpatch_trace_setting >= 2)
+              printf("BP added: MV %d size %d PC %04x\n", zcode_markers[i], 4, new_pc);
           ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+6);
           zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i];
           zcode_backpatch_table[zcode_backpatch_size++] = 4;

@@ -259,6 +259,9 @@ extern int symbol_index(char *p, int hashcode)
         this = symbols[this].next_entry;
     } while (this != -1);
 
+    if (symdef_trace_setting)
+        printf("Encountered symbol %d '%s'\n", no_symbols, p);
+    
     ensure_memory_list_available(&symbols_memlist, no_symbols+1);
     if (debugfile_switch)
         ensure_memory_list_available(&symbol_debug_info_memlist, no_symbols+1);
@@ -396,7 +399,7 @@ extern void describe_symbol(int k)
 extern void list_symbols(int level)
 {   int k;
     for (k=0; k<no_symbols; k++)
-    {   if ((level==2) ||
+    {   if ((level>=2) ||
             ((symbols[k].flags & (SYSTEM_SFLAG + UNKNOWN_SFLAG + INSF_SFLAG)) == 0))
         {   describe_symbol(k); printf("\n");
         }
@@ -696,12 +699,16 @@ extern void assign_symbol(int index, int32 value, int type)
 {
     assign_symbol_base(index, value, type);
     symbols[index].marker = 0;
+    if (symdef_trace_setting)
+        printf("Defined symbol %d '%s' as %d (%s)\n", index, symbols[index].name, value, typename(type));
 }
 
 extern void assign_marked_symbol(int index, int marker, int32 value, int type)
 {
     assign_symbol_base(index, value, type);
     symbols[index].marker = marker;
+    if (symdef_trace_setting)
+        printf("Defined symbol %d '%s' as %s %d (%s)\n", index, symbols[index].name, describe_mv(marker), value, typename(type));
 }
 
 static void emit_debug_information_for_predefined_symbol

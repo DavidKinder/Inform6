@@ -969,14 +969,19 @@ the first constant definition");
         declare_systemfile(); break;                        /* see "files.c" */
 
     /* --------------------------------------------------------------------- */
-    /*   Trace dictionary                                                    */
-    /*         objects                                                       */
-    /*         symbols                                                       */
-    /*         verbs                                                         */
-    /*                      [on/off]                                         */
-    /*         assembly     [on/off]                                         */
-    /*         expressions  [on/off]                                         */
-    /*         lines        [on/off]                                         */
+    /*   Trace dictionary   [on/NUM]                                         */
+    /*         objects      [on/NUM]                                         */
+    /*         symbols      [on/NUM]                                         */
+    /*         verbs        [on/NUM]                                         */
+    /*                      [on/off/NUM]      {same as "assembly"}           */
+    /*         assembly     [on/off/NUM]                                     */
+    /*         expressions  [on/off/NUM]                                     */
+    /*         lines        [on/off/NUM]                                     */
+    /*         tokens       [on/off/NUM]                                     */
+    /*         linker       [on/off/NUM]                                     */
+    /*                                                                       */
+    /* The first four trace commands immediately display a compiler table.   */
+    /* The rest set or clear an ongoing trace.                               */
     /* --------------------------------------------------------------------- */
 
     case TRACE_CODE:
@@ -985,62 +990,105 @@ the first constant definition");
         get_next_token();
         trace_keywords.enabled = FALSE;
         directives.enabled = TRUE;
-        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
-        {   asm_trace_level = 1; return FALSE; }
+        
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
+            /* "Trace;" */
+            put_token_back();
+            i = ASSEMBLY_TK;
+            trace_level = &asm_trace_level;
+            j = 1;
+            goto HandleTraceKeyword;
+        }
+        if (token_type == NUMBER_TT) {
+            /* "Trace NUM;" */
+            i = ASSEMBLY_TK;
+            trace_level = &asm_trace_level;
+            j = token_value;
+            goto HandleTraceKeyword;
+        }
 
+        /* Anything else must be "Trace KEYWORD..." Remember that
+           'on' and 'off' are trace keywords. */
+        
         if (token_type != TRACE_KEYWORD_TT)
             return ebf_error_recover("debugging keyword", token_text);
 
         trace_keywords.enabled = TRUE;
 
-        i = token_value; j = 0;
-        switch(i)
-        {   case DICTIONARY_TK: break;
-            case OBJECTS_TK:    break;
-            case VERBS_TK:      break;
-            default:
-                switch(token_value)
-                {   case ASSEMBLY_TK:
-                        trace_level = &asm_trace_level;  break;
-                    case EXPRESSIONS_TK:
-                        trace_level = &expr_trace_level; break;
-                    case LINES_TK:
-                        trace_level = &line_trace_level; break;
-                    case TOKENS_TK:
-                        trace_level = &tokens_trace_level; break;
-                    case LINKER_TK:
-                        trace_level = &linker_trace_level; break;
-                    case SYMBOLS_TK:
-                        trace_level = NULL; break;
-                    default:
-                        put_token_back();
-                        trace_level = &asm_trace_level; break;
-                }
-                j = 1;
-                get_next_token();
-                if ((token_type == SEP_TT) &&
-                    (token_value == SEMICOLON_SEP))
-                {   put_token_back(); break;
-                }
-                if (token_type == NUMBER_TT)
-                {   j = token_value; break; }
-                if ((token_type == TRACE_KEYWORD_TT) && (token_value == ON_TK))
-                {   j = 1; break; }
-                if ((token_type == TRACE_KEYWORD_TT) && (token_value == OFF_TK))
-                {   j = 0; break; }
-                put_token_back(); break;
-        }
+        /* Note that "Trace verbs" doesn't affect list_verbs_setting.
+           It shows the grammar at this point in the code. Setting
+           list_verbs_setting shows the grammar at the end of 
+           compilation.
+           Same goes for "Trace dictionary" and list_dict_setting, etc. */
+        
+        i = token_value;
 
         switch(i)
-        {   case DICTIONARY_TK: show_dictionary();  break;
-            case OBJECTS_TK:    list_object_tree(); break;
+        {
+        case ASSEMBLY_TK:
+            trace_level = &asm_trace_level;  break;
+        case EXPRESSIONS_TK:
+            trace_level = &expr_trace_level; break;
+        case TOKENS_TK:
+            trace_level = &tokens_trace_level; break;
+        case LINKER_TK:
+            trace_level = &linker_trace_level; break;
+        case DICTIONARY_TK:
+        case SYMBOLS_TK:
+        case OBJECTS_TK:
+        case VERBS_TK:
+            trace_level = NULL; break;
+        case LINES_TK:
+            /* never implememented */
+            trace_level = NULL; break;
+        default:
+            put_token_back();
+            trace_level = &asm_trace_level; break;
+        }
+        
+        j = 1;
+        get_next_token();
+        if ((token_type == SEP_TT) &&
+            (token_value == SEMICOLON_SEP))
+        {   put_token_back();
+        }
+        else if (token_type == NUMBER_TT)
+        {   j = token_value;
+        }
+        else if ((token_type == TRACE_KEYWORD_TT) && (token_value == ON_TK))
+        {   j = 1;
+        }
+        else if ((token_type == TRACE_KEYWORD_TT) && (token_value == OFF_TK))
+        {   j = 0;
+        }
+        else
+        {   put_token_back();
+        }
+
+        trace_keywords.enabled = FALSE;
+
+        HandleTraceKeyword:
+
+        if (i == LINES_TK) {
+            warning_named("Trace option is not supported:", trace_keywords.keywords[i]);
+            break;
+        }
+        
+        if (trace_level == NULL && j == 0) {
+            warning_named("Trace directive to display table at 'off' level has no effect: table", trace_keywords.keywords[i]);
+            break;
+        }
+        
+        switch(i)
+        {   case DICTIONARY_TK: show_dictionary(j);  break;
+            case OBJECTS_TK:    list_object_tree();  break;
             case SYMBOLS_TK:    list_symbols(j);     break;
-            case VERBS_TK:      list_verb_table();  break;
+            case VERBS_TK:      list_verb_table();   break;
             default:
-                *trace_level = j;
+                if (trace_level)
+                    *trace_level = j;
                 break;
         }
-        trace_keywords.enabled = FALSE;
         break;
 
     /* --------------------------------------------------------------------- */

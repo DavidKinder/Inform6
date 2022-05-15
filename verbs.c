@@ -271,6 +271,7 @@ static void list_grammar_line_v2(int mark)
 extern void list_verb_table(void)
 {
     int verb, lx;
+    printf("Grammar table: %d verbs\n", no_Inform_verbs);
     for (verb=0; verb<no_Inform_verbs; verb++) {
         char *verbword = find_verb_by_number(verb);
         printf("Verb '%s'\n", verbword);
@@ -298,7 +299,7 @@ static void new_action(char *b, int c)
         by using make_action above, or the Fake_Action directive, or by
         the linker).  At present just a hook for some tracing code.          */
 
-    if (printprops_switch)
+    if (printactions_switch)
         printf("Action '%s' is numbered %d\n",b,c);
 }
 

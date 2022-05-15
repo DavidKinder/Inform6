@@ -1018,6 +1018,7 @@ string; substituting '?'.");
       }
     }
     write_z_char_g(0);
+    zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
 
   }
 
@@ -1457,9 +1458,11 @@ static void optimise_pass(void)
                 }
             }
 #endif
-            printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
-                pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
-                (long int) tlbtab[i].occurrences);
+            if (optabbrevs_trace_setting >= 2) {
+                printf("Pass %d, %4ld/%ld '%s' (%ld occurrences) ",
+                    pass_no, (long int) i, (long int) no_occs, tlbtab[i].text,
+                    (long int) tlbtab[i].occurrences);
+            }
             TIMEVALUE_NOW(&t1);
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
@@ -1517,9 +1520,11 @@ static void optimise_pass(void)
                 }
                 FinishEarly: ;
             }
-            TIMEVALUE_NOW(&t2);
-            duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
-            printf(" (%.4f seconds)\n", duration);
+            if (optabbrevs_trace_setting >= 2) {
+                TIMEVALUE_NOW(&t2);
+                duration = TIMEVALUE_DIFFERENCE(&t1, &t2);
+                printf(" (%.4f seconds)\n", duration);
+            }
         }
     }
 }
@@ -1653,8 +1658,10 @@ extern void optimise_abbreviations(void)
     grandflags=my_calloc(sizeof(int), max, "grandflags");
 
 
-    printf("Cross-reference table (%ld entries) built...\n",
-        (long int) no_occs);
+    if (optabbrevs_trace_setting >= 1) {
+        printf("Cross-reference table (%ld entries) built...\n",
+            (long int) no_occs);
+    }
     /*  for (i=0; i<no_occs; i++)
             printf("%4d %4d '%s' %d\n",i,tlbtab[i].intab,tlbtab[i].text,
                 tlbtab[i].occurrences);
@@ -1663,8 +1670,12 @@ extern void optimise_abbreviations(void)
     for (i=0; i<MAX_ABBREVS; i++) bestyet2[i].length=0;
     available=MAX_BESTYET;
     while ((available>0)&&(selected<MAX_ABBREVS))
-    {   printf("Pass %d\n", ++pass_no);
-
+    {
+        pass_no++;
+        if (optabbrevs_trace_setting >= 1) {
+            printf("Pass %d\n", pass_no);
+        }
+        
         optimise_pass();
         available=0;
         for (i=0; i<MAX_BESTYET; i++)
@@ -1697,11 +1708,13 @@ extern void optimise_abbreviations(void)
                 char testtext[4];
                 bestyet2[selected++]=bestyet[maxat];
 
-                printf(
-                    "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
-                    (long int) selected,bestyet[maxat].text,
-                    (long int) bestyet[maxat].popularity,
-                    (long int) bestyet[maxat].score);
+                if (optabbrevs_trace_setting >= 1) {
+                    printf(
+                        "Selection %2ld: '%s' (repeated %ld times, scoring %ld)\n",
+                        (long int) selected,bestyet[maxat].text,
+                        (long int) bestyet[maxat].popularity,
+                        (long int) bestyet[maxat].score);
+                }
 
                 testtext[0]=bestyet[maxat].text[0];
                 testtext[1]=bestyet[maxat].text[1];
@@ -2489,13 +2502,13 @@ void print_dict_word(int node)
     }
 }
 
-static void recursively_show_z(int node)
+static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[32];
     int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
-        recursively_show_z(dtree[node].branch[0]);
+        recursively_show_z(dtree[node].branch[0], level);
 
     p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
@@ -2506,8 +2519,12 @@ static void recursively_show_z(int node)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
-    if (d_show_buf == NULL)
-    {   for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+    /* The level-1 info can only be printfed (d_show_buf must be null). */
+    if (d_show_buf == NULL && level >= 1)
+    {
+        if (level >= 2) {
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        }
 
         flags = (int) p[res];
         if (flags & 128)
@@ -2535,15 +2552,15 @@ static void recursively_show_z(int node)
     }
 
     if (dtree[node].branch[1] != VACANT)
-        recursively_show_z(dtree[node].branch[1]);
+        recursively_show_z(dtree[node].branch[1], level);
 }
 
-static void recursively_show_g(int node)
+static void recursively_show_g(int node, int level)
 {   int i, cprinted;
     uchar *p;
 
     if (dtree[node].branch[0] != VACANT)
-        recursively_show_g(dtree[node].branch[0]);
+        recursively_show_g(dtree[node].branch[0], level);
 
     p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
 
@@ -2561,11 +2578,14 @@ static void recursively_show_g(int node)
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
-    if (d_show_buf == NULL)
+    /* The level-1 info can only be printfed (d_show_buf must be null). */
+    if (d_show_buf == NULL && level >= 1)
     {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
-        for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        if (level >= 2) {
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+        }
         if (flags & 128)
         {   printf("noun ");
             if (flags & 4)  printf("p"); else printf(" ");
@@ -2588,7 +2608,7 @@ static void recursively_show_g(int node)
     }
 
     if (dtree[node].branch[1] != VACANT)
-        recursively_show_g(dtree[node].branch[1]);
+        recursively_show_g(dtree[node].branch[1], level);
 }
 
 static void show_alphabet(int i)
@@ -2607,14 +2627,17 @@ static void show_alphabet(int i)
     printf("\n");
 }
 
-extern void show_dictionary(void)
-{   printf("Dictionary contains %d entries:\n",dict_entries);
+extern void show_dictionary(int level)
+{
+    /* Level 0: show words only. Level 1: show words and flags.
+       Level 2: also show bytes.*/
+    printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
     {   d_show_len = 0; d_show_buf = NULL; 
         if (!glulx_mode)    
-            recursively_show_z(root);
+            recursively_show_z(root, level);
         else
-            recursively_show_g(root);
+            recursively_show_g(root, level);
     }
     if (!glulx_mode)
     {
@@ -2639,9 +2662,9 @@ extern void write_dictionary_to_transcript(void)
     if (dict_entries != 0)
     {
         if (!glulx_mode)    
-            recursively_show_z(root);
+            recursively_show_z(root, 0);
         else
-            recursively_show_g(root);
+            recursively_show_g(root, 0);
     }
     if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
 
