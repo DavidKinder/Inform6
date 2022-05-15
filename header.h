@@ -1069,7 +1069,7 @@ typedef struct operator_s
 
 /* ------------------------------------------------------------------------- */
 /*   Internal numbers representing assemble-able Z-opcodes                   */
-/*   (Must match opcodes_table_z[])                                          */
+/*   (Must match opcodes_table_z[] and opcode_list_z[])                      */
 /* ------------------------------------------------------------------------- */
 
 #define je_zc 0
@@ -1194,7 +1194,7 @@ typedef struct operator_s
 
 /* ------------------------------------------------------------------------- */
 /*   Internal numbers representing assemble-able Glulx opcodes               */
-/*   (Must match opcodes_table_g[])                                          */
+/*   (Must match opcodes_table_g[] and opcode_list_g[])                      */
 /*                                                                           */
 /*   This is not a complete list. It only needs to include opcodes that are  */
 /*   directly created by the compiler or listed in the operator tables.      */
