@@ -2483,7 +2483,6 @@ extern int  current_input_file;
 extern int  total_input_files;
 extern FileId *InputFiles;
 
-extern char Temp1_Name[], Temp2_Name[], Temp3_Name[];
 extern int32 total_chars_read;
 
 extern void open_transcript_file(char *what_of);

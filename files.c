@@ -74,12 +74,6 @@ static debug_backpatch_accumulator array_backpatch_accumulator;
 static debug_backpatch_accumulator grammar_backpatch_accumulator;
 
 /* ------------------------------------------------------------------------- */
-/*   File handles and names for temporary files.                             */
-/* ------------------------------------------------------------------------- */
-
-char Temp1_Name[PATHLEN], Temp2_Name[PATHLEN], Temp3_Name[PATHLEN];
-
-/* ------------------------------------------------------------------------- */
 /*   Opening and closing source code files                                   */
 /* ------------------------------------------------------------------------- */
 
