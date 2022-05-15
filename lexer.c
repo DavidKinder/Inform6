@@ -396,7 +396,7 @@ extern void describe_token_triple(const char *text, int32 value, int type)
 
 /* This must exceed the total number of keywords across all groups, 
    including opcodes. */
-#define MAX_KEYWORDS (500)
+#define MAX_KEYWORDS (350)
 
 /* The values will be filled in at compile time, when we know
    which opcode set to use. */
