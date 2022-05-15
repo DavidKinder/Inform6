@@ -2022,7 +2022,6 @@ static void transfer_to_zcode_area(uchar *c)
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
-    void (* transfer_byte)(uchar *); //### rename
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2030,8 +2029,6 @@ static void transfer_routine_z(void)
     {   printf("Backpatching routine at %05lx: initial size %d, %d labels\n",
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
-
-    transfer_byte = transfer_to_zcode_area;
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (2nd bytes in branches converted to
@@ -2138,7 +2135,7 @@ static void transfer_routine_z(void)
                 }
                 zcode_holding_area[i] = branch_on_true + 0x40 + (addr&0x3f);
             }
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
             break;
 
           case LABEL_MV:
@@ -2155,7 +2152,7 @@ static void transfer_routine_z(void)
             if (addr<0) addr += (int32) 0x10000L;
             zcode_holding_area[i] = addr/256;
             zcode_holding_area[i+1] = addr%256;
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
             break;
 
           case DELETED_MV:
@@ -2186,7 +2183,7 @@ static void transfer_routine_z(void)
                     zcode_backpatch_table[zcode_backpatch_size++] = new_pc%256;
                     break;
             }
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
             break;
         }
     }
@@ -2210,9 +2207,9 @@ static void transfer_routine_z(void)
     {   uchar zero[1];
         zero[0] = 0;
         if (oddeven_packing_switch)
-            while ((adjusted_pc%(scale_factor*2))!=0) transfer_byte(zero);
+            while ((adjusted_pc%(scale_factor*2))!=0) transfer_to_zcode_area(zero);
         else
-            while ((adjusted_pc%scale_factor)!=0) transfer_byte(zero);
+            while ((adjusted_pc%scale_factor)!=0) transfer_to_zcode_area(zero);
     }
 
     zmachine_pc = adjusted_pc;
@@ -2222,7 +2219,6 @@ static void transfer_routine_z(void)
 static void transfer_routine_g(void)
 {   int32 i, j, pc, new_pc, label, form_len, offset_of_next, addr,
           rstart_pc;
-    void (* transfer_byte)(uchar *); //### rename
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2230,8 +2226,6 @@ static void transfer_routine_g(void)
     {   printf("Backpatching routine at %05lx: initial size %d, %d labels\n",
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
-
-    transfer_byte = transfer_to_zcode_area;
 
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (bytes 2-4 in branches converted to
@@ -2379,7 +2373,7 @@ static void transfer_routine_g(void)
             zcode_holding_area[i+2] = (addr >> 8) & 0xFF;
             zcode_holding_area[i+3] = (addr) & 0xFF;
         }
-        transfer_byte(zcode_holding_area + i); new_pc++;
+        transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
       }
       else if (zcode_markers[i] == LABEL_MV) {
           error("*** No LABEL opcodes in Glulx ***");
@@ -2419,7 +2413,7 @@ static void transfer_routine_g(void)
           zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
           break;
         }
-        transfer_byte(zcode_holding_area + i); new_pc++;
+        transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
       }
     }
 
