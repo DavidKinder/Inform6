@@ -2588,7 +2588,6 @@ extern int translate_in_filename(int last_value, char *new_name, char *old_name,
 extern void translate_out_filename(char *new_name, char *old_name);
 extern int translate_link_filename(int last_value,
     char *new_name, char *old_name);
-extern void translate_temp_filename(int i);
 
 #ifdef ARCHIMEDES
 extern char *riscos_file_type(void);
