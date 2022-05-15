@@ -157,8 +157,8 @@
 /*   is set without STANDARD_DIRECTORIES, as then Inform may                 */
 /*   overwrite its source with object code.                                  */
 /*                                                                           */
-/*   5. Filenames (or code related to filenames) for the three temporary     */
-/*   files.  These only exist during compilation (and only if -F1 is set).   */
+/*   5. Filenames (or code related to filenames) for temporary files.        */
+/*   Inform no longer uses temporary files but the options still exist.      */
 /*   Temporary_Name is the body of a filename to use                         */
 /*   (if you don't set this, it becomes "Inftemp") and Temporary_Directory   */
 /*   is the directory path for the files to go in (which can be altered on   */
