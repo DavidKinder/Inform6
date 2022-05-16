@@ -53,7 +53,7 @@ int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
                                       features?                              */
 int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
-int uses_double_features;           /* Makes use of Glulx double-precision (3.1.3)
+int uses_double_features;          /* Makes use of Glulx double-prec (3.1.3)
                                       features?                              */
 
 debug_location statement_debug_location;
