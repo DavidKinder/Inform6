@@ -1301,8 +1301,8 @@ static void assembleg_macro(const assembly_instruction *AI)
             AMO_1 = AI->operand[1];
             AMO_2 = AI->operand[2];
             //### stack-pointer case!
-            assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
             assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
+            assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
             break;
 
         case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
