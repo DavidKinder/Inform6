@@ -767,6 +767,8 @@ typedef struct classinfo_s {
     int object_number;
     /* The offset of properties block for this class (always an offset inside the properties table) */
     int32 begins_at;
+    /* Class name symbol number */
+    int32 symbol;
 } classinfo;
 
 /* Common property information. */
@@ -791,6 +793,7 @@ typedef struct fpropt {
     uchar atts[6];
     int l;
     prop pp[64];
+    int32 symbol; /* name symbol or 0 */
 } fpropt;
 
 /* Constructed object (Z). */
@@ -798,6 +801,7 @@ typedef struct objecttz {
     uchar atts[6];
     int parent, next, child;
     int propsize;
+    int32 symbol; /* name symbol or 0 */
 } objecttz;
 
 /* Property entry record (G). */
@@ -822,6 +826,7 @@ typedef struct fproptg {
     int32 finalpropaddr;
     /* It's safe to use memory_lists in this object because there's just
        one and it's static. */
+    int32 symbol; /* name symbol or 0 */
 } fproptg;
 
 /* Constructed object (G). */
@@ -831,6 +836,7 @@ typedef struct objecttg {
     int32 parent, next, child;
     int32 propaddr;
     int32 propsize;
+    int32 symbol; /* name symbol or 0 */
 } objecttg;
 
 typedef struct abbreviation_s {
@@ -881,8 +887,10 @@ typedef struct debug_location_beginning_s
     int32 orig_beg_char_number;
 } debug_location_beginning;
 
+#define MAX_KEYWORD_GROUP_SIZE (119)
+
 typedef struct keyword_group_s
-{   char *keywords[120];
+{   char *keywords[MAX_KEYWORD_GROUP_SIZE+1]; /* empty-string-terminated */
     int change_token_type;
     int enabled;
     int case_sensitive;

@@ -50,6 +50,52 @@ These are the changes delivered in version 6.37 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>The various command line arguments that produce tracing or statistical information have been consolidated in a new
+argument: <tt>$!TRACEOPT</tt> or <tt>$!TRACEOPT=N</tt>. The Unix-style equivalent is <tt>--trace TRACEOPT</tt> or
+<tt>--trace TRACEOPT=N</tt>. You can also use <tt>$!</tt> by itself (or <tt>--helptrace</tt>) to list all available trace options.
+Trace option names are case-insensitive.
+<p>
+The optional <tt>N</tt> is always an integer. 0 always means off, 1 is the base level, 2 or more may increase verbosity.
+As a general rule, setting <tt>N</tt> to a high number is not an error; it just does the same thing as the highest supported
+number for that option. (This lets us add more verbosity levels to any option without worrying about compatibility errors.)
+<p>
+Four trace settings can be changed in mid-compile with the <tt>Trace</tt> directive. (This has always been true but now it is handled
+consistently.) <tt>Trace assembly</tt>, <tt>Trace expressions</tt>, <tt>Trace tokens</tt> and <tt>Trace linker</tt> are
+equivalent to <tt>--trace asm</tt>, <tt>--trace expr</tt>, <tt>--trace tokens</tt> and <tt>--trace linker</tt>, respectively.
+As with the command-line versions, you can optionally specify 0 to turn off that setting or 2 or more for more verbosity.
+<p>
+Four more trace directives do an immediate information dump: <tt>Trace dictionary</tt>, <tt>Trace objects</tt>,
+<tt>Trace symbols</tt> and <tt>Trace verbs</tt>. The command-line equivalents <tt>--trace dict</tt>, <tt>--trace objects</tt>,
+<tt>--trace symbols</tt> and <tt>--trace verbs</tt> do the same at the end of compilation.
+<p>
+The following single-letter options have been removed and replaced with trace options:
+ <ul>
+ <li><tt>-j</tt>: Replaced by <tt>--trace OBJECTS</tt>
+ <li><tt>-m</tt>: Replaced by <tt>--trace MEM</tt>
+ <li><tt>-n</tt>: Replaced by <tt>--trace PROPS</tt> (for property information) and <tt>--trace ACTIONS</tt> (for action numbers)
+ <li><tt>-p</tt>: Replaced by <tt>--trace MAP=2</tt>
+ <li><tt>-t</tt>: Replaced by <tt>--trace ASM=2</tt>
+ <li><tt>-y</tt>: Replaced by <tt>--trace LINKER</tt>
+ </ul><br>
+The following single-letter options still exist, but are now aliases for trace options:
+ <ul><br>
+ <li><tt>-a</tt>: Same as <tt>--trace ASM</tt>
+ <li><tt>-f</tt>: Same as <tt>--trace FREQ</tt>
+ <li><tt>-g</tt>: Same as <tt>--trace RUNTIME</tt>
+ <li><tt>-s</tt>: Same as <tt>--trace STATS</tt>
+ <li><tt>-z</tt>: Same as <tt>--trace MAP</tt>
+ </ul><br>
+The following single-letter options have been removed entirely:
+ <ul><br>
+ <li><tt>-b</tt>: Has not done anything since at least Inform 5.
+ <li><tt>-l</tt>: Was supposed to list all statements compiled, but it was never implemented.
+ <li><tt>-o</tt>: Showed the same information as <tt>-z</tt> or <tt>--trace MAP</tt>.
+ </ul><br>
+The <tt>-l</tt> option did show include files being opened; this is now a separate trace setting, <tt>--trace FILES</tt>.
+<p>
+Some of the information that used to be under <tt>-a4</tt> is now a separate trace setting, <tt>--trace BPATCH</tt>.
+<li><p>The <tt>-u</tt> option now just outputs computed abbreviations. If you want the verbose calculation information that
+it used to print, use <tt>--trace FINDABBREVS</tt> or <tt>--trace FINDABBREVS=2</tt>.
 <li><p>The compiler is now capable of dead code elimination, allowing it to:
  <ul>
  <li>Discard unreachable opcodes and strings.
@@ -63,7 +109,8 @@ These are the changes delivered in version 6.37 of the Inform compiler.
  <li>Fold expressions like <tt>(0 && expr)</tt> and <tt>(1 || expr)</tt>, even when <tt>expr</tt> is not a constant.
  </ul><br>
 When statements that can never be reached are eliminated, a warning is produced, where appropriate.
-<li><p>Dead code elimination does mean that theoretically possible (though very odd) valid code will now
+<p>
+Dead code elimination does mean that theoretically possible (though very odd) valid code will now
 result in a compilation error. For example,
 <pre>
   if (DOSTUFF) {

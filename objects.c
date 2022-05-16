@@ -466,17 +466,22 @@ memory_list   class_info_memlist;
 
 extern void list_object_tree(void)
 {   int i;
-    /* TODO: include the object names in this list. */
     printf("Object tree:\n");
-    printf("obj   par nxt chl:\n");
+    printf("obj name                             par nxt chl:\n");
     for (i=0; i<no_objects; i++) {
         if (!glulx_mode) {
-            printf("%3d   %3d %3d %3d\n",
-                i+1,objectsz[i].parent,objectsz[i].next, objectsz[i].child);
+            int sym = objectsz[i].symbol;
+            char *symname = ((sym > 0) ? symbols[sym].name : "...");
+            printf("%3d %-32s %3d %3d %3d\n",
+                i+1, symname,
+                objectsz[i].parent, objectsz[i].next, objectsz[i].child);
         }
         else {
-            printf("%3d   %3d %3d %3d\n",
-                i+1,objectsg[i].parent,objectsg[i].next, objectsg[i].child);
+            int sym = objectsg[i].symbol;
+            char *symname = ((sym > 0) ? symbols[sym].name : "...");
+            printf("%3d %-32s %3d %3d %3d\n",
+                i+1, symname,
+                objectsg[i].parent, objectsg[i].next, objectsg[i].child);
         }
     }
 }
@@ -1018,6 +1023,8 @@ static void manufacture_object_z(void)
     directives.enabled = TRUE;
 
     ensure_memory_list_available(&objectsz_memlist, no_objects+1);
+
+    objectsz[no_objects].symbol = full_object.symbol;
     
     property_inheritance_z();
 
@@ -1060,6 +1067,8 @@ static void manufacture_object_g(void)
 
     ensure_memory_list_available(&objectsg_memlist, no_objects+1);
     ensure_memory_list_available(&objectatts_memlist, no_objects+1);
+    
+    objectsg[no_objects].symbol = full_object_g.symbol;
     
     property_inheritance_g();
 
@@ -1829,6 +1838,7 @@ static void initialise_full_object(void)
 {
   int i;
   if (!glulx_mode) {
+    full_object.symbol = 0;
     full_object.l = 0;
     full_object.atts[0] = 0;
     full_object.atts[1] = 0;
@@ -1838,6 +1848,7 @@ static void initialise_full_object(void)
     full_object.atts[5] = 0;
   }
   else {
+    full_object_g.symbol = 0;
     full_object_g.numprops = 0;
     full_object_g.propdatasize = 0;
     for (i=0; i<NUM_ATTR_BYTES; i++)
@@ -1908,6 +1919,8 @@ inconvenience, please contact the maintainers.");
     else parent_of_this_obj = (module_switch)?MAXINTWORD:1;
 
     class_info[no_classes].object_number = class_number;
+    class_info[no_classes].symbol = current_classname_symbol;
+    class_info[no_classes].begins_at = 0;
 
     initialise_full_object();
 
@@ -1917,6 +1930,7 @@ inconvenience, please contact the maintainers.");
         since property 2 is always set to "additive" -- see below)           */
 
     if (!glulx_mode) {
+      full_object.symbol = current_classname_symbol;
       full_object.l = 1;
       full_object.pp[0].num = 2;
       full_object.pp[0].l = 1;
@@ -1924,6 +1938,7 @@ inconvenience, please contact the maintainers.");
       full_object.pp[0].ao[0].marker = OBJECT_MV;
     }
     else {
+      full_object_g.symbol = current_classname_symbol;
       full_object_g.numprops = 1;
       ensure_memory_list_available(&full_object_g.props_memlist, 1);
       full_object_g.props[0].num = 2;
@@ -2206,6 +2221,11 @@ extern void make_object(int nearby_flag,
     }
 
     initialise_full_object();
+    if (!glulx_mode)
+        full_object.symbol = internal_name_symbol;
+    else
+        full_object_g.symbol = internal_name_symbol;
+
     if (instance_of != -1) add_class_to_inheritance_list(instance_of);
 
     if (specified_class == -1) parse_body_of_definition();
