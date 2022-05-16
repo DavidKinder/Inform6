@@ -382,7 +382,7 @@ extern void describe_token_triple(const char *text, int32 value, int type)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   All but one of the 280 Inform keywords (118 of them opcode names used   */
+/*   All but one of the Inform keywords (most of them opcode names used      */
 /*   only by the assembler).  (The one left over is "sp", a keyword used in  */
 /*   assembly language only.)                                                */
 /*                                                                           */
@@ -394,7 +394,9 @@ extern void describe_token_triple(const char *text, int32 value, int type)
 /*   "header.h" but is otherwise not significant.                            */
 /* ------------------------------------------------------------------------- */
 
-#define MAX_KEYWORDS 350
+/* This must exceed the total number of keywords across all groups, 
+   including opcodes. */
+#define MAX_KEYWORDS (350)
 
 /* The values will be filled in at compile time, when we know
    which opcode set to use. */
@@ -661,11 +663,21 @@ static void make_keywords_tables(void)
     }
 
     for (j=0; *(oplist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opcode_list has overflowed opcode_names.keywords");
+            break;
+        }
         opcode_names.keywords[j] = oplist[j];
     }
     opcode_names.keywords[j] = "";
     
     for (j=0; *(maclist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opmacro_list has overflowed opcode_macros.keywords");
+            break;
+        }
         opcode_macros.keywords[j] = maclist[j];
     }
     opcode_macros.keywords[j] = "";
@@ -678,7 +690,13 @@ static void make_keywords_tables(void)
     for (i=1; i<=11; i++)
     {   keyword_group *kg = keyword_groups[i];
         for (j=0; *(kg->keywords[j]) != 0; j++)
-        {   h = hash_code_from_string(kg->keywords[j]);
+        {
+            if (tp >= MAX_KEYWORDS) {
+                /* Gotta increase MAX_KEYWORDS */
+                compiler_error("keywords_data_table has overflowed MAX_KEYWORDS");
+                break;
+            }
+            h = hash_code_from_string(kg->keywords[j]);
             if (keywords_hash_table[h] == -1)
                 keywords_hash_table[h] = tp;
             else
