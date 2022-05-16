@@ -155,7 +155,7 @@ static void select_target(int targ)
     }
   }
 
-  if (MAX_LOCAL_VARIABLES >= MAX_KEYWORD_GROUP_SIZE) {
+  if (MAX_LOCAL_VARIABLES > MAX_KEYWORD_GROUP_SIZE) {
     compiler_error("MAX_LOCAL_VARIABLES cannot exceed MAX_KEYWORD_GROUP_SIZE");
     MAX_LOCAL_VARIABLES = MAX_KEYWORD_GROUP_SIZE;
   }
