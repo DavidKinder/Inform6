@@ -792,6 +792,8 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "numtod",     0x200,  St|St2, GOP_Double, 3 },
   { (uchar *) "dtonumz",    0x201,  St, GOP_Double, 3 },
   { (uchar *) "dtonumn",    0x202,  St, GOP_Double, 3 },
+  { (uchar *) "ftod",       0x203,  St|St2, GOP_Double, 3 },
+  { (uchar *) "dtof",       0x204,  St, GOP_Double, 3 },
   { (uchar *) "dceil",      0x208,  St|St2, GOP_Double, 4 },
   { (uchar *) "dfloor",     0x209,  St|St2, GOP_Double, 4 },
   { (uchar *) "dadd",       0x210,  St|St2, GOP_Double, 6 },
