@@ -456,9 +456,6 @@
 #ifndef Module_Directory
 #define Module_Directory  "modules"
 #endif
-#ifndef Temporary_Directory
-#define Temporary_Directory ""
-#endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
 #endif
@@ -477,9 +474,6 @@
 #ifndef Module_Directory
 #define Module_Directory  ""
 #endif
-#ifndef Temporary_Directory
-#define Temporary_Directory ""
-#endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
 #endif
@@ -495,10 +489,6 @@
 
 #ifndef PATHLEN
 #define PATHLEN 128
-#endif
-
-#ifndef Temporary_File
-#define Temporary_File "Inftemp"
 #endif
 
 #ifndef DEFAULT_ERROR_FORMAT
