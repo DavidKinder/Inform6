@@ -158,20 +158,9 @@
 /*   overwrite its source with object code.                                  */
 /*                                                                           */
 /*   5. Filenames (or code related to filenames) for temporary files.        */
-/*   Inform no longer uses temporary files but the options still exist.      */
-/*   Temporary_Name is the body of a filename to use                         */
-/*   (if you don't set this, it becomes "Inftemp") and Temporary_Directory   */
-/*   is the directory path for the files to go in (which can be altered on   */
-/*   the command line).  On some multi-tasking OSs these filenames ought to  */
-/*   include a number uniquely identifying the process: to indicate this,    */
-/*   define INCLUDE_TASK_ID and provide some code...                         */
-/*                                                                           */
-/*       #define INCLUDE_TASK_ID                                             */
-/*       #ifdef INFORM_FILE                                                  */
-/*       static int32 unique_task_id(void)                                   */
-/*       {   ...some code returning your task ID...                          */
-/*       }                                                                   */
-/*       #endif                                                              */
+/*   These included Temporary_Name, Temporary_Directory, and                 */
+/*   INCLUDE_TASK_ID. These options have been removed, and are listed here   */
+/*   only for people who might ask "what happened to 5?"                     */
 /*                                                                           */
 /*   6. Any other definitions specific to the OS or machine.                 */
 /*   (In particular DEFAULT_ERROR_FORMAT is 0 on most machines and 1 on PCs; */
@@ -189,16 +178,6 @@
 #define MACHINE_STRING   "Amiga"
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define __USE_SYSBASE
-#include <proto/exec.h>
-#define INCLUDE_TASK_ID
-#define Temporary_Directory "T:"
-#ifdef MAIN_INFORM_FILE
-static int32 unique_task_id(void)
-{   return (int32)FindTask(NULL);
-}
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   ARCHIMEDES block: Acorn/RISC OS settings                                */
@@ -214,9 +193,6 @@ static int32 unique_task_id(void)
 #define NO_FILE_EXTENSIONS
 #define Source_Directory "inform"
 #define ICL_Directory "ICL"
-/* 5 */
-#define ENABLE_TEMPORARY_PATH
-#define Temporary_Directory "ram:"
 /* 6 */
 #define ARC_THROWBACK
 #endif
@@ -228,16 +204,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "Atari ST"
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#ifndef TOSFS
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#ifdef MAIN_INFORM_FILE
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   BEOS block                                                              */
@@ -248,8 +214,6 @@ static int32 unique_task_id(void)
 /* 4 */
 #define FN_SEP '/'
 #define FILE_EXTENSIONS
-/* 5 */
-#define Temporary_Directory "/tmp"
 #endif
 /* ------------------------------------------------------------------------- */
 /*   LINUX block                                                             */
@@ -261,8 +225,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define Temporary_Directory "/tmp"
 /* 6 */
 #define PATHLEN 8192
 #if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
@@ -327,18 +289,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#define _POSIX_C_SOURCE 199506L
-#define _XOPEN_SOURCE 500
-#ifdef MAIN_INFORM_FILE
-#include <sys/types.h>
-#include <unistd.h>
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
 /* 6 */
 #define PATHLEN 8192
 #if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
@@ -389,16 +339,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define PATHLEN 512
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#ifdef MAIN_INFORM_FILE
-#include <unistd.h>
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   VMS (Dec VAX and Alpha) block                                           */
