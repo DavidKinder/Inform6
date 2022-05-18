@@ -509,7 +509,6 @@ static char Source_Path[PATHLEN];
 static char Include_Path[PATHLEN];
 static char Code_Path[PATHLEN];
 static char Module_Path[PATHLEN];
-static char Temporary_Path[PATHLEN];
 static char current_source_path[PATHLEN];
        char Debugging_Name[PATHLEN];
        char Transcript_Name[PATHLEN];
@@ -616,7 +615,6 @@ static void set_default_paths(void)
     set_path_value(Code_Path,       Code_Directory);
     set_path_value(Module_Path,     Module_Directory);
     set_path_value(ICL_Path,        ICL_Directory);
-    set_path_value(Temporary_Path,  Temporary_Directory);
     set_path_value(Debugging_Name,  Debugging_File);
     set_path_value(Transcript_Name, Transcript_File);
     set_path_value(Language_Name,   Default_Language);
@@ -658,7 +656,6 @@ static void set_path_command(char *command)
         if (strcmp(pathname, "code_path")==0)    path_to_set=Code_Path;
         if (strcmp(pathname, "module_path")==0)  path_to_set=Module_Path;
         if (strcmp(pathname, "icl_path")==0)     path_to_set=ICL_Path;
-        if (strcmp(pathname, "temporary_path")==0) path_to_set=Temporary_Path;
         if (strcmp(pathname, "debugging_name")==0) path_to_set=Debugging_Name;
         if (strcmp(pathname, "transcript_name")==0) path_to_set=Transcript_Name;
         if (strcmp(pathname, "language_name")==0) path_to_set=Language_Name;
@@ -944,10 +941,8 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
    name_or_unset(Code_Path));
 
     printf(
-"       Temporary file (out)   temporary_path      %s\n\
-       ICL command file (in)  icl_path            %s\n\
+"       ICL command file (in)  icl_path            %s\n\
        Module (in & out)      module_path         %s\n\n",
-   name_or_unset(Temporary_Path),
    name_or_unset(ICL_Path), name_or_unset(Module_Path));
 
     printf(
@@ -979,7 +974,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
       Include files:   %s\n\
       Story files:     %s (Version 3), %s (v4), %s (v5, the default),\n\
                        %s (v6), %s (v7), %s (v8), %s (Glulx)\n\
-      Temporary files: .tmp\n\
       Modules:         %s\n\n",
       Source_Extension, Include_Extension,
       Code_Extension, V4Code_Extension, V5Code_Extension, V6Code_Extension,
