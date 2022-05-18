@@ -120,8 +120,7 @@ static int zchars_out_buffer[3],       /* During text translation, a buffer of
            zob_index;                  /* Index (0 to 2) into it             */
 
 uchar *translated_text;                /* Area holding translated strings
-                                          until they are moved into either
-                                          a temporary file, or the
+                                          until they are moved into the
                                           static_strings_area below */
 static memory_list translated_text_memlist;
 
