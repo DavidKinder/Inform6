@@ -2203,13 +2203,10 @@ static void transfer_routine_z(void)
 
     ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+2*scale_factor);
 
-    {   uchar zero[1];
-        zero[0] = 0;
-        if (oddeven_packing_switch)
-            while ((adjusted_pc%(scale_factor*2))!=0) transfer_to_zcode_area(zero);
-        else
-            while ((adjusted_pc%scale_factor)!=0) transfer_to_zcode_area(zero);
-    }
+    if (oddeven_packing_switch)
+        while ((adjusted_pc%(scale_factor*2))!=0) zcode_area[adjusted_pc++] = 0;
+    else
+        while ((adjusted_pc%scale_factor)!=0) zcode_area[adjusted_pc++] = 0;
 
     zmachine_pc = adjusted_pc;
     zcode_ha_size = 0;
