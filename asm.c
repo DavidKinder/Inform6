@@ -2014,10 +2014,6 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 
 static int32 adjusted_pc;
 
-static void transfer_to_zcode_area(uchar *c)
-{   zcode_area[adjusted_pc++] = *c;
-}
-
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
@@ -2134,7 +2130,7 @@ static void transfer_routine_z(void)
                 }
                 zcode_holding_area[i] = branch_on_true + 0x40 + (addr&0x3f);
             }
-            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
           case LABEL_MV:
@@ -2151,7 +2147,7 @@ static void transfer_routine_z(void)
             if (addr<0) addr += (int32) 0x10000L;
             zcode_holding_area[i] = addr/256;
             zcode_holding_area[i+1] = addr%256;
-            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
           case DELETED_MV:
@@ -2182,7 +2178,7 @@ static void transfer_routine_z(void)
                     zcode_backpatch_table[zcode_backpatch_size++] = new_pc%256;
                     break;
             }
-            transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
         }
     }
@@ -2369,7 +2365,7 @@ static void transfer_routine_g(void)
             zcode_holding_area[i+2] = (addr >> 8) & 0xFF;
             zcode_holding_area[i+3] = (addr) & 0xFF;
         }
-        transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
+        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
       }
       else if (zcode_markers[i] == LABEL_MV) {
           error("*** No LABEL opcodes in Glulx ***");
@@ -2409,7 +2405,7 @@ static void transfer_routine_g(void)
           zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
           break;
         }
-        transfer_to_zcode_area(zcode_holding_area + i); new_pc++;
+        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
       }
     }
 
