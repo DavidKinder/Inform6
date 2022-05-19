@@ -2012,11 +2012,10 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 /*   might transfer fewer bytes than that.                                   */
 /* ------------------------------------------------------------------------- */
 
-static int32 adjusted_pc;
-
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
+    int32 adjusted_pc;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2211,6 +2210,7 @@ static void transfer_routine_z(void)
 static void transfer_routine_g(void)
 {   int32 i, j, pc, new_pc, label, form_len, offset_of_next, addr,
           rstart_pc;
+    int32 adjusted_pc;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
