@@ -256,7 +256,6 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    temporary_files_switch,         /* -F */
     module_switch,                  /* -M */
     runtime_error_checking_switch,  /* -S */
     define_USE_MODULES_switch,      /* -U */
@@ -331,11 +330,6 @@ static void reset_switch_settings(void)
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
-#ifdef USE_TEMPORARY_FILES
-    temporary_files_switch = TRUE;
-#else
-    temporary_files_switch = FALSE;
-#endif
     define_USE_MODULES_switch = FALSE;
     module_switch = FALSE;
 #ifdef ARC_THROWBACK
@@ -515,7 +509,6 @@ static char Source_Path[PATHLEN];
 static char Include_Path[PATHLEN];
 static char Code_Path[PATHLEN];
 static char Module_Path[PATHLEN];
-static char Temporary_Path[PATHLEN];
 static char current_source_path[PATHLEN];
        char Debugging_Name[PATHLEN];
        char Transcript_Name[PATHLEN];
@@ -622,7 +615,6 @@ static void set_default_paths(void)
     set_path_value(Code_Path,       Code_Directory);
     set_path_value(Module_Path,     Module_Directory);
     set_path_value(ICL_Path,        ICL_Directory);
-    set_path_value(Temporary_Path,  Temporary_Directory);
     set_path_value(Debugging_Name,  Debugging_File);
     set_path_value(Transcript_Name, Transcript_File);
     set_path_value(Language_Name,   Default_Language);
@@ -664,7 +656,6 @@ static void set_path_command(char *command)
         if (strcmp(pathname, "code_path")==0)    path_to_set=Code_Path;
         if (strcmp(pathname, "module_path")==0)  path_to_set=Module_Path;
         if (strcmp(pathname, "icl_path")==0)     path_to_set=ICL_Path;
-        if (strcmp(pathname, "temporary_path")==0) path_to_set=Temporary_Path;
         if (strcmp(pathname, "debugging_name")==0) path_to_set=Debugging_Name;
         if (strcmp(pathname, "transcript_name")==0) path_to_set=Transcript_Name;
         if (strcmp(pathname, "language_name")==0) path_to_set=Language_Name;
@@ -950,10 +941,8 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
    name_or_unset(Code_Path));
 
     printf(
-"       Temporary file (out)   temporary_path      %s\n\
-       ICL command file (in)  icl_path            %s\n\
+"       ICL command file (in)  icl_path            %s\n\
        Module (in & out)      module_path         %s\n\n",
-   name_or_unset(Temporary_Path),
    name_or_unset(ICL_Path), name_or_unset(Module_Path));
 
     printf(
@@ -985,7 +974,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
       Include files:   %s\n\
       Story files:     %s (Version 3), %s (v4), %s (v5, the default),\n\
                        %s (v6), %s (v7), %s (v8), %s (Glulx)\n\
-      Temporary files: .tmp\n\
       Modules:         %s\n\n",
       Source_Extension, Include_Extension,
       Code_Extension, V4Code_Extension, V5Code_Extension, V6Code_Extension,
@@ -1060,33 +1048,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     module_switch = save_mm;
 }
 
-/* ------------------------------------------------------------------------- */
-/*  Naming temporary files                                                   */
-/*       (Arguably temporary files should be made using "tmpfile" in         */
-/*        the ANSI C library, but many supposed ANSI libraries lack it.)     */
-/* ------------------------------------------------------------------------- */
-
-extern void translate_temp_filename(int i)
-{   char *p = NULL;
-    switch(i)
-    {   case 1: p=Temp1_Name; break;
-        case 2: p=Temp2_Name; break;
-        case 3: p=Temp3_Name; break;
-        default: return;
-    }
-    if (strlen(Temporary_Path)+strlen(Temporary_File)+6 >= PATHLEN) {
-        printf ("Temporary_Path is too long.\n");
-        exit(1);
-    }
-    sprintf(p,"%s%s%d", Temporary_Path, Temporary_File, i);
-#ifdef INCLUDE_TASK_ID
-    sprintf(p+strlen(p), "_proc%08lx", (long int) unique_task_id());
-#endif
-#ifdef FILE_EXTENSIONS
-    sprintf(p+strlen(p), ".tmp");
-#endif
-}
-
 #ifdef ARCHIMEDES
 static char riscos_ft_buffer[4];
 
@@ -1130,10 +1091,6 @@ static void run_pass(void)
     close_all_source();
     if (hash_switch && hash_printed_since_newline) printf("\n");
 
-    if (temporary_files_switch)
-    {   if (module_switch) flush_link_data();
-        check_temp_files();
-    }
     sort_dictionary();
     if (track_unused_routines)
         locate_dead_functions();
@@ -1252,8 +1209,6 @@ compiling modules: disabling -S switch\n");
     if (debugfile_switch)
     {   end_debug_file();
     }
-
-    if (temporary_files_switch && (no_errors>0)) remove_temp_files();
 
     if (optimise_switch) {
         /* Pull out all_text so that it will not be freed. */
@@ -1407,11 +1362,6 @@ printf("  E1  Microsoft-style error messages%s\n",
       (error_format==1)?" (current setting)":"");
 printf("  E2  Macintosh MPW-style error messages%s\n",
       (error_format==2)?" (current setting)":"");
-#ifdef USE_TEMPORARY_FILES
-printf("  F0  use extra memory rather than temporary files\n");
-#else
-printf("  F1  use temporary files to reduce memory consumption\n");
-#endif
 printf("  G   compile a Glulx game file\n");
 printf("  H   use Huffman encoding to compress Glulx strings\n");
 printf("  M   compile as a Module for future linking\n");
@@ -1545,16 +1495,6 @@ extern void switches(char *p, int cmode)
                       case '1': s=2; error_format=1; break;
                       case '2': s=2; error_format=2; break;
                       default:  error_format=1; break;
-                  }
-                  break;
-        case 'F': if (cmode == 0) {
-                      error("The switch '-F' can't be set with 'Switches'");
-                      break;
-                  }
-                  switch(p[i+1])
-                  {   case '0': s=2; temporary_files_switch = FALSE; break;
-                      case '1': s=2; temporary_files_switch = TRUE; break;
-                      default:  temporary_files_switch = state; break;
                   }
                   break;
         case 'M': module_switch = state;

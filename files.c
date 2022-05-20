@@ -74,13 +74,6 @@ static debug_backpatch_accumulator array_backpatch_accumulator;
 static debug_backpatch_accumulator grammar_backpatch_accumulator;
 
 /* ------------------------------------------------------------------------- */
-/*   File handles and names for temporary files.                             */
-/* ------------------------------------------------------------------------- */
-
-FILE *Temp1_fp=NULL, *Temp2_fp=NULL,  *Temp3_fp=NULL;
-char Temp1_Name[PATHLEN], Temp2_Name[PATHLEN], Temp3_Name[PATHLEN];
-
-/* ------------------------------------------------------------------------- */
 /*   Opening and closing source code files                                   */
 /* ------------------------------------------------------------------------- */
 
@@ -382,7 +375,7 @@ static void output_compression(int entnum, int32 *size, int *count)
 }
 
 static void output_file_z(void)
-{   FILE *fin=NULL; char new_name[PATHLEN];
+{   char new_name[PATHLEN];
     int32 length, blanks=0, size, i, j, offset;
     uint32 code_length, size_before_code, next_cons_check;
     int use_function;
@@ -436,14 +429,6 @@ static void output_file_z(void)
 
     /*  (2)  Output the compiled code area.                                  */
 
-    if (temporary_files_switch)
-    {   fclose(Temp2_fp);
-        Temp2_fp = NULL;
-        fin=fopen(Temp2_Name,"rb");
-        if (fin==NULL)
-            fatalerror("I/O failure: couldn't reopen temporary file 2");
-    }
-
     if (!OMIT_UNUSED_ROUTINES) {
         /* This is the old-fashioned case, which is easy. All of zcode_area
            (zmachine_pc bytes) will be output. next_cons_check will be
@@ -493,17 +478,13 @@ static void output_file_z(void)
         while (j<offset) {
             if (!use_function) {
                 while (j<offset && j<next_cons_check) {
-                    /* get dummy value */
-                    ((temporary_files_switch)?fgetc(fin):
-                        zcode_area[j]);
                     j++;
                 }
             }
             else {
                 while (j<offset && j<next_cons_check) {
                     size++;
-                    sf_put((temporary_files_switch)?fgetc(fin):
-                        zcode_area[j]);
+                    sf_put(zcode_area[j]);
                     j++;
                 }
             }
@@ -512,10 +493,8 @@ static void output_file_z(void)
         }
 
         if (long_flag)
-        {   int32 v = (temporary_files_switch)?fgetc(fin):
-                zcode_area[j];
-            v = 256*v + ((temporary_files_switch)?fgetc(fin):
-                zcode_area[j+1]);
+        {   int32 v = zcode_area[j];
+            v = 256*v + (zcode_area[j+1]);
             j += 2;
             if (use_function) {
                 v = backpatch_value(v);
@@ -524,8 +503,7 @@ static void output_file_z(void)
             }
         }
         else
-        {   int32 v = (temporary_files_switch)?fgetc(fin):
-                zcode_area[j];
+        {   int32 v = zcode_area[j];
             j++;
             if (use_function) {
                 v = backpatch_value(v);
@@ -549,29 +527,18 @@ static void output_file_z(void)
     while (j<offset) {
         if (!use_function) {
             while (j<offset && j<next_cons_check) {
-                /* get dummy value */
-                ((temporary_files_switch)?fgetc(fin):
-                    zcode_area[j]);
                 j++;
             }
         }
         else {
             while (j<offset && j<next_cons_check) {
                 size++;
-                sf_put((temporary_files_switch)?fgetc(fin):
-                    zcode_area[j]);
+                sf_put(zcode_area[j]);
                 j++;
             }
         }
         if (j == next_cons_check)
             next_cons_check = df_next_function_iterate(&use_function);
-    }
-
-    if (temporary_files_switch)
-    {   if (ferror(fin))
-            fatalerror("I/O failure: couldn't read from temporary file 2");
-        fclose(fin);
-        fin = NULL;
     }
 
     if (size_before_code + code_length != size)
@@ -584,46 +551,16 @@ static void output_file_z(void)
 
     /*  (4)  Output the static strings area.                                 */
 
-    if (temporary_files_switch)
-    {   fclose(Temp1_fp);
-        Temp1_fp = NULL;
-        fin=fopen(Temp1_Name,"rb");
-        if (fin==NULL)
-            fatalerror("I/O failure: couldn't reopen temporary file 1");
-        for (i=0; i<static_strings_extent; i++) sf_put(fgetc(fin));
-        if (ferror(fin))
-            fatalerror("I/O failure: couldn't read from temporary file 1");
-        fclose(fin);
-        fin = NULL;
-        remove(Temp1_Name); remove(Temp2_Name);
-    }
-    else
-      for (i=0; i<static_strings_extent; i++) {
+    for (i=0; i<static_strings_extent; i++) {
         sf_put(static_strings_area[i]);
         size++;
-      }
+    }
 
     /*  (5)  Output the linking data table (in the case of a module).        */
 
-    if (temporary_files_switch)
-    {   if (module_switch)
-        {   fclose(Temp3_fp);
-            Temp3_fp = NULL;
-            fin=fopen(Temp3_Name,"rb");
-            if (fin==NULL)
-                fatalerror("I/O failure: couldn't reopen temporary file 3");
-            for (j=0; j<link_data_size; j++) sf_put(fgetc(fin));
-            if (ferror(fin))
-                fatalerror("I/O failure: couldn't read from temporary file 3");
-            fclose(fin);
-            fin = NULL;
-            remove(Temp3_Name);
-        }
-    }
-    else
-        if (module_switch)
-            for (i=0; i<link_data_size; i++)
-                sf_put(link_data_area[i]);
+    if (module_switch)
+        for (i=0; i<link_data_size; i++)
+            sf_put(link_data_area[i]);
 
     if (module_switch)
     {   for (i=0; i<zcode_backpatch_size; i++)
@@ -687,7 +624,7 @@ static void output_file_z(void)
 }
 
 static void output_file_g(void)
-{   FILE *fin=NULL; char new_name[PATHLEN];
+{   char new_name[PATHLEN];
     int32 size, i, j, offset;
     int32 VersionNum;
     uint32 code_length, size_before_code, next_cons_check;
@@ -829,14 +766,6 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
 
     /*  (2)  Output the compiled code area. */
 
-    if (temporary_files_switch)
-    {   fclose(Temp2_fp);
-        Temp2_fp = NULL;
-        fin=fopen(Temp2_Name,"rb");
-        if (fin==NULL)
-            fatalerror("I/O failure: couldn't reopen temporary file 2");
-    }
-
     if (!OMIT_UNUSED_ROUTINES) {
         /* This is the old-fashioned case, which is easy. All of zcode_area
            (zmachine_pc bytes) will be output. next_cons_check will be
@@ -883,17 +812,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         while (j<offset) {
             if (!use_function) {
                 while (j<offset && j<next_cons_check) {
-                    /* get dummy value */
-                    ((temporary_files_switch)?fgetc(fin):
-                        zcode_area[j]);
                     j++;
                 }
             }
             else {
                 while (j<offset && j<next_cons_check) {
                     size++;
-                    sf_put((temporary_files_switch)?fgetc(fin):
-                        zcode_area[j]);
+                    sf_put(zcode_area[j]);
                     j++;
                 }
             }
@@ -906,14 +831,10 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         switch (data_len) {
 
         case 4:
-          v = ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j]);
-          v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j+1]);
-          v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j+2]);
-          v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j+3]);
+          v = (zcode_area[j]);
+          v = (v << 8) | (zcode_area[j+1]);
+          v = (v << 8) | (zcode_area[j+2]);
+          v = (v << 8) | (zcode_area[j+3]);
           j += 4;
           if (!use_function)
               break;
@@ -926,10 +847,8 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           break;
 
         case 2:
-          v = ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j]);
-          v = (v << 8) | ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j+1]);
+          v = (zcode_area[j]);
+          v = (v << 8) | (zcode_area[j+1]);
           j += 2;
           if (!use_function)
               break;
@@ -944,8 +863,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
           break;
 
         case 1:
-          v = ((temporary_files_switch)?fgetc(fin):
-            zcode_area[j]);
+          v = (zcode_area[j]);
           j += 1;
           if (!use_function)
               break;
@@ -979,17 +897,13 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     while (j<offset) {
         if (!use_function) {
             while (j<offset && j<next_cons_check) {
-                /* get dummy value */
-                ((temporary_files_switch)?fgetc(fin):
-                    zcode_area[j]);
                 j++;
             }
         }
         else {
             while (j<offset && j<next_cons_check) {
                 size++;
-                sf_put((temporary_files_switch)?fgetc(fin):
-                    zcode_area[j]);
+                sf_put(zcode_area[j]);
                 j++;
             }
         }
@@ -997,21 +911,11 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
             next_cons_check = df_next_function_iterate(&use_function);
     }
 
-    if (temporary_files_switch)
-    {   if (ferror(fin))
-            fatalerror("I/O failure: couldn't read from temporary file 2");
-        fclose(fin);
-        fin = NULL;
-    }
-
     if (size_before_code + code_length != size)
         compiler_error("Code output length did not match");
 
     /*  (4)  Output the static strings area.                                 */
 
-    if (temporary_files_switch) {
-      fseek(Temp1_fp, 0, SEEK_SET);
-    }
     {
       int32 ix, lx;
       int ch, jx, curbyte, bx;
@@ -1065,10 +969,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
         jx = 0; 
         curbyte = 0;
         while (!done) {
-          if (temporary_files_switch)
-            ch = fgetc(Temp1_fp);
-          else
-            ch = static_strings_area[ix];
+          ch = static_strings_area[ix];
           ix++;
           if (ix > static_strings_extent || ch < 0)
             compiler_error("Read too much not-yet-compressed text.");
@@ -1812,57 +1713,6 @@ extern void end_debug_file()
     close_debug_file();
 }
 
-/* ------------------------------------------------------------------------- */
-/*  Temporary storage files:                                                 */
-/*                                                                           */
-/*      Temp file 1 is used to hold the static strings area, as compiled     */
-/*                2 to hold compiled routines of Z-code                      */
-/*                3 to hold the link data table (but only for modules)       */
-/*                                                                           */
-/*  (Though annoying, this procedure typically saves about 200K of memory,   */
-/*  an important point for Amiga and sub-386 PC users of Inform)             */
-/* ------------------------------------------------------------------------- */
-
-extern void open_temporary_files(void)
-{   translate_temp_filename(1);
-    Temp1_fp=fopen(Temp1_Name,"wb");
-    if (Temp1_fp==NULL) fatalerror_named("Couldn't open temporary file 1",
-        Temp1_Name);
-    translate_temp_filename(2);
-    Temp2_fp=fopen(Temp2_Name,"wb");
-    if (Temp2_fp==NULL) fatalerror_named("Couldn't open temporary file 2",
-        Temp2_Name);
-
-    if (!module_switch) return;
-    translate_temp_filename(3);
-    Temp3_fp=fopen(Temp3_Name,"wb");
-    if (Temp3_fp==NULL) fatalerror_named("Couldn't open temporary file 3",
-        Temp3_Name);
-}
-
-extern void check_temp_files(void)
-{
-    if (ferror(Temp1_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 1");
-    if (ferror(Temp2_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 2");
-    if (module_switch && ferror(Temp3_fp))
-        fatalerror("I/O failure: couldn't write to temporary file 3");
-}
-
-extern void remove_temp_files(void)
-{   if (Temp1_fp != NULL) fclose(Temp1_fp);
-    Temp1_fp = NULL;
-    if (Temp2_fp != NULL) fclose(Temp2_fp);
-    Temp2_fp = NULL;
-    remove(Temp1_Name); remove(Temp2_Name);
-    if (module_switch)
-    {   if (Temp3_fp != NULL) fclose(Temp3_fp);
-        Temp3_fp = NULL;
-        remove(Temp3_Name);
-    }
-}
-
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -1886,8 +1736,6 @@ extern void files_begin_prepass(void)
 
 extern void files_begin_pass(void)
 {   total_chars_read=0;
-    if (temporary_files_switch)
-        open_temporary_files();
 }
 
 static void initialise_accumulator
