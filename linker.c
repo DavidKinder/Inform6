@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "linker" : For compiling and linking modules                            */
 /*                                                                           */
-/*   Part of Inform 6.37                                                     */
+/*   Part of Inform 6.40                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -834,14 +834,8 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
     ensure_memory_list_available(&zcode_area_memlist, zmachine_pc + (m_strs_offset - m_code_offset));
     
     for (k=m_code_offset;k<m_strs_offset;k++)
-    {   if (temporary_files_switch)
-        {   fputc(p[k],Temp2_fp);
-            zmachine_pc++;
-        }
-        else
-        {
-            zcode_area[zmachine_pc++] = p[k];
-        }
+    {
+        zcode_area[zmachine_pc++] = p[k];
     }
 
     /* (12) Glue in the static strings area */
@@ -851,16 +845,10 @@ of the Inform 6 compiler knows about: it may not link in correctly", filename);
 at strings offset %04x (+%04x)\n",
         m_strs_offset, link_offset, strings_offset,
         static_strings_extent);
-    if (!temporary_files_switch) {
-        ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+link_offset-m_strs_offset);
-    }
+    ensure_memory_list_available(&static_strings_area_memlist, static_strings_extent+link_offset-m_strs_offset);
     for (k=m_strs_offset;k<link_offset;k++)
-    {   if (temporary_files_switch)
-        {   fputc(p[k], Temp1_fp);
-            static_strings_extent++;
-        }
-        else
-            static_strings_area[static_strings_extent++] = p[k];
+    {
+        static_strings_area[static_strings_extent++] = p[k];
     }
 
     /* (13) Append the class object-numbers table: note that modules
@@ -993,14 +981,9 @@ static void write_link_byte(int x)
 extern void flush_link_data(void)
 {   int32 i, j;
     j = link_data_ha_size;
-    if (temporary_files_switch) {
-        for (i=0;i<j;i++) fputc(link_data_holding_area[i], Temp3_fp);
-    }
-    else {
-        ensure_memory_list_available(&link_data_area_memlist, link_data_size);
-        for (i=0;i<j;i++)
-            link_data_area[link_data_size-j+i] = link_data_holding_area[i];
-    }
+    ensure_memory_list_available(&link_data_area_memlist, link_data_size);
+    for (i=0;i<j;i++)
+        link_data_area[link_data_size-j+i] = link_data_holding_area[i];
     link_data_ha_size = 0;
 }
 

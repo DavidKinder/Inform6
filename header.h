@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   Header file for Inform:  Z-machine ("Infocom" format) compiler          */
 /*                                                                           */
-/*                              Inform 6.37                                  */
+/*                              Inform 6.40                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
@@ -32,7 +32,7 @@
 
 /* For releases, set to the release date in the form "1st January 2000" */
 #define RELEASE_DATE "in development"
-#define RELEASE_NUMBER 1637
+#define RELEASE_NUMBER 1640
 #define GLULX_RELEASE_NUMBER 38
 #define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
@@ -116,8 +116,6 @@
 /*   2. Some miscellaneous #define options (set if the constant is           */
 /*   defined, otherwise not set):                                            */
 /*                                                                           */
-/*   USE_TEMPORARY_FILES - use scratch files for workspace, not memory,      */
-/*                         by default                                        */
 /*   PROMPT_INPUT        - prompt input (don't use Unix-style command line)  */
 /*   TIME_UNAVAILABLE    - don't use ANSI time routines to work out today's  */
 /*                         date                                              */
@@ -159,21 +157,10 @@
 /*   is set without STANDARD_DIRECTORIES, as then Inform may                 */
 /*   overwrite its source with object code.                                  */
 /*                                                                           */
-/*   5. Filenames (or code related to filenames) for the three temporary     */
-/*   files.  These only exist during compilation (and only if -F1 is set).   */
-/*   Temporary_Name is the body of a filename to use                         */
-/*   (if you don't set this, it becomes "Inftemp") and Temporary_Directory   */
-/*   is the directory path for the files to go in (which can be altered on   */
-/*   the command line).  On some multi-tasking OSs these filenames ought to  */
-/*   include a number uniquely identifying the process: to indicate this,    */
-/*   define INCLUDE_TASK_ID and provide some code...                         */
-/*                                                                           */
-/*       #define INCLUDE_TASK_ID                                             */
-/*       #ifdef INFORM_FILE                                                  */
-/*       static int32 unique_task_id(void)                                   */
-/*       {   ...some code returning your task ID...                          */
-/*       }                                                                   */
-/*       #endif                                                              */
+/*   5. Filenames (or code related to filenames) for temporary files.        */
+/*   These included Temporary_Name, Temporary_Directory, and                 */
+/*   INCLUDE_TASK_ID. These options have been removed, and are listed here   */
+/*   only for people who might ask "what happened to 5?"                     */
 /*                                                                           */
 /*   6. Any other definitions specific to the OS or machine.                 */
 /*   (In particular DEFAULT_ERROR_FORMAT is 0 on most machines and 1 on PCs; */
@@ -191,16 +178,6 @@
 #define MACHINE_STRING   "Amiga"
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define __USE_SYSBASE
-#include <proto/exec.h>
-#define INCLUDE_TASK_ID
-#define Temporary_Directory "T:"
-#ifdef MAIN_INFORM_FILE
-static int32 unique_task_id(void)
-{   return (int32)FindTask(NULL);
-}
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   ARCHIMEDES block: Acorn/RISC OS settings                                */
@@ -216,9 +193,6 @@ static int32 unique_task_id(void)
 #define NO_FILE_EXTENSIONS
 #define Source_Directory "inform"
 #define ICL_Directory "ICL"
-/* 5 */
-#define ENABLE_TEMPORARY_PATH
-#define Temporary_Directory "ram:"
 /* 6 */
 #define ARC_THROWBACK
 #endif
@@ -230,16 +204,6 @@ static int32 unique_task_id(void)
 #define MACHINE_STRING   "Atari ST"
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#ifndef TOSFS
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#ifdef MAIN_INFORM_FILE
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   BEOS block                                                              */
@@ -250,8 +214,6 @@ static int32 unique_task_id(void)
 /* 4 */
 #define FN_SEP '/'
 #define FILE_EXTENSIONS
-/* 5 */
-#define Temporary_Directory "/tmp"
 #endif
 /* ------------------------------------------------------------------------- */
 /*   LINUX block                                                             */
@@ -263,8 +225,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define Temporary_Directory "/tmp"
 /* 6 */
 #define PATHLEN 8192
 #if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
@@ -329,18 +289,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#define _POSIX_C_SOURCE 199506L
-#define _XOPEN_SOURCE 500
-#ifdef MAIN_INFORM_FILE
-#include <sys/types.h>
-#include <unistd.h>
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
 /* 6 */
 #define PATHLEN 8192
 #if defined(__STDC__) && (__STDC_VERSION__ >= 201112L)
@@ -357,8 +305,6 @@ static int32 unique_task_id(void)
 #ifdef PC
 /* 1 */
 #define MACHINE_STRING   "PC"
-/* 2 */
-#define USE_TEMPORARY_FILES
 /* 4 */
 #define FN_SEP '\\'
 /* 6 */
@@ -393,16 +339,6 @@ static int32 unique_task_id(void)
 #define HAS_REALPATH
 /* 4 */
 #define FN_SEP '/'
-/* 5 */
-#define PATHLEN 512
-#define Temporary_Directory "/tmp"
-#define INCLUDE_TASK_ID
-#ifdef MAIN_INFORM_FILE
-#include <unistd.h>
-static int32 unique_task_id(void)
-{   return (int32)getpid();
-}
-#endif
 #endif
 /* ------------------------------------------------------------------------- */
 /*   VMS (Dec VAX and Alpha) block                                           */
@@ -520,9 +456,6 @@ static int32 unique_task_id(void)
 #ifndef Module_Directory
 #define Module_Directory  "modules"
 #endif
-#ifndef Temporary_Directory
-#define Temporary_Directory ""
-#endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
 #endif
@@ -541,9 +474,6 @@ static int32 unique_task_id(void)
 #ifndef Module_Directory
 #define Module_Directory  ""
 #endif
-#ifndef Temporary_Directory
-#define Temporary_Directory ""
-#endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
 #endif
@@ -559,10 +489,6 @@ static int32 unique_task_id(void)
 
 #ifndef PATHLEN
 #define PATHLEN 128
-#endif
-
-#ifndef Temporary_File
-#define Temporary_File "Inftemp"
 #endif
 
 #ifndef DEFAULT_ERROR_FORMAT
@@ -2474,13 +2400,7 @@ extern int  current_input_file;
 extern int  total_input_files;
 extern FileId *InputFiles;
 
-extern FILE *Temp1_fp, *Temp2_fp, *Temp3_fp;
-extern char Temp1_Name[], Temp2_Name[], Temp3_Name[];
 extern int32 total_chars_read;
-
-extern void open_temporary_files(void);
-extern void check_temp_files(void);
-extern void remove_temp_files(void);
 
 extern void open_transcript_file(char *what_of);
 extern void write_to_transcript_file(char *text, int linetype);
@@ -2553,7 +2473,7 @@ extern int
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
-    memory_map_setting,     module_switch,        temporary_files_switch,
+    memory_map_setting,     module_switch,
     define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,
@@ -2584,7 +2504,6 @@ extern int translate_in_filename(int last_value, char *new_name, char *old_name,
 extern void translate_out_filename(char *new_name, char *old_name);
 extern int translate_link_filename(int last_value,
     char *new_name, char *old_name);
-extern void translate_temp_filename(int i);
 
 #ifdef ARCHIMEDES
 extern char *riscos_file_type(void);

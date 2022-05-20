@@ -2,7 +2,7 @@
 /*   "errors" : Warnings, errors and fatal errors                            */
 /*              (with error throwback code for RISC OS machines)             */
 /*                                                                           */
-/*   Part of Inform 6.37                                                     */
+/*   Part of Inform 6.40                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -184,7 +184,6 @@ extern void fatalerror(char *s)
 #endif
 #ifdef MAC_FACE
     close_all_source();
-    if (temporary_files_switch) remove_temp_files();
     abort_transcript_file();
     free_arrays();
     longjmp(g_fallback, 1);
@@ -247,7 +246,6 @@ static void message(int style, char *s)
     if (g_proc != true)
     {   free_arrays();
         close_all_source ();
-        if (temporary_files_switch) remove_temp_files();
         abort_transcript_file();
         longjmp (g_fallback, 1);
     }

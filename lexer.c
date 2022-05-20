@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "lexer" : Lexical analyser                                              */
 /*                                                                           */
-/*   Part of Inform 6.37                                                     */
+/*   Part of Inform 6.40                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
@@ -1141,8 +1141,6 @@ static void reached_new_line(void)
         if (g_proc != true)
         {   free_arrays();
             close_all_source();
-            if (temporary_files_switch)
-                remove_temp_files();
             abort_transcript_file();
             longjmp (g_fallback, 1);
         }
