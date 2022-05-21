@@ -1301,18 +1301,32 @@ static void assembleg_macro(const assembly_instruction *AI)
             AMO_0 = AI->operand[0];
             AMO_1 = AI->operand[1];
             AMO_2 = AI->operand[2];
-            //### stack-pointer case!
-            assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
-            assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                // addr is on the stack
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(aload_gc, temp_var3, one_operand, AMO_1);
+                assembleg_3(aload_gc, temp_var3, zero_operand, AMO_2);
+            }
+            else {
+                assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
+                assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
+            }
             break;
 
         case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
             AMO_0 = AI->operand[0];
             AMO_1 = AI->operand[1];
             AMO_2 = AI->operand[2];
-            //### stack-pointer case!
-            assembleg_3(astore_gc, AMO_0, zero_operand, AMO_1);
-            assembleg_3(astore_gc, AMO_0, one_operand, AMO_2);
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                // addr is on the stack
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(astore_gc, temp_var3, zero_operand, AMO_1);
+                assembleg_3(astore_gc, temp_var3, one_operand, AMO_2);
+            }
+            else {
+                assembleg_3(astore_gc, AMO_0, zero_operand, AMO_1);
+                assembleg_3(astore_gc, AMO_0, one_operand, AMO_2);
+            }
             break;
         
         default:
