@@ -1941,13 +1941,13 @@ typedef struct operator_s
 #define EXPORTAC_MV           35     /* Action name */
 
 /* Values used only in branch backpatching: */
-/* ###-I've rearranged these, so that BRANCH_MV can be last; Glulx uses the
-   whole range from BRANCH_MV to BRANCHMAX_MV. */
+/* BRANCH_MV must be last; Glulx uses the whole range from BRANCH_MV
+   to BRANCHMAX_MV. */
 
 #define LABEL_MV              36     /* Ditto: marks "jump" operands */
 #define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
 #define BRANCH_MV             38     /* Used in "asm.c" for routine coding */
-#define BRANCHMAX_MV          58     /* In fact, the range BRANCH_MV to 
+#define BRANCHMAX_MV          78     /* In fact, the range BRANCH_MV to 
                                         BRANCHMAX_MV all means the same thing.
                                         The position within the range means
                                         how far back from the label to go
