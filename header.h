@@ -1947,7 +1947,7 @@ typedef struct operator_s
 #define LABEL_MV              36     /* Ditto: marks "jump" operands */
 #define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
 #define BRANCH_MV             38     /* Used in "asm.c" for routine coding */
-#define BRANCHMAX_MV          78     /* In fact, the range BRANCH_MV to 
+#define BRANCHMAX_MV          102    /* In fact, the range BRANCH_MV to 
                                         BRANCHMAX_MV all means the same thing.
                                         The position within the range means
                                         how far back from the label to go
