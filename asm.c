@@ -490,7 +490,7 @@ typedef struct opcodeg
 #define GOP_MemHeap      2   /* uses_memheap_features */
 #define GOP_Acceleration 4   /* uses_acceleration_features */
 #define GOP_Float        8   /* uses_float_features */
-#define GOP_Double       16  /* uses_double_features */
+#define GOP_Double       32  /* uses_double_features */
 
     /* Codes for the number of operands */
 
