@@ -455,6 +455,7 @@ static char *opcode_list_g[] = {
     "sqrt", "exp", "log", "pow",
     "sin", "cos", "tan", "asin", "acos", "atan", "atan2",
     "jfeq", "jfne", "jflt", "jfle", "jfgt", "jfge", "jisnan", "jisinf",
+    "hasundo", "discardundo",
     ""
 };
 
