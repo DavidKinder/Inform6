@@ -2141,7 +2141,7 @@ extern int32 no_instructions;
 extern int   sequence_point_follows;
 extern int   uses_unicode_features, uses_memheap_features, 
     uses_acceleration_features, uses_float_features,
-    uses_double_features;
+    uses_extundo_features, uses_double_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
 extern variableinfo *variables;

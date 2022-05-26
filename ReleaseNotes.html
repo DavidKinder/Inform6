@@ -13,7 +13,7 @@ all known bugs are fixed, the approach to enhancing Inform is more conservative.
 to implement has been governed by two factors:
 <ul>
 <li><p>Avoidance of changes which might cause existing games to misbehave; and
-<li><p>Minimisation of features which would require updates to the <i>Inform Designer&rsquo;s Manual</i>
+<li><p>Minimisation of features which would require updates to the <i>Inform Designer&rsquo;s Manual</i>.
 </ul>
 Since the first release of the Inform 6.3 compiler, the Inform 6 library has been split into a separate project,
 maintained at <a href="https://gitlab.com/DavidGriffith/inform6lib">https://gitlab.com/DavidGriffith/inform6lib</a>.
@@ -25,7 +25,7 @@ listed. So instead, this is a general thank-you to everybody who has made this r
 specific ones to Graham Nelson for permitting it in the first place, and to Andrew Plotkin, who is responsible
 for most of the actual changes to the compiler code.
 
-<h2>Compiler 6.40</h2>
+<h2>Inform 6.40</h2>
 These are the changes delivered in version 6.40 of the Inform compiler.
 
 <h3>Features added</h3>
@@ -120,6 +120,8 @@ Z-code, as well as Glulx.
 extension to the <tt>-z</tt> switch.
 <li><p>The ability to use temporary files for internal storage (the <tt>-F</tt> switch and the <tt>+temporary_path</tt> option)
 have been removed.
+<li>The undo related opcodes added to the Glulx 3.1.3 specification (that is, <tt>@hasundo</tt> and <tt>@discardundo</tt>)
+are now supported. 
 </ul>
 
 <h3>Bugs fixed</h3>

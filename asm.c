@@ -52,6 +52,8 @@ int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
                                       features?                              */
 int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
+int uses_extundo_features;         /* Makes use of Glulx extended undo (3.1.3)
+                                      features?                              */
 int uses_double_features;          /* Makes use of Glulx double-prec (3.1.3)
                                       features?                              */
 
@@ -490,7 +492,8 @@ typedef struct opcodeg
 #define GOP_MemHeap      2   /* uses_memheap_features */
 #define GOP_Acceleration 4   /* uses_acceleration_features */
 #define GOP_Float        8   /* uses_float_features */
-#define GOP_Double       32  /* uses_double_features */
+#define GOP_ExtUndo     16   /* uses_extundo_features */
+#define GOP_Double      32   /* uses_double_features */
 
     /* Codes for the number of operands */
 
@@ -788,6 +791,8 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "jfge",       0x1C5,  Br, GOP_Float, 3 },
   { (uchar *) "jisnan",     0x1C8,  Br, GOP_Float, 2 },
   { (uchar *) "jisinf",     0x1C9,  Br, GOP_Float, 2 },
+  { (uchar *) "hasundo",    0x128,  St, GOP_ExtUndo, 1 },
+  { (uchar *) "discardundo",0x129,   0, GOP_ExtUndo, 0 },
   { (uchar *) "numtod",     0x200,  St|St2, GOP_Double, 3 },
   { (uchar *) "dtonumz",    0x201,  St, GOP_Double, 3 },
   { (uchar *) "dtonumn",    0x202,  St, GOP_Double, 3 },
@@ -1395,6 +1400,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     }
     if (opco.op_rules & GOP_Float) {
         uses_float_features = TRUE;
+    }
+    if (opco.op_rules & GOP_ExtUndo) {
+        uses_extundo_features = TRUE;
     }
     if (opco.op_rules & GOP_Double) {
         uses_double_features = TRUE;
@@ -3488,6 +3496,7 @@ extern void init_asm_vars(void)
     uses_memheap_features = FALSE;
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
+    uses_extundo_features = FALSE;
     uses_double_features = FALSE;
 
     labels = NULL;
