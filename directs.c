@@ -394,13 +394,24 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("symbol name", token_text);
 
+        /* Special case: a symbol of the form "VN_nnnn" is considered
+           defined if the compiler version number is at least nnnn.
+           Compiler version numbers look like "1640" for Inform 6.40;
+           see RELEASE_NUMBER.
+           ("VN_nnnn" isn't a real symbol and can't be used in other
+           contexts.) */
         if ((token_text[0] == 'V')
             && (token_text[1] == 'N')
             && (token_text[2] == '_')
             && (strlen(token_text)==7))
-        {   i = atoi(token_text+3);
-            if (VNUMBER < i) flag = (flag)?FALSE:TRUE;
-            goto HashIfCondition;
+        {
+            char *endstr;
+            i = strtol(token_text+3, &endstr, 10);
+            if (*endstr == '\0') {
+                /* All characters after the underscore were digits */
+                if (VNUMBER < i) flag = (flag)?FALSE:TRUE;
+                goto HashIfCondition;
+            }
         }
 
         if (symbols[token_value].flags & UNKNOWN_SFLAG) flag = (flag)?FALSE:TRUE;
