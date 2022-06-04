@@ -235,11 +235,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case DEFAULT_CODE:
-        if (module_switch)
-        {   error("'Default' cannot be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
-
         get_next_token();
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("name", token_text);
@@ -546,26 +541,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     /* --------------------------------------------------------------------- */
     /*   Import global <varname> [, ...]                                     */
-    /*                                                                       */
-    /* (Further imported goods may be allowed later.)                        */
     /* --------------------------------------------------------------------- */
 
     case IMPORT_CODE:
-        if (!module_switch)
-        {   error("'Import' can only be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
-        directives.enabled = TRUE;
-        do
-        {   get_next_token();
-            if ((token_type == DIRECTIVE_TT) && (token_value == GLOBAL_CODE))
-                 make_global(FALSE, TRUE);
-            else error_named("'Import' cannot import things of this type:",
-                 token_text);
-            get_next_token();
-        } while ((token_type == SEP_TT) && (token_value == COMMA_SEP));
-        put_token_back();
-        directives.enabled = FALSE;
+        error("The 'Import' directive is no longer supported.");
         break;
 
     /* --------------------------------------------------------------------- */
@@ -612,10 +591,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case LOWSTRING_CODE:
-        if (module_switch)
-        {   error("'LowString' cannot be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
         if (glulx_mode) {
             error("The LowString directive has no meaning in Glulx.");
             panic_mode_error_recovery(); return FALSE;
@@ -869,9 +844,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case STATUSLINE_CODE:
-        if (module_switch)
-            warning("This does not set the final game's statusline");
-
         directive_keywords.enabled = TRUE;
         get_next_token();
         directive_keywords.enabled = FALSE;
