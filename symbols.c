@@ -508,8 +508,6 @@ extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *co
 extern void issue_unused_warnings(void)
 {   int32 i;
 
-    if (module_switch) return;
-
     /*  Update any ad-hoc variables that might help the library  */
     if (glulx_mode)
     {   global_initial_value[10]=statusline_flag;
@@ -557,8 +555,6 @@ extern void write_the_identifier_names(void)
 
     for (i=0; i<no_individual_properties; i++)
         individual_name_strings[i] = 0;
-
-    if (module_switch) return;
 
     veneer_mode = TRUE;
 
@@ -807,9 +803,6 @@ static void stockup_symbols(void)
     else
         create_rsymbol("Grammar__Version", 2, CONSTANT_T);
     grammar_version_symbol = symbol_index("Grammar__Version", -1);
-
-    if (module_switch)
-        create_rsymbol("MODULE_MODE",0, CONSTANT_T);
 
     if (runtime_error_checking_switch)
         create_rsymbol("STRICT_MODE",0, CONSTANT_T);

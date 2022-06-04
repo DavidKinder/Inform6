@@ -1087,16 +1087,10 @@ static void parse_statement_z(int break_label, int continue_label)
                      statement_debug_location = spare_debug_location2;
                      if (flag > 0)
                      {   INITAOTV(&AO3, SHORT_CONSTANT_OT, flag);
-                         if (module_switch
-                             && (flag>=MAX_LOCAL_VARIABLES) && (flag<LOWEST_SYSTEM_VAR_NUMBER))
-                             AO3.marker = VARIABLE_MV;
                          assemblez_1(inc_zc, AO3);
                      }
                      else
                      {   INITAOTV(&AO3, SHORT_CONSTANT_OT, -flag);
-                         if ((module_switch) && (flag>=MAX_LOCAL_VARIABLES)
-                             && (flag<LOWEST_SYSTEM_VAR_NUMBER))
-                             AO3.marker = VARIABLE_MV;
                          assemblez_1(dec_zc, AO3);
                      }
                      assemblez_jump(ln);
@@ -1359,9 +1353,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  {   ebf_error("'objectloop' variable", token_text);
                      panic_mode_error_recovery(); break;
                  }
-                 if ((module_switch) && (AO.value >= MAX_LOCAL_VARIABLES)
-                     && (AO.value < LOWEST_SYSTEM_VAR_NUMBER))
-                     AO.marker = VARIABLE_MV;
                  misc_keywords.enabled = TRUE;
                  get_next_token(); flag = TRUE;
                  misc_keywords.enabled = FALSE;
