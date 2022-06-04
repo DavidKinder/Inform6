@@ -435,7 +435,7 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
 
     assembly_operand zero_ao, max_ao, size_ao, en_ao, type_ao, an_ao,
         index_ao;
-    int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE, from_module = FALSE;
+    int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE;
 
     INITAO(&zero_ao);
     INITAO(&size_ao);
@@ -463,10 +463,12 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
             error("Cannot write to a static array");
         }
 
-        if (size_ao.value==-1) 
-            from_module=TRUE;
+        if (size_ao.value==-1) {
+            /* This case was originally meant for module linking.
+               It should no longer be possible. */
+            compiler_error("Array size cannot be negative");
+        }
         else {
-            from_module=FALSE;
             type_ao = zero_ao; type_ao.value = arrays[y].type;
 
             if ((!is_systemfile()))
@@ -498,7 +500,7 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
     /* If we recognise AO1 as arising textually from a declared
        array, we can check bounds explicitly. */
 
-    if ((AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV) && (!from_module))
+    if ((AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV))
     {   
         int passed_label = next_label++, failed_label = next_label++,
             final_label = next_label++; 
