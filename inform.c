@@ -230,7 +230,7 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
-    linker_trace_level,  /* linker tracing: 0 to 4 levels                    */
+    linker_trace_level,  /* linker tracing: 0 to 4 levels //####             */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
