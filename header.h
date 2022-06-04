@@ -2288,6 +2288,8 @@ extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;
 
+extern char *describe_mv(int mval);
+
 extern int32 backpatch_value(int32 value);
 extern void  backpatch_zmachine_image_z(void);
 extern void  backpatch_zmachine_image_g(void);
@@ -2591,8 +2593,6 @@ extern keyword_group directives, statements, segment_markers,
 extern uchar *link_data_area;
 extern int32 link_data_size;
 extern char  current_module_filename[];
-
-extern char *describe_mv(int mval);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */

@@ -19,6 +19,47 @@ int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 
 /* ------------------------------------------------------------------------- */
+/*   Marker values                                                           */
+/* ------------------------------------------------------------------------- */
+
+extern char *describe_mv(int mval)
+{   switch(mval)
+    {   case NULL_MV:       return("null");
+
+        /*  Marker values used in ordinary story file backpatching  */
+
+        case DWORD_MV:      return("dictionary word");
+        case STRING_MV:     return("string literal");
+        case INCON_MV:      return("system constant");
+        case IROUTINE_MV:   return("routine");
+        case VROUTINE_MV:   return("veneer routine");
+        case ARRAY_MV:      return("internal array");
+        case NO_OBJS_MV:    return("the number of objects");
+        case INHERIT_MV:    return("inherited common p value");
+        case INDIVPT_MV:    return("indiv prop table address");
+        case INHERIT_INDIV_MV: return("inherited indiv p value");
+        case MAIN_MV:       return("ref to Main");
+        case SYMBOL_MV:     return("ref to symbol value");
+
+        /*  Additional marker values used in module backpatching  */
+
+        case VARIABLE_MV:   return("global variable");
+        case IDENT_MV:      return("prop identifier number");
+        case ACTION_MV:     return("action");
+        case OBJECT_MV:     return("internal object");
+
+        /*  Record types in the import/export table (not really marker
+            values at all)  */
+
+        case EXPORT_MV:     return("Export   ");
+        case EXPORTSF_MV:   return("Export sf");
+        case EXPORTAC_MV:   return("Export ##");
+        case IMPORT_MV:     return("Import   ");
+    }
+    return("** No such MV **");
+}
+
+/* ------------------------------------------------------------------------- */
 /*   The mending operation                                                   */
 /* ------------------------------------------------------------------------- */
 
