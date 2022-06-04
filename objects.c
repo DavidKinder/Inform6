@@ -616,9 +616,7 @@ so many values that the list has overflowed the maximum 32 entries");
                                 {   already_present = TRUE; break;
                                 }
                             if (already_present == FALSE)
-                            {   if (module_switch)
-                                    backpatch_zmachine(IDENT_MV,
-                                        INDIVIDUAL_PROP_ZA, i_m);
+                            {
                                 ensure_memory_list_available(&individuals_table_memlist, i_m+3+individuals_table[z+2]);
                                 individuals_table[i_m++] = individuals_table[z];
                                 individuals_table[i_m++] = individuals_table[z+1];
@@ -679,8 +677,7 @@ so many values that the list has overflowed the maximum 32 entries");
 
                     z = class_block_offset;
                     while ((individuals_table[z]!=0)||(individuals_table[z+1]!=0))
-                    {   if (module_switch)
-                        backpatch_zmachine(IDENT_MV, INDIVIDUAL_PROP_ZA, i_m);
+                    {
                         ensure_memory_list_available(&individuals_table_memlist, i_m+3+individuals_table[z+2]);
                         individuals_table[i_m++] = individuals_table[z];
                         individuals_table[i_m++] = individuals_table[z+1];
@@ -1204,8 +1201,6 @@ static void properties_segment_z(int this_segment)
             if (this_segment == PRIVATE_SEGMENT)
                 individuals_table[i_m] |= 0x80;
             individuals_table[i_m+1] = this_identifier_number%256;
-            if (module_switch)
-                backpatch_zmachine(IDENT_MV, INDIVIDUAL_PROP_ZA, i_m);
             individuals_table[i_m+2] = 0;
         }
         else
@@ -1916,7 +1911,7 @@ inconvenience, please contact the maintainers.");
         a special value is used which is corrected to 1 by the linker.       */
 
     if (metaclass_flag) parent_of_this_obj = 0;
-    else parent_of_this_obj = (module_switch)?MAXINTWORD:1;
+    else parent_of_this_obj = 1;
 
     class_info[no_classes].object_number = class_number;
     class_info[no_classes].symbol = current_classname_symbol;
@@ -2190,7 +2185,7 @@ extern void make_object(int nearby_flag,
             {   int j = i, k = 0;
 
                 /*  Metaclass or class objects cannot be '->' parents:  */
-                if ((!module_switch) && (i<4))
+                if (i<4)
                     continue;
 
                 if (!glulx_mode) {
