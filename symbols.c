@@ -817,9 +817,6 @@ static void stockup_symbols(void)
     if (define_DEBUG_switch)
         create_rsymbol("DEBUG",      0, CONSTANT_T);
 
-    if (define_USE_MODULES_switch)
-        create_rsymbol("USE_MODULES",0, CONSTANT_T);
-
     if (define_INFIX_switch)
     {   create_rsymbol("INFIX",      0, CONSTANT_T);
         create_symbol("infix__watching", 0, ATTRIBUTE_T);

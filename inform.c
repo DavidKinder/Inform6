@@ -258,7 +258,6 @@ int concise_switch,                 /* -c */
     define_DEBUG_switch,            /* -D */
     module_switch,                  /* -M */
     runtime_error_checking_switch,  /* -S */
-    define_USE_MODULES_switch,      /* -U */
     define_INFIX_switch;            /* -X */
 #ifdef ARC_THROWBACK
 int throwback_switch;               /* -T */
@@ -330,7 +329,6 @@ static void reset_switch_settings(void)
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
-    define_USE_MODULES_switch = FALSE;
     module_switch = FALSE;
 #ifdef ARC_THROWBACK
     throwback_switch = FALSE;
@@ -1375,7 +1373,6 @@ printf("  S   compile strict error-checking at run-time (on by default)\n");
 #ifdef ARC_THROWBACK
 printf("  T   enable throwback of errors in the DDE\n");
 #endif
-printf("  U   insert \"Constant USE_MODULES;\" automatically\n");
 printf("  V   print the version and date of this program\n");
 printf("  Wn  header extension table is at least n words (n = 3 to 99)\n");
 printf("  X   compile with INFIX debugging facilities present\n");
@@ -1524,7 +1521,6 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'H': compression_switch = state; break;
-        case 'U': define_USE_MODULES_switch = state; break;
         case 'V': exit(0); break;
         case 'W': if ((p[i+1]>='0') && (p[i+1]<='9'))
                   {   s=2; ZCODE_HEADER_EXT_WORDS = p[i+1]-'0';
