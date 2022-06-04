@@ -241,15 +241,6 @@ static void export_symbols(void)
 
 int mv_vref=LOWEST_SYSTEM_VAR_NUMBER-1;
 
-void import_symbol(int32 symbol_number)
-{   symbols[symbol_number].flags |= IMPORT_SFLAG;
-    switch(symbols[symbol_number].type)
-    {   case GLOBAL_VARIABLE_T:
-            assign_symbol(symbol_number, mv_vref--, symbols[symbol_number].type);
-            break;
-    }
-}
-
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */

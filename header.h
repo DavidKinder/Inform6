@@ -2596,9 +2596,6 @@ extern char *describe_mv(int mval);
 extern void  write_link_marker(int zmachine_area, int32 offset,
                  assembly_operand op);
 extern void  flush_link_data(void);
-extern void  import_symbol(int32 symbol_number);
-extern void  export_symbol(int32 symbol_number);
-extern void  export_symbol_name(int32 i);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */
