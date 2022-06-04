@@ -420,9 +420,6 @@
 #ifndef GlulxCode_Extension
 #define GlulxCode_Extension  ".ulx"
 #endif
-#ifndef Module_Extension
-#define Module_Extension  ".m5" //####
-#endif
 #ifndef ICL_Extension
 #define ICL_Extension     ".icl"
 #endif
@@ -438,7 +435,6 @@
 #define V7Code_Extension  ""
 #define V8Code_Extension  ""
 #define GlulxCode_Extension  ""
-#define Module_Extension  ""
 #define ICL_Extension     ""
 #endif
 
@@ -451,9 +447,6 @@
 #endif
 #ifndef Code_Directory
 #define Code_Directory    "games"
-#endif
-#ifndef Module_Directory
-#define Module_Directory  "modules"
 #endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
@@ -469,9 +462,6 @@
 #endif
 #ifndef Code_Directory
 #define Code_Directory    ""
-#endif
-#ifndef Module_Directory
-#define Module_Directory  ""
 #endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
