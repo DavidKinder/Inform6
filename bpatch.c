@@ -345,14 +345,10 @@ extern int32 backpatch_value(int32 value)
 }
 
 static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
-{   if (module_switch)
-    {   if (zmachine_area == PROP_DEFAULTS_ZA) return;
-    }
-    else
-    {   if (mv == OBJECT_MV) return;
-        if (mv == IDENT_MV) return;
-        if (mv == ACTION_MV) return;
-    }
+{   
+    if (mv == OBJECT_MV) return;
+    if (mv == IDENT_MV) return;
+    if (mv == ACTION_MV) return;
 
     if (bpatch_trace_setting >= 2)
         printf("BP added: MV %d ZA %d Off %04x\n", mv, zmachine_area, offset);
@@ -365,13 +361,9 @@ static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
 }
 
 static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
-{   if (module_switch)
-    {   if (zmachine_area == PROP_DEFAULTS_ZA) return;
-    }
-    else
-    {   if (mv == IDENT_MV) return;
-        if (mv == ACTION_MV) return;
-    }
+{   
+    if (mv == IDENT_MV) return;
+    if (mv == ACTION_MV) return;
 
 /* The backpatch table format for Glulx:
    First, the marker byte.
