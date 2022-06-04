@@ -600,13 +600,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     case LINK_CODE:
         get_next_token();
-        if (token_type != DQ_TT)
-            return ebf_error_recover("filename in double-quotes", token_text);
-        if (strlen(token_text) >= PATHLEN-1) {
-            error_numbered("'Link' filename is too long; max length is", PATHLEN-1);
-            break;
-        }
-        link_module(token_text);                           /* See "linker.c" */
+        error("The 'Link' directive is no longer supported.");
         break;
 
     /* --------------------------------------------------------------------- */
