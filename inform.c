@@ -859,8 +859,8 @@ If <file2> is given, however, the output filename is set to just <file2>\n\
 (not altered in any way).\n\n");
 
     printf(
-"Filenames given in the game source (with commands like Include \"name\" and\n\
-Link \"name\") are also translated by the rules below.\n\n");
+"Filenames given in the game source (with commands like Include \"name\")\n\
+are also translated by the rules below.\n\n");
 
     printf(
 "Rules of translation:\n\n\
