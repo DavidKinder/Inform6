@@ -2310,9 +2310,8 @@ extern void dictionary_set_verb_number(char *dword, int to)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Tracing code for the dictionary: used not only by "trace" and text      */
-/*   transcription, but also (in the case of "word_to_ascii") in a vital     */
-/*   by the linker.                                                          */
+/*   Tracing code for the dictionary: used by "trace" and text               */
+/*   transcription.                                                          */
 /* ------------------------------------------------------------------------- */
 
 /* In the dictionary-showing code, if d_show_buf is NULL, the text is

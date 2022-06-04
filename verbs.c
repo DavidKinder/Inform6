@@ -296,8 +296,8 @@ extern void list_verb_table(void)
 static void new_action(char *b, int c)
 {
     /*  Called whenever a new action (or fake action) is created (either
-        by using make_action above, or the Fake_Action directive, or by
-        the linker).  At present just a hook for some tracing code.          */
+        by using make_action above, or the Fake_Action directive).
+        At present just a hook for some tracing code.                        */
 
     if (printactions_switch)
         printf("Action '%s' is numbered %d\n",b,c);
