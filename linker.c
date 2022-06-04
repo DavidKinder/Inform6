@@ -72,12 +72,6 @@ typedef struct importexport_s
     char *symbol_name;
 } ImportExport;
 
-static void describe_importexport(ImportExport *I)
-{   printf("%8s %20s %04d %04x %s\n",
-        describe_mv(I->module_value), I->symbol_name,
-            I->symbol_number, I->symbol_value, typename(I->symbol_type));
-}
-
 /* ========================================================================= */
 /*   Linking in external modules: this code is run when the external         */
 /*   program hits a Link directive.                                          */
@@ -123,117 +117,9 @@ char current_module_filename[PATHLEN];
 /*   Writing to the link data table                                          */
 /* ------------------------------------------------------------------------- */
 
-static void write_link_byte(int x)
-{
-    ensure_memory_list_available(&link_data_holding_area_memlist, link_data_ha_size+1);
-    link_data_holding_area[link_data_ha_size] = (unsigned char) x;
-    link_data_ha_size++; link_data_size++;
-}
-
-extern void flush_link_data(void)
-{   int32 i, j;
-    j = link_data_ha_size;
-    ensure_memory_list_available(&link_data_area_memlist, link_data_size);
-    for (i=0;i<j;i++)
-        link_data_area[link_data_size-j+i] = link_data_holding_area[i];
-    link_data_ha_size = 0;
-}
-
-static void write_link_word(int32 x)
-{   write_link_byte(x/256); write_link_byte(x%256);
-}
-
-static void write_link_string(char *s)
-{   int i;
-    for (i=0; s[i]!=0; i++) write_link_byte(s[i]);
-    write_link_byte(0);
-}
-
 /* ------------------------------------------------------------------------- */
 /*   Exports and imports                                                     */
 /* ------------------------------------------------------------------------- */
-
-static void export_symbols(void)
-{   int symbol_number;
-
-    for (symbol_number = 0; symbol_number < no_symbols; symbol_number++)
-    {   int export_flag = FALSE, import_flag = FALSE;
-
-        if (symbols[symbol_number].type==GLOBAL_VARIABLE_T)
-        {   if (symbols[symbol_number].value < LOWEST_SYSTEM_VAR_NUMBER)
-            {   if (symbols[symbol_number].flags & IMPORT_SFLAG)
-                    import_flag = TRUE;
-                else
-                    if (!(symbols[symbol_number].flags & SYSTEM_SFLAG))
-                        export_flag = TRUE;
-            }
-        }
-        else
-        {   if (!(symbols[symbol_number].flags & SYSTEM_SFLAG))
-            {   if (symbols[symbol_number].flags & UNKNOWN_SFLAG)
-                {   if (symbols[symbol_number].flags & IMPORT_SFLAG)
-                        import_flag = TRUE;
-                }
-                else
-                switch(symbols[symbol_number].type)
-                {   case LABEL_T:
-                    case ATTRIBUTE_T:
-                    case PROPERTY_T:
-                         /*  Ephemera  */
-                         break;
-
-                    default: export_flag = TRUE;
-                }
-            }
-        }
-
-        if (export_flag)
-        {   if (linker_trace_level >= 1)
-            {   IE.module_value = EXPORT_MV;
-                IE.symbol_number = symbol_number;
-                IE.symbol_type = symbols[symbol_number].type;
-                IE.symbol_value = symbols[symbol_number].value;
-                IE.symbol_name = (symbols[symbol_number].name);
-                describe_importexport(&IE);
-            }
-
-            if (symbols[symbol_number].flags & ACTION_SFLAG)
-                write_link_byte(EXPORTAC_MV);
-            else
-            if (symbols[symbol_number].flags & INSF_SFLAG)
-                write_link_byte(EXPORTSF_MV);
-            else
-                write_link_byte(EXPORT_MV);
-
-            write_link_word(symbol_number);
-            write_link_byte(symbols[symbol_number].type);
-            if (symbols[symbol_number].flags & CHANGE_SFLAG)
-                 write_link_byte(symbols[symbol_number].marker);
-            else write_link_byte(0);
-            write_link_word(symbols[symbol_number].value % 0x10000);
-            write_link_string((symbols[symbol_number].name));
-            flush_link_data();
-        }
-
-        if (import_flag)
-        {   if (linker_trace_level >= 1)
-            {   IE.module_value = IMPORT_MV;
-                IE.symbol_number = symbol_number;
-                IE.symbol_type = symbols[symbol_number].type;
-                IE.symbol_value = symbols[symbol_number].value;
-                IE.symbol_name = (symbols[symbol_number].name);
-                describe_importexport(&IE);
-            }
-
-            write_link_byte(IMPORT_MV);
-            write_link_word(symbol_number);
-            write_link_byte(symbols[symbol_number].type);
-            write_link_word(symbols[symbol_number].value);
-            write_link_string((symbols[symbol_number].name));
-            flush_link_data();
-        }
-    }
-}
 
 /* ------------------------------------------------------------------------- */
 /*   Marking for later importation                                           */
@@ -257,9 +143,7 @@ extern void linker_begin_pass(void)
 }
 
 extern void linker_endpass(void)
-{   export_symbols();
-    write_link_byte(0);
-    flush_link_data();
+{
 }
 
 extern void linker_allocate_arrays(void)

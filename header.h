@@ -2593,9 +2593,6 @@ extern int32 link_data_size;
 extern char  current_module_filename[];
 
 extern char *describe_mv(int mval);
-extern void  write_link_marker(int zmachine_area, int32 offset,
-                 assembly_operand op);
-extern void  flush_link_data(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */
