@@ -465,21 +465,6 @@ extern void obsolete_warning(char *s1)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Style 3: Link error message routines                                    */
-/* ------------------------------------------------------------------------- */
-
-extern void link_error(char *s)
-{   if (no_errors==MAX_ERRORS) fatalerror("Too many errors: giving up");
-    message(3,s);
-}
-
-extern void link_error_named(char *s1, char *s2)
-{   snprintf(error_message_buff, ERROR_BUFLEN,"%s \"%s\"",s1,s2);
-    ellipsize_error_message_buff();
-    link_error(error_message_buff);
-}
-
-/* ------------------------------------------------------------------------- */
 /*   Style 4: Compiler error message routines                                */
 /* ------------------------------------------------------------------------- */
 

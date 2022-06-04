@@ -780,25 +780,6 @@ extern int translate_in_filename(int last_value,
     return last_value;
 }
 
-extern int translate_link_filename(int last_value,
-    char *new_name, char *old_name)
-{   char *prefix_path = NULL;
-    char *extension;
-
-    if (contains_separator(old_name)==0)
-        if (Module_Path[0]!=0)
-            prefix_path = Module_Path;
-
-#ifdef FILE_EXTENSIONS
-    extension = check_extension(old_name, Module_Extension);
-#else
-    extension = "";
-#endif
-
-    return write_translated_name(new_name, old_name,
-               prefix_path, last_value, extension);
-}
-
 static int translate_icl_filename(int last_value,
     char *new_name, char *old_name)
 {   char *prefix_path = NULL;

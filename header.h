@@ -34,7 +34,6 @@
 #define RELEASE_DATE "in development"
 #define RELEASE_NUMBER 1640
 #define GLULX_RELEASE_NUMBER 38
-#define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
 
 /* N indicates an intermediate release for Inform 7 */
@@ -422,7 +421,7 @@
 #define GlulxCode_Extension  ".ulx"
 #endif
 #ifndef Module_Extension
-#define Module_Extension  ".m5"
+#define Module_Extension  ".m5" //####
 #endif
 #ifndef ICL_Extension
 #define ICL_Extension     ".icl"
@@ -1938,7 +1937,8 @@ typedef struct operator_s
 #define MAIN_MV               10     /* "Main" routine */
 #define SYMBOL_MV             11     /* Forward ref to unassigned symbol */
 
-/* Additional marker values used in module backpatch areas: */
+/* Additional marker values used in module backpatch areas (most are
+   obsolete). */
 /* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching, even
    without modules.) */
 
@@ -2364,8 +2364,6 @@ extern void symtype_warning(char *context, char *name, char *type, char *wanttyp
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
-extern void link_error(char *s);
-extern void link_error_named(char *s1, char *s2);
 extern int  compiler_error(char *s);
 extern int  compiler_error_named(char *s1, char *s2);
 extern void print_sorry_message(void);
@@ -2521,8 +2519,6 @@ extern void switches(char *, int);
 extern int translate_in_filename(int last_value, char *new_name, char *old_name,
     int same_directory_flag, int command_line_flag);
 extern void translate_out_filename(char *new_name, char *old_name);
-extern int translate_link_filename(int last_value,
-    char *new_name, char *old_name);
 
 #ifdef ARCHIMEDES
 extern char *riscos_file_type(void);
