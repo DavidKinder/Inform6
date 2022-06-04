@@ -49,13 +49,6 @@ extern char *describe_mv(int mval)
         case ACTION_MV:     return("action");
         case OBJECT_MV:     return("internal object");
 
-        /*  Record types in the import/export table (not really marker
-            values at all)  */
-
-        case EXPORT_MV:     return("Export   ");
-        case EXPORTSF_MV:   return("Export sf");
-        case EXPORTAC_MV:   return("Export ##");
-        case IMPORT_MV:     return("Import   ");
     }
     return("** No such MV **");
 }

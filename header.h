@@ -1942,15 +1942,7 @@ typedef struct operator_s
 #define LARGEST_BPATCH_MV     17     /* Larger marker values are never written
                                         to backpatch tables */
 
-/* Value indicating an imported symbol record: */
-
-#define IMPORT_MV             32
-
-/* Values indicating an exported symbol record: */
-
-#define EXPORT_MV             33     /* Defined ordinarily */
-#define EXPORTSF_MV           34     /* Defined in a system file */
-#define EXPORTAC_MV           35     /* Action name */
+/* Values 32-35 were used only for module import/export. */
 
 /* Values used only in branch backpatching: */
 /* ###-I've rearranged these, so that BRANCH_MV can be last; Glulx uses the
