@@ -2599,7 +2599,6 @@ extern void  flush_link_data(void);
 extern void  import_symbol(int32 symbol_number);
 extern void  export_symbol(int32 symbol_number);
 extern void  export_symbol_name(int32 i);
-extern void  link_module(char *filename);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */
