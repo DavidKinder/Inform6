@@ -2042,7 +2042,6 @@ extern void init_expressp_vars(void); /* expressp: parse expressions         */
 extern void init_files_vars(void);    /* files: handle files                 */
     /* void init_vars(void);             inform: decide what to do           */
 extern void init_lexer_vars(void);    /* lexer: lexically analyse source     */
-extern void init_linker_vars(void);   /* linker: link in pre-compiled module */
 extern void init_memory_vars(void);   /* memory: manage memory settings      */
 extern void init_objects_vars(void);  /* objects: cultivate object tree      */
 extern void init_states_vars(void);   /* states: translate statements to code*/
@@ -2067,7 +2066,6 @@ extern void expressp_begin_pass(void);
 extern void files_begin_pass(void);
     /* void begin_pass(void); */
 extern void lexer_begin_pass(void);
-extern void linker_begin_pass(void);
 extern void memory_begin_pass(void);
 extern void objects_begin_pass(void);
 extern void states_begin_pass(void);
@@ -2079,7 +2077,6 @@ extern void veneer_begin_pass(void);
 extern void verbs_begin_pass(void);
 
 extern void lexer_endpass(void);
-extern void linker_endpass(void);
 
 extern void arrays_allocate_arrays(void);
 extern void asm_allocate_arrays(void);
@@ -2092,7 +2089,6 @@ extern void expressp_allocate_arrays(void);
 extern void files_allocate_arrays(void);
     /* void allocate_arrays(void); */
 extern void lexer_allocate_arrays(void);
-extern void linker_allocate_arrays(void);
 extern void memory_allocate_arrays(void);
 extern void objects_allocate_arrays(void);
 extern void states_allocate_arrays(void);
@@ -2114,7 +2110,6 @@ extern void expressp_free_arrays(void);
 extern void files_free_arrays(void);
     /* void free_arrays(void); */
 extern void lexer_free_arrays(void);
-extern void linker_free_arrays(void);
 extern void memory_free_arrays(void);
 extern void objects_free_arrays(void);
 extern void states_free_arrays(void);

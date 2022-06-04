@@ -280,7 +280,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* $!RUNTIME, -g: 0, 1, 2, or 3 */
     files_trace_setting,            /* $!FILES */
-    linker_trace_setting,           /* $!LINKER: initial value of
+    linker_trace_setting,           /* $!LINKER: initial value of //####
                                        linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
@@ -381,7 +381,6 @@ static void init_vars(void)
     init_expressp_vars();
     init_files_vars();
     init_lexer_vars();
-    init_linker_vars();
     init_memory_vars();
     init_objects_vars();
     init_states_vars();
@@ -412,7 +411,6 @@ static void begin_pass(void)
     linker_trace_level = linker_trace_setting;
 
     lexer_begin_pass();
-    linker_begin_pass();
     memory_begin_pass();
     objects_begin_pass();
     states_begin_pass();
@@ -453,7 +451,6 @@ extern void allocate_arrays(void)
     files_allocate_arrays();
 
     lexer_allocate_arrays();
-    linker_allocate_arrays();
     memory_allocate_arrays();
     objects_allocate_arrays();
     states_allocate_arrays();
@@ -482,7 +479,6 @@ extern void free_arrays(void)
     files_free_arrays();
 
     lexer_free_arrays();
-    linker_free_arrays();
     memory_free_arrays();
     objects_free_arrays();
     states_free_arrays();
