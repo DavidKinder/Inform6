@@ -256,7 +256,7 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    module_switch,                  /* -M ### */
+    module_switch,                  /* -M */ //####
     runtime_error_checking_switch,  /* -S */
     define_INFIX_switch;            /* -X */
 #ifdef ARC_THROWBACK
@@ -503,7 +503,7 @@ extern void free_arrays(void)
 static char Source_Path[PATHLEN];
 static char Include_Path[PATHLEN];
 static char Code_Path[PATHLEN];
-static char Module_Path[PATHLEN];
+static char Module_Path[PATHLEN]; //####
 static char current_source_path[PATHLEN];
        char Debugging_Name[PATHLEN];
        char Transcript_Name[PATHLEN];
@@ -952,20 +952,17 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
 "   If two '+' signs are used (\"inform ++include_path=dir jigsaw\") then\n\
    the path or paths are added to the existing list.\n\n");
     printf(
-"   (Modules are written to the first alternative in the module_path list;\n\
-   it is an error to give alternatives at all for purely output paths.)\n\n");
+"   (It is an error to give alternatives at all for purely output paths.)\n\n");
 
 #ifdef FILE_EXTENSIONS
     printf("3. The following file extensions are added:\n\n\
       Source code:     %s\n\
       Include files:   %s\n\
       Story files:     %s (Version 3), %s (v4), %s (v5, the default),\n\
-                       %s (v6), %s (v7), %s (v8), %s (Glulx)\n\
-      Modules:         %s\n\n",
+                       %s (v6), %s (v7), %s (v8), %s (Glulx)\n\n",
       Source_Extension, Include_Extension,
       Code_Extension, V4Code_Extension, V5Code_Extension, V6Code_Extension,
-      V7Code_Extension, V8Code_Extension, GlulxCode_Extension, 
-      Module_Extension);
+      V7Code_Extension, V8Code_Extension, GlulxCode_Extension);
     printf("\
    except that any extension you give (on the command line or in a filename\n\
    used in a program) will override these.  If you give the null extension\n\
@@ -990,7 +987,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     printf("  and a story file is compiled to \"%s\".\n\n", new_name);
 
     sprintf(old_name, "demos%cplugh", FN_SEP);
-    printf("3. \"inform %s\"\n", old_name);
+    printf("2. \"inform %s\"\n", old_name);
     translate_in_filename(0, new_name, old_name, 0, 1);
     printf("  the source code is read from \"%s\"\n", new_name);
     sprintf(old_name, "demos%cplugh", FN_SEP);
@@ -998,7 +995,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     translate_out_filename(new_name, old_name);
     printf("  and a story file is compiled to \"%s\".\n\n", new_name);
 
-    printf("4. \"inform plover my_demo\"\n");
+    printf("3. \"inform plover my_demo\"\n");
     translate_in_filename(0, new_name, "plover", 0, 1);
     printf("  the source code is read from \"%s\"\n", new_name);
     convert_filename_flag = FALSE;
@@ -1008,7 +1005,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     strcpy(old_name, Source_Path);
     sprintf(new_name, "%cnew%cold%crecent%cold%cancient",
         FN_ALT, FN_ALT, FN_SEP, FN_ALT, FN_SEP);
-    printf("5. \"inform +source_path=%s zooge\"\n", new_name);
+    printf("4. \"inform +source_path=%s zooge\"\n", new_name);
     printf(
 "   Note that four alternative paths are given, the first being the empty\n\
    path-name (meaning: where you are now).  Inform looks for the source code\n\
@@ -1319,7 +1316,6 @@ printf("  E2  Macintosh MPW-style error messages%s\n",
       (error_format==2)?" (current setting)":"");
 printf("  G   compile a Glulx game file\n");
 printf("  H   use Huffman encoding to compress Glulx strings\n");
-printf("  M   compile as a Module for future linking\n");
 
 #ifdef ARCHIMEDES
 printf("\
