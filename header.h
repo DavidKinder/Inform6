@@ -2143,7 +2143,7 @@ extern memory_list static_array_area_memlist;
 extern int32 *global_initial_value;
 extern arrayinfo *arrays;
 
-extern void make_global(int array_flag, int name_only);
+extern void make_global(int array_flag);
 extern void set_variable_value(int i, int32 v);
 extern void check_globals(void);
 extern int32 begin_table_array(void);

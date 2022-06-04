@@ -124,7 +124,7 @@ extern int parse_given_directive(int internal_flag)
     /*   Array arrayname array...                                            */
     /* --------------------------------------------------------------------- */
 
-    case ARRAY_CODE: make_global(TRUE, FALSE); break;      /* See "tables.c" */
+    case ARRAY_CODE: make_global(TRUE); break;             /* See "tables.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Attribute newname [alias oldname]                                   */
@@ -363,7 +363,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /*   Global variable [= value / array...]                                */
     /* --------------------------------------------------------------------- */
 
-    case GLOBAL_CODE: make_global(FALSE, FALSE); break;    /* See "tables.c" */
+    case GLOBAL_CODE: make_global(FALSE); break;           /* See "tables.c" */
 
     /* --------------------------------------------------------------------- */
     /*   If...                                                               */
