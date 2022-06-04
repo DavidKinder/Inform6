@@ -218,8 +218,7 @@ extern void memory_out_error(int32 size, int32 howmany, char *name)
 /*                                    indicate a bug in Inform)              */
 /* ------------------------------------------------------------------------- */
 
-int no_errors, no_warnings, no_suppressed_warnings, no_link_errors,
-    no_compiler_errors;
+int no_errors, no_warnings, no_suppressed_warnings, no_compiler_errors;
 
 char *forerrors_buff;
 int  forerrors_pointer;
@@ -232,8 +231,7 @@ static void message(int style, char *s)
     switch(style)
     {   case 1: printf("Error: "); no_errors++; break;
         case 2: printf("Warning: "); no_warnings++; break;
-        case 3: printf("Error:  [linking]  ");
-                no_link_errors++; no_errors++; break;
+        case 3: printf("Error:  [linking]  "); no_errors++; break;
         case 4: printf("*** Compiler error: ");
                 no_compiler_errors++; break;
     }
@@ -484,7 +482,7 @@ extern void print_sorry_message(void)
 }
 
 extern int compiler_error(char *s)
-{   if (no_link_errors > 0) return FALSE;
+{
     if (no_errors > 0) return FALSE;
     if (no_compiler_errors==MAX_ERRORS)
         fatalerror("Too many compiler errors: giving up");
@@ -493,7 +491,7 @@ extern int compiler_error(char *s)
 }
 
 extern int compiler_error_named(char *s1, char *s2)
-{   if (no_link_errors > 0) return FALSE;
+{
     if (no_errors > 0) return FALSE;
     snprintf(error_message_buff, ERROR_BUFLEN, "%s \"%s\"",s1,s2);
     ellipsize_error_message_buff();

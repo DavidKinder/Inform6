@@ -2338,8 +2338,7 @@ extern int  parse_given_directive(int internal_flag);
 #define FORERRORS_SIZE (512)
 extern char *forerrors_buff;
 extern int  forerrors_pointer;
-extern int  no_errors, no_warnings, no_suppressed_warnings,
-            no_link_errors, no_compiler_errors;
+extern int  no_errors, no_warnings, no_suppressed_warnings, no_compiler_errors;
 
 extern ErrorPosition ErrorReport;
 
