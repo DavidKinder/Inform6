@@ -247,7 +247,7 @@ static void construct_storyfile_z(void)
           limit=0, excess=0, extend_offset=0, headerext_length=0;
     int32 globals_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
           abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
-          map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
+          grammar_table_at=0, charset_at=0, headerext_at=0,
           terminating_chars_at=0, unicode_at=0, id_names_length=0,
           static_arrays_at=0;
     int skip_backpatching = FALSE;
@@ -1000,7 +1000,7 @@ printf("        + - - - - - - - - - - +   %05lx\n",
 printf("        |     adjectives      |   %s\n",
     show_percentage(dictionary_at-adjectives_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) dictionary_at);
-addr = (module_switch ? map_of_module : (static_array_area_size ? static_arrays_at : Write_Code_At));
+addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
 printf("        |     dictionary      |   %s\n",
     show_percentage(addr-dictionary_at, Out_Size));
 if (static_array_area_size)
