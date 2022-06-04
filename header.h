@@ -2495,7 +2495,7 @@ extern int
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
-    memory_map_setting,     module_switch,
+    memory_map_setting,
     define_DEBUG_switch,    define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,

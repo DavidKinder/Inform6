@@ -256,7 +256,6 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    module_switch,                  /* -M */ //####
     runtime_error_checking_switch,  /* -S */
     define_INFIX_switch;            /* -X */
 #ifdef ARC_THROWBACK
@@ -329,7 +328,6 @@ static void reset_switch_settings(void)
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
-    module_switch = FALSE;
 #ifdef ARC_THROWBACK
     throwback_switch = FALSE;
 #endif

@@ -273,7 +273,7 @@ extern void linker_endpass(void)
 
 extern void linker_allocate_arrays(void)
 {
-    int initlinksize = (module_switch ? 2000 : 0);
+    int initlinksize = 0;
     initialise_memory_list(&link_data_holding_area_memlist,
         sizeof(uchar), initlinksize, (void**)&link_data_holding_area,
         "link data holding area");
