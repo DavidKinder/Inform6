@@ -1008,18 +1008,20 @@ the first constant definition");
             trace_level = &expr_trace_level; break;
         case TOKENS_TK:
             trace_level = &tokens_trace_level; break;
-        case LINKER_TK:
-            /* no longer implememented */
-            trace_level = NULL; break;
         case DICTIONARY_TK:
         case SYMBOLS_TK:
         case OBJECTS_TK:
         case VERBS_TK:
+            /* show a table rather than changing any trace level */
             trace_level = NULL; break;
         case LINES_TK:
             /* never implememented */
             trace_level = NULL; break;
+        case LINKER_TK:
+            /* no longer implememented */
+            trace_level = NULL; break;
         default:
+            /* default to "Trace assembly" */
             put_token_back();
             trace_level = &asm_trace_level; break;
         }
