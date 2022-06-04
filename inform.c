@@ -256,7 +256,7 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    module_switch,                  /* -M */
+    module_switch,                  /* -M ### */
     runtime_error_checking_switch,  /* -S */
     define_INFIX_switch;            /* -X */
 #ifdef ARC_THROWBACK
@@ -425,24 +425,21 @@ static void begin_pass(void)
     veneer_begin_pass();
     verbs_begin_pass();
 
-    if (!module_switch)
-    {
-        /*  Compile a Main__ routine (see "veneer.c")  */
-
-        compile_initial_routine();
-
-        /*  Make the four metaclasses: Class must be object number 1, so
-            it must come first  */
-
-        veneer_mode = TRUE;
-
-        make_class("Class");
-        make_class("Object");
-        make_class("Routine");
-        make_class("String");
-
-        veneer_mode = FALSE;
-    }
+    /*  Compile a Main__ routine (see "veneer.c")  */
+    
+    compile_initial_routine();
+    
+    /*  Make the four metaclasses: Class must be object number 1, so
+        it must come first  */
+    
+    veneer_mode = TRUE;
+    
+    make_class("Class");
+    make_class("Object");
+    make_class("Routine");
+    make_class("String");
+    
+    veneer_mode = FALSE;
 }
 
 extern void allocate_arrays(void)
@@ -850,27 +847,21 @@ extern void translate_out_filename(char *new_name, char *old_name)
 #endif
 
     prefix_path = NULL;
-    if (module_switch)
-    {   extension = Module_Extension;
-        if (Module_Path[0]!=0) prefix_path = Module_Path;
-    }
-    else
-    {
-        if (!glulx_mode) {
-            switch(version_number)
-            {   case 3: extension = Code_Extension;   break;
-                case 4: extension = V4Code_Extension; break;
-                case 5: extension = V5Code_Extension; break;
-                case 6: extension = V6Code_Extension; break;
-                case 7: extension = V7Code_Extension; break;
-                case 8: extension = V8Code_Extension; break;
-            }
+    
+    if (!glulx_mode) {
+        switch(version_number)
+        {   case 3: extension = Code_Extension;   break;
+            case 4: extension = V4Code_Extension; break;
+            case 5: extension = V5Code_Extension; break;
+            case 6: extension = V6Code_Extension; break;
+            case 7: extension = V7Code_Extension; break;
+            case 8: extension = V8Code_Extension; break;
         }
-        else {
-            extension = GlulxCode_Extension;
-        }
-        if (Code_Path[0]!=0) prefix_path = Code_Path;
     }
+    else {
+        extension = GlulxCode_Extension;
+    }
+    if (Code_Path[0]!=0) prefix_path = Code_Path;
 
 #ifdef FILE_EXTENSIONS
     extension = check_extension(old_name, extension);
@@ -887,9 +878,7 @@ static char *name_or_unset(char *p)
 static void help_on_filenames(void)
 {   char old_name[PATHLEN];
     char new_name[PATHLEN];
-    int save_mm = module_switch, x;
-
-    module_switch = FALSE;
+    int x;
 
     printf("Help information on filenames:\n\n");
 
@@ -1000,17 +989,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     translate_out_filename(new_name, "rezrov");
     printf("  and a story file is compiled to \"%s\".\n\n", new_name);
 
-    translate_in_filename(0, new_name, "frotz", 0, 1);
-    printf("2. \"inform -M frotz\"\n\
-  the source code is read from \"%s\"\n",
-        new_name);
-    module_switch = TRUE;
-    convert_filename_flag = TRUE;
-    translate_out_filename(new_name, "frotz");
-    printf("  and a module is compiled to \"%s\".\n\n", new_name);
-
-    module_switch = FALSE;
-
     sprintf(old_name, "demos%cplugh", FN_SEP);
     printf("3. \"inform %s\"\n", old_name);
     translate_in_filename(0, new_name, old_name, 0, 1);
@@ -1043,7 +1021,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
         printf("     \"%s\"\n", new_name);
     } while (x != 0);
     strcpy(Source_Path, old_name);
-    module_switch = save_mm;
 }
 
 #ifdef ARCHIMEDES
@@ -1052,11 +1029,9 @@ static char riscos_ft_buffer[4];
 extern char *riscos_file_type(void)
 {
     if (riscos_file_type_format == 1)
-    {   if (module_switch) return("data");
+    {
         return("11A");
     }
-
-    if (module_switch) return("075");
 
     sprintf(riscos_ft_buffer, "%03x", 0x60 + version_number);
     return(riscos_ft_buffer);
@@ -1082,7 +1057,6 @@ static void run_pass(void)
     compile_veneer();
 
     lexer_endpass();
-    if (module_switch) linker_endpass();
 
     issue_debug_symbol_warnings();
     
@@ -1157,23 +1131,6 @@ static int compile(int number_of_files_specified, char *file1, char *file2)
         printf("Infix (-X) facilities are not available in Glulx: \
 disabling -X switch\n");
         define_INFIX_switch = FALSE;
-    }
-
-    if (module_switch && glulx_mode) {
-        printf("Modules are not available in Glulx: \
-disabling -M switch\n");
-        module_switch = FALSE;
-    }
-
-    if (define_INFIX_switch && module_switch)
-    {   printf("Infix (-X) facilities are not available when compiling \
-modules: disabling -X switch\n");
-        define_INFIX_switch = FALSE;
-    }
-    if (runtime_error_checking_switch && module_switch)
-    {   printf("Strict checking (-S) facilities are not available when \
-compiling modules: disabling -S switch\n");
-        runtime_error_checking_switch = FALSE;
     }
 
     TIMEVALUE_NOW(&time_start);
@@ -1493,10 +1450,6 @@ extern void switches(char *p, int cmode)
                       case '2': s=2; error_format=2; break;
                       default:  error_format=1; break;
                   }
-                  break;
-        case 'M': module_switch = state;
-                  if (state && (r_e_c_s_set == FALSE))
-                      runtime_error_checking_switch = FALSE;
                   break;
 #ifdef ARCHIMEDES
         case 'R': switch(p[i+1])
