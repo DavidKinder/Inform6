@@ -260,7 +260,7 @@ extern int file_load_chars(int file_number, char *buffer, int length)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Final assembly and output of the story file/module.                     */
+/*   Final assembly and output of the story file.                            */
 /* ------------------------------------------------------------------------- */
 
 FILE *sf_handle;
@@ -270,9 +270,7 @@ static void sf_put(int c)
     if (!glulx_mode) {
 
       /*  The checksum is the unsigned sum mod 65536 of the bytes in the
-          story file from 0x0040 (first byte after header) to the end.
-
-          The link data does not contribute to the checksum of a module.     */
+          story file from 0x0040 (first byte after header) to the end.       */
 
       checksum_low_byte += c;
       if (checksum_low_byte>=256)

@@ -1907,8 +1907,7 @@ inconvenience, please contact the maintainers.");
     }
 
     /*  "Class" (object 1) has no parent, whereas all other classes are
-        the children of "Class".  Since "Class" is not present in a module,
-        a special value is used which is corrected to 1 by the linker.       */
+        the children of "Class".                                             */
 
     if (metaclass_flag) parent_of_this_obj = 0;
     else parent_of_this_obj = 1;

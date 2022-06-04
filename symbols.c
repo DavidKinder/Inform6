@@ -538,8 +538,8 @@ extern void issue_debug_symbol_warnings(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   These are arrays used only during story file (never module) creation,   */
-/*   and not allocated until then.                                           */
+/*   These are arrays used only during story file creation, and not          */
+/*   allocated until then.                                                   */
 
        int32 *individual_name_strings; /* Packed addresses of Z-encoded
                                           strings of the names of the
