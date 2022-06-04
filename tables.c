@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------- */
-/*   "tables" :  Constructs the story file or module (the output) up to the  */
-/*               end of dynamic memory, gluing together all the required     */
+/*   "tables" :  Constructs the story file (the output) up to the end        */
+/*               of dynamic memory, gluing together all the required         */
 /*               tables.                                                     */
 /*                                                                           */
 /*   Part of Inform 6.40                                                     */
@@ -86,7 +86,7 @@ int flags2_requirements[16];           /* An array of which bits in Flags 2 of
                                           Values are 0 or 1.                 */
 
 /* ------------------------------------------------------------------------- */
-/*   Construct story/module file (up to code area start).                    */
+/*   Construct story file (up to code area start).                           */
 /*                                                                           */
 /*   (To understand what follows, you really need to look at the run-time    */
 /*   system's specification, the Z-Machine Standards document.)              */
