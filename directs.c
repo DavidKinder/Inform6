@@ -953,9 +953,9 @@ the first constant definition");
     /*                      [on/off/NUM]      {same as "assembly"}           */
     /*         assembly     [on/off/NUM]                                     */
     /*         expressions  [on/off/NUM]                                     */
-    /*         lines        [on/off/NUM]                                     */
+    /*         lines        [on/off/NUM]      {not supported}                */
     /*         tokens       [on/off/NUM]                                     */
-    /*         linker       [on/off/NUM]                                     */
+    /*         linker       [on/off/NUM]      {not supported}                */
     /*                                                                       */
     /* The first four trace commands immediately display a compiler table.   */
     /* The rest set or clear an ongoing trace.                               */
@@ -1009,7 +1009,8 @@ the first constant definition");
         case TOKENS_TK:
             trace_level = &tokens_trace_level; break;
         case LINKER_TK:
-            trace_level = &linker_trace_level; break;
+            /* no longer implememented */
+            trace_level = NULL; break;
         case DICTIONARY_TK:
         case SYMBOLS_TK:
         case OBJECTS_TK:
@@ -1046,7 +1047,7 @@ the first constant definition");
 
         HandleTraceKeyword:
 
-        if (i == LINES_TK) {
+        if (i == LINES_TK || i == LINKER_TK) {
             warning_named("Trace option is not supported:", trace_keywords.keywords[i]);
             break;
         }

@@ -230,7 +230,6 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
-    linker_trace_level,  /* linker tracing: 0 to 4 levels //####             */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
@@ -280,8 +279,6 @@ int character_set_setting,          /* set by -C0 through -C9 */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* $!RUNTIME, -g: 0, 1, 2, or 3 */
     files_trace_setting,            /* $!FILES */
-    linker_trace_setting,           /* $!LINKER: initial value of //####
-                                       linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
     list_objects_setting,           /* $!OBJECTS */
@@ -294,7 +291,6 @@ int glulx_mode;                     /* -G */
 
 static void reset_switch_settings(void)
 {   asm_trace_setting = 0;
-    linker_trace_setting = 0;
     tokens_trace_setting = 0;
     expr_trace_setting = 0;
     bpatch_trace_setting = 0;
@@ -349,7 +345,6 @@ static void reset_switch_settings(void)
     /* These aren't switches, but for clarity we reset them too. */
     asm_trace_level = 0;
     expr_trace_level = 0;
-    linker_trace_level = 0;
     tokens_trace_level = 0;
 }
 
@@ -408,7 +403,6 @@ static void begin_pass(void)
     expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
     tokens_trace_level = tokens_trace_setting;
-    linker_trace_level = linker_trace_setting;
 
     lexer_begin_pass();
     memory_begin_pass();
