@@ -22,15 +22,6 @@ int32 link_data_size;                     /*  link data table being written  */
 /*   Import/export records                                                   */
 /* ------------------------------------------------------------------------- */
 
-typedef struct importexport_s
-{   int module_value;
-    int32 symbol_number;
-    char symbol_type;
-    int backpatch;
-    int32 symbol_value;
-    char *symbol_name;
-} ImportExport;
-
 /* ========================================================================= */
 /*   Linking in external modules: this code is run when the external         */
 /*   program hits a Link directive.                                          */
@@ -41,26 +32,15 @@ typedef struct importexport_s
 /*   used.)                                                                  */
 /* ------------------------------------------------------------------------- */
 
-int32 module_map[16];
-
-ImportExport IE;
-
 /* ------------------------------------------------------------------------- */
 /*   These are offsets within the module:                                    */
 /* ------------------------------------------------------------------------- */
 
-int32 *xref_table; int xref_top;
-int32 *property_identifier_map;
-int *accession_numbers_map;
-int32 routine_replace[64],
-      routine_replace_with[64]; int no_rr;
 
 /* ------------------------------------------------------------------------- */
 /*   Reading and writing bytes/words in the module (as loaded in), indexing  */
 /*   via "marker addresses".                                                 */
 /* ------------------------------------------------------------------------- */
-
-int m_read_pos;
 
 /* ------------------------------------------------------------------------- */
 /*   The main routine: linking in a module with the given filename.          */
@@ -83,8 +63,6 @@ char current_module_filename[PATHLEN];
 /* ------------------------------------------------------------------------- */
 /*   Marking for later importation                                           */
 /* ------------------------------------------------------------------------- */
-
-int mv_vref=LOWEST_SYSTEM_VAR_NUMBER-1;
 
 /* ========================================================================= */
 /*   Data structure management routines                                      */
