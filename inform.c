@@ -491,7 +491,6 @@ extern void free_arrays(void)
 static char Source_Path[PATHLEN];
 static char Include_Path[PATHLEN];
 static char Code_Path[PATHLEN];
-static char Module_Path[PATHLEN]; //####
 static char current_source_path[PATHLEN];
        char Debugging_Name[PATHLEN];
        char Transcript_Name[PATHLEN];
@@ -501,7 +500,7 @@ static char ICL_Path[PATHLEN];
 
 /* Set one of the above Path buffers to the given location, or list of
    locations. (A list is comma-separated, and only accepted for Source_Path,
-   Include_Path, ICL_Path, Module_Path.)
+   Include_Path, ICL_Path.)
 */
 static void set_path_value(char *path, char *value)
 {   int i, j;
@@ -516,10 +515,10 @@ static void set_path_value(char *path, char *value)
         if ((value[j] == FN_ALT) || (value[j] == 0))
         {   if ((value[j] == FN_ALT)
                 && (path != Source_Path) && (path != Include_Path)
-                && (path != ICL_Path) && (path != Module_Path))
+                && (path != ICL_Path))
             {   printf("The character '%c' is used to divide entries in a list \
-of possible locations, and can only be used in the Include_Path, Source_Path, \
-Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
+of possible locations, and can only be used in the Include_Path, Source_Path \
+or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
                 exit(1);
             }
             if ((path != Debugging_Name) && (path != Transcript_Name)
@@ -534,7 +533,7 @@ Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
 
 /* Prepend the given location or list of locations to one of the above
    Path buffers. This is only permitted for Source_Path, Include_Path, 
-   ICL_Path, Module_Path.
+   ICL_Path.
 
    An empty field (in the comma-separated list) means the current
    directory. If the Path buffer is entirely empty, we assume that
@@ -549,10 +548,10 @@ static void prepend_path_value(char *path, char *value)
     char new_path[PATHLEN];
 
     if ((path != Source_Path) && (path != Include_Path)
-        && (path != ICL_Path) && (path != Module_Path))
+        && (path != ICL_Path))
     {   printf("The character '+' is used to add to a list \
-of possible locations, and can only be used in the Include_Path, Source_Path, \
-Module_Path or ICL_Path variables. Other paths are for output only.\n");
+of possible locations, and can only be used in the Include_Path, Source_Path \
+or ICL_Path variables. Other paths are for output only.\n");
         exit(1);
     }
 
@@ -596,7 +595,6 @@ static void set_default_paths(void)
     set_path_value(Source_Path,     Source_Directory);
     set_path_value(Include_Path,    Include_Directory);
     set_path_value(Code_Path,       Code_Directory);
-    set_path_value(Module_Path,     Module_Directory);
     set_path_value(ICL_Path,        ICL_Directory);
     set_path_value(Debugging_Name,  Debugging_File);
     set_path_value(Transcript_Name, Transcript_File);
@@ -637,7 +635,6 @@ static void set_path_command(char *command)
         if (strcmp(pathname, "source_path")==0)  path_to_set=Source_Path;
         if (strcmp(pathname, "include_path")==0) path_to_set=Include_Path;
         if (strcmp(pathname, "code_path")==0)    path_to_set=Code_Path;
-        if (strcmp(pathname, "module_path")==0)  path_to_set=Module_Path;
         if (strcmp(pathname, "icl_path")==0)     path_to_set=ICL_Path;
         if (strcmp(pathname, "debugging_name")==0) path_to_set=Debugging_Name;
         if (strcmp(pathname, "transcript_name")==0) path_to_set=Transcript_Name;
@@ -897,9 +894,8 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
    name_or_unset(Code_Path));
 
     printf(
-"       ICL command file (in)  icl_path            %s\n\
-       Module (in & out)      module_path         %s\n\n",
-   name_or_unset(ICL_Path), name_or_unset(Module_Path));
+"       ICL command file (in)  icl_path            %s\n\n",
+   name_or_unset(ICL_Path));
 
     printf(
 "   If the path is unset, then the current working directory is used (so\n\
