@@ -261,8 +261,8 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 
 extern void set_variable_value(int i, int32 v)
 {
-    /* This can be called during module-load to create a new global,
-       so we call ensure. */
+    /* This isn't currently called to create a new global, but it has
+       been used that way within living memory. So we call ensure. */
     ensure_memory_list_available(&global_initial_value_memlist, i+1);
     global_initial_value[i]=v;
 }

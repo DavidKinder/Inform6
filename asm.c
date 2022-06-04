@@ -1113,7 +1113,8 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
         /*  Note that variable numbers 249 to 255 (i.e. globals 233 to 239)
             are used as scratch workspace, so need no mapping between
-            modules and story files: nor do local variables 0 to 15  */
+            modules and story files: nor do local variables 0 to 15.
+            (Modules no longer exist but why drop a good comment.) */
 
         if ((o1.value >= MAX_LOCAL_VARIABLES) && (o1.value < 249))
             o1.marker = VARIABLE_MV;

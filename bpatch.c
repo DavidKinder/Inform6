@@ -41,7 +41,8 @@ extern char *describe_mv(int mval)
         case MAIN_MV:       return("ref to Main");
         case SYMBOL_MV:     return("ref to symbol value");
 
-        /*  Additional marker values used in module backpatching  */
+        /*  Additional marker values used in Glulx backpatching
+            (IDENT_MV is not really used at all any more) */
 
         case VARIABLE_MV:   return("global variable");
         case IDENT_MV:      return("prop identifier number");
