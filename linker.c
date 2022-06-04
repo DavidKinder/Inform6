@@ -8,16 +8,6 @@
 
 #include "header.h"
 
-uchar *link_data_holding_area;            /* Allocated to link_data_ha_size  */
-static memory_list link_data_holding_area_memlist;
-int32 link_data_ha_size;
-
-uchar *link_data_area;
-static memory_list link_data_area_memlist;
-                                          /*  Start, current top, size of    */
-int32 link_data_size;                     /*  link data table being written  */
-                                          /*  (holding import/export names)  */
-
 /* ------------------------------------------------------------------------- */
 /*   Import/export records                                                   */
 /* ------------------------------------------------------------------------- */
@@ -46,8 +36,6 @@ int32 link_data_size;                     /*  link data table being written  */
 /*   The main routine: linking in a module with the given filename.          */
 /* ------------------------------------------------------------------------- */
 
-char current_module_filename[PATHLEN];
-
 
 /* ========================================================================= */
 /*   Writing imports, exports and markers to the link data table during      */
@@ -69,14 +57,11 @@ char current_module_filename[PATHLEN];
 /* ------------------------------------------------------------------------- */
 
 extern void init_linker_vars(void)
-{   link_data_size = 0;
-    link_data_area = NULL;
-    link_data_ha_size = 0;
-    link_data_holding_area = NULL;
+{
 }
 
 extern void linker_begin_pass(void)
-{   link_data_ha_size = 0;
+{
 }
 
 extern void linker_endpass(void)
@@ -85,19 +70,10 @@ extern void linker_endpass(void)
 
 extern void linker_allocate_arrays(void)
 {
-    int initlinksize = 0;
-    initialise_memory_list(&link_data_holding_area_memlist,
-        sizeof(uchar), initlinksize, (void**)&link_data_holding_area,
-        "link data holding area");
-    initialise_memory_list(&link_data_area_memlist,
-        sizeof(uchar), 128, (void**)&link_data_area,
-        "link data area");
 }
 
 extern void linker_free_arrays(void)
 {
-    deallocate_memory_list(&link_data_holding_area_memlist);
-    deallocate_memory_list(&link_data_area_memlist);
 }
 
 /* ========================================================================= */

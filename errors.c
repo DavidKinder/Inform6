@@ -213,7 +213,7 @@ extern void memory_out_error(int32 size, int32 howmany, char *name)
 /*   Survivable diagnostics:                                                 */
 /*      compilation errors   style 1                                         */
 /*      warnings             style 2                                         */
-/*      linkage errors       style 3                                         */
+/*      linkage errors       style 3 (no longer used)                        */
 /*      compiler errors      style 4 (these should never happen and          */
 /*                                    indicate a bug in Inform)              */
 /* ------------------------------------------------------------------------- */
@@ -232,7 +232,7 @@ static void message(int style, char *s)
     switch(style)
     {   case 1: printf("Error: "); no_errors++; break;
         case 2: printf("Warning: "); no_warnings++; break;
-        case 3: printf("Error:  [linking '%s']  ", current_module_filename);
+        case 3: printf("Error:  [linking]  ");
                 no_link_errors++; no_errors++; break;
         case 4: printf("*** Compiler error: ");
                 no_compiler_errors++; break;

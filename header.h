@@ -2587,14 +2587,6 @@ extern keyword_group directives, statements, segment_markers,
        opcode_macros;
 
 /* ------------------------------------------------------------------------- */
-/*   Extern definitions for "linker"                                         */
-/* ------------------------------------------------------------------------- */
-
-extern uchar *link_data_area;
-extern int32 link_data_size;
-extern char  current_module_filename[];
-
-/* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */
 /* ------------------------------------------------------------------------- */
 
