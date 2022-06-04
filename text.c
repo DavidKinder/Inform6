@@ -2081,16 +2081,9 @@ static void recursively_sort(int node)
 }
 
 extern void sort_dictionary(void)
-{   int i;
-    
+{    
     final_dict_order = my_calloc(sizeof(int), dict_entries, "final dictionary ordering table");
     
-    if (module_switch)
-    {   for (i=0; i<dict_entries; i++)
-            final_dict_order[i] = i;
-        return;
-    }
-
     if (root != VACANT)
     {   fdo_count = 0; recursively_sort(root);
     }
