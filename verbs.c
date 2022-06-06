@@ -296,8 +296,8 @@ extern void list_verb_table(void)
 static void new_action(char *b, int c)
 {
     /*  Called whenever a new action (or fake action) is created (either
-        by using make_action above, or the Fake_Action directive, or by
-        the linker).  At present just a hook for some tracing code.          */
+        by using make_action above, or the Fake_Action directive).
+        At present just a hook for some tracing code.                        */
 
     if (printactions_switch)
         printf("Action '%s' is numbered %d\n",b,c);
@@ -387,7 +387,7 @@ extern assembly_operand action_of_name(char *name)
     AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
     if (!glulx_mode) {
-      AO.type = (module_switch)?LONG_CONSTANT_OT:SHORT_CONSTANT_OT;
+      AO.type = SHORT_CONSTANT_OT;
       if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
     }
     else {
@@ -401,9 +401,6 @@ extern void find_the_actions(void)
     char action_name[MAX_IDENTIFIER_LENGTH+4];
     char action_sub[MAX_IDENTIFIER_LENGTH+4];
 
-    if (module_switch)
-        for (i=0; i<no_actions; i++) actions[i].byte_offset = 0;
-    else
     for (i=0; i<no_actions; i++)
     {   strcpy(action_name, symbols[actions[i].symbol].name);
         action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */

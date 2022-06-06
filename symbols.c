@@ -508,8 +508,6 @@ extern void check_warn_symbol_has_metaclass(const assembly_operand *AO, char *co
 extern void issue_unused_warnings(void)
 {   int32 i;
 
-    if (module_switch) return;
-
     /*  Update any ad-hoc variables that might help the library  */
     if (glulx_mode)
     {   global_initial_value[10]=statusline_flag;
@@ -540,8 +538,8 @@ extern void issue_debug_symbol_warnings(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   These are arrays used only during story file (never module) creation,   */
-/*   and not allocated until then.                                           */
+/*   These are arrays used only during story file creation, and not          */
+/*   allocated until then.                                                   */
 
        int32 *individual_name_strings; /* Packed addresses of Z-encoded
                                           strings of the names of the
@@ -557,8 +555,6 @@ extern void write_the_identifier_names(void)
 
     for (i=0; i<no_individual_properties; i++)
         individual_name_strings[i] = 0;
-
-    if (module_switch) return;
 
     veneer_mode = TRUE;
 
@@ -808,17 +804,11 @@ static void stockup_symbols(void)
         create_rsymbol("Grammar__Version", 2, CONSTANT_T);
     grammar_version_symbol = symbol_index("Grammar__Version", -1);
 
-    if (module_switch)
-        create_rsymbol("MODULE_MODE",0, CONSTANT_T);
-
     if (runtime_error_checking_switch)
         create_rsymbol("STRICT_MODE",0, CONSTANT_T);
 
     if (define_DEBUG_switch)
         create_rsymbol("DEBUG",      0, CONSTANT_T);
-
-    if (define_USE_MODULES_switch)
-        create_rsymbol("USE_MODULES",0, CONSTANT_T);
 
     if (define_INFIX_switch)
     {   create_rsymbol("INFIX",      0, CONSTANT_T);

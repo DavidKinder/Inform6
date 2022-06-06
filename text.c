@@ -2081,16 +2081,9 @@ static void recursively_sort(int node)
 }
 
 extern void sort_dictionary(void)
-{   int i;
-    
+{    
     final_dict_order = my_calloc(sizeof(int), dict_entries, "final dictionary ordering table");
     
-    if (module_switch)
-    {   for (i=0; i<dict_entries; i++)
-            final_dict_order[i] = i;
-        return;
-    }
-
     if (root != VACANT)
     {   fdo_count = 0; recursively_sort(root);
     }
@@ -2317,9 +2310,8 @@ extern void dictionary_set_verb_number(char *dword, int to)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Tracing code for the dictionary: used not only by "trace" and text      */
-/*   transcription, but also (in the case of "word_to_ascii") in a vital     */
-/*   by the linker.                                                          */
+/*   Tracing code for the dictionary: used by "trace" and text               */
+/*   transcription.                                                          */
 /* ------------------------------------------------------------------------- */
 
 /* In the dictionary-showing code, if d_show_buf is NULL, the text is

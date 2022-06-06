@@ -958,10 +958,6 @@ static void make_opcode_syntax_g(opcodeg opco)
 /* This is for Z-code only. */
 static void write_operand(assembly_operand op)
 {   int32 j;
-    if (module_switch && (op.marker != 0))
-    {   if ((op.marker != VARIABLE_MV) && (op.type == SHORT_CONSTANT_OT))
-            op.type = LONG_CONSTANT_OT;
-    }
     j=op.value;
     switch(op.type)
     {   case LONG_CONSTANT_OT:
@@ -971,7 +967,7 @@ static void write_operand(assembly_operand op)
             byteout(j, 0);
             else byteout(j, 0x80 + op.marker); return;
         case VARIABLE_OT:
-            byteout(j, (module_switch)?(0x80 + op.marker):0); return;
+            byteout(j, 0); return;
         case CONSTANT_OT:
         case HALFCONSTANT_OT:
         case BYTECONSTANT_OT:
@@ -1154,7 +1150,8 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
         /*  Note that variable numbers 249 to 255 (i.e. globals 233 to 239)
             are used as scratch workspace, so need no mapping between
-            modules and story files: nor do local variables 0 to 15  */
+            modules and story files: nor do local variables 0 to 15.
+            (Modules no longer exist but why drop a good comment.) */
 
         if ((o1.value >= MAX_LOCAL_VARIABLES) && (o1.value < 249))
             o1.marker = VARIABLE_MV;
@@ -1243,8 +1240,6 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         }
         printf("\n");
     }
-
-    if (module_switch) flush_link_data();
 
     return;
 
@@ -1646,8 +1641,6 @@ extern void assembleg_instruction(const assembly_instruction *AI)
       }
       printf("\n");
     }
-
-    if (module_switch) flush_link_data();
 
     return;
 
@@ -2246,7 +2239,7 @@ static void transfer_routine_z(void)
                 case OBJECT_MV:
                 case ACTION_MV:
                 case IDENT_MV:
-                    if (!module_switch) break;
+                    break;
                 default:
                     if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV)
                     {   compiler_error("Illegal code backpatch value");
@@ -2466,7 +2459,7 @@ static void transfer_routine_g(void)
             break;
         case ACTION_MV:
         case IDENT_MV:
-            if (!module_switch) break;
+            break;
         case OBJECT_MV:
         case VARIABLE_MV:
         default:

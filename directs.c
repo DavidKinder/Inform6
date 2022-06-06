@@ -124,7 +124,7 @@ extern int parse_given_directive(int internal_flag)
     /*   Array arrayname array...                                            */
     /* --------------------------------------------------------------------- */
 
-    case ARRAY_CODE: make_global(TRUE, FALSE); break;      /* See "tables.c" */
+    case ARRAY_CODE: make_global(TRUE); break;             /* See "tables.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Attribute newname [alias oldname]                                   */
@@ -235,11 +235,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case DEFAULT_CODE:
-        if (module_switch)
-        {   error("'Default' cannot be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
-
         get_next_token();
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("name", token_text);
@@ -368,7 +363,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /*   Global variable [= value / array...]                                */
     /* --------------------------------------------------------------------- */
 
-    case GLOBAL_CODE: make_global(FALSE, FALSE); break;    /* See "tables.c" */
+    case GLOBAL_CODE: make_global(FALSE); break;           /* See "tables.c" */
 
     /* --------------------------------------------------------------------- */
     /*   If...                                                               */
@@ -394,13 +389,24 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != SYMBOL_TT)
             return ebf_error_recover("symbol name", token_text);
 
+        /* Special case: a symbol of the form "VN_nnnn" is considered
+           defined if the compiler version number is at least nnnn.
+           Compiler version numbers look like "1640" for Inform 6.40;
+           see RELEASE_NUMBER.
+           ("VN_nnnn" isn't a real symbol and can't be used in other
+           contexts.) */
         if ((token_text[0] == 'V')
             && (token_text[1] == 'N')
             && (token_text[2] == '_')
             && (strlen(token_text)==7))
-        {   i = atoi(token_text+3);
-            if (VNUMBER < i) flag = (flag)?FALSE:TRUE;
-            goto HashIfCondition;
+        {
+            char *endstr;
+            i = strtol(token_text+3, &endstr, 10);
+            if (*endstr == '\0') {
+                /* All characters after the underscore were digits */
+                if (VNUMBER < i) flag = (flag)?FALSE:TRUE;
+                goto HashIfCondition;
+            }
         }
 
         if (symbols[token_value].flags & UNKNOWN_SFLAG) flag = (flag)?FALSE:TRUE;
@@ -535,26 +541,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     /* --------------------------------------------------------------------- */
     /*   Import global <varname> [, ...]                                     */
-    /*                                                                       */
-    /* (Further imported goods may be allowed later.)                        */
     /* --------------------------------------------------------------------- */
 
     case IMPORT_CODE:
-        if (!module_switch)
-        {   error("'Import' can only be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
-        directives.enabled = TRUE;
-        do
-        {   get_next_token();
-            if ((token_type == DIRECTIVE_TT) && (token_value == GLOBAL_CODE))
-                 make_global(FALSE, TRUE);
-            else error_named("'Import' cannot import things of this type:",
-                 token_text);
-            get_next_token();
-        } while ((token_type == SEP_TT) && (token_value == COMMA_SEP));
-        put_token_back();
-        directives.enabled = FALSE;
+        error("The 'Import' directive is no longer supported.");
         break;
 
     /* --------------------------------------------------------------------- */
@@ -589,13 +579,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
     case LINK_CODE:
         get_next_token();
-        if (token_type != DQ_TT)
-            return ebf_error_recover("filename in double-quotes", token_text);
-        if (strlen(token_text) >= PATHLEN-1) {
-            error_numbered("'Link' filename is too long; max length is", PATHLEN-1);
-            break;
-        }
-        link_module(token_text);                           /* See "linker.c" */
+        error("The 'Link' directive is no longer supported.");
         break;
 
     /* --------------------------------------------------------------------- */
@@ -607,10 +591,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case LOWSTRING_CODE:
-        if (module_switch)
-        {   error("'LowString' cannot be used in -M (Module) mode");
-            panic_mode_error_recovery(); return FALSE;
-        }
         if (glulx_mode) {
             error("The LowString directive has no meaning in Glulx.");
             panic_mode_error_recovery(); return FALSE;
@@ -864,9 +844,6 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /* --------------------------------------------------------------------- */
 
     case STATUSLINE_CODE:
-        if (module_switch)
-            warning("This does not set the final game's statusline");
-
         directive_keywords.enabled = TRUE;
         get_next_token();
         directive_keywords.enabled = FALSE;
@@ -976,9 +953,9 @@ the first constant definition");
     /*                      [on/off/NUM]      {same as "assembly"}           */
     /*         assembly     [on/off/NUM]                                     */
     /*         expressions  [on/off/NUM]                                     */
-    /*         lines        [on/off/NUM]                                     */
+    /*         lines        [on/off/NUM]      {not supported}                */
     /*         tokens       [on/off/NUM]                                     */
-    /*         linker       [on/off/NUM]                                     */
+    /*         linker       [on/off/NUM]      {not supported}                */
     /*                                                                       */
     /* The first four trace commands immediately display a compiler table.   */
     /* The rest set or clear an ongoing trace.                               */
@@ -1031,17 +1008,20 @@ the first constant definition");
             trace_level = &expr_trace_level; break;
         case TOKENS_TK:
             trace_level = &tokens_trace_level; break;
-        case LINKER_TK:
-            trace_level = &linker_trace_level; break;
         case DICTIONARY_TK:
         case SYMBOLS_TK:
         case OBJECTS_TK:
         case VERBS_TK:
+            /* show a table rather than changing any trace level */
             trace_level = NULL; break;
         case LINES_TK:
             /* never implememented */
             trace_level = NULL; break;
+        case LINKER_TK:
+            /* no longer implememented */
+            trace_level = NULL; break;
         default:
+            /* default to "Trace assembly" */
             put_token_back();
             trace_level = &asm_trace_level; break;
         }
@@ -1069,7 +1049,7 @@ the first constant definition");
 
         HandleTraceKeyword:
 
-        if (i == LINES_TK) {
+        if (i == LINES_TK || i == LINKER_TK) {
             warning_named("Trace option is not supported:", trace_keywords.keywords[i]);
             break;
         }

@@ -132,7 +132,6 @@ but not used as a value:", unicode);
                        because there could be another definition coming. */
                     if (symbols[symbol].flags & REPLACE_SFLAG)
                     {   current_token.marker = SYMBOL_MV;
-                        if (module_switch) import_symbol(symbol);
                         v = symbol;
                         break;
                     }
@@ -144,7 +143,7 @@ but not used as a value:", unicode);
                 case OBJECT_T:
                 case CLASS_T:
                     /* All objects must be backpatched in Glulx. */
-                    if (module_switch || glulx_mode)
+                    if (glulx_mode)
                         current_token.marker = OBJECT_MV;
                     break;
                 case ARRAY_T:
@@ -154,12 +153,10 @@ but not used as a value:", unicode);
                     current_token.marker = STATIC_ARRAY_MV;
                     break;
                 case INDIVIDUAL_PROPERTY_T:
-                    if (module_switch) current_token.marker = IDENT_MV;
                     break;
                 case CONSTANT_T:
                     if (symbols[symbol].flags & (UNKNOWN_SFLAG + CHANGE_SFLAG))
                     {   current_token.marker = SYMBOL_MV;
-                        if (module_switch) import_symbol(symbol);
                         v = symbol;
                     }
                     else current_token.marker = 0;
@@ -1499,7 +1496,6 @@ static void check_property_operator(int from_node)
                 && ((ET[n].value.type == LONG_CONSTANT_OT)
                     || (ET[n].value.type == SHORT_CONSTANT_OT))
                 && ((ET[n].value.value > 0) && (ET[n].value.value < 64))
-                && (!module_switch)
                 && (ET[n].value.marker == 0))
             flag = TRUE;
 

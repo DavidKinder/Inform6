@@ -260,7 +260,7 @@ extern int file_load_chars(int file_number, char *buffer, int length)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Final assembly and output of the story file/module.                     */
+/*   Final assembly and output of the story file.                            */
 /* ------------------------------------------------------------------------- */
 
 FILE *sf_handle;
@@ -270,9 +270,7 @@ static void sf_put(int c)
     if (!glulx_mode) {
 
       /*  The checksum is the unsigned sum mod 65536 of the bytes in the
-          story file from 0x0040 (first byte after header) to the end.
-
-          The link data does not contribute to the checksum of a module.     */
+          story file from 0x0040 (first byte after header) to the end.       */
 
       checksum_low_byte += c;
       if (checksum_low_byte>=256)
@@ -387,9 +385,6 @@ static void output_file_z(void)
     /*  Enter the length information into the header.                        */
 
     length=((int32) Write_Strings_At) + static_strings_extent;
-    if (module_switch) length += link_data_size +
-                                 zcode_backpatch_size +
-                                 zmachine_backpatch_size;
 
     while ((length%length_scale_factor)!=0) { length++; blanks++; }
     length=length/length_scale_factor;
@@ -412,7 +407,7 @@ static void output_file_z(void)
     /*  Set the type and creator to Andrew Plotkin's MaxZip, a popular
         Z-code interpreter on the Macintosh  */
 
-    if (!module_switch) fsetfileinfo(new_name, 'mxZR', 'ZCOD');
+    fsetfileinfo(new_name, 'mxZR', 'ZCOD');
 #endif
 
     /*  (1)  Output the paged memory.                                        */
@@ -455,7 +450,6 @@ static void output_file_z(void)
     size_before_code = size;
 
     j=0;
-    if (!module_switch)
     for (i=0; i<zcode_backpatch_size; i=i+3)
     {   int long_flag = TRUE;
         offset
@@ -556,18 +550,7 @@ static void output_file_z(void)
         size++;
     }
 
-    /*  (5)  Output the linking data table (in the case of a module).        */
-
-    if (module_switch)
-        for (i=0; i<link_data_size; i++)
-            sf_put(link_data_area[i]);
-
-    if (module_switch)
-    {   for (i=0; i<zcode_backpatch_size; i++)
-            sf_put(zcode_backpatch_table[i]);
-        for (i=0; i<zmachine_backpatch_size; i++)
-            sf_put(zmachine_backpatch_table[i]);
-    }
+    /*  (5)  When modules existed, we output link data here.                 */
 
     /*  (6)  Output null bytes to reach a multiple of 0.5K.                  */
 
@@ -616,10 +599,7 @@ static void output_file_z(void)
     }
 #endif
 #ifdef MAC_FACE
-     if (module_switch)
-         InformFiletypes (new_name, INF_MODULE_TYPE);
-     else
-         InformFiletypes (new_name, INF_ZCODE_TYPE);
+    InformFiletypes (new_name, INF_ZCODE_TYPE);
 #endif
 }
 
@@ -645,7 +625,7 @@ static void output_file_g(void)
     /*  Set the type and creator to Andrew Plotkin's MaxZip, a popular
         Z-code interpreter on the Macintosh  */
 
-    if (!module_switch) fsetfileinfo(new_name, 'mxZR', 'ZCOD');
+    fsetfileinfo(new_name, 'mxZR', 'GLUL');
 #endif
 
     checksum_long = 0;
@@ -795,7 +775,6 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     size_before_code = size;
 
     j=0;
-    if (!module_switch)
       for (i=0; i<zcode_backpatch_size; i=i+6) {
         int data_len;
         int32 v;
@@ -1165,10 +1144,7 @@ game features require version 0x%08lx", (long)requested_glulx_version, (long)Ver
     }
 #endif
 #ifdef MAC_FACE
-     if (module_switch)
-         InformFiletypes (new_name, INF_MODULE_TYPE);
-     else
-         InformFiletypes (new_name, INF_ZCODE_TYPE);
+    InformFiletypes (new_name, INF_GLULX_TYPE);
 #endif
 }
 

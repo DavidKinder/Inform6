@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------------- */
-/*   "tables" :  Constructs the story file or module (the output) up to the  */
-/*               end of dynamic memory, gluing together all the required     */
+/*   "tables" :  Constructs the story file (the output) up to the end        */
+/*               of dynamic memory, gluing together all the required         */
 /*               tables.                                                     */
 /*                                                                           */
 /*   Part of Inform 6.40                                                     */
@@ -86,7 +86,7 @@ int flags2_requirements[16];           /* An array of which bits in Flags 2 of
                                           Values are 0 or 1.                 */
 
 /* ------------------------------------------------------------------------- */
-/*   Construct story/module file (up to code area start).                    */
+/*   Construct story file (up to code area start).                           */
 /*                                                                           */
 /*   (To understand what follows, you really need to look at the run-time    */
 /*   system's specification, the Z-Machine Standards document.)              */
@@ -168,7 +168,7 @@ static int32 rough_size_of_paged_memory_z(void)
     total += 2*((version_number==3)?31:63)        /* property default values */
             + no_objects*((version_number==3)?9:14)     /* object tree table */
             + properties_table_size            /* property values of objects */
-            + (no_classes+1)*(module_switch?4:2)
+            + (no_classes+1)*2
                                                /* class object numbers table */
             + no_symbols*2                       /* names of numerous things */
             + individuals_length                 /* tables of prop variables */
@@ -188,7 +188,7 @@ static int32 rough_size_of_paged_memory_z(void)
               + 2*no_grammar_token_routines;     /* general parsing routines */
 
     total += (dictionary_top)                            /* dictionary size */
-             + ((module_switch)?30:0);                        /* module map */
+             + (0);                                           /* module map */
 
     total += static_array_area_size;                       /* static arrays */
 
@@ -245,13 +245,13 @@ static void construct_storyfile_z(void)
 {   uchar *p;
     int32 i, j, k, l, mark, objs, strings_length, code_length,
           limit=0, excess=0, extend_offset=0, headerext_length=0;
-    int32 globals_at=0, link_table_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
+    int32 globals_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
           abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
-          map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
+          grammar_table_at=0, charset_at=0, headerext_at=0,
           terminating_chars_at=0, unicode_at=0, id_names_length=0,
           static_arrays_at=0;
     int skip_backpatching = FALSE;
-    char *output_called = (module_switch)?"module":"story file";
+    char *output_called = "story file";
 
     ASSERT_ZCODE();
 
@@ -410,14 +410,8 @@ static void construct_storyfile_z(void)
             p[objs+9]=(objectsz[i].next)%256;
             p[objs+10]=(objectsz[i].child)/256;
             p[objs+11]=(objectsz[i].child)%256;
-            if (!module_switch)
-            {   p[objs+12]=mark/256;
-                p[objs+13]=mark%256;
-            }
-            else
-            {   p[objs+12]=objectsz[i].propsize/256;
-                p[objs+13]=objectsz[i].propsize%256;
-            }
+            p[objs+12]=mark/256;
+            p[objs+13]=mark%256;
             objs+=14;
         }
         mark+=objectsz[i].propsize;
@@ -429,10 +423,6 @@ static void construct_storyfile_z(void)
     for (i=0; i<no_classes; i++)
     {   p[mark++] = class_info[i].object_number/256;
         p[mark++] = class_info[i].object_number%256;
-        if (module_switch)
-        {   p[mark++] = class_info[i].begins_at/256;
-            p[mark++] = class_info[i].begins_at%256;
-        }
     }
     p[mark++] = 0;
     p[mark++] = 0;
@@ -441,7 +431,7 @@ static void construct_storyfile_z(void)
 
     identifier_names_offset = mark;
 
-    if (!module_switch)
+    if (TRUE)
     {   p[mark++] = no_individual_properties/256;
         p[mark++] = no_individual_properties%256;
         for (i=1; i<no_individual_properties; i++)
@@ -616,10 +606,7 @@ table format requested (producing number 2 format instead)");
 
     /*  ------------------------- Module Map ------------------------------- */
 
-    if (module_switch)
-    {   map_of_module = mark;                             /* Filled in below */
-        mark += 30;
-    }
+    /* (no longer used) */
 
     /*  ------------------------ Static Arrays ----------------------------- */
 
@@ -667,10 +654,8 @@ or less.");
     /*  ------------------ Another synchronising gap ----------------------- */
 
     if (oddeven_packing_switch)
-    {   if (module_switch)
-             while ((mark%(scale_factor*2)) != 0) mark++;
-        else
-             while ((mark%(scale_factor*2)) != scale_factor) mark++;
+    {   
+        while ((mark%(scale_factor*2)) != scale_factor) mark++;
     }
     else
         while ((mark%scale_factor) != 0) mark++;
@@ -683,11 +668,7 @@ or less.");
 
     /*  --------------------- Module Linking Data -------------------------- */
 
-    if (module_switch)
-    {   link_table_at = mark; mark += link_data_size;
-        mark += zcode_backpatch_size;
-        mark += zmachine_backpatch_size;
-    }
+    /* (no longer used) */
 
     /*  --------------------- Is the file too big? ------------------------- */
 
@@ -700,10 +681,6 @@ or less.");
         case 6:
         case 7:
         case 8: excess = Out_Size-((int32) 0x80000L); limit = 512; break;
-    }
-
-    if (module_switch)
-    {   excess = Out_Size-((int32) 0x10000L); limit=64;
     }
 
     if (excess > 0)
@@ -852,54 +829,11 @@ or less.");
 
     /*  ----------------- The Header: Extras for modules ------------------- */
 
-    if (module_switch)
-    {   p[0]=p[0]+64;
-        p[1]=MODULE_VERSION_NUMBER;
-        p[6]=map_of_module/256;
-        p[7]=map_of_module%256;
-
-        mark = map_of_module;                       /*  Module map format:   */
-
-        p[mark++]=object_tree_at/256;               /*  0: Object tree addr  */
-        p[mark++]=object_tree_at%256;
-        p[mark++]=object_props_at/256;              /*  2: Prop values addr  */
-        p[mark++]=object_props_at%256;
-        p[mark++]=(Write_Strings_At/scale_factor)/256;  /*  4: Static strs   */
-        p[mark++]=(Write_Strings_At/scale_factor)%256;
-        p[mark++]=class_numbers_offset/256;         /*  6: Class nos addr    */
-        p[mark++]=class_numbers_offset%256;
-        p[mark++]=individuals_offset/256;           /*  8: Indiv prop values */
-        p[mark++]=individuals_offset%256;
-        p[mark++]=individuals_length/256;           /*  10: Length of table  */
-        p[mark++]=individuals_length%256;
-        p[mark++]=no_symbols/256;                   /*  12: No of symbols    */
-        p[mark++]=no_symbols%256;
-        p[mark++]=no_individual_properties/256;     /*  14: Max property no  */
-        p[mark++]=no_individual_properties%256;
-        p[mark++]=no_objects/256;                   /*  16: No of objects    */
-        p[mark++]=no_objects%256;
-        i = link_table_at;
-        p[mark++]=i/256;                            /*  18: Import/exports   */
-        p[mark++]=i%256;
-        p[mark++]=link_data_size/256;               /*  20: Size of          */
-        p[mark++]=link_data_size%256;
-        i += link_data_size;
-        p[mark++]=i/256;                            /*  22: Code backpatch   */
-        p[mark++]=i%256;
-        p[mark++]=zcode_backpatch_size/256;         /*  24: Size of          */
-        p[mark++]=zcode_backpatch_size%256;
-        i += zcode_backpatch_size;
-        p[mark++]=i/256;                            /*  26: Image backpatch  */
-        p[mark++]=i%256;
-        p[mark++]=zmachine_backpatch_size/256;      /*  28: Size of          */
-        p[mark++]=zmachine_backpatch_size%256;
-
-        /*  Further space in this table is reserved for future use  */
-    }
+    /* (no longer used) */
 
     /*  ---- Backpatch the Z-machine, now that all information is in ------- */
 
-    if (!module_switch && !skip_backpatching)
+    if (!skip_backpatching)
     {   backpatch_zmachine_image_z();
         for (i=1; i<id_names_length; i++)
         {   int32 v = 256*p[identifier_names_offset + i*2]
@@ -1066,17 +1000,9 @@ printf("        + - - - - - - - - - - +   %05lx\n",
 printf("        |     adjectives      |   %s\n",
     show_percentage(dictionary_at-adjectives_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) dictionary_at);
-addr = (module_switch ? map_of_module : (static_array_area_size ? static_arrays_at : Write_Code_At));
+addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
 printf("        |     dictionary      |   %s\n",
     show_percentage(addr-dictionary_at, Out_Size));
-if (module_switch)
-{
-printf("        + - - - - - - - - - - +   %05lx\n",
-                                          (long int) map_of_module);
-addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
-printf("        | map of module addrs |   %s\n",
-    show_percentage(addr-map_of_module, Out_Size));
-}
 if (static_array_area_size)
 {
 printf("        +---------------------+   %05lx\n", (long int) static_arrays_at);
@@ -1088,15 +1014,9 @@ printf("Above   |       Z-code        |   %s\n",
     show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("readable+---------------------+   %05lx\n",
                                           (long int) Write_Strings_At);
-addr = (module_switch ? link_table_at : Out_Size);
+addr = (Out_Size);
 printf("memory  |       strings       |   %s\n",
     show_percentage(addr-Write_Strings_At, Out_Size));
-if (module_switch)
-{
-printf("        +=====================+   %05lx\n", (long int) link_table_at);
-printf("        | module linking data |   %s\n",
-    show_percentage(Out_Size-link_table_at, Out_Size));
-}
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
         }
     }
@@ -1475,7 +1395,7 @@ table format requested (producing number 2 format instead)");
 
     /*  ------ Backpatch the machine, now that all information is in ------- */
 
-    if (!module_switch)
+    if (TRUE)
     {   backpatch_zmachine_image_g();
 
         mark = actions_at + 4;
@@ -1682,7 +1602,7 @@ static void display_statistics_z()
     int32 k_long, rate;
     char *k_str = "";
     uchar *p = (uchar *) zmachine_paged_memory;
-    char *output_called = (module_switch)?"module":"story file";
+    char *output_called = "story file";
     int limit = 0;
 
     /* Yeah, we're repeating this calculation from construct_storyfile_z() */
@@ -1783,7 +1703,7 @@ static void display_statistics_g()
     char *k_str = "";
     int32 limit = 1024*1024;
     int32 strings_length = compression_table_size + compression_string_size;
-    char *output_called = (module_switch)?"module":"story file";
+    char *output_called = "story file";
     
     k_long=(Out_Size/1024);
     if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }

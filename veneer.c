@@ -2332,8 +2332,6 @@ extern void compile_veneer(void)
 {   int i, j, try_veneer_again;
     VeneerRoutine *VRs; 
 
-    if (module_switch) return;
-
     VRs = (!glulx_mode) ? VRs_z : VRs_g;
 
     /*  Called at the end of the pass to insert as much of the veneer as is
