@@ -230,7 +230,6 @@ int asm_trace_level,     /* trace assembly: 0 for off, 1 for assembly
                             3 for branch shortening info, 4 for verbose
                             branch info                                      */
     expr_trace_level,    /* expression tracing: 0 off, 1 on, 2/3 more        */
-    linker_trace_level,  /* linker tracing: 0 to 4 levels                    */
     tokens_trace_level;  /* lexer output tracing: 0 off, 1 on, 2/3 more      */
 
 /* ------------------------------------------------------------------------- */
@@ -256,9 +255,7 @@ int concise_switch,                 /* -c */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
     define_DEBUG_switch,            /* -D */
-    module_switch,                  /* -M */
     runtime_error_checking_switch,  /* -S */
-    define_USE_MODULES_switch,      /* -U */
     define_INFIX_switch;            /* -X */
 #ifdef ARC_THROWBACK
 int throwback_switch;               /* -T */
@@ -282,8 +279,6 @@ int character_set_setting,          /* set by -C0 through -C9 */
     double_space_setting,           /* set by -d: 0, 1 or 2 */
     trace_fns_setting,              /* $!RUNTIME, -g: 0, 1, 2, or 3 */
     files_trace_setting,            /* $!FILES */
-    linker_trace_setting,           /* $!LINKER: initial value of
-                                       linker_trace_level */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
     list_objects_setting,           /* $!OBJECTS */
@@ -296,7 +291,6 @@ int glulx_mode;                     /* -G */
 
 static void reset_switch_settings(void)
 {   asm_trace_setting = 0;
-    linker_trace_setting = 0;
     tokens_trace_setting = 0;
     expr_trace_setting = 0;
     bpatch_trace_setting = 0;
@@ -330,8 +324,6 @@ static void reset_switch_settings(void)
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
     define_DEBUG_switch = FALSE;
-    define_USE_MODULES_switch = FALSE;
-    module_switch = FALSE;
 #ifdef ARC_THROWBACK
     throwback_switch = FALSE;
 #endif
@@ -353,7 +345,6 @@ static void reset_switch_settings(void)
     /* These aren't switches, but for clarity we reset them too. */
     asm_trace_level = 0;
     expr_trace_level = 0;
-    linker_trace_level = 0;
     tokens_trace_level = 0;
 }
 
@@ -385,7 +376,6 @@ static void init_vars(void)
     init_expressp_vars();
     init_files_vars();
     init_lexer_vars();
-    init_linker_vars();
     init_memory_vars();
     init_objects_vars();
     init_states_vars();
@@ -413,10 +403,8 @@ static void begin_pass(void)
     expr_trace_level = expr_trace_setting;
     asm_trace_level = asm_trace_setting;
     tokens_trace_level = tokens_trace_setting;
-    linker_trace_level = linker_trace_setting;
 
     lexer_begin_pass();
-    linker_begin_pass();
     memory_begin_pass();
     objects_begin_pass();
     states_begin_pass();
@@ -427,24 +415,21 @@ static void begin_pass(void)
     veneer_begin_pass();
     verbs_begin_pass();
 
-    if (!module_switch)
-    {
-        /*  Compile a Main__ routine (see "veneer.c")  */
-
-        compile_initial_routine();
-
-        /*  Make the four metaclasses: Class must be object number 1, so
-            it must come first  */
-
-        veneer_mode = TRUE;
-
-        make_class("Class");
-        make_class("Object");
-        make_class("Routine");
-        make_class("String");
-
-        veneer_mode = FALSE;
-    }
+    /*  Compile a Main__ routine (see "veneer.c")  */
+    
+    compile_initial_routine();
+    
+    /*  Make the four metaclasses: Class must be object number 1, so
+        it must come first  */
+    
+    veneer_mode = TRUE;
+    
+    make_class("Class");
+    make_class("Object");
+    make_class("Routine");
+    make_class("String");
+    
+    veneer_mode = FALSE;
 }
 
 extern void allocate_arrays(void)
@@ -460,7 +445,6 @@ extern void allocate_arrays(void)
     files_allocate_arrays();
 
     lexer_allocate_arrays();
-    linker_allocate_arrays();
     memory_allocate_arrays();
     objects_allocate_arrays();
     states_allocate_arrays();
@@ -489,7 +473,6 @@ extern void free_arrays(void)
     files_free_arrays();
 
     lexer_free_arrays();
-    linker_free_arrays();
     memory_free_arrays();
     objects_free_arrays();
     states_free_arrays();
@@ -508,7 +491,6 @@ extern void free_arrays(void)
 static char Source_Path[PATHLEN];
 static char Include_Path[PATHLEN];
 static char Code_Path[PATHLEN];
-static char Module_Path[PATHLEN];
 static char current_source_path[PATHLEN];
        char Debugging_Name[PATHLEN];
        char Transcript_Name[PATHLEN];
@@ -518,7 +500,7 @@ static char ICL_Path[PATHLEN];
 
 /* Set one of the above Path buffers to the given location, or list of
    locations. (A list is comma-separated, and only accepted for Source_Path,
-   Include_Path, ICL_Path, Module_Path.)
+   Include_Path, ICL_Path.)
 */
 static void set_path_value(char *path, char *value)
 {   int i, j;
@@ -533,10 +515,10 @@ static void set_path_value(char *path, char *value)
         if ((value[j] == FN_ALT) || (value[j] == 0))
         {   if ((value[j] == FN_ALT)
                 && (path != Source_Path) && (path != Include_Path)
-                && (path != ICL_Path) && (path != Module_Path))
+                && (path != ICL_Path))
             {   printf("The character '%c' is used to divide entries in a list \
-of possible locations, and can only be used in the Include_Path, Source_Path, \
-Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
+of possible locations, and can only be used in the Include_Path, Source_Path \
+or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
                 exit(1);
             }
             if ((path != Debugging_Name) && (path != Transcript_Name)
@@ -551,7 +533,7 @@ Module_Path or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
 
 /* Prepend the given location or list of locations to one of the above
    Path buffers. This is only permitted for Source_Path, Include_Path, 
-   ICL_Path, Module_Path.
+   ICL_Path.
 
    An empty field (in the comma-separated list) means the current
    directory. If the Path buffer is entirely empty, we assume that
@@ -566,10 +548,10 @@ static void prepend_path_value(char *path, char *value)
     char new_path[PATHLEN];
 
     if ((path != Source_Path) && (path != Include_Path)
-        && (path != ICL_Path) && (path != Module_Path))
+        && (path != ICL_Path))
     {   printf("The character '+' is used to add to a list \
-of possible locations, and can only be used in the Include_Path, Source_Path, \
-Module_Path or ICL_Path variables. Other paths are for output only.\n");
+of possible locations, and can only be used in the Include_Path, Source_Path \
+or ICL_Path variables. Other paths are for output only.\n");
         exit(1);
     }
 
@@ -613,7 +595,6 @@ static void set_default_paths(void)
     set_path_value(Source_Path,     Source_Directory);
     set_path_value(Include_Path,    Include_Directory);
     set_path_value(Code_Path,       Code_Directory);
-    set_path_value(Module_Path,     Module_Directory);
     set_path_value(ICL_Path,        ICL_Directory);
     set_path_value(Debugging_Name,  Debugging_File);
     set_path_value(Transcript_Name, Transcript_File);
@@ -654,7 +635,6 @@ static void set_path_command(char *command)
         if (strcmp(pathname, "source_path")==0)  path_to_set=Source_Path;
         if (strcmp(pathname, "include_path")==0) path_to_set=Include_Path;
         if (strcmp(pathname, "code_path")==0)    path_to_set=Code_Path;
-        if (strcmp(pathname, "module_path")==0)  path_to_set=Module_Path;
         if (strcmp(pathname, "icl_path")==0)     path_to_set=ICL_Path;
         if (strcmp(pathname, "debugging_name")==0) path_to_set=Debugging_Name;
         if (strcmp(pathname, "transcript_name")==0) path_to_set=Transcript_Name;
@@ -791,25 +771,6 @@ extern int translate_in_filename(int last_value,
     return last_value;
 }
 
-extern int translate_link_filename(int last_value,
-    char *new_name, char *old_name)
-{   char *prefix_path = NULL;
-    char *extension;
-
-    if (contains_separator(old_name)==0)
-        if (Module_Path[0]!=0)
-            prefix_path = Module_Path;
-
-#ifdef FILE_EXTENSIONS
-    extension = check_extension(old_name, Module_Extension);
-#else
-    extension = "";
-#endif
-
-    return write_translated_name(new_name, old_name,
-               prefix_path, last_value, extension);
-}
-
 static int translate_icl_filename(int last_value,
     char *new_name, char *old_name)
 {   char *prefix_path = NULL;
@@ -852,27 +813,21 @@ extern void translate_out_filename(char *new_name, char *old_name)
 #endif
 
     prefix_path = NULL;
-    if (module_switch)
-    {   extension = Module_Extension;
-        if (Module_Path[0]!=0) prefix_path = Module_Path;
-    }
-    else
-    {
-        if (!glulx_mode) {
-            switch(version_number)
-            {   case 3: extension = Code_Extension;   break;
-                case 4: extension = V4Code_Extension; break;
-                case 5: extension = V5Code_Extension; break;
-                case 6: extension = V6Code_Extension; break;
-                case 7: extension = V7Code_Extension; break;
-                case 8: extension = V8Code_Extension; break;
-            }
+    
+    if (!glulx_mode) {
+        switch(version_number)
+        {   case 3: extension = Code_Extension;   break;
+            case 4: extension = V4Code_Extension; break;
+            case 5: extension = V5Code_Extension; break;
+            case 6: extension = V6Code_Extension; break;
+            case 7: extension = V7Code_Extension; break;
+            case 8: extension = V8Code_Extension; break;
         }
-        else {
-            extension = GlulxCode_Extension;
-        }
-        if (Code_Path[0]!=0) prefix_path = Code_Path;
     }
+    else {
+        extension = GlulxCode_Extension;
+    }
+    if (Code_Path[0]!=0) prefix_path = Code_Path;
 
 #ifdef FILE_EXTENSIONS
     extension = check_extension(old_name, extension);
@@ -889,9 +844,7 @@ static char *name_or_unset(char *p)
 static void help_on_filenames(void)
 {   char old_name[PATHLEN];
     char new_name[PATHLEN];
-    int save_mm = module_switch, x;
-
-    module_switch = FALSE;
+    int x;
 
     printf("Help information on filenames:\n\n");
 
@@ -906,8 +859,8 @@ If <file2> is given, however, the output filename is set to just <file2>\n\
 (not altered in any way).\n\n");
 
     printf(
-"Filenames given in the game source (with commands like Include \"name\" and\n\
-Link \"name\") are also translated by the rules below.\n\n");
+"Filenames given in the game source (with commands like Include \"name\")\n\
+are also translated by the rules below.\n\n");
 
     printf(
 "Rules of translation:\n\n\
@@ -941,9 +894,8 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
    name_or_unset(Code_Path));
 
     printf(
-"       ICL command file (in)  icl_path            %s\n\
-       Module (in & out)      module_path         %s\n\n",
-   name_or_unset(ICL_Path), name_or_unset(Module_Path));
+"       ICL command file (in)  icl_path            %s\n\n",
+   name_or_unset(ICL_Path));
 
     printf(
 "   If the path is unset, then the current working directory is used (so\n\
@@ -965,20 +917,17 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
 "   If two '+' signs are used (\"inform ++include_path=dir jigsaw\") then\n\
    the path or paths are added to the existing list.\n\n");
     printf(
-"   (Modules are written to the first alternative in the module_path list;\n\
-   it is an error to give alternatives at all for purely output paths.)\n\n");
+"   (It is an error to give alternatives at all for purely output paths.)\n\n");
 
 #ifdef FILE_EXTENSIONS
     printf("3. The following file extensions are added:\n\n\
       Source code:     %s\n\
       Include files:   %s\n\
       Story files:     %s (Version 3), %s (v4), %s (v5, the default),\n\
-                       %s (v6), %s (v7), %s (v8), %s (Glulx)\n\
-      Modules:         %s\n\n",
+                       %s (v6), %s (v7), %s (v8), %s (Glulx)\n\n",
       Source_Extension, Include_Extension,
       Code_Extension, V4Code_Extension, V5Code_Extension, V6Code_Extension,
-      V7Code_Extension, V8Code_Extension, GlulxCode_Extension, 
-      Module_Extension);
+      V7Code_Extension, V8Code_Extension, GlulxCode_Extension);
     printf("\
    except that any extension you give (on the command line or in a filename\n\
    used in a program) will override these.  If you give the null extension\n\
@@ -1002,19 +951,8 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     translate_out_filename(new_name, "rezrov");
     printf("  and a story file is compiled to \"%s\".\n\n", new_name);
 
-    translate_in_filename(0, new_name, "frotz", 0, 1);
-    printf("2. \"inform -M frotz\"\n\
-  the source code is read from \"%s\"\n",
-        new_name);
-    module_switch = TRUE;
-    convert_filename_flag = TRUE;
-    translate_out_filename(new_name, "frotz");
-    printf("  and a module is compiled to \"%s\".\n\n", new_name);
-
-    module_switch = FALSE;
-
     sprintf(old_name, "demos%cplugh", FN_SEP);
-    printf("3. \"inform %s\"\n", old_name);
+    printf("2. \"inform %s\"\n", old_name);
     translate_in_filename(0, new_name, old_name, 0, 1);
     printf("  the source code is read from \"%s\"\n", new_name);
     sprintf(old_name, "demos%cplugh", FN_SEP);
@@ -1022,7 +960,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     translate_out_filename(new_name, old_name);
     printf("  and a story file is compiled to \"%s\".\n\n", new_name);
 
-    printf("4. \"inform plover my_demo\"\n");
+    printf("3. \"inform plover my_demo\"\n");
     translate_in_filename(0, new_name, "plover", 0, 1);
     printf("  the source code is read from \"%s\"\n", new_name);
     convert_filename_flag = FALSE;
@@ -1032,7 +970,7 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
     strcpy(old_name, Source_Path);
     sprintf(new_name, "%cnew%cold%crecent%cold%cancient",
         FN_ALT, FN_ALT, FN_SEP, FN_ALT, FN_SEP);
-    printf("5. \"inform +source_path=%s zooge\"\n", new_name);
+    printf("4. \"inform +source_path=%s zooge\"\n", new_name);
     printf(
 "   Note that four alternative paths are given, the first being the empty\n\
    path-name (meaning: where you are now).  Inform looks for the source code\n\
@@ -1045,7 +983,6 @@ Inform translates plain filenames (such as \"xyzzy\") into full pathnames\n\
         printf("     \"%s\"\n", new_name);
     } while (x != 0);
     strcpy(Source_Path, old_name);
-    module_switch = save_mm;
 }
 
 #ifdef ARCHIMEDES
@@ -1054,11 +991,9 @@ static char riscos_ft_buffer[4];
 extern char *riscos_file_type(void)
 {
     if (riscos_file_type_format == 1)
-    {   if (module_switch) return("data");
+    {
         return("11A");
     }
-
-    if (module_switch) return("075");
 
     sprintf(riscos_ft_buffer, "%03x", 0x60 + version_number);
     return(riscos_ft_buffer);
@@ -1084,7 +1019,6 @@ static void run_pass(void)
     compile_veneer();
 
     lexer_endpass();
-    if (module_switch) linker_endpass();
 
     issue_debug_symbol_warnings();
     
@@ -1159,23 +1093,6 @@ static int compile(int number_of_files_specified, char *file1, char *file2)
         printf("Infix (-X) facilities are not available in Glulx: \
 disabling -X switch\n");
         define_INFIX_switch = FALSE;
-    }
-
-    if (module_switch && glulx_mode) {
-        printf("Modules are not available in Glulx: \
-disabling -M switch\n");
-        module_switch = FALSE;
-    }
-
-    if (define_INFIX_switch && module_switch)
-    {   printf("Infix (-X) facilities are not available when compiling \
-modules: disabling -X switch\n");
-        define_INFIX_switch = FALSE;
-    }
-    if (runtime_error_checking_switch && module_switch)
-    {   printf("Strict checking (-S) facilities are not available when \
-compiling modules: disabling -S switch\n");
-        runtime_error_checking_switch = FALSE;
     }
 
     TIMEVALUE_NOW(&time_start);
@@ -1364,7 +1281,6 @@ printf("  E2  Macintosh MPW-style error messages%s\n",
       (error_format==2)?" (current setting)":"");
 printf("  G   compile a Glulx game file\n");
 printf("  H   use Huffman encoding to compress Glulx strings\n");
-printf("  M   compile as a Module for future linking\n");
 
 #ifdef ARCHIMEDES
 printf("\
@@ -1375,7 +1291,6 @@ printf("  S   compile strict error-checking at run-time (on by default)\n");
 #ifdef ARC_THROWBACK
 printf("  T   enable throwback of errors in the DDE\n");
 #endif
-printf("  U   insert \"Constant USE_MODULES;\" automatically\n");
 printf("  V   print the version and date of this program\n");
 printf("  Wn  header extension table is at least n words (n = 3 to 99)\n");
 printf("  X   compile with INFIX debugging facilities present\n");
@@ -1497,10 +1412,6 @@ extern void switches(char *p, int cmode)
                       default:  error_format=1; break;
                   }
                   break;
-        case 'M': module_switch = state;
-                  if (state && (r_e_c_s_set == FALSE))
-                      runtime_error_checking_switch = FALSE;
-                  break;
 #ifdef ARCHIMEDES
         case 'R': switch(p[i+1])
                   {   case '0': s=2; riscos_file_type_format=0; break;
@@ -1524,7 +1435,6 @@ extern void switches(char *p, int cmode)
                   }
                   break;
         case 'H': compression_switch = state; break;
-        case 'U': define_USE_MODULES_switch = state; break;
         case 'V': exit(0); break;
         case 'W': if ((p[i+1]>='0') && (p[i+1]<='9'))
                   {   s=2; ZCODE_HEADER_EXT_WORDS = p[i+1]-'0';

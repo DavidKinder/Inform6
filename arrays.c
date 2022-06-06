@@ -261,8 +261,8 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 
 extern void set_variable_value(int i, int32 v)
 {
-    /* This can be called during module-load to create a new global,
-       so we call ensure. */
+    /* This isn't currently called to create a new global, but it has
+       been used that way within living memory. So we call ensure. */
     ensure_memory_list_available(&global_initial_value_memlist, i+1);
     global_initial_value[i]=v;
 }
@@ -275,11 +275,9 @@ extern void set_variable_value(int i, int32 v)
 #define ASCII_AI        2
 #define BRACKET_AI      3
 
-extern void make_global(int array_flag, int name_only)
+extern void make_global(int array_flag)
 {
-    /*  array_flag is TRUE for an Array directive, FALSE for a Global;
-        name_only is only TRUE for parsing an imported variable name, so
-        array_flag is always FALSE in that case.                             */
+    /*  array_flag is TRUE for an Array directive, FALSE for a Global.       */
 
     int32 i;
     int name_length;
@@ -369,23 +367,13 @@ extern void make_global(int array_flag, int name_only)
         variables[MAX_LOCAL_VARIABLES+no_globals].usage = FALSE;
         assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
 
-        if (name_only) {
-            import_symbol(i);
-        }
-        else {
-            ensure_memory_list_available(&global_initial_value_memlist, no_globals+1);
-            global_initial_value[no_globals++]=0;
-        }
+        ensure_memory_list_available(&global_initial_value_memlist, no_globals+1);
+        global_initial_value[no_globals++]=0;
     }
 
     directive_keywords.enabled = TRUE;
 
     RedefinitionOfSystemVar:
-
-    if (name_only)
-    {   discard_token_location(beginning_debug_location);
-        return;
-    }
 
     get_next_token();
 

@@ -34,7 +34,6 @@
 #define RELEASE_DATE "in development"
 #define RELEASE_NUMBER 1640
 #define GLULX_RELEASE_NUMBER 38
-#define MODULE_VERSION_NUMBER 1
 #define VNUMBER RELEASE_NUMBER
 
 /* N indicates an intermediate release for Inform 7 */
@@ -421,9 +420,6 @@
 #ifndef GlulxCode_Extension
 #define GlulxCode_Extension  ".ulx"
 #endif
-#ifndef Module_Extension
-#define Module_Extension  ".m5"
-#endif
 #ifndef ICL_Extension
 #define ICL_Extension     ".icl"
 #endif
@@ -439,7 +435,6 @@
 #define V7Code_Extension  ""
 #define V8Code_Extension  ""
 #define GlulxCode_Extension  ""
-#define Module_Extension  ""
 #define ICL_Extension     ""
 #endif
 
@@ -452,9 +447,6 @@
 #endif
 #ifndef Code_Directory
 #define Code_Directory    "games"
-#endif
-#ifndef Module_Directory
-#define Module_Directory  "modules"
 #endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
@@ -470,9 +462,6 @@
 #endif
 #ifndef Code_Directory
 #define Code_Directory    ""
-#endif
-#ifndef Module_Directory
-#define Module_Directory  ""
 #endif
 #ifndef ICL_Directory
 #define ICL_Directory     ""
@@ -1938,7 +1927,8 @@ typedef struct operator_s
 #define MAIN_MV               10     /* "Main" routine */
 #define SYMBOL_MV             11     /* Forward ref to unassigned symbol */
 
-/* Additional marker values used in module backpatch areas: */
+/* Additional marker values used in module backpatch areas (most are
+   obsolete). */
 /* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching, even
    without modules.) */
 
@@ -1952,15 +1942,7 @@ typedef struct operator_s
 #define LARGEST_BPATCH_MV     17     /* Larger marker values are never written
                                         to backpatch tables */
 
-/* Value indicating an imported symbol record: */
-
-#define IMPORT_MV             32
-
-/* Values indicating an exported symbol record: */
-
-#define EXPORT_MV             33     /* Defined ordinarily */
-#define EXPORTSF_MV           34     /* Defined in a system file */
-#define EXPORTAC_MV           35     /* Action name */
+/* Values 32-35 were used only for module import/export. */
 
 /* Values used only in branch backpatching: */
 /* ###-I've rearranged these, so that BRANCH_MV can be last; Glulx uses the
@@ -2042,7 +2024,6 @@ extern void init_expressp_vars(void); /* expressp: parse expressions         */
 extern void init_files_vars(void);    /* files: handle files                 */
     /* void init_vars(void);             inform: decide what to do           */
 extern void init_lexer_vars(void);    /* lexer: lexically analyse source     */
-extern void init_linker_vars(void);   /* linker: link in pre-compiled module */
 extern void init_memory_vars(void);   /* memory: manage memory settings      */
 extern void init_objects_vars(void);  /* objects: cultivate object tree      */
 extern void init_states_vars(void);   /* states: translate statements to code*/
@@ -2067,7 +2048,6 @@ extern void expressp_begin_pass(void);
 extern void files_begin_pass(void);
     /* void begin_pass(void); */
 extern void lexer_begin_pass(void);
-extern void linker_begin_pass(void);
 extern void memory_begin_pass(void);
 extern void objects_begin_pass(void);
 extern void states_begin_pass(void);
@@ -2079,7 +2059,6 @@ extern void veneer_begin_pass(void);
 extern void verbs_begin_pass(void);
 
 extern void lexer_endpass(void);
-extern void linker_endpass(void);
 
 extern void arrays_allocate_arrays(void);
 extern void asm_allocate_arrays(void);
@@ -2092,7 +2071,6 @@ extern void expressp_allocate_arrays(void);
 extern void files_allocate_arrays(void);
     /* void allocate_arrays(void); */
 extern void lexer_allocate_arrays(void);
-extern void linker_allocate_arrays(void);
 extern void memory_allocate_arrays(void);
 extern void objects_allocate_arrays(void);
 extern void states_allocate_arrays(void);
@@ -2114,7 +2092,6 @@ extern void expressp_free_arrays(void);
 extern void files_free_arrays(void);
     /* void free_arrays(void); */
 extern void lexer_free_arrays(void);
-extern void linker_free_arrays(void);
 extern void memory_free_arrays(void);
 extern void objects_free_arrays(void);
 extern void states_free_arrays(void);
@@ -2143,7 +2120,7 @@ extern memory_list static_array_area_memlist;
 extern int32 *global_initial_value;
 extern arrayinfo *arrays;
 
-extern void make_global(int array_flag, int name_only);
+extern void make_global(int array_flag);
 extern void set_variable_value(int i, int32 v);
 extern void check_globals(void);
 extern int32 begin_table_array(void);
@@ -2288,6 +2265,8 @@ extern int32 zcode_backpatch_size, staticarray_backpatch_size,
     zmachine_backpatch_size;
 extern int   backpatch_marker, backpatch_error_flag;
 
+extern char *describe_mv(int mval);
+
 extern int32 backpatch_value(int32 value);
 extern void  backpatch_zmachine_image_z(void);
 extern void  backpatch_zmachine_image_g(void);
@@ -2341,8 +2320,7 @@ extern int  parse_given_directive(int internal_flag);
 #define FORERRORS_SIZE (512)
 extern char *forerrors_buff;
 extern int  forerrors_pointer;
-extern int  no_errors, no_warnings, no_suppressed_warnings,
-            no_link_errors, no_compiler_errors;
+extern int  no_errors, no_warnings, no_suppressed_warnings, no_compiler_errors;
 
 extern ErrorPosition ErrorReport;
 
@@ -2367,8 +2345,6 @@ extern void symtype_warning(char *context, char *name, char *type, char *wanttyp
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
-extern void link_error(char *s);
-extern void link_error_named(char *s1, char *s2);
 extern int  compiler_error(char *s);
 extern int  compiler_error_named(char *s1, char *s2);
 extern void print_sorry_message(void);
@@ -2483,8 +2459,7 @@ extern int WORDSIZE, INDIV_PROP_START,
     OBJECT_BYTE_LENGTH, DICT_ENTRY_BYTE_LENGTH, DICT_ENTRY_FLAG_POS;
 extern int32 MAXINTWORD;
 
-extern int asm_trace_level, expr_trace_level,
-    linker_trace_level,     tokens_trace_level;
+extern int asm_trace_level, expr_trace_level, tokens_trace_level;
 
 extern int
     concise_switch,
@@ -2495,8 +2470,8 @@ extern int
     obsolete_switch,        optabbrevs_trace_setting,
     transcript_switch,      statistics_switch,    optimise_switch,
     version_set_switch,     nowarnings_switch,    hash_switch,
-    memory_map_setting,     module_switch,
-    define_DEBUG_switch,    define_USE_MODULES_switch, define_INFIX_switch,
+    memory_map_setting,
+    define_DEBUG_switch,    define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,
     list_symbols_setting;
@@ -2507,7 +2482,7 @@ extern int glulx_mode, compression_switch;
 extern int32 requested_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
-    expr_trace_setting,     linker_trace_setting, tokens_trace_setting,
+    expr_trace_setting,     tokens_trace_setting,
     bpatch_trace_setting,   symdef_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
@@ -2524,8 +2499,6 @@ extern void switches(char *, int);
 extern int translate_in_filename(int last_value, char *new_name, char *old_name,
     int same_directory_flag, int command_line_flag);
 extern void translate_out_filename(char *new_name, char *old_name);
-extern int translate_link_filename(int last_value,
-    char *new_name, char *old_name);
 
 #ifdef ARCHIMEDES
 extern char *riscos_file_type(void);
@@ -2583,23 +2556,6 @@ extern keyword_group directives, statements, segment_markers,
        conditions, system_functions, local_variables, opcode_names,
        misc_keywords, directive_keywords, trace_keywords, system_constants,
        opcode_macros;
-
-/* ------------------------------------------------------------------------- */
-/*   Extern definitions for "linker"                                         */
-/* ------------------------------------------------------------------------- */
-
-extern uchar *link_data_area;
-extern int32 link_data_size;
-extern char  current_module_filename[];
-
-extern char *describe_mv(int mval);
-extern void  write_link_marker(int zmachine_area, int32 offset,
-                 assembly_operand op);
-extern void  flush_link_data(void);
-extern void  import_symbol(int32 symbol_number);
-extern void  export_symbol(int32 symbol_number);
-extern void  export_symbol_name(int32 i);
-extern void  link_module(char *filename);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "memory"                                         */
