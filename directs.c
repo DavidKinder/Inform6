@@ -927,9 +927,18 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != DQ_TT)
             return ebf_error_recover("string of switches", token_text);
         if (!ignore_switches_switch)
-        {   if (constant_made_yet)
-                error("A 'Switches' directive must must come before \
-the first constant definition");
+        {
+            if (constant_made_yet) {
+                error("A 'Switches' directive must must come before the first constant definition");
+                break;
+            }
+            if (no_routines > 1)
+            {
+                /* The built-in Main__ routine is number zero. */
+                error("A 'Switches' directive must come before the first routine definition.");
+                break;
+            }
+            obsolete_warning("the Switches directive is deprecated and may produce incorrect results. Use command-line arguments or header comments.");
             switches(token_text, 0);                       /* see "inform.c" */
         }
         break;
