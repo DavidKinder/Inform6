@@ -1143,6 +1143,7 @@ the first constant definition");
                 {   error("The version number must be in the range 3 to 8");
                     break;
                 }
+                obsolete_warning("the Version directive is deprecated and may produce incorrect results. Use -vN instead, as either a command-line argument or a header comment.");
                 select_version(i);
                 /* We must now do a small dance to reset the DICT_ENTRY_BYTES
                    constant, which was defined at startup based on the Z-code
