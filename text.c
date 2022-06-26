@@ -211,6 +211,10 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
 
 extern void make_abbreviation(char *text)
 {
+    /* If -e mode is off, we won't waste space creating an abbreviation entry. */
+    if (!economy_switch)
+        return;
+    
     ensure_memory_list_available(&abbreviations_memlist, no_abbreviations+1);
     ensure_memory_list_available(&abbreviations_at_memlist, no_abbreviations+1);
     
