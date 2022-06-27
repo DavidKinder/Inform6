@@ -118,8 +118,10 @@ As a result of this, under Glulx the limit on <tt>$MAX_DYNAMIC_STRINGS</tt> bein
 Z-code, as well as Glulx.
 <li><p>The command line switch to display percentages (<tt>-p</tt>) now works with Glulx, and acts as an
 extension to the <tt>-z</tt> switch.
-<li>The undo related opcodes added to the Glulx 3.1.3 specification (that is, <tt>@hasundo</tt> and <tt>@discardundo</tt>)
+<li><p>The undo related opcodes added to the Glulx 3.1.3 specification (that is, <tt>@hasundo</tt> and <tt>@discardundo</tt>)
 are now supported. 
+<li><p>The <tt>Version</tt> and <tt>Switches</tt> directives are now deprecated, and produce a warning if used. The recommended way to
+set the Z-code version and any other switches is to use the command line, or <tt>!%</tt> comments at the top of the source file.
 <li><p>The ability to compile Inform source code as modules, and then later link it, has been removed. This functionality always had
 significant restrictions and was never widely used. The <tt>-M</tt> and <tt>-U</tt> command line options have been removed, along with
 the <tt>+module_path</tt> option. The <tt>Link</tt> and <tt>Import</tt> directives now just produce errors.
