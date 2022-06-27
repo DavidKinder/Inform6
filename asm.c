@@ -54,6 +54,8 @@ int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
 int uses_extundo_features;         /* Makes use of Glulx extended undo (3.1.3)
                                       features?                              */
+int uses_double_features;          /* Makes use of Glulx double-prec (3.1.3)
+                                      features?                              */
 
 debug_location statement_debug_location;
                                    /* Location of current statement          */
@@ -491,6 +493,7 @@ typedef struct opcodeg
 #define GOP_Acceleration 4   /* uses_acceleration_features */
 #define GOP_Float        8   /* uses_float_features */
 #define GOP_ExtUndo     16   /* uses_extundo_features */
+#define GOP_Double      32   /* uses_double_features */
 
     /* Codes for the number of operands */
 
@@ -759,6 +762,8 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "mfree",      0x179,  0, GOP_MemHeap, 1 },
   { (uchar *) "accelfunc",  0x180,  0, GOP_Acceleration, 2 },
   { (uchar *) "accelparam", 0x181,  0, GOP_Acceleration, 2 },
+  { (uchar *) "hasundo",    0x128,  St, GOP_ExtUndo, 1 },
+  { (uchar *) "discardundo",0x129,   0, GOP_ExtUndo, 0 },
   { (uchar *) "numtof",     0x190,  St, GOP_Float, 2 },
   { (uchar *) "ftonumz",    0x191,  St, GOP_Float, 2 },
   { (uchar *) "ftonumn",    0x192,  St, GOP_Float, 2 },
@@ -788,15 +793,47 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "jfge",       0x1C5,  Br, GOP_Float, 3 },
   { (uchar *) "jisnan",     0x1C8,  Br, GOP_Float, 2 },
   { (uchar *) "jisinf",     0x1C9,  Br, GOP_Float, 2 },
-  { (uchar *) "hasundo",    0x128,  St, GOP_ExtUndo, 1 },
-  { (uchar *) "discardundo",0x129,   0, GOP_ExtUndo, 0 },
+  { (uchar *) "numtod",     0x200,  St|St2, GOP_Double, 3 },
+  { (uchar *) "dtonumz",    0x201,  St, GOP_Double, 3 },
+  { (uchar *) "dtonumn",    0x202,  St, GOP_Double, 3 },
+  { (uchar *) "ftod",       0x203,  St|St2, GOP_Double, 3 },
+  { (uchar *) "dtof",       0x204,  St, GOP_Double, 3 },
+  { (uchar *) "dceil",      0x208,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dfloor",     0x209,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dadd",       0x210,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsub",       0x211,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmul",       0x212,  St|St2, GOP_Double, 6 },
+  { (uchar *) "ddiv",       0x213,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmodr",      0x214,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmodq",      0x215,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsqrt",      0x218,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dexp",       0x219,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dlog",       0x21A,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dpow",       0x21B,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsin",       0x220,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dcos",       0x221,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dtan",       0x222,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dasin",      0x223,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dacos",      0x224,  St|St2, GOP_Double, 4 },
+  { (uchar *) "datan",      0x225,  St|St2, GOP_Double, 4 },
+  { (uchar *) "datan2",     0x226,  St|St2, GOP_Double, 6 },
+  { (uchar *) "jdeq",       0x230,  Br, GOP_Double, 7 },
+  { (uchar *) "jdne",       0x231,  Br, GOP_Double, 7 },
+  { (uchar *) "jdlt",       0x232,  Br, GOP_Double, 5 },
+  { (uchar *) "jdle",       0x233,  Br, GOP_Double, 5 },
+  { (uchar *) "jdgt",       0x234,  Br, GOP_Double, 5 },
+  { (uchar *) "jdge",       0x235,  Br, GOP_Double, 5 },
+  { (uchar *) "jdisnan",    0x238,  Br, GOP_Double, 3 },
+  { (uchar *) "jdisinf",    0x239,  Br, GOP_Double, 3 },
 };
 
 /* The opmacros table is used for fake opcodes. The opcode numbers are
    ignored; this table is only used for argument parsing. */
 static opcodeg opmacros_table_g[] = {
-  { (uchar *) "pull", 0, St, 0, 1 },
-  { (uchar *) "push", 0,  0, 0, 1 },
+  { (uchar *) "pull",   pull_gm,       St, 0, 1 },
+  { (uchar *) "push",   push_gm,        0, 0, 1 },
+  { (uchar *) "dload",  dload_gm,  St|St2, 0, 3 },
+  { (uchar *) "dstore", dstore_gm,      0, 0, 3 },
 };
 
 static opcodeg custom_opcode_g;
@@ -1214,9 +1251,11 @@ extern void assemblez_instruction(const assembly_instruction *AI)
 
 static void assembleg_macro(const assembly_instruction *AI)
 {
-    /* validate macro syntax first */
     int ix, no_operands_given;
     opcodeg opco;
+    assembly_operand AMO_0, AMO_1, AMO_2;
+    
+    /* validate macro syntax first */
     
     opco = internal_number_to_opmacro_g(AI->internal_number);
     no_operands_given = AI->operand_count;
@@ -1243,14 +1282,51 @@ static void assembleg_macro(const assembly_instruction *AI)
         }
     }
     
-    /* expand the macro */
-    switch (AI->internal_number) {
-        case pull_gm:
-            assembleg_store(AI->operand[0], stack_pointer);
+    /* Expand the macro.
+       The assembleg_() functions overwrite AI, so we need to copy out
+       its operands before we call them. */
+    
+    switch (opco.code) {
+        case pull_gm:   /* @pull STORE */
+            AMO_0 = AI->operand[0];
+            assembleg_store(AMO_0, stack_pointer);
             break;
         
-        case push_gm:
-            assembleg_store(stack_pointer, AI->operand[0]);
+        case push_gm:   /* @push LOAD */
+            AMO_0 = AI->operand[0];
+            assembleg_store(stack_pointer, AMO_0);
+            break;
+
+        case dload_gm:   /* @dload LOAD STORELO STOREHI */
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                // addr is on the stack
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(aload_gc, temp_var3, one_operand, AMO_1);
+                assembleg_3(aload_gc, temp_var3, zero_operand, AMO_2);
+            }
+            else {
+                assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
+                assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
+            }
+            break;
+
+        case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                // addr is on the stack
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(astore_gc, temp_var3, zero_operand, AMO_1);
+                assembleg_3(astore_gc, temp_var3, one_operand, AMO_2);
+            }
+            else {
+                assembleg_3(astore_gc, AMO_0, zero_operand, AMO_1);
+                assembleg_3(astore_gc, AMO_0, one_operand, AMO_2);
+            }
             break;
         
         default:
@@ -1322,6 +1398,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
     }
     if (opco.op_rules & GOP_ExtUndo) {
         uses_extundo_features = TRUE;
+    }
+    if (opco.op_rules & GOP_Double) {
+        uses_double_features = TRUE;
     }
 
     no_operands_given = AI->operand_count;
@@ -3411,6 +3490,7 @@ extern void init_asm_vars(void)
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
     uses_extundo_features = FALSE;
+    uses_double_features = FALSE;
 
     labels = NULL;
     sequence_points = NULL;

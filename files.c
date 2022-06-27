@@ -648,7 +648,7 @@ static void output_file_g(void)
     if (uses_float_features) {
       VersionNum = 0x00030102;
     }
-    if (uses_extundo_features) {
+    if (uses_double_features || uses_extundo_features) {
       VersionNum = 0x00030103;
     }
 

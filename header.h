@@ -806,7 +806,7 @@ typedef struct debug_location_beginning_s
     int32 orig_beg_char_number;
 } debug_location_beginning;
 
-#define MAX_KEYWORD_GROUP_SIZE (119)
+#define MAX_KEYWORD_GROUP_SIZE (159)
 
 typedef struct keyword_group_s
 {   char *keywords[MAX_KEYWORD_GROUP_SIZE+1]; /* empty-string-terminated */
@@ -994,6 +994,7 @@ typedef struct operator_s
 
 /* ------------------------------------------------------------------------- */
 /*   Internal numbers representing assemble-able Z-opcodes                   */
+/*   (Must match opcodes_table_z[] and opcode_list_z[])                      */
 /* ------------------------------------------------------------------------- */
 
 #define je_zc 0
@@ -1118,6 +1119,10 @@ typedef struct operator_s
 
 /* ------------------------------------------------------------------------- */
 /*   Internal numbers representing assemble-able Glulx opcodes               */
+/*   (Must match opcodes_table_g[] and opcode_list_g[])                      */
+/*                                                                           */
+/*   This is not a complete list. It only needs to include opcodes that are  */
+/*   directly created by the compiler or listed in the operator tables.      */
 /* ------------------------------------------------------------------------- */
 
 #define nop_gc 0
@@ -1207,35 +1212,6 @@ typedef struct operator_s
 #define mfree_gc 84
 #define accelfunc_gc 85
 #define accelparam_gc 86
-#define numtof_gc 87
-#define ftonumz_gc 88
-#define ftonumn_gc 89
-#define ceil_gc 90
-#define floor_gc 91
-#define fadd_gc 92
-#define fsub_gc 93
-#define fmul_gc 94
-#define fdiv_gc 95
-#define fmod_gc 96
-#define sqrt_gc 97
-#define exp_gc 98
-#define log_gc 99
-#define pow_gc 100
-#define sin_gc 101
-#define cos_gc 102
-#define tan_gc 103
-#define asin_gc 104
-#define acos_gc 105
-#define atan_gc 106
-#define atan2_gc 107
-#define jfeq_gc 108
-#define jfne_gc 109
-#define jflt_gc 110
-#define jfle_gc 111
-#define jfgt_gc 112
-#define jfge_gc 113
-#define jisnan_gc 114
-#define jisinf_gc 115
 
 /* ------------------------------------------------------------------------- */
 /*   Index numbers into the keyword group "opcode_macros_g" (see "lexer.c")  */
@@ -1243,6 +1219,8 @@ typedef struct operator_s
 
 #define pull_gm   0
 #define push_gm   1
+#define dload_gm  2
+#define dstore_gm 3
 
 
 #define SYMBOL_TT    0                      /* value = index in symbol table */
@@ -1945,13 +1923,13 @@ typedef struct operator_s
 /* Values 32-35 were used only for module import/export. */
 
 /* Values used only in branch backpatching: */
-/* ###-I've rearranged these, so that BRANCH_MV can be last; Glulx uses the
-   whole range from BRANCH_MV to BRANCHMAX_MV. */
+/* BRANCH_MV must be last; Glulx uses the whole range from BRANCH_MV
+   to BRANCHMAX_MV. */
 
 #define LABEL_MV              36     /* Ditto: marks "jump" operands */
 #define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
 #define BRANCH_MV             38     /* Used in "asm.c" for routine coding */
-#define BRANCHMAX_MV          58     /* In fact, the range BRANCH_MV to 
+#define BRANCHMAX_MV          102    /* In fact, the range BRANCH_MV to 
                                         BRANCHMAX_MV all means the same thing.
                                         The position within the range means
                                         how far back from the label to go
@@ -2140,7 +2118,7 @@ extern int32 no_instructions;
 extern int   sequence_point_follows;
 extern int   uses_unicode_features, uses_memheap_features, 
     uses_acceleration_features, uses_float_features,
-    uses_extundo_features;
+    uses_extundo_features, uses_double_features;
 extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
 extern variableinfo *variables;

@@ -917,6 +917,14 @@ static void stockup_symbols(void)
         create_symbol("FLOAT_INFINITY",  0x7F800000, CONSTANT_T);
         create_symbol("FLOAT_NINFINITY", 0xFF800000, CONSTANT_T);
         create_symbol("FLOAT_NAN",       0x7FC00000, CONSTANT_T);
+        /* Same for double constants. Each of these has a high 32-bit
+           word and a low 32-bit word. */
+        create_symbol("DOUBLE_HI_INFINITY",  0x7FF00000, CONSTANT_T);
+        create_symbol("DOUBLE_LO_INFINITY",  0x00000000, CONSTANT_T);
+        create_symbol("DOUBLE_HI_NINFINITY", 0xFFF00000, CONSTANT_T);
+        create_symbol("DOUBLE_LO_NINFINITY", 0x00000000, CONSTANT_T);
+        create_symbol("DOUBLE_HI_NAN",       0x7FF80000, CONSTANT_T);
+        create_symbol("DOUBLE_LO_NAN",       0x00000001, CONSTANT_T);
     }
 
     if (symbol_definitions && symbol_definitions_count) {
