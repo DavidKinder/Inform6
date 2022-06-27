@@ -927,9 +927,18 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (token_type != DQ_TT)
             return ebf_error_recover("string of switches", token_text);
         if (!ignore_switches_switch)
-        {   if (constant_made_yet)
-                error("A 'Switches' directive must must come before \
-the first constant definition");
+        {
+            if (constant_made_yet) {
+                error("A 'Switches' directive must must come before the first constant definition");
+                break;
+            }
+            if (no_routines > 1)
+            {
+                /* The built-in Main__ routine is number zero. */
+                error("A 'Switches' directive must come before the first routine definition.");
+                break;
+            }
+            obsolete_warning("the Switches directive is deprecated and may produce incorrect results. Use command-line arguments or header comments.");
             switches(token_text, 0);                       /* see "inform.c" */
         }
         break;
@@ -1143,6 +1152,7 @@ the first constant definition");
                 {   error("The version number must be in the range 3 to 8");
                     break;
                 }
+                obsolete_warning("the Version directive is deprecated and may produce incorrect results. Use -vN instead, as either a command-line argument or a header comment.");
                 select_version(i);
                 /* We must now do a small dance to reset the DICT_ENTRY_BYTES
                    constant, which was defined at startup based on the Z-code
