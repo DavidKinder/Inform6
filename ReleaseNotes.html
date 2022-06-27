@@ -118,8 +118,15 @@ As a result of this, under Glulx the limit on <tt>$MAX_DYNAMIC_STRINGS</tt> bein
 Z-code, as well as Glulx.
 <li><p>The command line switch to display percentages (<tt>-p</tt>) now works with Glulx, and acts as an
 extension to the <tt>-z</tt> switch.
+<li><p>The double precision floating point related opcodes added to the Glulx 3.1.3 specification (that is,
+<tt>@numtod</tt>, <tt>@dtonumz</tt>, <tt>@dtonumn</tt>, <tt>@ftod</tt>, <tt>@dtof</tt>, <tt>@dceil</tt>, <tt>@dfloor</tt>,
+<tt>@dadd</tt>, <tt>@dsub</tt>, <tt>@dmul</tt>, <tt>@ddiv</tt>, <tt>@dmodr</tt>, <tt>@dmodq</tt>, <tt>@dsqrt</tt>,
+<tt>@dexp</tt>, <tt>@dlog</tt>, <tt>@dpow</tt>, <tt>@dsin</tt>, <tt>@dcos</tt>, <tt>@dtan</tt>, <tt>@dasin</tt>,
+<tt>@dacos</tt>, <tt>@datan</tt>, <tt>@datan2</tt>, <tt>@jdeq</tt>, <tt>@jdne</tt>, <tt>@jdlt</tt>, <tt>@jdle</tt>,
+<tt>@jdgt</tt>, <tt>@jdge</tt>, <tt>@jdisnan</tt>, <tt>@jdisinf</tt>) are now supported. In addition there are also
+two new macros <tt>@dload</tt> and <tt>@dstore</tt>, to load and store double precision floating point values.
 <li><p>The undo related opcodes added to the Glulx 3.1.3 specification (that is, <tt>@hasundo</tt> and <tt>@discardundo</tt>)
-are now supported. 
+are now supported.
 <li><p>The <tt>Version</tt> and <tt>Switches</tt> directives are now deprecated, and produce a warning if used. The recommended way to
 set the Z-code version and any other switches is to use the command line, or <tt>!%</tt> comments at the top of the source file.
 <li><p>The ability to compile Inform source code as modules, and then later link it, has been removed. This functionality always had
