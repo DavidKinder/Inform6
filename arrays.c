@@ -430,6 +430,166 @@ extern void make_global(int array_flag)
         }
 
         obsolete_warning("more modern to use 'Array', not 'Global'");
+        //### error
+        return;
+    }
+}
+
+extern void make_array(int array_flag)
+{
+    /*  array_flag is TRUE for an Array directive, FALSE for a Global.       */
+
+    int32 i;
+    int name_length;
+    int array_type, data_type;
+    int is_static = FALSE;
+    assembly_operand AO;
+    
+    int extraspace;
+
+    int32 global_symbol;
+    debug_location_beginning beginning_debug_location =
+        get_token_location_beginning();
+
+    directive_keywords.enabled = FALSE;
+    get_next_token();
+    i = token_value;
+    global_symbol = i;
+    
+    name_length = strlen(token_text) + 1;
+    ensure_memory_list_available(&current_array_name, name_length);
+    strncpy(current_array_name.data, token_text, name_length);
+
+    if (!glulx_mode) {
+        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
+            && (symbols[i].value >= LOWEST_SYSTEM_VAR_NUMBER))
+            goto RedefinitionOfSystemVar;
+    }
+    else {
+        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T))
+            goto RedefinitionOfSystemVar;
+    }
+
+    if (token_type != SYMBOL_TT)
+    {   discard_token_location(beginning_debug_location);
+        if (array_flag)
+            ebf_error("new array name", token_text);
+        else ebf_error("new global variable name", token_text);
+        panic_mode_error_recovery(); return;
+    }
+
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
+    {   discard_token_location(beginning_debug_location);
+        if (array_flag)
+            ebf_symbol_error("new array name", token_text, typename(symbols[i].type), symbols[i].line);
+        else ebf_symbol_error("new global variable name", token_text, typename(symbols[i].type), symbols[i].line);
+        panic_mode_error_recovery(); return;
+    }
+
+    if ((!array_flag) && (symbols[i].flags & USED_SFLAG))
+        error_named("Variable must be defined before use:", token_text);
+
+    directive_keywords.enabled = TRUE;
+    get_next_token();
+    directive_keywords.enabled = FALSE;
+    if ((token_type==DIR_KEYWORD_TT)&&(token_value==STATIC_DK)) {
+        if (array_flag) {
+            is_static = TRUE;
+        }
+        else {
+            error("Global variables cannot be static");
+        }
+    }
+    else {
+        put_token_back();
+    }
+    
+    if (array_flag)
+    {   if (!is_static) {
+            assign_symbol(i, dynamic_array_area_size, ARRAY_T);
+        }
+        else {
+            assign_symbol(i, static_array_area_size, STATIC_ARRAY_T);
+        }
+        ensure_memory_list_available(&arrays_memlist, no_arrays+1);
+        arrays[no_arrays].symbol = i;
+    }
+    else
+    {   if (!glulx_mode && no_globals==233)
+        {   discard_token_location(beginning_debug_location);
+            error("All 233 global variables already declared");
+            panic_mode_error_recovery();
+            return;
+        }
+        
+        ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES+no_globals+1);
+        variables[MAX_LOCAL_VARIABLES+no_globals].token = i;
+        variables[MAX_LOCAL_VARIABLES+no_globals].usage = FALSE;
+        assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
+
+        ensure_memory_list_available(&global_initial_value_memlist, no_globals+1);
+        global_initial_value[no_globals++]=0;
+    }
+
+    directive_keywords.enabled = TRUE;
+
+    RedefinitionOfSystemVar:
+
+    get_next_token();
+
+    if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
+    {   if (array_flag)
+        {   discard_token_location(beginning_debug_location);
+            ebf_error("array definition", token_text);
+        }
+        put_token_back();
+        if (debugfile_switch && !array_flag)
+        {
+            char *global_name = current_array_name.data;
+            debug_file_printf("<global-variable>");
+            debug_file_printf("<identifier>%s</identifier>", global_name);
+            debug_file_printf("<address>");
+            write_debug_global_backpatch(symbols[global_symbol].value);
+            debug_file_printf("</address>");
+            write_debug_locations
+                (get_token_location_end(beginning_debug_location));
+            debug_file_printf("</global-variable>");
+        }
+        return;
+    }
+
+    if (!array_flag)
+    {
+        /* is_static is always false in this case */
+        if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
+        {   AO = parse_expression(CONSTANT_CONTEXT);
+            if (!glulx_mode) {
+                if (AO.marker != 0)
+                    backpatch_zmachine(AO.marker, DYNAMIC_ARRAY_ZA,
+                        2*(no_globals-1));
+            }
+            else {
+            if (AO.marker != 0)
+                backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
+                4*(no_globals-1));
+            }
+            global_initial_value[no_globals-1] = AO.value;
+            if (debugfile_switch)
+            {
+                char *global_name = current_array_name.data;
+                debug_file_printf("<global-variable>");
+                debug_file_printf("<identifier>%s</identifier>", global_name);
+                debug_file_printf("<address>");
+                write_debug_global_backpatch(symbols[global_symbol].value);
+                debug_file_printf("</address>");
+                write_debug_locations
+                    (get_token_location_end(beginning_debug_location));
+                debug_file_printf("</global-variable>");
+            }
+            return;
+        }
+
+        obsolete_warning("more modern to use 'Array', not 'Global'");
 
         if (!glulx_mode) {
             backpatch_zmachine(ARRAY_MV, DYNAMIC_ARRAY_ZA, 2*(no_globals-1));
