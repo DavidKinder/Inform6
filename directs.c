@@ -363,7 +363,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
     /*   Global variable [= value / array...]                                */
     /* --------------------------------------------------------------------- */
 
-    case GLOBAL_CODE: make_global(FALSE); break;           /* See "arrays.c" */
+    case GLOBAL_CODE: make_global(); break;                /* See "arrays.c" */
 
     /* --------------------------------------------------------------------- */
     /*   If...                                                               */

@@ -275,7 +275,7 @@ extern void set_variable_value(int i, int32 v)
 #define ASCII_AI        2
 #define BRACKET_AI      3
 
-extern void make_global(int array_flag)
+extern void make_global()
 {
     int32 i;
     int name_length;
