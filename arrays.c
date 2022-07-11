@@ -368,35 +368,48 @@ extern void make_global()
         return;
     }
 
-    if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
-    {   AO = parse_expression(CONSTANT_CONTEXT);
-        if (!glulx_mode) {
-            if (AO.marker != 0)
-                backpatch_zmachine(AO.marker, DYNAMIC_ARRAY_ZA,
-                    2*(no_globals-1));
-        }
-        else {
-        if (AO.marker != 0)
-            backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
-            4*(no_globals-1));
-        }
-        global_initial_value[no_globals-1] = AO.value;
-        if (debugfile_switch)
-        {
-            char *global_name = current_array_name.data;
-            debug_file_printf("<global-variable>");
-            debug_file_printf("<identifier>%s</identifier>", global_name);
-            debug_file_printf("<address>");
-            write_debug_global_backpatch(symbols[global_symbol].value);
-            debug_file_printf("</address>");
-            write_debug_locations
-                (get_token_location_end(beginning_debug_location));
-            debug_file_printf("</global-variable>");
-        }
+    if (((token_type==SEP_TT)&&(token_value==ARROW_SEP))
+        || ((token_type==SEP_TT)&&(token_value==DARROW_SEP))
+        || ((token_type==DIR_KEYWORD_TT)&&(token_value==STRING_DK))
+        || ((token_type==DIR_KEYWORD_TT)&&(token_value==TABLE_DK))
+        || ((token_type==DIR_KEYWORD_TT)&&(token_value==BUFFER_DK)))
+    {
+        error("use 'Array' to define arrays, not 'Global'");
         return;
     }
-
-    error("use 'Array' to define arrays, not 'Global'");
+    
+    if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
+    {
+        ebf_error("'=' or ';'", token_text);
+        //### but the equals can be optional?
+        //###error("use 'Array' to define arrays, not 'Global'");
+        return;
+    }
+            
+    AO = parse_expression(CONSTANT_CONTEXT);
+    if (!glulx_mode) {
+        if (AO.marker != 0)
+            backpatch_zmachine(AO.marker, DYNAMIC_ARRAY_ZA,
+                2*(no_globals-1));
+    }
+    else {
+    if (AO.marker != 0)
+        backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
+        4*(no_globals-1));
+    }
+    global_initial_value[no_globals-1] = AO.value;
+    if (debugfile_switch)
+    {
+        char *global_name = current_array_name.data;
+        debug_file_printf("<global-variable>");
+        debug_file_printf("<identifier>%s</identifier>", global_name);
+        debug_file_printf("<address>");
+        write_debug_global_backpatch(symbols[global_symbol].value);
+        debug_file_printf("</address>");
+        write_debug_locations
+            (get_token_location_end(beginning_debug_location));
+        debug_file_printf("</global-variable>");
+    }
 }
 
 extern void make_array(int array_flag)
