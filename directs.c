@@ -124,7 +124,7 @@ extern int parse_given_directive(int internal_flag)
     /*   Array arrayname array...                                            */
     /* --------------------------------------------------------------------- */
 
-    case ARRAY_CODE: make_array(TRUE); break;              /* See "arrays.c" */
+    case ARRAY_CODE: make_array(); break;                  /* See "arrays.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Attribute newname [alias oldname]                                   */

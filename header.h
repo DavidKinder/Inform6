@@ -2100,7 +2100,7 @@ extern arrayinfo *arrays;
 
 extern void make_global(void);
 extern void set_variable_value(int i, int32 v);
-extern void make_array(int array_flag);
+extern void make_array(void);
 extern void check_globals(void);
 extern int32 begin_table_array(void);
 extern int32 begin_word_array(void);

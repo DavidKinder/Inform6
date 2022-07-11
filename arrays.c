@@ -412,7 +412,7 @@ extern void make_global()
     }
 }
 
-extern void make_array(int array_flag)
+extern void make_array()
 {
     int32 i;
     int name_length;
