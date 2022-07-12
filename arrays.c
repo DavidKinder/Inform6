@@ -241,9 +241,7 @@ extern void array_entry(int32 i, int is_static, assembly_operand VAL)
 /* ------------------------------------------------------------------------- */
 /*   Global and Array directives.                                            */
 /*                                                                           */
-/*      Global <variablename> |                                              */
-/*                            | = <value>                                    */
-/*                            | <array specification>                        */
+/*      Global <variablename> [ [=] <value> ]                                */
 /*                                                                           */
 /*      Array <arrayname> [static] <array specification>                     */
 /*                                                                           */

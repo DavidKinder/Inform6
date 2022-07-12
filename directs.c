@@ -360,7 +360,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         make_fake_action(); break;                          /* see "verbs.c" */
 
     /* --------------------------------------------------------------------- */
-    /*   Global variable [= value / array...]                                */
+    /*   Global <variablename> [ [=] <value> ]                               */
     /* --------------------------------------------------------------------- */
 
     case GLOBAL_CODE: make_global(); break;                /* See "arrays.c" */
