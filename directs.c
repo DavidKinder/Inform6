@@ -121,7 +121,7 @@ extern int parse_given_directive(int internal_flag)
         } while (TRUE);
 
     /* --------------------------------------------------------------------- */
-    /*   Array arrayname array...                                            */
+    /*   Array <arrayname> [static] <array specification>                    */
     /* --------------------------------------------------------------------- */
 
     case ARRAY_CODE: make_array(); break;                  /* See "arrays.c" */
