@@ -352,6 +352,7 @@ extern void make_global()
 
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
     {
+        /* No initial value. */
         put_token_back();
         if (debugfile_switch)
         {
@@ -377,15 +378,11 @@ extern void make_global()
         error("use 'Array' to define arrays, not 'Global'");
         return;
     }
-    
+
+    /* Skip "=" if present. */
     if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
-    {
-        ebf_error("'=' or ';'", token_text);
-        //### but the equals can be optional?
-        //###error("use 'Array' to define arrays, not 'Global'");
-        return;
-    }
-            
+        put_token_back();
+
     AO = parse_expression(CONSTANT_CONTEXT);
     if (!glulx_mode) {
         if (AO.marker != 0)
