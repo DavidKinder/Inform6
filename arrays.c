@@ -395,9 +395,9 @@ extern void make_global()
                 2*globalnum);
     }
     else {
-    if (AO.marker != 0)
-        backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
-            4*globalnum);
+        if (AO.marker != 0)
+            backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
+                4*globalnum);
     }
     
     if (globalnum < 0 || globalnum >= global_initial_value_memlist.count)
