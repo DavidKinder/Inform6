@@ -399,7 +399,11 @@ extern void make_global()
         backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
             4*globalnum);
     }
+    
+    if (globalnum < 0 || globalnum >= global_initial_value_memlist.count)
+        compiler_error("Globalnum out of range");
     global_initial_value[globalnum] = AO.value;
+    
     if (debugfile_switch)
     {
         char *global_name = current_array_name.data;
