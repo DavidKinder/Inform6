@@ -279,6 +279,7 @@ extern void make_global()
     int name_length;
     assembly_operand AO;
 
+    int32 globalnum;
     int32 global_symbol;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
@@ -294,12 +295,16 @@ extern void make_global()
 
     if (!glulx_mode) {
         if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
-            && (symbols[i].value >= LOWEST_SYSTEM_VAR_NUMBER))
+            && (symbols[i].value >= LOWEST_SYSTEM_VAR_NUMBER)) {
+            globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
             goto RedefinitionOfSystemVar;
+        }
     }
     else {
-        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T))
+        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)) {
+            globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
             goto RedefinitionOfSystemVar;
+        }
     }
 
     if (token_type != SYMBOL_TT)
@@ -333,6 +338,8 @@ extern void make_global()
         panic_mode_error_recovery();
         return;
     }
+
+    globalnum = no_globals;
     
     ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES+no_globals+1);
     variables[MAX_LOCAL_VARIABLES+no_globals].token = i;
@@ -385,14 +392,14 @@ extern void make_global()
     if (!glulx_mode) {
         if (AO.marker != 0)
             backpatch_zmachine(AO.marker, DYNAMIC_ARRAY_ZA,
-                2*(no_globals-1));
+                2*globalnum);
     }
     else {
     if (AO.marker != 0)
         backpatch_zmachine(AO.marker, GLOBALVAR_ZA,
-        4*(no_globals-1));
+            4*globalnum);
     }
-    global_initial_value[no_globals-1] = AO.value;
+    global_initial_value[globalnum] = AO.value;
     if (debugfile_switch)
     {
         char *global_name = current_array_name.data;
