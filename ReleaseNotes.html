@@ -134,6 +134,22 @@ significant restrictions and was never widely used. The <tt>-M</tt> and <tt>-U</
 the <tt>+module_path</tt> option. The <tt>Link</tt> and <tt>Import</tt> directives now just produce errors.
 <li><p>The ability to use temporary files for internal storage (the <tt>-F</tt> switch and the <tt>+temporary_path</tt> option)
 have been removed.
+<li><p>The <tt>=</tt> sign in the <tt>Global</tt> directive is now optional, just as it is in the <tt>Constant</tt> directive. So all
+of these are now legal:
+<pre>
+  Constant c1 11;
+  Constant c2 = 22;
+  Global g1 33;
+  Global g2 = 44;
+</pre>
+<li><p>The long deprecated forms of the <tt>Global</tt> directive that could define arrays have been removed. All these are now no
+longer legal:
+<pre>
+  Global array --> size;
+  Global array data ...;
+  Global array initial ...;
+  Global array initstr ...;
+</pre>
 </ul>
 
 <h3>Bugs fixed</h3>
