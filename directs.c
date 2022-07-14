@@ -121,10 +121,10 @@ extern int parse_given_directive(int internal_flag)
         } while (TRUE);
 
     /* --------------------------------------------------------------------- */
-    /*   Array arrayname array...                                            */
+    /*   Array <arrayname> [static] <array specification>                    */
     /* --------------------------------------------------------------------- */
 
-    case ARRAY_CODE: make_global(TRUE); break;             /* See "tables.c" */
+    case ARRAY_CODE: make_array(); break;                  /* See "arrays.c" */
 
     /* --------------------------------------------------------------------- */
     /*   Attribute newname [alias oldname]                                   */
@@ -360,10 +360,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         make_fake_action(); break;                          /* see "verbs.c" */
 
     /* --------------------------------------------------------------------- */
-    /*   Global variable [= value / array...]                                */
+    /*   Global <variablename> [ [=] <value> ]                               */
     /* --------------------------------------------------------------------- */
 
-    case GLOBAL_CODE: make_global(FALSE); break;           /* See "tables.c" */
+    case GLOBAL_CODE: make_global(); break;                /* See "arrays.c" */
 
     /* --------------------------------------------------------------------- */
     /*   If...                                                               */
