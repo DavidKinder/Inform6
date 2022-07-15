@@ -2187,7 +2187,10 @@ static void transfer_routine_z(void)
             offset_of_next = new_pc + long_form + 1;
 
             if (labels[j].offset < 0) {
-                error("Attempt to jump to an unreachable label");
+                char *lname = "(anon)";
+                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                    lname = symbols[labels[j].symbol].name;
+                error_named("Attempt to jump to an unreachable label", lname);
                 addr = 0;
             }
             else {
@@ -2215,7 +2218,10 @@ static void transfer_routine_z(void)
           case LABEL_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
             if (labels[j].offset < 0) {
-                error("Attempt to jump to an unreachable label");
+                char *lname = "(anon)";
+                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                    lname = symbols[labels[j].symbol].name;
+                error_named("Attempt to jump to an unreachable label", lname);
                 addr = 0;
             }
             else {
@@ -2415,7 +2421,10 @@ static void transfer_routine_g(void)
         offset_of_next = new_pc + form_len;
 
         if (labels[j].offset < 0) {
-            error("Attempt to jump to an unreachable label");
+            char *lname = "(anon)";
+            if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                lname = symbols[labels[j].symbol].name;
+            error_named("Attempt to jump to an unreachable label", lname);
             addr = 0;
         }
         else {
