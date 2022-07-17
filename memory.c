@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "memory" : Memory management and ICL memory setting commands            */
 /*                                                                           */
-/*   Part of Inform 6.40                                                     */
+/*   Part of Inform 6.41                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */

@@ -3,7 +3,7 @@
 /*              by the compiler (e.g. DefArt) which the program doesn't      */
 /*              provide                                                      */
 /*                                                                           */
-/*   Part of Inform 6.40                                                     */
+/*   Part of Inform 6.41                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
