@@ -1666,7 +1666,7 @@ extern void assemble_label_no(int n)
 {
     int inuse = (n >= 0 && n < labeluse_size && labeluse[n]);
     
-    if ((execution_never_reaches_here & EXECSTATE_ENTIRE) && STRIP_UNREACHABLE_LABELS && !inuse) {
+    if ((!inuse) && (execution_never_reaches_here & EXECSTATE_ENTIRE) && STRIP_UNREACHABLE_LABELS) {
         /* We're not going to compile this label at all. Set a negative
            offset, which will trip an error if this label is jumped to. */
         set_label_offset(n, -1);
