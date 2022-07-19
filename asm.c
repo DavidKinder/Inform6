@@ -209,6 +209,8 @@ static memory_list sequence_points_memlist;
    The linked list must be in increasing PC order. We know this will
    be true because we call this as we run through the function, so
    zmachine_pc always increases.
+
+   (It won't necessarily be in *label index* order, though.)
 */
 static void set_label_offset(int label, int32 offset)
 {
@@ -1655,12 +1657,16 @@ extern void assembleg_instruction(const assembly_instruction *AI)
    is assumed to be reachable. 
    However, if STRIP_UNREACHABLE_LABELS and EXECSTATE_ENTIRE are both set,
    that's not true. The entire statement is being skipped, so we can safely
-   skip all labels within it.
+   skip all unused labels within it.
+   ("Unused" meaning there are no forward jumps to the label. We can't
+   do anything about *backward* jumps because we haven't seen them yet!)
    (If STRIP_UNREACHABLE_LABELS is not set, the ENTIRE flag is ignored.)
 */
 extern void assemble_label_no(int n)
 {
-    if ((execution_never_reaches_here & EXECSTATE_ENTIRE) && STRIP_UNREACHABLE_LABELS) {
+    int inuse = (n >= 0 && n < labeluse_size && labeluse[n]);
+    
+    if ((!inuse) && (execution_never_reaches_here & EXECSTATE_ENTIRE) && STRIP_UNREACHABLE_LABELS) {
         /* We're not going to compile this label at all. Set a negative
            offset, which will trip an error if this label is jumped to. */
         set_label_offset(n, -1);
