@@ -3,7 +3,7 @@
 /*               of dynamic memory, gluing together all the required         */
 /*               tables.                                                     */
 /*                                                                           */
-/*   Part of Inform 6.40                                                     */
+/*   Part of Inform 6.41                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2022                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
