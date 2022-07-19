@@ -30,6 +30,19 @@ These are the changes delivered in version 6.41 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>The dead code elimination logic now allows forward jumps to labels that would be otherwise unreachable, like this:
+<pre>
+  if (condition) {
+    jump MiddleLabel;
+  }
+  if (0) {
+    while (condition) {
+      ...
+    .MiddleLabel;
+      ...
+    }
+  }
+</pre>
 <li><p>The error that occurs when the compiler encounters a jump to an unknown label now includes the name of that label.
 </ul>
 
