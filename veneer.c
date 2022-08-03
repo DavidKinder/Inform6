@@ -110,9 +110,11 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          @set_window 1;\
          w = 0 -> 33;\
          if (w == 0) w=80;\
-         w2 = (w - maxw)/2;\
+         w2 = (w - maxw)/2 + 1;\
+         if (w2 < 1) w2 = 1;\
          style reverse;\
          @sub w2 2 -> w;\
+         if (w < 1) w = 1;\
          line = 5;\
          lc = 1;\
          @set_cursor 4 w;\
