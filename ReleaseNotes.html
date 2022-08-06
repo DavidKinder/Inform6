@@ -25,6 +25,16 @@ listed. So instead, this is a general thank-you to everybody who has made this r
 specific ones to Graham Nelson for permitting it in the first place, and to Andrew Plotkin, who is responsible
 for most of the actual changes to the compiler code.
 
+<h2>Inform 6.42</h2>
+These are the changes delivered in version 6.42 of the Inform compiler.
+
+<h3>Bugs fixed</h3>
+<ul>
+<li><p>The Z-code version of the veneer function <tt>Box__Routine</tt> (which is used in the implementation of the
+<tt>box</tt> statement) now contains a check to prevent calling the <tt>@set_cursor</tt> opcode with negative
+co-ordinates.
+</ul>
+
 <h2>Inform 6.41</h2>
 These are the changes delivered in version 6.41 of the Inform compiler.
 
