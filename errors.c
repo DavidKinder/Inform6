@@ -158,6 +158,14 @@ static char *location_text(brief_location report_line)
     return other_pos_buff;
 }
 
+char *current_location_text(void)
+{
+    /* Convert the current lexer location to a brief string.
+       (Called by some trace messages.)
+       This uses the static buffer other_pos_buff. */
+    return location_text(get_brief_location(&ErrorReport));
+}
+
 static void ellipsize_error_message_buff(void)
 {
     /* If the error buffer was actually filled up by a message, it was
