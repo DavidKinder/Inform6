@@ -300,7 +300,7 @@ static void new_action(char *b, int c)
         At present just a hook for some tracing code.                        */
 
     if (printactions_switch)
-        printf("Action '%s' is numbered %d\n",b,c);
+        printf("%s: Action '%s' is numbered %d\n", current_location_text(), b, c);
 }
 
 /* Note that fake actions are numbered from a high base point upwards;

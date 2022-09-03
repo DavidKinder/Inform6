@@ -95,7 +95,7 @@ static void trace_s(char *name, int32 number, int f)
     if (f != 1) printf("  ");
     else      printf("%s%s",(commonprops[number].is_long)?"L":" ",
                             (commonprops[number].is_additive)?"A":" ");
-    printf("  %s\n", name);
+    printf("  %-24s  (%s)\n", name, current_location_text());
 }
 
 extern void make_attribute(void)

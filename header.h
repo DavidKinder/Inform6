@@ -2327,6 +2327,7 @@ extern void obsolete_warning(char *s1);
 extern int  compiler_error(char *s);
 extern int  compiler_error_named(char *s1, char *s2);
 extern void print_sorry_message(void);
+extern char *current_location_text(void);
 
 #ifdef ARC_THROWBACK
 extern int  throwback_switch;
