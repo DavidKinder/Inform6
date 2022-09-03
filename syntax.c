@@ -73,10 +73,12 @@ extern void get_next_token_with_directives(void)
        Object, where we want to support internal #ifdefs. (Although
        function-parsing predates this and doesn't make use of it.) */
 
-    int directives_save, segment_markers_save, statements_save;
-
     while (TRUE)
     {
+        int directives_save, segment_markers_save, statements_save,
+            conditions_save, local_variables_save, misc_keywords_save,
+            system_functions_save;
+
         get_next_token();
 
         /* If the first token is not a '#', return it directly. */
@@ -87,6 +89,10 @@ extern void get_next_token_with_directives(void)
         directives_save = directives.enabled;
         segment_markers_save = segment_markers.enabled;
         statements_save = statements.enabled;
+        conditions_save = conditions.enabled;
+        local_variables_save = local_variables.enabled;
+        misc_keywords_save = misc_keywords.enabled;
+        system_functions_save = system_functions.enabled;
 
         directives.enabled = TRUE;
         segment_markers.enabled = FALSE;
@@ -110,18 +116,15 @@ extern void get_next_token_with_directives(void)
             return;
         }
 
-        /* Restore all the lexer flags. (We are squashing several of them
-           into a single save variable, which I think is safe because that's
-           what CKnight did.)
-        */
+        /* Restore all the lexer flags. */
         directive_keywords.enabled = FALSE;
         directives.enabled = directives_save;
         segment_markers.enabled = segment_markers_save;
-        statements.enabled =
-            conditions.enabled =
-            local_variables.enabled =
-            misc_keywords.enabled = 
-            system_functions.enabled = statements_save;
+        statements.enabled = statements_save;
+        conditions.enabled = conditions_save;
+        local_variables.enabled = local_variables_save;
+        misc_keywords.enabled = misc_keywords_save; 
+        system_functions.enabled = system_functions_save;
     }
 }
 
