@@ -584,6 +584,39 @@ static int get_verb(void)
     return -1;
 }
 
+void locate_dead_grammar_lines()
+{
+    /* Run through the grammar table and check whether each entry is
+       associated with a verb word. (Some might have been detached by
+       "Extend only".)
+    */
+    int verb;
+    char *p;
+
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        Inform_verbs[verb].used = FALSE;
+    }
+    
+    p=English_verb_list;
+    while (p < English_verb_list+English_verb_list_size)
+    {
+        verb = ((uchar)p[1] << 8) | (uchar)p[2];
+        if (verb < 0 || verb >= no_Inform_verbs) {
+            error_named("An entry in the English verb list had an invalid verb number", p+3);
+        }
+        else {
+            Inform_verbs[verb].used = TRUE;
+        }
+        p=p+(uchar)p[0];
+    }
+
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        if (!Inform_verbs[verb].used) {
+            //### warning
+        }
+    }
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Grammar lines for Verb/Extend directives.                               */
 /* ------------------------------------------------------------------------- */
@@ -972,6 +1005,7 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].lines = 0;
         Inform_verbs[no_Inform_verbs].size = 4;
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
+        Inform_verbs[no_Inform_verbs].used = FALSE;
     }
 
     for (i=0, pos=0; i<no_given; i++) {
@@ -1056,6 +1090,7 @@ extern void extend_verb(void)
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
         for (k=0; k<l; k++)
             Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
+        Inform_verbs[no_Inform_verbs].used = FALSE;
         Inform_verb = no_Inform_verbs++;
     }
     else

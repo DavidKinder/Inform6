@@ -673,6 +673,7 @@ typedef struct verbt {
     int *l; /* alloced array of grammar line indexes
                (positions in grammar_lines[]) */
     int size; /* allocated size of l */
+    int used; /* only set at locate_dead_grammar_lines() time */
 } verbt;
 
 typedef struct actioninfo_s {
@@ -2837,6 +2838,7 @@ extern int32 *grammar_token_routine,
 extern void find_the_actions(void);
 extern void make_fake_action(void);
 extern assembly_operand action_of_name(char *name);
+extern void locate_dead_grammar_lines(void);
 extern void make_verb(void);
 extern void extend_verb(void);
 extern void list_verb_table(void);
