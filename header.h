@@ -647,6 +647,13 @@ typedef struct memory_list_s
     size_t count;       /* number of items allocated */
 } memory_list;
 
+typedef struct brief_location_s
+{   int32 file_index;
+    int32 line_number;
+    int32 orig_file_index;
+    int32 orig_line_number;
+} brief_location;
+
 typedef struct identstruct_s
 {
     char text[MAX_IDENTIFIER_LENGTH+1];
@@ -673,6 +680,7 @@ typedef struct verbt {
     int *l; /* alloced array of grammar line indexes
                (positions in grammar_lines[]) */
     int size; /* allocated size of l */
+    brief_location line; /* originally defined at */
     int used; /* only set at locate_dead_grammar_lines() time */
 } verbt;
 
@@ -790,13 +798,6 @@ typedef struct debug_locations_s
     struct debug_locations_s *next;
     int reference_count;
 } debug_locations;
-
-typedef struct brief_location_s
-{   int32 file_index;
-    int32 line_number;
-    int32 orig_file_index;
-    int32 orig_line_number;
-} brief_location;
 
 typedef struct debug_location_beginning_s
 {   debug_locations *head;
@@ -2322,6 +2323,7 @@ extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
+extern void warning_at(char *name, brief_location report_line);
 extern void symtype_warning(char *context, char *name, char *type, char *wanttype);
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);

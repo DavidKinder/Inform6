@@ -612,7 +612,7 @@ void locate_dead_grammar_lines()
 
     for (verb=0; verb<no_Inform_verbs; verb++) {
         if (!Inform_verbs[verb].used) {
-            //### warning
+            warning_at("Verb declaration no longer has any verbs associated", Inform_verbs[verb].line);
         }
     }
 }
@@ -1005,6 +1005,7 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].lines = 0;
         Inform_verbs[no_Inform_verbs].size = 4;
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
+        Inform_verbs[no_Inform_verbs].line = get_brief_location(&ErrorReport);
         Inform_verbs[no_Inform_verbs].used = FALSE;
     }
 
@@ -1090,6 +1091,7 @@ extern void extend_verb(void)
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
         for (k=0; k<l; k++)
             Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
+        Inform_verbs[no_Inform_verbs].line = get_brief_location(&ErrorReport);
         Inform_verbs[no_Inform_verbs].used = FALSE;
         Inform_verb = no_Inform_verbs++;
     }
