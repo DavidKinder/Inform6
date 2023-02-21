@@ -670,7 +670,8 @@ typedef struct variableinfo_s {
 
 typedef struct verbt {
     int lines;
-    int *l; /* alloced array */
+    int *l; /* alloced array of grammar line indexes
+               (positions in grammar_lines[]) */
     int size; /* allocated size of l */
 } verbt;
 
