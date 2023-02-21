@@ -525,7 +525,7 @@ static char *find_verb_by_number(int num)
     p=English_verb_list;
     while (p < English_verb_list+English_verb_list_size)
     {
-        int val = (p[1] << 8) | p[2];
+        int val = ((uchar)p[1] << 8) | (uchar)p[2];
         if (val == num) {
             return p+3;
         }
