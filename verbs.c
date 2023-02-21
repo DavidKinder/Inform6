@@ -963,6 +963,10 @@ extern void make_verb(void)
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
+        if (no_Inform_verbs >= 65535) {
+            error("Inform is limited to 65535 verbs.");
+            panic_mode_error_recovery(); return;
+        }
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         Inform_verb = no_Inform_verbs;
         Inform_verbs[no_Inform_verbs].lines = 0;
@@ -1017,6 +1021,10 @@ extern void extend_verb(void)
     {
         if (!glulx_mode && no_Inform_verbs >= 255) {
             error("Z-code is limited to 255 verbs.");
+            panic_mode_error_recovery(); return;
+        }
+        if (no_Inform_verbs >= 65535) {
+            error("Inform is limited to 65535 verbs.");
             panic_mode_error_recovery(); return;
         }
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
