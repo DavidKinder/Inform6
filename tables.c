@@ -520,6 +520,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++)
     {   p[grammar_table_at + i*2] = (mark/256);
         p[grammar_table_at + i*2 + 1] = (mark%256);
+        if (!Inform_verbs[i].used) {
+            /* This verb was marked unused at locate_dead_grammar_lines()
+               time. Omit the grammar lines. */
+            p[mark++] = 0;
+            continue;
+        }
         p[mark++] = Inform_verbs[i].lines;
         for (j=0; j<Inform_verbs[i].lines; j++)
         {   k = Inform_verbs[i].l[j];
@@ -1313,6 +1319,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++) {
       j = mark + Write_RAM_At;
       WriteInt32(p+(grammar_table_at+4+i*4), j);
+      if (!Inform_verbs[i].used) {
+          /* This verb was marked unused at locate_dead_grammar_lines()
+             time. Omit the grammar lines. */
+          p[mark++] = 0;
+          continue;
+      }
       p[mark++] = Inform_verbs[i].lines;
       for (j=0; j<Inform_verbs[i].lines; j++) {
         int tok;
