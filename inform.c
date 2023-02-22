@@ -1028,6 +1028,7 @@ static void run_pass(void)
     sort_dictionary();
     if (track_unused_routines)
         locate_dead_functions();
+    locate_dead_grammar_lines();
     construct_storyfile();
 }
 

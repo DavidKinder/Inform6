@@ -417,6 +417,19 @@ extern void warning_named(char *s1, char *s2)
     message(2,error_message_buff);
 }
 
+extern void warning_at(char *name, brief_location report_line)
+{   int i;
+    ErrorPosition E = ErrorReport;
+    if (nowarnings_switch) { no_suppressed_warnings++; return; }
+    export_brief_location(report_line, &ErrorReport);
+    snprintf(error_message_buff, ERROR_BUFLEN, "%s", name);
+    ellipsize_error_message_buff();
+    i = concise_switch; concise_switch = TRUE;
+    message(2,error_message_buff);
+    concise_switch = i;
+    ErrorReport = E;
+}
+
 extern void symtype_warning(char *context, char *name, char *type, char *wanttype)
 {
     if (nowarnings_switch) { no_suppressed_warnings++; return; }

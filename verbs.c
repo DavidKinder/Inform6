@@ -525,7 +525,7 @@ static char *find_verb_by_number(int num)
     p=English_verb_list;
     while (p < English_verb_list+English_verb_list_size)
     {
-        int val = (p[1] << 8) | p[2];
+        int val = ((uchar)p[1] << 8) | (uchar)p[2];
         if (val == num) {
             return p+3;
         }
@@ -582,6 +582,39 @@ static int get_verb(void)
     ebf_error("an English verb in quotes", token_text);
 
     return -1;
+}
+
+void locate_dead_grammar_lines()
+{
+    /* Run through the grammar table and check whether each entry is
+       associated with a verb word. (Some might have been detached by
+       "Extend only".)
+    */
+    int verb;
+    char *p;
+
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        Inform_verbs[verb].used = FALSE;
+    }
+    
+    p=English_verb_list;
+    while (p < English_verb_list+English_verb_list_size)
+    {
+        verb = ((uchar)p[1] << 8) | (uchar)p[2];
+        if (verb < 0 || verb >= no_Inform_verbs) {
+            error_named("An entry in the English verb list had an invalid verb number", p+3);
+        }
+        else {
+            Inform_verbs[verb].used = TRUE;
+        }
+        p=p+(uchar)p[0];
+    }
+
+    for (verb=0; verb<no_Inform_verbs; verb++) {
+        if (!Inform_verbs[verb].used) {
+            warning_at("Verb declaration no longer has any verbs associated. Use \"Extend replace\" instead of \"Extend only\"?", Inform_verbs[verb].line);
+        }
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -963,11 +996,17 @@ extern void make_verb(void)
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
+        if (no_Inform_verbs >= 65535) {
+            error("Inform is limited to 65535 verbs.");
+            panic_mode_error_recovery(); return;
+        }
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         Inform_verb = no_Inform_verbs;
         Inform_verbs[no_Inform_verbs].lines = 0;
         Inform_verbs[no_Inform_verbs].size = 4;
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
+        Inform_verbs[no_Inform_verbs].line = get_brief_location(&ErrorReport);
+        Inform_verbs[no_Inform_verbs].used = FALSE;
     }
 
     for (i=0, pos=0; i<no_given; i++) {
@@ -1019,6 +1058,10 @@ extern void extend_verb(void)
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
         }
+        if (no_Inform_verbs >= 65535) {
+            error("Inform is limited to 65535 verbs.");
+            panic_mode_error_recovery(); return;
+        }
         ensure_memory_list_available(&Inform_verbs_memlist, no_Inform_verbs+1);
         l = -1;
         while (get_next_token(),
@@ -1048,6 +1091,8 @@ extern void extend_verb(void)
         Inform_verbs[no_Inform_verbs].l = my_malloc(sizeof(int) * Inform_verbs[no_Inform_verbs].size, "grammar lines for one verb");
         for (k=0; k<l; k++)
             Inform_verbs[no_Inform_verbs].l[k] = Inform_verbs[Inform_verb].l[k];
+        Inform_verbs[no_Inform_verbs].line = get_brief_location(&ErrorReport);
+        Inform_verbs[no_Inform_verbs].used = FALSE;
         Inform_verb = no_Inform_verbs++;
     }
     else

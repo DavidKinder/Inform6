@@ -109,7 +109,7 @@ extern void write_serial_number(char *buffer)
 #endif
 }
 
-static char percentage_buffer[32];
+static char percentage_buffer[64];
 
 static char *show_percentage(int32 x, int32 total)
 {
@@ -119,8 +119,11 @@ static char *show_percentage(int32 x, int32 total)
     else if (x == 0) {
         sprintf(percentage_buffer, "  ( --- )");
     }
-    else {
+    else if (memory_map_setting < 3) {
         sprintf(percentage_buffer, "  (%.1f %%)", (float)x * 100.0 / (float)total);
+    }
+    else {
+        sprintf(percentage_buffer, "  (%.1f %%, %d bytes)", (float)x * 100.0 / (float)total, x);
     }
     return percentage_buffer;
 }
@@ -517,6 +520,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++)
     {   p[grammar_table_at + i*2] = (mark/256);
         p[grammar_table_at + i*2 + 1] = (mark%256);
+        if (!Inform_verbs[i].used) {
+            /* This verb was marked unused at locate_dead_grammar_lines()
+               time. Omit the grammar lines. */
+            p[mark++] = 0;
+            continue;
+        }
         p[mark++] = Inform_verbs[i].lines;
         for (j=0; j<Inform_verbs[i].lines; j++)
         {   k = Inform_verbs[i].l[j];
@@ -1310,6 +1319,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++) {
       j = mark + Write_RAM_At;
       WriteInt32(p+(grammar_table_at+4+i*4), j);
+      if (!Inform_verbs[i].used) {
+          /* This verb was marked unused at locate_dead_grammar_lines()
+             time. Omit the grammar lines. */
+          p[mark++] = 0;
+          continue;
+      }
       p[mark++] = Inform_verbs[i].lines;
       for (j=0; j<Inform_verbs[i].lines; j++) {
         int tok;
