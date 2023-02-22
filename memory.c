@@ -616,6 +616,7 @@ static void set_trace_option(char *command)
         printf("  FREQ: show how efficient abbreviations were (same as -f)\n    (only meaningful with -e)\n");
         printf("  MAP: print memory map of the virtual machine (same as -z)\n");
         printf("    MAP=2: also show percentage of VM that each segment occupies\n");
+        printf("    MAP=3: also show number of bytes that each segment occupies\n");
         printf("  MEM: show internal memory allocations\n");
         printf("  OBJECTS: display the object table\n");
         printf("  PROPS: show attributes and properties defined\n");
