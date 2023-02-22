@@ -612,7 +612,7 @@ void locate_dead_grammar_lines()
 
     for (verb=0; verb<no_Inform_verbs; verb++) {
         if (!Inform_verbs[verb].used) {
-            warning_at("Verb declaration no longer has any verbs associated", Inform_verbs[verb].line);
+            warning_at("Verb declaration no longer has any verbs associated. Use \"Extend replace\" instead of \"Extend only\"?", Inform_verbs[verb].line);
         }
     }
 }
