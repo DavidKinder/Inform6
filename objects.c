@@ -576,9 +576,15 @@ static void property_inheritance_z(void)
 
                         for (i=full_object.pp[k].l;
                              i<full_object.pp[k].l+prop_length/2; i++)
-                        {   if (i >= 32)
+                        {
+                            if (i >= 32)
                             {   error("An additive property has inherited \
 so many values that the list has overflowed the maximum 32 entries");
+                                break;
+                            }
+                            if ((version_number==3) && i >= 4)
+                            {   error("An additive property has inherited \
+so many values that the list has overflowed the maximum 4 entries");
                                 break;
                             }
                             INITAOTV(&full_object.pp[k].ao[i], LONG_CONSTANT_OT, mark + j);
@@ -1326,12 +1332,20 @@ the names '%s' and '%s' actually refer to the same property",
                 AO = parse_expression(ARRAY_CONTEXT);
             }
 
+            /* length is in bytes here, but we report the limit in words. */
+
             if (length == 64)
             {   error_named("Limit (of 32 values) exceeded for property",
                     symbols[property_name_symbol].name);
                 break;
             }
 
+            if ((version_number==3) && (!individual_property) && length == 8)
+            {   error_named("Limit (of 4 values) exceeded for property",
+                    symbols[property_name_symbol].name);
+                break;
+            }
+            
             if (individual_property)
             {   if (AO.marker != 0)
                     backpatch_zmachine(AO.marker, INDIVIDUAL_PROP_ZA,
@@ -1366,16 +1380,6 @@ the names '%s' and '%s' actually refer to the same property",
             {
                 INITAOTV(&full_object.pp[next_prop].ao[0], LONG_CONSTANT_OT, 0);
                 length = 2;
-            }
-        }
-
-        if ((version_number==3) && (!individual_property))
-        {   if (length > 8)
-            {
-       warning_named("Version 3 limit of 4 values per property exceeded \
-(use -v5 to get 32), so truncating property",
-                    symbols[property_name_symbol].name);
-                length = 8;
             }
         }
 
