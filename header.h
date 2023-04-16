@@ -4,7 +4,7 @@
 /*                              Inform 6.42                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2022                                 */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   https://www.ifarchive.org/                                              */
