@@ -27,7 +27,7 @@ int32 total_chars_read;                 /* Characters read in (from all
 static int checksum_low_byte,           /* For calculating the Z-machine's   */
            checksum_high_byte;          /* "verify" checksum                 */
 
-static int32 checksum_long;             /* For the Glulx checksum,           */
+static uint32 checksum_long;             /* For the Glulx checksum,          */
 static int checksum_count;              /* similarly                         */
 
 /* ------------------------------------------------------------------------- */
@@ -287,16 +287,16 @@ static void sf_put(int c)
 
       switch (checksum_count) {
       case 0:
-        checksum_long += (((int32)(c & 0xFF)) << 24);
+        checksum_long += (((uint32)(c & 0xFF)) << 24);
         break;
       case 1:
-        checksum_long += (((int32)(c & 0xFF)) << 16);
+        checksum_long += (((uint32)(c & 0xFF)) << 16);
         break;
       case 2:
-        checksum_long += (((int32)(c & 0xFF)) << 8);
+        checksum_long += (((uint32)(c & 0xFF)) << 8);
         break;
       case 3:
-        checksum_long += ((int32)(c & 0xFF));
+        checksum_long += ((uint32)(c & 0xFF));
         break;
       }
       
