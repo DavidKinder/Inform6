@@ -276,7 +276,7 @@ extern int symbol_index(char *p, int hashcode)
     }
 
     len = strlen(p);
-    if (symbols_free_space+len+1 >= symbols_ceiling)
+    if (!symbols_free_space || symbols_free_space+len+1 >= symbols_ceiling)
     {   symbols_free_space
             = my_malloc(SYMBOLS_CHUNK_SIZE, "symbol names chunk");
         symbols_ceiling = symbols_free_space + SYMBOLS_CHUNK_SIZE;
