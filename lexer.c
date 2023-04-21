@@ -1682,7 +1682,9 @@ static void lexadds(char *str)
 }
 
 extern void get_next_token(void)
-{   int d, i, j, k, quoted_size, e, radix, context; int32 n; char *r;
+{   int d, i, j, k, quoted_size, e, radix, context;
+    uint32 n;
+    char *r;
     int floatend;
     int returning_a_put_back_token = TRUE;
     
@@ -1766,7 +1768,7 @@ extern void get_next_token(void)
 
             lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
-            circle[circle_position].value = n;
+            circle[circle_position].value = (int32)n;
             break;
 
             FloatNumber:

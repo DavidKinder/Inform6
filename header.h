@@ -567,14 +567,14 @@
 
 
 #define ReadInt32(ptr)                               \
-  (   (((int32)(((uchar *)(ptr))[0])) << 24)         \
-    | (((int32)(((uchar *)(ptr))[1])) << 16)         \
-    | (((int32)(((uchar *)(ptr))[2])) <<  8)         \
-    | (((int32)(((uchar *)(ptr))[3]))      ) )
+  (   (((uint32)(((uchar *)(ptr))[0])) << 24)         \
+    | (((uint32)(((uchar *)(ptr))[1])) << 16)         \
+    | (((uint32)(((uchar *)(ptr))[2])) <<  8)         \
+    | (((uint32)(((uchar *)(ptr))[3]))      ) )
 
 #define ReadInt16(ptr)                               \
-  (   (((int32)(((uchar *)(ptr))[0])) << 8)          \
-    | (((int32)(((uchar *)(ptr))[1]))     ) )
+  (   (((uint32)(((uchar *)(ptr))[0])) << 8)          \
+    | (((uint32)(((uchar *)(ptr))[1]))     ) )
 
 #define WriteInt32(ptr, val)                         \
   ((ptr)[0] = (uchar)(((int32)(val)) >> 24),         \

@@ -1210,7 +1210,9 @@ static void emit_token(const token_data *t)
             o1 = emitter_stack[emitter_sp - 1].op;
             if ((o1.marker == 0) && is_constant_ot(o1.type))
             {   switch(t->value)
-                {   case UNARY_MINUS_OP: x = -o1.value; goto FoldConstant;
+                {   case UNARY_MINUS_OP:
+                        x = (-(uint32)o1.value);
+                        goto FoldConstant;
                     case ARTNOT_OP: 
                          if (!glulx_mode)
                              x = (~o1.value) & 0xffff;
