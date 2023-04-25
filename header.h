@@ -1226,13 +1226,23 @@ typedef struct operator_s
 #define dstore_gm 3
 
 
-#define SYMBOL_TT    0                      /* value = index in symbol table */
-#define NUMBER_TT    1                      /* value = the number            */
-#define DQ_TT        2                      /* no value                      */
-#define SQ_TT        3                      /* no value                      */
-#define SEP_TT       4                      /* value = the _SEP code         */
-#define EOF_TT       5                      /* no value                      */
-#define UQ_TT        6                      /* no value                      */
+#define SYMBOL_TT    0                      /* symbol.
+                                               value = index in symbol table */
+#define NUMBER_TT    1                      /* number (including hex, float,
+                                               etc).
+                                               value = the number            */
+#define DQ_TT        2                      /* double-quoted string.
+                                               no value; look at the text    */
+#define SQ_TT        3                      /* single-quoted string.
+                                               no value                      */
+#define UQ_TT        4                      /* unquoted string; only when
+                                               dont_enter_into_symbol_table
+                                               is true.
+                                               no value                      */
+#define SEP_TT       5                      /* separator (punctuation).
+                                               value = the _SEP code         */
+#define EOF_TT       6                      /* end of file.
+                                               no value                      */
 
 #define STATEMENT_TT      100               /* a statement keyword           */
 #define SEGMENT_MARKER_TT 101               /* with/has/class etc.           */
