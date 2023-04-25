@@ -2686,6 +2686,7 @@ extern void  parse_code_block(int break_label, int continue_label,
 
 extern void  match_close_bracket(void);
 extern void  parse_statement(int break_label, int continue_label);
+extern void  parse_statement_singleexpr(assembly_operand AO);
 extern int   parse_label(void);
 
 /* ------------------------------------------------------------------------- */

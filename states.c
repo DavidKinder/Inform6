@@ -2743,6 +2743,39 @@ extern void parse_statement(int break_label, int continue_label)
         execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
 }
 
+extern void parse_statement_singleexpr(assembly_operand AO)
+{
+    int res;
+    int saved_entire_flag;
+    
+    res = parse_named_label_statements();
+    if (!res)
+        return;
+
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+
+    code_generate(AO, VOID_CONTEXT, -1);
+    
+    if (vivc_flag) {
+        panic_mode_error_recovery();
+    }
+    else {
+        /* StatementTerminator... */
+        get_next_token();
+        if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
+        {   ebf_error("';'", token_text);
+            put_token_back();
+        }
+    }
+
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
