@@ -455,7 +455,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         {   debug_flag = TRUE; continue;
         }
 
-        if (token_type != DQ_TT)
+        if (token_type != UQ_TT)
         {   if ((token_type == SEP_TT)
                 && (token_value == SEMICOLON_SEP)) break;
             ebf_error("local variable name or ';'", token_text);

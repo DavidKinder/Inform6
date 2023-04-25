@@ -1232,6 +1232,7 @@ typedef struct operator_s
 #define SQ_TT        3                      /* no value                      */
 #define SEP_TT       4                      /* value = the _SEP code         */
 #define EOF_TT       5                      /* no value                      */
+#define UQ_TT        6                      /* no value                      */
 
 #define STATEMENT_TT      100               /* a statement keyword           */
 #define SEGMENT_MARKER_TT 101               /* with/has/class etc.           */
