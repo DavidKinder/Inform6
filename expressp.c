@@ -1468,10 +1468,10 @@ static void show_node(int n, int depth, int annotate)
     if (ET[n].right != -1) show_node(ET[n].right, depth, annotate);
 }
 
-extern void show_tree(assembly_operand AO, int annotate)
-{   if (AO.type == EXPRESSION_OT) show_node(AO.value, 0, annotate);
+extern void show_tree(const assembly_operand *AO, int annotate)
+{   if (AO->type == EXPRESSION_OT) show_node(AO->value, 0, annotate);
     else
-    {   printf("Constant: "); print_operand(&AO, annotate);
+    {   printf("Constant: "); print_operand(AO, annotate);
         printf("\n");
     }
 }
@@ -1948,7 +1948,7 @@ extern assembly_operand parse_expression(int context)
             if (AO.type == EXPRESSION_OT)
             {   if (expr_trace_level >= 3)
                 {   printf("Tree before lvalue checking:\n");
-                    show_tree(AO, FALSE);
+                    show_tree(&AO, FALSE);
                 }
                 if (!glulx_mode)
                     check_property_operator(AO.value);
