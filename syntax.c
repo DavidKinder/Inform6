@@ -256,7 +256,9 @@ extern int parse_directive(int internal_flag)
     return !(parse_given_directive(internal_flag));
 }
 
-/* Check what's coming up after a switch case value. */
+/* Check what's coming up after a switch case value.
+   (This is "switch sign" in the sense of "worm sign", not like a signed
+   variable.) */
 static int switch_sign(void)
 {
     if ((token_type == SEP_TT)&&(token_value == COLON_SEP))   return 1;
@@ -555,7 +557,9 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         /*  Only check for the form of a case switch if the initial token
             isn't double-quoted text, as that would mean it was a print_ret
             statement: this is a mild ambiguity in the grammar. 
-            Action statements also cannot be cases. */
+            Action statements also cannot be cases.
+            We don't try to handle parenthesized expressions as cases
+            at the top level. */
 
         if ((token_type != DQ_TT) && (token_type != SEP_TT))
         {   get_next_token();
