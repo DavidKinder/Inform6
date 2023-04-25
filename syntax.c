@@ -341,9 +341,10 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
                 ebf_error("action (or fake action) name", token_text);
             }
         }
-        else
+        else {
             spec_stack[spec_sp] =
       code_generate(parse_expression(CONSTANT_CONTEXT), CONSTANT_CONTEXT, -1);
+        }
 
         misc_keywords.enabled = TRUE;
         get_next_token();
@@ -677,7 +678,21 @@ extern void parse_code_block(int break_label, int continue_label,
                 /*  Decide: is this an ordinary statement, or the start
                     of a new case?  */
 
+                /*  Again, double-quoted text is a print_ret statement. */
                 if (token_type == DQ_TT) goto NotASwitchCase;
+
+                if ((token_type == SEP_TT)&&(token_value == OPENB_SEP)) {
+                    /* An open-paren means we need to parse a full
+                       expression. */
+                    assembly_operand AO;
+                    put_token_back();
+                    AO = parse_expression(VOID_CONTEXT);
+                    //### if this looks constant and is followed by colon/etc, get into parse_switch_spec and then continue
+                    /* Otherwise, treat this as a statement. */
+                    sequence_point_follows = TRUE;
+                    parse_statement_singleexpr(AO);
+                    continue;
+                }
 
                 unary_minus_flag
                     = ((token_type == SEP_TT)&&(token_value == MINUS_SEP));
