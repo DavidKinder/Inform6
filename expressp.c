@@ -2088,6 +2088,60 @@ extern int test_for_incdec(assembly_operand AO)
     return s*(ET[ET[AO.value].down].value.value);
 }
 
+
+/* Determine whether this operand refers to a constant (as per
+   is_constant_ot()) *or* a comma-separated list of constants.
+   
+   "(1)" and "(1,2,3)" both count, and even "((1,2),3)", but
+   not "(1,(2,3))"; the list must be left-associated.
+
+   Backpatched constants (function names, etc) count as constants.
+   
+   Returns FALSE or the count of constants.
+*/
+extern int is_constant_op_list(const assembly_operand *o)
+{
+    int count = 0;
+    int n;
+
+    if (o->type != EXPRESSION_OT) {
+        if (is_constant_ot(o->type))
+            return 1;
+        else
+            return 0;
+    }
+
+    n = o->value;
+
+    // For some reason the top node is always a COMMA with just a .down.
+    if (operators[ET[n].operator_number].token_value != COMMA_SEP)
+        return 0;
+    if (ET[n].right != -1)
+        return 0;
+    n = ET[n].down;
+
+    while (TRUE) {
+        if (ET[n].right != -1) {
+            if (ET[ET[n].right].down != -1)
+                return 0;
+            if (!is_constant_ot(ET[ET[n].right].value.type))
+                return 0;
+            count++;
+        }
+
+        if (ET[n].down == -1) {
+            if (!is_constant_ot(ET[n].value.type))
+                return 0;
+            return count+1;
+        }
+        
+        if (operators[ET[n].operator_number].token_value != COMMA_SEP)
+            return 0;
+
+        n = ET[n].down;
+    }
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
