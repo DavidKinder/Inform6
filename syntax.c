@@ -315,11 +315,12 @@ static void compile_alternatives(assembly_operand switch_value, int n,
     compile_alternatives_g(switch_value, n, stack_level, label, flag);
 }
 
+static void generate_switch_spec(assembly_operand switch_value, int label, int label_after, int speccount);
+
 static void parse_switch_spec(assembly_operand switch_value, int label,
     int action_switch)
 {
-    int i, j, label_after = -1, spec_sp = 0;
-    int max_equality_args = ((!glulx_mode) ? 3 : 1);
+    int label_after = -1, spec_sp = 0;
 
     sequence_point_follows = FALSE;
 
@@ -363,92 +364,36 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
             case 1: goto GenSpecCode;
             case 3: if (label_after == -1) label_after = next_label++;
         }
-     } while(TRUE);
+    } while(TRUE);
 
-     GenSpecCode:
-
-     if ((spec_sp > max_equality_args) && (label_after == -1))
-         label_after = next_label++;
-
-     if (label_after == -1)
-     {   compile_alternatives(switch_value, spec_sp, 0, label, FALSE); return;
-     }
-
-     for (i=0; i<spec_sp;)
-     {
-         j=i; while ((j<spec_sp) && (spec_type[j] != 3)) j++;
-
-         if (j > i)
-         {   if (j-i > max_equality_args) j=i+max_equality_args;
-
-             if (j == spec_sp)
-                 compile_alternatives(switch_value, j-i, i, label, FALSE);
-             else
-                 compile_alternatives(switch_value, j-i, i, label_after, TRUE);
-
-             i=j;
-         }
-         else
-         {   
-           if (!glulx_mode) {
-             if (i == spec_sp - 2)
-             {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
-                     label, TRUE);
-                 assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
-                     label, TRUE);
-             }
-             else
-             {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
-                     next_label, TRUE);
-                 assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
-                     label_after, FALSE);
-                 assemble_label_no(next_label++);
-             }
-           }
-           else {
-             if (i == spec_sp - 2)
-             {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
-                     label);
-                 assembleg_2_branch(jgt_gc, switch_value, spec_stack[i+1],
-                     label);
-             }
-             else
-             {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
-                     next_label);
-                 assembleg_2_branch(jle_gc, switch_value, spec_stack[i+1],
-                     label_after);
-                 assemble_label_no(next_label++);
-             }
-           }
-           i = i+2;
-         }
-     }
-
-     assemble_label_no(label_after);
+ GenSpecCode:
+    generate_switch_spec(switch_value, label, label_after, spec_sp);
 }
 
-static void generate_switch_spec(assembly_operand switch_value, int label, int spec_sp)
+/* Generate code for a switch case. The case values are in spec_stack[]
+   and spec_type[]. */
+static void generate_switch_spec(assembly_operand switch_value, int label, int label_after, int speccount)
 {
-    int i, j, label_after = -1;
+    int i, j;
     int max_equality_args = ((!glulx_mode) ? 3 : 1);
 
     sequence_point_follows = FALSE;
 
-    if ((spec_sp > max_equality_args) && (label_after == -1))
+    if ((speccount > max_equality_args) && (label_after == -1))
         label_after = next_label++;
 
     if (label_after == -1)
-    {   compile_alternatives(switch_value, spec_sp, 0, label, FALSE); return;
+    {   compile_alternatives(switch_value, speccount, 0, label, FALSE); return;
     }
 
-    for (i=0; i<spec_sp;)
+    for (i=0; i<speccount;)
     {
-        j=i; while ((j<spec_sp) && (spec_type[j] != 3)) j++;
+        j=i; while ((j<speccount) && (spec_type[j] != 3)) j++;
 
         if (j > i)
         {   if (j-i > max_equality_args) j=i+max_equality_args;
 
-            if (j == spec_sp)
+            if (j == speccount)
                 compile_alternatives(switch_value, j-i, i, label, FALSE);
             else
                 compile_alternatives(switch_value, j-i, i, label_after, TRUE);
@@ -458,7 +403,7 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int s
         else
         {   
           if (!glulx_mode) {
-            if (i == spec_sp - 2)
+            if (i == speccount - 2)
             {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
                     label, TRUE);
                 assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
@@ -473,7 +418,7 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int s
             }
           }
           else {
-            if (i == spec_sp - 2)
+            if (i == speccount - 2)
             {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
                     label);
                 assembleg_2_branch(jgt_gc, switch_value, spec_stack[i+1],
@@ -796,7 +741,7 @@ extern void parse_code_block(int break_label, int continue_label,
                         switch_clause_made = TRUE;
                         
                         AO = temp_var1;
-                        generate_switch_spec(AO, switch_label, constcount);
+                        generate_switch_spec(AO, switch_label, -1, constcount);
                         continue;
                     }
                     
