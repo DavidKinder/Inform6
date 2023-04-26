@@ -434,12 +434,6 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int s
 
     sequence_point_follows = FALSE;
 
-    if (spec_sp >= MAX_SPEC_STACK)
-    {   error("At most 32 values can be given in a single 'switch' case");
-        panic_mode_error_recovery();
-        return;
-    }
-
     if ((spec_sp > max_equality_args) && (label_after == -1))
         label_after = next_label++;
 
@@ -771,6 +765,13 @@ extern void parse_code_block(int break_label, int continue_label,
                     constcount = test_constant_op_list(&AO, spec_stack, MAX_SPEC_STACK);
                     if (constcount && ((token_type == SEP_TT)&&(token_value == COLON_SEP))) {
                         int ix;
+
+                        if (constcount > MAX_SPEC_STACK)
+                        {   error("At most 32 values can be given in a single 'switch' case");
+                            panic_mode_error_recovery();
+                            continue;
+                        }
+
                         get_next_token();
                         /* Gotta fill in the spec_type values for the
                            spec_stacks. */
