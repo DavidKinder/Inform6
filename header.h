@@ -2372,7 +2372,7 @@ extern void clear_expression_space(void);
 extern void show_tree(const assembly_operand *AO, int annotate);
 extern assembly_operand parse_expression(int context);
 extern int test_for_incdec(assembly_operand AO);
-extern int  is_constant_op_list(const assembly_operand *o);
+extern int  test_constant_op_list(const assembly_operand *AO, assembly_operand *ops_found, int max_ops_found);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "files"                                          */

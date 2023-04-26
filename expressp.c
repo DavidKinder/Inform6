@@ -2089,31 +2089,44 @@ extern int test_for_incdec(assembly_operand AO)
 }
 
 
-/* Determine whether this operand refers to a constant (as per
-   is_constant_ot()) *or* a comma-separated list of constants.
+/* Determine if the operand (a parsed expression) is a constant (as
+   per is_constant_ot()) or a comma-separated list of such constants.
    
    "(1)" and "(1,2,3)" both count, and even "((1,2),3)", but
    not "(1,(2,3))"; the list must be left-associated.
 
-   Backpatched constants (function names, etc) count as constants.
+   Backpatched constants (function names, etc) are acceptable, as are
+   folded constant expressions. Variables are right out.
+
+   The constants are stored in the ops_found array, up to a maximum of
+   max_ops_found. For Inform parsing reasons, the array list is backwards
+   from the order found.
+
+   Returns the number of constants found. If the expression is not a list of
+   constants, returns zero.
    
-   Returns FALSE or the count of constants.
+   (The return value may be more than max_ops_found, in which case we weren't
+   able to return them all in the array.)
 */
-extern int is_constant_op_list(const assembly_operand *o)
+extern int test_constant_op_list(const assembly_operand *AO, assembly_operand *ops_found, int max_ops_found)
 {
     int count = 0;
     int n;
 
-    if (o->type != EXPRESSION_OT) {
-        if (is_constant_ot(o->type))
-            return 1;
-        else
+    if (AO->type != EXPRESSION_OT) {
+        if (!is_constant_ot(AO->type))
             return 0;
+
+        if (ops_found && max_ops_found > 0)
+            ops_found[0] = *AO;
+        return 1;
     }
 
-    n = o->value;
+    n = AO->value;
 
-    // For some reason the top node is always a COMMA with just a .down.
+    /* For some reason the top node is always a COMMA with no .right,
+       just a .down. Should we rely on this? For now yes. */
+
     if (operators[ET[n].operator_number].token_value != COMMA_SEP)
         return 0;
     if (ET[n].right != -1)
@@ -2126,13 +2139,20 @@ extern int is_constant_op_list(const assembly_operand *o)
                 return 0;
             if (!is_constant_ot(ET[ET[n].right].value.type))
                 return 0;
+            
+            if (ops_found && max_ops_found > count)
+                ops_found[count] = ET[ET[n].right].value;
             count++;
         }
 
         if (ET[n].down == -1) {
             if (!is_constant_ot(ET[n].value.type))
                 return 0;
-            return count+1;
+            
+            if (ops_found && max_ops_found > count)
+                ops_found[count] = ET[n].value;
+            count++;
+            return count;
         }
         
         if (operators[ET[n].operator_number].token_value != COMMA_SEP)
