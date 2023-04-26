@@ -762,10 +762,46 @@ extern void parse_code_block(int break_label, int continue_label,
                     /* An open-paren means we need to parse a full
                        expression. */
                     assembly_operand AO;
+                    int constcount;
                     put_token_back();
                     AO = parse_expression(VOID_CONTEXT);
-                    //### if this looks constant and is followed by colon/etc, get into parse_switch_spec and then continue
-                    /* Otherwise, treat this as a statement. */
+                    /* If this expression is a constant or a list of constants,
+                       and it's followed by a colon, we'll handle it as a
+                       switch case. */
+                    constcount = test_constant_op_list(&AO, spec_stack, MAX_SPEC_STACK);
+                    if (constcount && ((token_type == SEP_TT)&&(token_value == COLON_SEP))) {
+                        int ix;
+                        get_next_token();
+                        /* Gotta fill in the spec_type values for the
+                           spec_stacks. */
+                        for (ix=0; ix<constcount-1; ix++)
+                            spec_type[ix] = 2; /* comma */
+                        spec_type[constcount-1] = 1; /* colon */
+                        
+                        /* The rest of this is parallel to the
+                           parse_switch_spec() case below. */
+                        if (default_clause_made)
+                            error("'default' must be the last 'switch' case");
+                        
+                        if (switch_clause_made)
+                        {   if (!execution_never_reaches_here)
+                                {   sequence_point_follows = FALSE;
+                                    assemble_jump(break_label);
+                                }
+                            assemble_label_no(switch_label);
+                        }
+                        
+                        switch_label = next_label++;
+                        switch_clause_made = TRUE;
+                        
+                        AO = temp_var1;
+                        generate_switch_spec(AO, switch_label, constcount);
+                        continue;
+                    }
+                    
+                    /* Otherwise, treat this as a statement. Imagine
+                       we've jumped down to NotASwitchCase, except that
+                       we have the expression AO already parsed. */
                     sequence_point_follows = TRUE;
                     parse_statement_singleexpr(AO);
                     continue;
