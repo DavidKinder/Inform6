@@ -924,7 +924,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         dont_enter_into_symbol_table = TRUE;
         get_next_token();
         dont_enter_into_symbol_table = FALSE;
-        if (token_type != DQ_TT)
+        if (token_type != UQ_TT)
             return ebf_error_recover("string of switches", token_text);
         if (!ignore_switches_switch)
         {

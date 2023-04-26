@@ -885,7 +885,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
     get_next_token();
     dont_enter_into_symbol_table = FALSE;
 
-    if (token_type != DQ_TT)
+    if (token_type != UQ_TT)
     {   discard_token_location(beginning_debug_location);
         ebf_error("name of new or existing action", token_text);
         panic_mode_error_recovery();

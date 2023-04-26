@@ -85,7 +85,11 @@ static void parse_action(void)
         codegen_action = TRUE;
     }
     else
-    {   codegen_action = FALSE;
+    {
+        if (token_type != UQ_TT) {
+            ebf_error("name of action", token_text);
+        }
+        codegen_action = FALSE;
         AO2 = action_of_name(token_text);
     }
 

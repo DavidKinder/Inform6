@@ -16,10 +16,9 @@ int total_source_line_count,            /* Number of source lines so far     */
                                            (generally as a result of an error
                                            message or the start of pass)     */
     dont_enter_into_symbol_table,       /* Return names as text (with
-                                           token type DQ_TT, i.e., as if
-                                           they had double-quotes around)
-                                           and not as entries in the symbol
-                                           table, when TRUE. If -2, only the
+                                           token type UQ_TT) and not as
+                                           entries in the symbol table,
+                                           when TRUE. If -2, only the
                                            keyword table is searched.        */
     return_sp_as_variable;              /* When TRUE, the word "sp" denotes
                                            the stack pointer variable
@@ -323,6 +322,8 @@ extern void describe_token_triple(const char *text, int32 value, int type)
         case DQ_TT:              printf("string \"%s\"", text);
                                  break;
         case SQ_TT:              printf("string '%s'", text);
+                                 break;
+        case UQ_TT:              printf("barestring %s", text);
                                  break;
         case SEP_TT:             printf("separator '%s'", text);
                                  break;
@@ -1936,7 +1937,7 @@ extern void get_next_token(void)
             }
 
             if (dont_enter_into_symbol_table)
-            {   circle[circle_position].type = DQ_TT;
+            {   circle[circle_position].type = UQ_TT;
                 circle[circle_position].value = 0;
                 if (dont_enter_into_symbol_table == -2)
                     interpret_identifier(lextexts[lex_index].text, circle_position, TRUE);

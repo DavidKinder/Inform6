@@ -43,6 +43,8 @@ most likely indicates an oversight in the game's source code.
 co-ordinates.
 <li><p>The case of a property having too many entries is now always an error, and is checked correctly in the case
 of compiling to Z-code V3.
+<li><p>In several places (local variable declarations, action names and the <tt>Switches</tt> directive) the compiler would
+accept quoted strings and then ignore the quotes. This is now an error.
 </ul>
 
 <h2>Inform 6.41</h2>
