@@ -427,6 +427,79 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
      assemble_label_no(label_after);
 }
 
+static void generate_switch_spec(assembly_operand switch_value, int label, int spec_sp)
+{
+    int i, j, label_after = -1;
+    int max_equality_args = ((!glulx_mode) ? 3 : 1);
+
+    sequence_point_follows = FALSE;
+
+    if (spec_sp >= MAX_SPEC_STACK)
+    {   error("At most 32 values can be given in a single 'switch' case");
+        panic_mode_error_recovery();
+        return;
+    }
+
+    if ((spec_sp > max_equality_args) && (label_after == -1))
+        label_after = next_label++;
+
+    if (label_after == -1)
+    {   compile_alternatives(switch_value, spec_sp, 0, label, FALSE); return;
+    }
+
+    for (i=0; i<spec_sp;)
+    {
+        j=i; while ((j<spec_sp) && (spec_type[j] != 3)) j++;
+
+        if (j > i)
+        {   if (j-i > max_equality_args) j=i+max_equality_args;
+
+            if (j == spec_sp)
+                compile_alternatives(switch_value, j-i, i, label, FALSE);
+            else
+                compile_alternatives(switch_value, j-i, i, label_after, TRUE);
+
+            i=j;
+        }
+        else
+        {   
+          if (!glulx_mode) {
+            if (i == spec_sp - 2)
+            {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
+                    label, TRUE);
+                assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
+                    label, TRUE);
+            }
+            else
+            {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
+                    next_label, TRUE);
+                assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
+                    label_after, FALSE);
+                assemble_label_no(next_label++);
+            }
+          }
+          else {
+            if (i == spec_sp - 2)
+            {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
+                    label);
+                assembleg_2_branch(jgt_gc, switch_value, spec_stack[i+1],
+                    label);
+            }
+            else
+            {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
+                    next_label);
+                assembleg_2_branch(jle_gc, switch_value, spec_stack[i+1],
+                    label_after);
+                assemble_label_no(next_label++);
+            }
+          }
+          i = i+2;
+        }
+    }
+
+    assemble_label_no(label_after);
+}
+
 extern int32 parse_routine(char *source, int embedded_flag, char *name,
     int veneer_flag, int r_symbol)
 {   int32 packed_address; int i; int debug_flag = FALSE;
