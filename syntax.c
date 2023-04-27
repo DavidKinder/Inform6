@@ -726,6 +726,11 @@ extern void parse_code_block(int break_label, int continue_label,
                         
                         /* The rest of this is parallel to the
                            parse_switch_spec() case below. */
+                        /* Before you ask: yes, the spec_stacks values
+                           appear in the reverse order from how
+                           parse_switch_spec() would do it. The results
+                           are the same because we're just comparing
+                           temp_var1 with a bunch of constants. */
                         if (default_clause_made)
                             error("'default' must be the last 'switch' case");
                         
