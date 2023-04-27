@@ -704,12 +704,16 @@ extern void parse_code_block(int break_label, int continue_label,
                     int constcount;
                     put_token_back();
                     AO = parse_expression(VOID_CONTEXT);
-                    /* If this expression is a constant or a list of constants,
-                       and it's followed by a colon, we'll handle it as a
-                       switch case. */
+                    /* If this expression is followed by a colon, we'll
+                       handle it as a switch case. */
                     constcount = test_constant_op_list(&AO, spec_stack, MAX_SPEC_STACK);
-                    if (constcount && ((token_type == SEP_TT)&&(token_value == COLON_SEP))) {
+                    if ((token_type == SEP_TT)&&(token_value == COLON_SEP)) {
                         int ix;
+
+                        if (!constcount)
+                        {
+                            ebf_error("constant", "<expression>");
+                        }
 
                         if (constcount > MAX_SPEC_STACK)
                         {   error("At most 32 values can be given in a single 'switch' case");
