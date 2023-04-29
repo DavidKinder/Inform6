@@ -141,17 +141,17 @@ static void select_target(int targ)
 
     if (INDIV_PROP_START < 256) {
         INDIV_PROP_START = 256;
-        warning_numbered("INDIV_PROP_START should be at least 256 in Glulx. Setting to", INDIV_PROP_START);
+        warning_fmt("INDIV_PROP_START should be at least 256 in Glulx; setting to %d", INDIV_PROP_START);
     }
 
     if (NUM_ATTR_BYTES % 4 != 3) {
       NUM_ATTR_BYTES += (3 - (NUM_ATTR_BYTES % 4)); 
-      warning_numbered("NUM_ATTR_BYTES must be a multiple of four, plus three. Increasing to", NUM_ATTR_BYTES);
+      warning_fmt("NUM_ATTR_BYTES must be a multiple of four, plus three; increasing to %d", NUM_ATTR_BYTES);
     }
 
     if (DICT_CHAR_SIZE != 1 && DICT_CHAR_SIZE != 4) {
       DICT_CHAR_SIZE = 4;
-      warning_numbered("DICT_CHAR_SIZE must be either 1 or 4. Setting to", DICT_CHAR_SIZE);
+      warning_fmt("DICT_CHAR_SIZE must be either 1 or 4; setting to %d", DICT_CHAR_SIZE);
     }
   }
 
