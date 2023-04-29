@@ -199,6 +199,16 @@ extern void fatalerror(char *s)
     exit(1);
 }
 
+extern void fatalerror_fmt(const char *format, ...)
+{
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
+    ellipsize_error_message_buff();
+    fatalerror(error_message_buff);
+}
+
 extern void fatalerror_named(char *m, char *fn)
 {   snprintf(error_message_buff, ERROR_BUFLEN, "%s \"%s\"", m, fn);
     ellipsize_error_message_buff();

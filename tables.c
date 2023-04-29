@@ -693,11 +693,10 @@ or less.");
     }
 
     if (excess > 0)
-    {   char memory_full_error[80];
-        sprintf(memory_full_error,
+    {
+        fatalerror_fmt(
             "The %s exceeds version-%d limit (%dK) by %d bytes",
              output_called, version_number, limit, excess);
-        fatalerror(memory_full_error);
     }
 
     /*  --------------------------- Offsets -------------------------------- */
