@@ -2320,7 +2320,7 @@ extern ErrorPosition ErrorReport;
 extern void fatalerror(char *s) NORETURN;
 extern void fatalerror_fmt(const char *format, ...) NORETURN;
 extern void fatalerror_named(char *s1, char *s2) NORETURN;
-extern void memory_out_error(int32 size, int32 howmany, char *name) NORETURN;
+extern void fatalerror_memory_out(int32 size, int32 howmany, char *name) NORETURN;
 extern void error_max_dynamic_strings(int index);
 extern void error_max_abbreviations(int index);
 extern void error(char *s);

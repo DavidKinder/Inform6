@@ -215,7 +215,7 @@ extern void fatalerror_named(char *m, char *fn)
     fatalerror(error_message_buff);
 }
 
-extern void memory_out_error(int32 size, int32 howmany, char *name)
+extern void fatalerror_memory_out(int32 size, int32 howmany, char *name)
 {   if (howmany == 1)
         snprintf(error_message_buff, ERROR_BUFLEN,
             "Run out of memory allocating %d bytes for %s", size, name);
