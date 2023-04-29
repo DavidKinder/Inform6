@@ -2333,7 +2333,6 @@ extern void unicode_char_error(char *s, int32 uni);
 extern void no_such_label(char *lname);
 extern void warning(char *s);
 extern void warning_fmt(const char *format, ...);
-extern void warning_numbered(char *s1, int val);
 extern void warning_named(char *s1, char *s2);
 extern void warning_at(char *name, brief_location report_line);
 extern void symtype_warning(char *context, char *name, char *type, char *wanttype);

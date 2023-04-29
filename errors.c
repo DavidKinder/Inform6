@@ -416,13 +416,6 @@ extern void warning_fmt(const char *format, ...)
     message(2,error_message_buff);
 }
 
-extern void warning_numbered(char *s1, int val)
-{   if (nowarnings_switch) { no_suppressed_warnings++; return; }
-    snprintf(error_message_buff, ERROR_BUFLEN,"%s %d.", s1, val);
-    ellipsize_error_message_buff();
-    message(2,error_message_buff);
-}
-
 extern void warning_named(char *s1, char *s2)
 {
     if (nowarnings_switch) { no_suppressed_warnings++; return; }
