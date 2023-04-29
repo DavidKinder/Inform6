@@ -313,10 +313,6 @@ extern void error_named_at(char *s1, char *s2, brief_location report_line)
     ErrorReport = E; concise_switch = i;
 }
 
-extern void no_such_label(char *lname)
-{   error_named("No such label as",lname);
-}
-
 extern void ebf_error(char *s1, char *s2)
 {   snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found %s", s1, s2);
     ellipsize_error_message_buff();
