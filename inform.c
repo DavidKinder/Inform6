@@ -162,15 +162,15 @@ static void select_target(int targ)
 
   if (DICT_WORD_SIZE > MAX_DICT_WORD_SIZE) {
     DICT_WORD_SIZE = MAX_DICT_WORD_SIZE;
-    warning_numbered(
-      "DICT_WORD_SIZE cannot exceed MAX_DICT_WORD_SIZE; resetting", 
+    warning_fmt(
+      "DICT_WORD_SIZE cannot exceed MAX_DICT_WORD_SIZE; resetting to %d", 
       MAX_DICT_WORD_SIZE);
     /* MAX_DICT_WORD_SIZE can be increased in header.h without fear. */
   }
   if (NUM_ATTR_BYTES > MAX_NUM_ATTR_BYTES) {
     NUM_ATTR_BYTES = MAX_NUM_ATTR_BYTES;
-    warning_numbered(
-      "NUM_ATTR_BYTES cannot exceed MAX_NUM_ATTR_BYTES; resetting",
+    warning_fmt(
+      "NUM_ATTR_BYTES cannot exceed MAX_NUM_ATTR_BYTES; resetting to %d",
       MAX_NUM_ATTR_BYTES);
     /* MAX_NUM_ATTR_BYTES can be increased in header.h without fear. */
   }
