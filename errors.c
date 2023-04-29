@@ -321,8 +321,17 @@ extern void ebf_error(char *s1, char *s2)
 
 extern void ebf_cur_token_error(char *s)
 {
-    /* This is "...but found the current token_text" */
-    snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found %s", s, token_text);
+    /* This is "...but found (the current token_text)" */
+    if (token_type == DQ_TT) {
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found \"%s\"", s, token_text);
+    }
+    else if (token_type == SQ_TT) {
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found '%s'", s, token_text);
+    }
+    else {
+        /* Symbols, unquoted strings, and numbers can be printed directly. EOF will have "<end of file>" in token_text. */
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found %s", s, token_text);
+    }
     
     ellipsize_error_message_buff();
     error(error_message_buff);
