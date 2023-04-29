@@ -2327,6 +2327,7 @@ extern void error_fmt(const char *format, ...);
 extern void error_named(char *s1, char *s2);
 extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
+extern void ebf_cur_token_error(char *s);
 extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line);
 extern void char_error(char *s, int ch);
 extern void unicode_char_error(char *s, int32 uni);
