@@ -1498,13 +1498,12 @@ not 'private':", token_text);
             }
             else
             if (symbols[defined_this_segment[i]].value == symbols[token_value].value)
-            {   char error_b[128+2*MAX_IDENTIFIER_LENGTH];
-                sprintf(error_b,
+            {
+                error_fmt(
                     "Property given twice in the same declaration, because \
-the names '%s' and '%s' actually refer to the same property",
+the names \"%s\" and \"%s\" actually refer to the same property",
                     symbols[defined_this_segment[i]].name,
                     symbols[token_value].name);
-                error(error_b);
             }
 
         property_name_symbol = token_value;
