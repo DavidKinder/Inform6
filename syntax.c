@@ -470,7 +470,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         }
 
         if (no_locals == MAX_LOCAL_VARIABLES-1)
-        {   error_numbered("Too many local variables for a routine; max is",
+        {   error_fmt("Too many local variables for a routine; max is %d",
                 MAX_LOCAL_VARIABLES-1);
             panic_mode_error_recovery();
             break;

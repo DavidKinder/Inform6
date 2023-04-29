@@ -119,9 +119,9 @@ game to get an extra 16)");
  else {
     if (no_attributes==NUM_ATTR_BYTES*8) {
       discard_token_location(beginning_debug_location);
-      error_numbered(
+      error_fmt(
         "All attributes already declared -- increase NUM_ATTR_BYTES to use \
-more than", 
+more than %d", 
         NUM_ATTR_BYTES*8);
       panic_mode_error_recovery(); 
       put_token_back();

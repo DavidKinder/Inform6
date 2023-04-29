@@ -273,6 +273,16 @@ extern void error(char *s)
     message(1,s);
 }
 
+extern void error_fmt(const char *format, ...)
+{
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
+    ellipsize_error_message_buff();
+    error(error_message_buff);
+}
+
 extern void error_named(char *s1, char *s2)
 {   snprintf(error_message_buff, ERROR_BUFLEN,"%s \"%s\"",s1,s2);
     ellipsize_error_message_buff();
