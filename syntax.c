@@ -323,7 +323,7 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
 
     do
     {   if (spec_sp >= MAX_SPEC_STACK)
-        {   error("At most 32 values can be given in a single 'switch' case");
+        {   error_fmt("At most %d values can be given in a single 'switch' case", MAX_SPEC_STACK);
             panic_mode_error_recovery();
             return;
         }
