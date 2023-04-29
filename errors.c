@@ -405,6 +405,17 @@ extern void warning(char *s1)
     message(2,s1);
 }
 
+extern void warning_fmt(const char *format, ...)
+{
+    if (nowarnings_switch) { no_suppressed_warnings++; return; }
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
+    ellipsize_error_message_buff();
+    message(2,error_message_buff);
+}
+
 extern void warning_numbered(char *s1, int val)
 {   if (nowarnings_switch) { no_suppressed_warnings++; return; }
     snprintf(error_message_buff, ERROR_BUFLEN,"%s %d.", s1, val);
