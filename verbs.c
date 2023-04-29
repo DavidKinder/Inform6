@@ -552,7 +552,7 @@ static void register_verb(char *English_verb, int number)
        MAX_DICT_WORD_SIZE is 40.) */
     entrysize = strlen(English_verb)+4;
     if (entrysize > MAX_VERB_WORD_SIZE+4)
-        error_numbered("Verb word is too long -- max length is", MAX_VERB_WORD_SIZE);
+        error_fmt("Verb word is too long -- max length is %d", MAX_VERB_WORD_SIZE);
     ensure_memory_list_available(&English_verb_list_memlist, English_verb_list_size + entrysize);
     top = English_verb_list + English_verb_list_size;
     English_verb_list_size += entrysize;
