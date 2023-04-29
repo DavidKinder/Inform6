@@ -2325,7 +2325,6 @@ extern void error_max_abbreviations(int index);
 extern void error(char *s);
 extern void error_fmt(const char *format, ...);
 extern void error_named(char *s1, char *s2);
-extern void error_numbered(char *s1, int val);
 extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
 extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line);

@@ -289,13 +289,6 @@ extern void error_named(char *s1, char *s2)
     error(error_message_buff);
 }
 
-extern void error_numbered(char *s1, int val)
-{
-    snprintf(error_message_buff, ERROR_BUFLEN,"%s %d.",s1,val);
-    ellipsize_error_message_buff();
-    error(error_message_buff);
-}
-
 extern void error_named_at(char *s1, char *s2, brief_location report_line)
 {   int i;
 
