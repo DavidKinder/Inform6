@@ -347,12 +347,10 @@ Advanced game to get 32 more)");
     }
     else {
         if (no_properties==INDIV_PROP_START) {
-            char error_b[128];
             discard_token_location(beginning_debug_location);
-            sprintf(error_b,
+            error_fmt(
                 "All %d properties already declared (increase INDIV_PROP_START to get more)",
                 INDIV_PROP_START-3);
-            error(error_b);
             panic_mode_error_recovery(); 
             put_token_back();
             return;
