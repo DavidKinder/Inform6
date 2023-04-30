@@ -1304,7 +1304,7 @@ static void assembleg_macro(const assembly_instruction *AI)
             AMO_1 = AI->operand[1];
             AMO_2 = AI->operand[2];
             if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
-                // addr is on the stack
+                /* addr is on the stack */
                 assembleg_store(temp_var3, stack_pointer);
                 assembleg_3(aload_gc, temp_var3, one_operand, AMO_1);
                 assembleg_3(aload_gc, temp_var3, zero_operand, AMO_2);
@@ -1320,7 +1320,7 @@ static void assembleg_macro(const assembly_instruction *AI)
             AMO_1 = AI->operand[1];
             AMO_2 = AI->operand[2];
             if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
-                // addr is on the stack
+                /* addr is on the stack */
                 assembleg_store(temp_var3, stack_pointer);
                 assembleg_3(astore_gc, temp_var3, zero_operand, AMO_1);
                 assembleg_3(astore_gc, temp_var3, one_operand, AMO_2);

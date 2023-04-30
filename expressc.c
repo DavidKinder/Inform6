@@ -2988,7 +2988,7 @@ assembly_operand code_generate(assembly_operand AO, int context, int label)
     }
 
     if (expr_trace_level >= 2)
-    {   printf("Raw parse tree:\n"); show_tree(AO, FALSE);
+    {   printf("Raw parse tree:\n"); show_tree(&AO, FALSE);
     }
 
     if (context == CONDITION_CONTEXT)
@@ -3008,7 +3008,7 @@ assembly_operand code_generate(assembly_operand AO, int context, int label)
             default: printf("* ILLEGAL *"); break;
         }
         printf(" context with annotated tree:\n");
-        show_tree(AO, TRUE);
+        show_tree(&AO, TRUE);
     }
 
     generate_code_from(AO.value, (context==VOID_CONTEXT));
