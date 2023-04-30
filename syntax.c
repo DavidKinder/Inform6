@@ -716,7 +716,7 @@ extern void parse_code_block(int break_label, int continue_label,
                         }
 
                         if (constcount > MAX_SPEC_STACK)
-                        {   error("At most 32 values can be given in a single 'switch' case");
+                        {   error_fmt("At most %d values can be given in a single 'switch' case", MAX_SPEC_STACK);
                             panic_mode_error_recovery();
                             continue;
                         }
