@@ -321,7 +321,9 @@ extern void ebf_error(char *s1, char *s2)
 
 extern void ebf_cur_token_error(char *s)
 {
-    /* This is "...but found (the current token_text)" */
+    /* This is "Expected (s) but found (the current token_text)". We use
+       token_type as a hint for how to display token_text. */
+    
     if (token_type == DQ_TT) {
         snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found \"%s\"", s, token_text);
     }
