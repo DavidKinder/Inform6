@@ -817,6 +817,8 @@ static void parse_statement_z(int break_label, int continue_label)
     if (token_type == EOF_TT)
     {   ebf_error("statement", token_text); return; }
 
+    /* If we don't see a keyword, this must be a function call or
+       other expression-with-side-effects. */
     if (token_type != STATEMENT_TT)
     {   put_token_back();
         AO = parse_expression(VOID_CONTEXT);
@@ -1787,6 +1789,8 @@ static void parse_statement_g(int break_label, int continue_label)
     if (token_type == EOF_TT)
     {   ebf_error("statement", token_text); return; }
 
+    /* If we don't see a keyword, this must be a function call or
+       other expression-with-side-effects. */
     if (token_type != STATEMENT_TT)
     {   put_token_back();
         AO = parse_expression(VOID_CONTEXT);
@@ -2740,6 +2744,48 @@ extern void parse_statement(int break_label, int continue_label)
         parse_statement_z(break_label, continue_label);
     else
         parse_statement_g(break_label, continue_label);
+
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
+}
+
+/* This does the same work as parse_statement(), but it's called if you've
+   already parsed an expression (in void context) and you want to generate
+   it as a statement. Essentially it's a copy of parse_statement() and
+   parse_statement_z/g(), except we skip straight to the "expression-with-
+   side-effects" bit and omit everything else.
+
+   The caller doesn't need to pass break_label/continue_label; they're
+   not used for this code path.
+*/
+extern void parse_statement_singleexpr(assembly_operand AO)
+{
+    int res;
+    int saved_entire_flag;
+    
+    res = parse_named_label_statements();
+    if (!res)
+        return;
+
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+
+    code_generate(AO, VOID_CONTEXT, -1);
+    
+    if (vivc_flag) {
+        panic_mode_error_recovery();
+    }
+    else {
+        /* StatementTerminator... */
+        get_next_token();
+        if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
+        {   ebf_error("';'", token_text);
+            put_token_back();
+        }
+    }
 
     if (saved_entire_flag)
         execution_never_reaches_here |= EXECSTATE_ENTIRE;
