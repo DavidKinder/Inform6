@@ -1468,10 +1468,10 @@ static void show_node(int n, int depth, int annotate)
     if (ET[n].right != -1) show_node(ET[n].right, depth, annotate);
 }
 
-extern void show_tree(assembly_operand AO, int annotate)
-{   if (AO.type == EXPRESSION_OT) show_node(AO.value, 0, annotate);
+extern void show_tree(const assembly_operand *AO, int annotate)
+{   if (AO->type == EXPRESSION_OT) show_node(AO->value, 0, annotate);
     else
-    {   printf("Constant: "); print_operand(&AO, annotate);
+    {   printf("Constant: "); print_operand(AO, annotate);
         printf("\n");
     }
 }
@@ -1948,7 +1948,7 @@ extern assembly_operand parse_expression(int context)
             if (AO.type == EXPRESSION_OT)
             {   if (expr_trace_level >= 3)
                 {   printf("Tree before lvalue checking:\n");
-                    show_tree(AO, FALSE);
+                    show_tree(&AO, FALSE);
                 }
                 if (!glulx_mode)
                     check_property_operator(AO.value);
@@ -2086,6 +2086,80 @@ extern int test_for_incdec(assembly_operand AO)
     if (ET[ET[AO.value].down].down != -1) return 0;
     if (!is_variable_ot(ET[ET[AO.value].down].value.type)) return 0;
     return s*(ET[ET[AO.value].down].value.value);
+}
+
+
+/* Determine if the operand (a parsed expression) is a constant (as
+   per is_constant_ot()) or a comma-separated list of such constants.
+   
+   "(1)" and "(1,2,3)" both count, and even "((1,2),3)", but
+   not "(1,(2,3))"; the list must be left-associated.
+
+   Backpatched constants (function names, etc) are acceptable, as are
+   folded constant expressions. Variables are right out.
+
+   The constants are stored in the ops_found array, up to a maximum of
+   max_ops_found. For Inform parsing reasons, the array list is backwards
+   from the order found.
+
+   Returns the number of constants found. If the expression is not a list of
+   constants, returns zero.
+   
+   (The return value may be more than max_ops_found, in which case we weren't
+   able to return them all in the array.)
+*/
+extern int test_constant_op_list(const assembly_operand *AO, assembly_operand *ops_found, int max_ops_found)
+{
+    int count = 0;
+    int n;
+
+    if (AO->type != EXPRESSION_OT) {
+        if (!is_constant_ot(AO->type))
+            return 0;
+
+        if (ops_found && max_ops_found > 0)
+            ops_found[0] = *AO;
+        return 1;
+    }
+
+    n = AO->value;
+
+    /* For some reason the top node is always a COMMA with no .right,
+       just a .down. Should we rely on this? For now yes. */
+
+    if (operators[ET[n].operator_number].token_value != COMMA_SEP)
+        return 0;
+    if (ET[n].right != -1)
+        return 0;
+    n = ET[n].down;
+
+    while (TRUE) {
+        if (ET[n].right != -1) {
+            if (ET[ET[n].right].down != -1)
+                return 0;
+            if (!is_constant_ot(ET[ET[n].right].value.type))
+                return 0;
+            
+            if (ops_found && max_ops_found > count)
+                ops_found[count] = ET[ET[n].right].value;
+            count++;
+        }
+
+        if (ET[n].down == -1) {
+            if (!is_constant_ot(ET[n].value.type))
+                return 0;
+            
+            if (ops_found && max_ops_found > count)
+                ops_found[count] = ET[n].value;
+            count++;
+            return count;
+        }
+        
+        if (operators[ET[n].operator_number].token_value != COMMA_SEP)
+            return 0;
+
+        n = ET[n].down;
+    }
 }
 
 /* ========================================================================= */

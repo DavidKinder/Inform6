@@ -2380,9 +2380,10 @@ extern int glulx_system_constant_list[];
 extern int32 value_of_system_constant(int t);
 extern char *name_of_system_constant(int t);
 extern void clear_expression_space(void);
-extern void show_tree(assembly_operand AO, int annotate);
+extern void show_tree(const assembly_operand *AO, int annotate);
 extern assembly_operand parse_expression(int context);
 extern int test_for_incdec(assembly_operand AO);
+extern int  test_constant_op_list(const assembly_operand *AO, assembly_operand *ops_found, int max_ops_found);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "files"                                          */
@@ -2527,6 +2528,7 @@ extern void discard_token_location(debug_location_beginning beginning);
 extern debug_locations get_token_location_end(debug_location_beginning beginning);
 
 extern void describe_token_triple(const char *text, int32 value, int type);
+#define describe_current_token() describe_token_triple(token_text, token_value, token_type)
 /* The describe_token() macro works on both token_data and lexeme_data structs. */
 #define describe_token(t) describe_token_triple((t)->text, (t)->value, (t)->type)
 
@@ -2697,6 +2699,7 @@ extern void  parse_code_block(int break_label, int continue_label,
 
 extern void  match_close_bracket(void);
 extern void  parse_statement(int break_label, int continue_label);
+extern void  parse_statement_singleexpr(assembly_operand AO);
 extern int   parse_label(void);
 
 /* ------------------------------------------------------------------------- */
