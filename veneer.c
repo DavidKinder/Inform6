@@ -254,6 +254,10 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "CA__Pr",
         "obj id a b c d e f x y z s s2 n m;\
+         #IFV3;\
+         #Message error \"Object message calls are not supported in v3.\";\
+         obj = id = a = b = c = d = e = f = x = y = z = s = s2 = n = m = 0;\
+         #IFNOT;\
          if (obj < 1 || obj > #largest_object-255)\
          {   switch(Z__Region(obj))\
              { 2: if (id == call)\
@@ -315,6 +319,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
         default: return x-->m;\
             }\
          }\
+         #ENDIF;\
          rfalse;\
          ]"
     },
@@ -703,6 +708,10 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "Cl__Ms",
         "obj id y a b c d x;\
+         #IFV3;\
+         #Message error \"Class messages are not supported in v3.\";\
+         obj = id = y = a = b = c = d = x = 0;\
+         #IFNOT;\
          switch(id)\
          {   create:\
                  if (children(obj)<=1) rfalse; x=child(obj);\
@@ -733,6 +742,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
                  { RT__Err(\"copy\", b, -obj); rfalse; }\
                  Copy__Primitive(a, b); rfalse;\
          }\
+         #ENDIF;\
          ]", "", "", ""
     },
     {   /*  RT__ChT:  check at run-time that a proposed object move is legal
