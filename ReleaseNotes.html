@@ -30,6 +30,41 @@ These are the changes delivered in version 6.42 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>The compiler can now handle switch cases which are expressions, rather than just looking for bare literals
+and symbols. The expression must still evaluate to a constant, but now parentheses and constant-folded arithmetic
+are handled:
+<pre>
+  Constant CONST = 5;
+
+  ! These have always worked.
+  switch (x) {
+    0: return 0;
+    1: return 1;
+    -2: return -2;
+  }
+
+  ! These now also work.
+  switch (x) {
+    (0): return 0;
+    (-(1)): return -1;
+    (CONST): return 5;
+    (CONST+1): return 6;
+  }
+</pre>
+For backwards compatibility, the expression must be wrapped in parens. <tt>-(1):</tt> would not be a valid case. Lists
+of expressions are also supported. Expression parsing applies as long as the first value is wrapped in parens.
+Wrapping the entire list in parens also works:
+<pre>
+  switch (x) {
+    1, 2, 3: return 0;                   ! old style
+    (4), (CONST), (CONST+1): return 1;   ! new style
+    (10), CONST+6, CONST+7: return 2;    ! this also works
+    (20, CONST+16, CONST+17): return 3;  ! as does this
+  }
+</pre>
+Note that the <tt>to</tt> keyword does not support expressions. You cannot say <tt>(CONST) to (CONST+5):</tt>
+as a case. Also, case expressions only work within a switch statement. Top-level action cases must still be bare
+action names.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>Grammar table lines entries which have no verb are now omitted. When this occurs a warning is printed, as this
