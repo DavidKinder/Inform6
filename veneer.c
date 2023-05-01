@@ -405,7 +405,11 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
              identifier = (identifier & $3f00) / $100;\
              if (~~(obj ofclass cla)) rfalse; i=0-->5;\
              if (cla == 2) return i+2*identifier-2;\
+             #IFV3;\
+             i = (i+60+cla*9)-->0;\
+             #IFNOT;\
              i = 0-->((i+124+cla*14)/2);\
+             #ENDIF;\
              i = CP__Tab(i + 2*(0->i) + 1, -1)+6;\
              return CP__Tab(i, identifier);\
          }\
