@@ -2318,27 +2318,30 @@ extern int  no_errors, no_warnings, no_suppressed_warnings, no_compiler_errors;
 extern ErrorPosition ErrorReport;
 
 extern void fatalerror(char *s) NORETURN;
+extern void fatalerror_fmt(const char *format, ...) NORETURN;
 extern void fatalerror_named(char *s1, char *s2) NORETURN;
-extern void memory_out_error(int32 size, int32 howmany, char *name) NORETURN;
-extern void error_max_dynamic_strings(int index);
-extern void error_max_abbreviations(int index);
+extern void fatalerror_memory_out(int32 size, int32 howmany, char *name) NORETURN;
+
 extern void error(char *s);
+extern void error_fmt(const char *format, ...);
 extern void error_named(char *s1, char *s2);
-extern void error_numbered(char *s1, int val);
 extern void error_named_at(char *s1, char *s2, brief_location report_line);
 extern void ebf_error(char *s1, char *s2);
 extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line);
 extern void char_error(char *s, int ch);
 extern void unicode_char_error(char *s, int32 uni);
-extern void no_such_label(char *lname);
+extern void error_max_dynamic_strings(int index);
+extern void error_max_abbreviations(int index);
+
 extern void warning(char *s);
-extern void warning_numbered(char *s1, int val);
+extern void warning_fmt(const char *format, ...);
 extern void warning_named(char *s1, char *s2);
 extern void warning_at(char *name, brief_location report_line);
 extern void symtype_warning(char *context, char *name, char *type, char *wanttype);
 extern void dbnu_warning(char *type, char *name, brief_location report_line);
 extern void uncalled_routine_warning(char *type, char *name, brief_location report_line);
 extern void obsolete_warning(char *s1);
+
 extern int  compiler_error(char *s);
 extern int  compiler_error_named(char *s1, char *s2);
 extern void print_sorry_message(void);

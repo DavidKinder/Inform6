@@ -693,11 +693,10 @@ or less.");
     }
 
     if (excess > 0)
-    {   char memory_full_error[80];
-        sprintf(memory_full_error,
+    {
+        fatalerror_fmt(
             "The %s exceeds version-%d limit (%dK) by %d bytes",
              output_called, version_number, limit, excess);
-        fatalerror(memory_full_error);
     }
 
     /*  --------------------------- Offsets -------------------------------- */
@@ -731,26 +730,24 @@ or less.");
          */
         excess = code_length + code_offset - (scale_factor*((int32) 0x10000L));
         if (excess > 0)
-        {   char code_full_error[80];
-            sprintf(code_full_error,
+        {
+            fatalerror_fmt(
                 "The code area limit has been exceeded by %d bytes",
                  excess);
-            fatalerror(code_full_error);
         }
 
         excess = strings_length + strings_offset - (scale_factor*((int32) 0x10000L));
         if (excess > 0)
-        {   char strings_full_error[140];
+        {
             if (oddeven_packing_switch)
-                sprintf(strings_full_error,
+                fatalerror_fmt(
                     "The strings area limit has been exceeded by %d bytes",
                      excess);
             else
-                sprintf(strings_full_error,
+                fatalerror_fmt(
                     "The code+strings area limit has been exceeded by %d bytes. \
  Try running Inform again with -B on the command line.",
                      excess);
-            fatalerror(strings_full_error);
         }
     }
     else

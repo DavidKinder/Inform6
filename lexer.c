@@ -1922,11 +1922,10 @@ extern void get_next_token(void)
             lexaddc(0);
 
             if (n > MAX_IDENTIFIER_LENGTH)
-            {   char bad_length[100];
-                sprintf(bad_length,
-                    "Name exceeds the maximum length of %d characters:",
-                         MAX_IDENTIFIER_LENGTH);
-                error_named(bad_length, lextexts[lex_index].text);
+            {
+                error_fmt(
+                    "Name exceeds the maximum length of %d characters: \"%s\"",
+                    MAX_IDENTIFIER_LENGTH, lextexts[lex_index].text);
                 /* Eat any further extra characters in the identifier */
                 while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                         || (tokeniser_grid[lookahead] == DIGIT_CODE)))

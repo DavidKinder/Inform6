@@ -655,10 +655,8 @@ static void output_file_g(void)
     /* And check if the user has requested a specific version. */
     if (requested_glulx_version) {
       if (requested_glulx_version < VersionNum) {
-        static char error_message_buff[256];
-        sprintf(error_message_buff, "Version 0x%08lx requested, but \
-game features require version 0x%08lx", (long)requested_glulx_version, (long)VersionNum);
-        warning(error_message_buff);
+        warning_fmt("Version 0x%08lx requested, but game features require version 0x%08lx",
+                    (long)requested_glulx_version, (long)VersionNum);
       }
       else {
         VersionNum = requested_glulx_version;

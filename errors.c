@@ -199,13 +199,23 @@ extern void fatalerror(char *s)
     exit(1);
 }
 
+extern void fatalerror_fmt(const char *format, ...)
+{
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
+    ellipsize_error_message_buff();
+    fatalerror(error_message_buff);
+}
+
 extern void fatalerror_named(char *m, char *fn)
 {   snprintf(error_message_buff, ERROR_BUFLEN, "%s \"%s\"", m, fn);
     ellipsize_error_message_buff();
     fatalerror(error_message_buff);
 }
 
-extern void memory_out_error(int32 size, int32 howmany, char *name)
+extern void fatalerror_memory_out(int32 size, int32 howmany, char *name)
 {   if (howmany == 1)
         snprintf(error_message_buff, ERROR_BUFLEN,
             "Run out of memory allocating %d bytes for %s", size, name);
@@ -273,15 +283,18 @@ extern void error(char *s)
     message(1,s);
 }
 
-extern void error_named(char *s1, char *s2)
-{   snprintf(error_message_buff, ERROR_BUFLEN,"%s \"%s\"",s1,s2);
+extern void error_fmt(const char *format, ...)
+{
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
     ellipsize_error_message_buff();
     error(error_message_buff);
 }
 
-extern void error_numbered(char *s1, int val)
-{
-    snprintf(error_message_buff, ERROR_BUFLEN,"%s %d.",s1,val);
+extern void error_named(char *s1, char *s2)
+{   snprintf(error_message_buff, ERROR_BUFLEN,"%s \"%s\"",s1,s2);
     ellipsize_error_message_buff();
     error(error_message_buff);
 }
@@ -298,10 +311,6 @@ extern void error_named_at(char *s1, char *s2, brief_location report_line)
     i = concise_switch; concise_switch = TRUE;
     error(error_message_buff);
     ErrorReport = E; concise_switch = i;
-}
-
-extern void no_such_label(char *lname)
-{   error_named("No such label as",lname);
 }
 
 extern void ebf_error(char *s1, char *s2)
@@ -402,9 +411,13 @@ extern void warning(char *s1)
     message(2,s1);
 }
 
-extern void warning_numbered(char *s1, int val)
-{   if (nowarnings_switch) { no_suppressed_warnings++; return; }
-    snprintf(error_message_buff, ERROR_BUFLEN,"%s %d.", s1, val);
+extern void warning_fmt(const char *format, ...)
+{
+    if (nowarnings_switch) { no_suppressed_warnings++; return; }
+    va_list argument_pointer;
+    va_start(argument_pointer, format);
+    vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
+    va_end(argument_pointer);
     ellipsize_error_message_buff();
     message(2,error_message_buff);
 }

@@ -326,7 +326,7 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
 
     do
     {   if (spec_sp >= MAX_SPEC_STACK)
-        {   error("At most 32 values can be given in a single 'switch' case");
+        {   error_fmt("At most %d values can be given in a single 'switch' case", MAX_SPEC_STACK);
             panic_mode_error_recovery();
             return;
         }
@@ -485,7 +485,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         }
 
         if (no_locals == MAX_LOCAL_VARIABLES-1)
-        {   error_numbered("Too many local variables for a routine; max is",
+        {   error_fmt("Too many local variables for a routine; max is %d",
                 MAX_LOCAL_VARIABLES-1);
             panic_mode_error_recovery();
             break;
@@ -716,7 +716,7 @@ extern void parse_code_block(int break_label, int continue_label,
                         }
 
                         if (constcount > MAX_SPEC_STACK)
-                        {   error("At most 32 values can be given in a single 'switch' case");
+                        {   error_fmt("At most %d values can be given in a single 'switch' case", MAX_SPEC_STACK);
                             panic_mode_error_recovery();
                             continue;
                         }

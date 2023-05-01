@@ -1379,23 +1379,24 @@ static void emit_token(const token_data *t)
        for 32-bit arithmetic. */
 
     if (!glulx_mode && ((x<-32768) || (x > 32767)))
-    {   char folding_error[40];
+    {
         int32 ov1 = (o1.value >= 0x8000) ? (o1.value - 0x10000) : o1.value;
         int32 ov2 = (o2.value >= 0x8000) ? (o2.value - 0x10000) : o2.value;
+        char op = '?';
         switch(t->value)
         {
             case PLUS_OP:
-                sprintf(folding_error, "%d + %d = %d", ov1, ov2, x);
+                op = '+';
                 break;
             case MINUS_OP:
-                sprintf(folding_error, "%d - %d = %d", ov1, ov2, x);
+                op = '-';
                 break;
             case TIMES_OP:
-                sprintf(folding_error, "%d * %d = %d", ov1, ov2, x);
+                op = '*';
                 break;
         }
-        error_named("Signed arithmetic on compile-time constants overflowed \
-the range -32768 to +32767:", folding_error);
+        error_fmt("Signed arithmetic on compile-time constants overflowed \
+the range -32768 to +32767 (%d %c %d = %d)", ov1, op, ov2, x);
     }
 
     FoldConstant:

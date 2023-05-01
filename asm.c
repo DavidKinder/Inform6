@@ -3111,10 +3111,9 @@ static void parse_assembly_z(void)
                 case TWO: max = 32; break;
             }
             if ((custom_opcode_z.code < min) || (custom_opcode_z.code >= max))
-            {   char range[32];
-                sprintf(range, "%d to %d", min, max-1);
-            error_named("For this operand type, opcode number must be in range",
-                    range);
+            {
+                error_fmt("For this operand type, opcode number must be in range %d to %d",
+                          min, max-1);
                 custom_opcode_z.code = min;
             }
         }
