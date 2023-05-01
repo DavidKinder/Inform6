@@ -679,6 +679,16 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "CP__Tab",
         "x id n l;\
+         #IFV3;\
+         while (1)\
+         {   n = x->0;\
+             if (n == 0) break;\
+             x++;\
+             if (id == (n & 31)) return x;\
+             l = (n/32)+1;\
+             x = x + l;\
+         }\
+         #IFNOT;\
          while ((n=0->x) ~= 0)\
          {   if (n & $80) { x++; l = (0->x) & $3f; }\
              else { if (n & $40) l=2; else l=1; }\
@@ -686,6 +696,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
              if ((n & $3f) == id) return x;\
              x = x + l;\
          }\
+         #ENDIF;\
          if (id<0) return x+1; rfalse; ]", "", "", "", "", ""
     },
     {   /*  Cl__Ms:   the five message-receiving properties of Classes       */
