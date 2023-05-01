@@ -684,8 +684,8 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          {   n = x->0;\
              if (n == 0) break;\
              x++;\
-             if (id == (n & 31)) return x;\
-             l = (n/32)+1;\
+             if (id == (n & $1f)) return x;\
+             l = (n/$20)+1;\
              x = x + l;\
          }\
          #IFNOT;\
