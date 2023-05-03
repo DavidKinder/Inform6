@@ -563,7 +563,7 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
 
             get_next_token();
             if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
-                ebf_error("semicolon ';' after Include filename", token_text);
+                ebf_curtoken_error("semicolon ';' after Include filename");
 
             if (strcmp(name, "language__") == 0)
                  load_sourcefile(Language_Name, 0);
@@ -1271,7 +1271,7 @@ a 'table' or 'terminating' command or a single character");
 
     get_next_token();
     if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-    {   ebf_error("';'", token_text);
+    {   ebf_curtoken_error("';'");
         /* Put the non-semicolon back. We will continue parsing from
            that point, in hope that it's the start of a new directive.
            (This recovers cleanly from a missing semicolon at the end
