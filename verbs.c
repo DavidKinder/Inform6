@@ -315,7 +315,7 @@ extern void make_fake_action(void)
     get_next_token();
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new fake action name", token_text);
+        ebf_curtoken_error("new fake action name");
         panic_mode_error_recovery(); return;
     }
     /* Action symbols (including fake_actions) may collide with other kinds of symbols. So we don't check that. */
@@ -579,7 +579,7 @@ static int get_verb(void)
         return j;
     }
 
-    ebf_error("an English verb in quotes", token_text);
+    ebf_curtoken_error("an English verb in quotes");
 
     return -1;
 }
@@ -672,7 +672,7 @@ static int grammar_line(int verbnum, int line)
     }
     if (!((token_type == SEP_TT) && (token_value == TIMES_SEP)))
     {   discard_token_location(beginning_debug_location);
-        ebf_error("'*' divider", token_text);
+        ebf_curtoken_error("'*' divider");
         panic_mode_error_recovery();
         return FALSE;
     }
@@ -700,12 +700,12 @@ static int grammar_line(int verbnum, int line)
         bytecode = 0; wordcode = 0;
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
         {   discard_token_location(beginning_debug_location);
-            ebf_error("'->' clause", token_text);
+            ebf_curtoken_error("'->' clause");
             return FALSE;
         }
         if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
         {   if (last_was_slash && (grammar_token>0))
-                ebf_error("grammar token", token_text);
+                ebf_curtoken_error("grammar token");
             break;
         }
 
@@ -714,7 +714,7 @@ static int grammar_line(int verbnum, int line)
         {   if (grammar_version_number == 1)
                 error("'/' can only be used with Library 6/3 or later");
             if (last_was_slash)
-                ebf_error("grammar token or '->'", token_text);
+                ebf_curtoken_error("grammar token or '->'");
             else
             {   last_was_slash = TRUE;
                 slash_mode = TRUE;
@@ -744,7 +744,7 @@ static int grammar_line(int verbnum, int line)
                      if ((token_type != SYMBOL_TT)
                          || (symbols[token_value].type != ROUTINE_T))
                      {   discard_token_location(beginning_debug_location);
-                         ebf_error("routine name after 'noun='", token_text);
+                         ebf_curtoken_error("routine name after 'noun='");
                          panic_mode_error_recovery();
                          return FALSE;
                      }
@@ -799,7 +799,7 @@ are using Library 6/3 or later");
                  get_next_token();
                  if (!((token_type==SEP_TT)&&(token_value==SETEQUALS_SEP)))
                  {   discard_token_location(beginning_debug_location);
-                     ebf_error("'=' after 'scope'", token_text);
+                     ebf_curtoken_error("'=' after 'scope'");
                      panic_mode_error_recovery();
                      return FALSE;
                  }
@@ -808,7 +808,7 @@ are using Library 6/3 or later");
                  if ((token_type != SYMBOL_TT)
                      || (symbols[token_value].type != ROUTINE_T))
                  {   discard_token_location(beginning_debug_location);
-                     ebf_error("routine name after 'scope='", token_text);
+                     ebf_curtoken_error("routine name after 'scope='");
                      panic_mode_error_recovery();
                      return FALSE;
                  }
@@ -887,7 +887,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
 
     if (token_type != UQ_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("name of new or existing action", token_text);
+        ebf_curtoken_error("name of new or existing action");
         panic_mode_error_recovery();
         return FALSE;
     }
@@ -977,7 +977,7 @@ extern void make_verb(void)
     }
 
     if (no_given == 0)
-    {   ebf_error("English verb in quotes", token_text);
+    {   ebf_curtoken_error("English verb in quotes");
         panic_mode_error_recovery(); return;
     }
 
@@ -988,7 +988,7 @@ extern void make_verb(void)
         if (Inform_verb == -1) return;
         get_next_token();
         if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
-            ebf_error("';' after English verb", token_text);
+            ebf_curtoken_error("';' after English verb");
     }
     else
     {   verb_equals_form = FALSE;
@@ -1116,7 +1116,7 @@ extern void extend_verb(void)
             extend_mode = EXTEND_LAST;
 
         if (extend_mode==0)
-        {   ebf_error("'replace', 'last', 'first' or '*'", token_text);
+        {   ebf_curtoken_error("'replace', 'last', 'first' or '*'");
             extend_mode = EXTEND_LAST;
         }
     }
