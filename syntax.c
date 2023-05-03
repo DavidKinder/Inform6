@@ -112,7 +112,7 @@ extern void get_next_token_with_directives(void)
         if (token_type == DIRECTIVE_TT)
             parse_given_directive(TRUE);
         else
-        {   ebf_error("directive", token_text);
+        {   ebf_curtoken_error("directive");
             return;
         }
 
@@ -176,7 +176,7 @@ extern int parse_directive(int internal_flag)
         get_next_token();
         df_dont_note_global_symbols = FALSE;
         if (token_type != SYMBOL_TT)
-        {   ebf_error("routine name", token_text);
+        {   ebf_curtoken_error("routine name");
             return(FALSE);
         }
         if ((!(symbols[token_value].flags & UNKNOWN_SFLAG))
@@ -226,7 +226,7 @@ extern int parse_directive(int internal_flag)
 
         get_next_token();
         if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-        {   ebf_error("';' after ']'", token_text);
+        {   ebf_curtoken_error("';' after ']'");
             put_token_back();
         }
         return TRUE;
@@ -246,9 +246,9 @@ extern int parse_directive(int internal_flag)
     {   /* If we're internal, we expect only a directive here. If
            we're top-level, the possibilities are broader. */
         if (internal_flag)
-            ebf_error("directive", token_text);
+            ebf_curtoken_error("directive");
         else
-            ebf_error("directive, '[' or class name", token_text);
+            ebf_curtoken_error("directive, '[' or class name");
         panic_mode_error_recovery();
         return TRUE;
     }
@@ -334,14 +334,14 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
         if (action_switch)
         {   get_next_token();
             if (token_type == SQ_TT || token_type == DQ_TT) {
-                ebf_error("action (or fake action) name", token_text);
+                ebf_curtoken_error("action (or fake action) name");
                 continue;
             }
             spec_stack[spec_sp] = action_of_name(token_text);
 
             if (spec_stack[spec_sp].value == -1)
             {   spec_stack[spec_sp].value = 0;
-                ebf_error("action (or fake action) name", token_text);
+                ebf_curtoken_error("action (or fake action) name");
             }
         }
         else {
@@ -357,8 +357,8 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
         switch(spec_type[spec_sp-1])
         {   case 0:
                 if (action_switch)
-                    ebf_error("',' or ':'", token_text);
-                else ebf_error("',', ':' or 'to'", token_text);
+                    ebf_curtoken_error("',' or ':'");
+                else ebf_curtoken_error("',', ':' or 'to'");
                 panic_mode_error_recovery();
                 return;
             case 1: goto GenSpecCode;
@@ -473,7 +473,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         if (token_type != UQ_TT)
         {   if ((token_type == SEP_TT)
                 && (token_value == SEMICOLON_SEP)) break;
-            ebf_error("local variable name or ';'", token_text);
+            ebf_curtoken_error("local variable name or ';'");
             panic_mode_error_recovery();
             break;
         }
@@ -518,7 +518,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         get_next_token();
 
         if (token_type == EOF_TT)
-        {   ebf_error("']'", token_text);
+        {   ebf_curtoken_error("']'");
             assemble_routine_end
                 (embedded_flag,
                  get_token_location_end(beginning_debug_location));
@@ -561,7 +561,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             get_next_token();
             if ((token_type == SEP_TT) &&
                 (token_value == COLON_SEP)) continue;
-            ebf_error("':' after 'default'", token_text);
+            ebf_curtoken_error("':' after 'default'");
             panic_mode_error_recovery();
             continue;
         }
@@ -661,7 +661,7 @@ extern void parse_code_block(int break_label, int continue_label,
                 break;
             }
             if (token_type == EOF_TT)
-            {   ebf_error("'}'", token_text);
+            {   ebf_curtoken_error("'}'");
                 break;
             }
 
@@ -686,7 +686,7 @@ extern void parse_code_block(int break_label, int continue_label,
                     get_next_token();
                     if ((token_type == SEP_TT) &&
                         (token_value == COLON_SEP)) continue;
-                    ebf_error("':' after 'default'", token_text);
+                    ebf_curtoken_error("':' after 'default'");
                     panic_mode_error_recovery();
                     continue;
                 }
@@ -804,7 +804,7 @@ extern void parse_code_block(int break_label, int continue_label,
             }
 
             if ((switch_rule != 0) && (!switch_clause_made))
-                ebf_error("switch value", token_text);
+                ebf_curtoken_error("switch value");
 
             NotASwitchCase:
             sequence_point_follows = TRUE;
@@ -814,7 +814,7 @@ extern void parse_code_block(int break_label, int continue_label,
     }
     else {
         if (switch_rule != 0)
-            ebf_error("braced code block after 'switch'", token_text);
+            ebf_curtoken_error("braced code block after 'switch'");
         
         /* Parse a single statement. */
         parse_statement(break_label, continue_label);
