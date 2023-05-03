@@ -3094,8 +3094,7 @@ static void parse_assembly_z(void)
         if (i>0) token_text[i-1] = ':';
 
         if (n==-1)
-        {   ebf_error("Expected 0OP, 1OP, 2OP, VAR, EXT, VAR_LONG or EXT_LONG",
-                token_text);
+        {   ebf_curtoken_error("Expected 0OP, 1OP, 2OP, VAR, EXT, VAR_LONG or EXT_LONG");
             n = EXT;
         }
         custom_opcode_z.no = n;
@@ -3136,7 +3135,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     }
     else
     {   if (token_type != OPCODE_NAME_TT)
-        {   ebf_error("an opcode name", token_text);
+        {   ebf_curtoken_error("an opcode name");
             panic_mode_error_recovery();
             return;
         }
@@ -3149,7 +3148,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     if (O.op_rules == TEXT)
     {   get_next_token();
         if (token_type != DQ_TT)
-            ebf_error("literal text in double-quotes", token_text);
+            ebf_curtoken_error("literal text in double-quotes");
         AI.text = token_text;
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) return;
         get_next_token();
@@ -3158,7 +3157,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             AI.text = NULL;
             return;
         }
-        ebf_error("semicolon ';' after print string", token_text);
+        ebf_curtoken_error("semicolon ';' after print string");
         AI.text = NULL;
         put_token_back();
         return;
@@ -3176,7 +3175,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             get_next_token();
             if ((token_type != SYMBOL_TT)
                 && (token_type != LOCAL_VARIABLE_TT))
-                ebf_error("variable name or 'sp'", token_text);
+                ebf_curtoken_error("variable name or 'sp'");
             n = 255;
             if (token_type == LOCAL_VARIABLE_TT) n = token_value;
             else
@@ -3216,7 +3215,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
                     n = parse_label();
                 }
                 else
-                    ebf_error("label name after '?' or '?~'", token_text);
+                    ebf_curtoken_error("label name after '?' or '?~'");
             }
             AI.branch_label_number = n;
             continue;
@@ -3235,7 +3234,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             AI.operand[AI.operand_count++] = parse_operand_z();
             get_next_token();
             if (!((token_type == SEP_TT) && (token_value == CLOSE_SQUARE_SEP)))
-            {   ebf_error("']'", token_text);
+            {   ebf_curtoken_error("']'");
                 put_token_back();
             }
         }
@@ -3416,7 +3415,7 @@ S (store), SS (two stores), R (execution never continues)");
   }
   else {
     if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
-      ebf_error("an opcode name", token_text);
+      ebf_curtoken_error("an opcode name");
       panic_mode_error_recovery();
       return;
     }
