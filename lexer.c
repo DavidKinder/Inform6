@@ -272,6 +272,12 @@ static int lex_pos;         /* Current write position in that lextext        */
 /* ------------------------------------------------------------------------- */
 /*   The lexer itself needs up to 3 characters of lookahead (it uses an      */
 /*   LR(3) grammar to translate characters into tokens).                     */
+/*                                                                           */
+/*   Past the end of the stream, we fill in zero bytes. This has the         */
+/*   awkward side effect that a zero byte in a source file will silently     */
+/*   terminate it, rather than producing an "illegal source character"       */
+/*   error. On the up side, we can compile veneer routines (which are null-  */
+/*   terminated strings) with no extra work.                                 */
 /* ------------------------------------------------------------------------- */
 
 #define LOOKAHEAD_SIZE 3
