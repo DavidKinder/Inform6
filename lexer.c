@@ -1534,7 +1534,7 @@ static int get_next_char_from_pipeline(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Source 2: from a string                                                 */
+/*   Source 2: from a (null-terminated) string                               */
 /* ------------------------------------------------------------------------- */
 
 static int source_to_analyse_pointer;            /*  Current read position   */
@@ -1574,7 +1574,8 @@ static int get_next_char_from_string(void)
 /*                                                                           */
 /*       restart_lexer(source, name) if source is NULL, initialise the lexer */
 /*                                       to read from source files;          */
-/*                                   otherwise, to read from this string.    */
+/*                                       otherwise, to read from this null-  */
+/*                                       terminated string.                  */
 /* ------------------------------------------------------------------------- */
 
 extern void release_token_texts(void)
