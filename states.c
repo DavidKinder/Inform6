@@ -16,13 +16,13 @@ static int match_colon(void)
 of a 'for' loop specification: replacing ';' with ':'");
         else
         if (token_value != COLON_SEP)
-        {   ebf_cur_token_error("':'");
+        {   ebf_curtoken_error("':'");
             panic_mode_error_recovery();
             return(FALSE);
         }
     }
     else
-    {   ebf_cur_token_error("':'");
+    {   ebf_curtoken_error("':'");
         panic_mode_error_recovery();
         return(FALSE);
     }
@@ -33,14 +33,14 @@ static void match_open_bracket(void)
 {   get_next_token();
     if ((token_type == SEP_TT) && (token_value == OPENB_SEP)) return;
     put_token_back();
-    ebf_cur_token_error("'('");
+    ebf_curtoken_error("'('");
 }
 
 extern void match_close_bracket(void)
 {   get_next_token();
     if ((token_type == SEP_TT) && (token_value == CLOSEB_SEP)) return;
     put_token_back();
-    ebf_cur_token_error("')'");
+    ebf_curtoken_error("')'");
 }
 
 static void parse_action(void)
@@ -87,7 +87,7 @@ static void parse_action(void)
     else
     {
         if (token_type != UQ_TT) {
-            ebf_cur_token_error("name of action");
+            ebf_curtoken_error("name of action");
         }
         codegen_action = FALSE;
         AO2 = action_of_name(token_text);
@@ -112,7 +112,7 @@ static void parse_action(void)
     }
     if (!((token_type == SEP_TT) && (token_value == GREATER_SEP || token_value == COMMA_SEP)))
     {
-        ebf_cur_token_error("',' or '>'");
+        ebf_curtoken_error("',' or '>'");
     }
 
     if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
@@ -126,7 +126,7 @@ static void parse_action(void)
         get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
         {
-            ebf_cur_token_error("'>'");
+            ebf_curtoken_error("'>'");
         }
     }
 
@@ -134,7 +134,7 @@ static void parse_action(void)
     {   get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
         {   put_token_back();
-            ebf_cur_token_error("'>>'");
+            ebf_curtoken_error("'>>'");
         }
     }
 
@@ -263,7 +263,7 @@ extern int parse_label(void)
         return(symbols[token_value].value);
     }
 
-    ebf_cur_token_error("label name");
+    ebf_curtoken_error("label name");
     return 0;
 }
 
@@ -432,7 +432,7 @@ static void parse_print_z(int finally_return)
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
                               if (symbols[token_value].type != ROUTINE_T)
-                                ebf_cur_token_error("printing routine name");
+                                ebf_curtoken_error("printing routine name");
                           }
                           symbols[token_value].flags |= USED_SFLAG;
 
@@ -453,7 +453,7 @@ static void parse_print_z(int finally_return)
                                 QUANTITY_CONTEXT, -1), temp_var1);
                           goto PrintTermDone;
 
-                        default: ebf_cur_token_error("print specification");
+                        default: ebf_curtoken_error("print specification");
                           get_next_token();
                           assemblez_1(print_num_zc,
                           code_generate(parse_expression(QUANTITY_CONTEXT),
@@ -483,13 +483,13 @@ static void parse_print_z(int finally_return)
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         if ((token_type != SEP_TT) || (token_value != COMMA_SEP))
-        {   ebf_cur_token_error("comma");
+        {   ebf_curtoken_error("comma");
             panic_mode_error_recovery(); return;
         }
         else get_next_token();
     } while(TRUE);
 
-    if (count == 0) ebf_cur_token_error("something to print");
+    if (count == 0) ebf_curtoken_error("something to print");
     if (finally_return)
     {   assemblez_0(new_line_zc);
         assemblez_0(rtrue_zc);
@@ -669,7 +669,7 @@ static void parse_print_g(int finally_return)
                               AO.marker = IROUTINE_MV;
                               AO.symindex = token_value;
                               if (symbols[token_value].type != ROUTINE_T)
-                                ebf_cur_token_error("printing routine name");
+                                ebf_curtoken_error("printing routine name");
                           }
                           symbols[token_value].flags |= USED_SFLAG;
 
@@ -683,7 +683,7 @@ static void parse_print_g(int finally_return)
                             AO2);
                           goto PrintTermDone;
 
-                        default: ebf_cur_token_error("print specification");
+                        default: ebf_curtoken_error("print specification");
                           get_next_token();
                           assembleg_1(streamnum_gc,
                           code_generate(parse_expression(QUANTITY_CONTEXT),
@@ -713,13 +713,13 @@ static void parse_print_g(int finally_return)
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         if ((token_type != SEP_TT) || (token_value != COMMA_SEP))
-        {   ebf_cur_token_error("comma");
+        {   ebf_curtoken_error("comma");
             panic_mode_error_recovery(); return;
         }
         else get_next_token();
     } while(TRUE);
 
-    if (count == 0) ebf_cur_token_error("something to print");
+    if (count == 0) ebf_curtoken_error("something to print");
     if (finally_return)
     {
         INITAOTV(&AO, BYTECONSTANT_OT, 0x0A);
@@ -739,7 +739,7 @@ static int parse_named_label_statements()
         get_next_token();
         if (token_type != SYMBOL_TT)
         {
-            ebf_cur_token_error("label name");
+            ebf_curtoken_error("label name");
             return TRUE;
         }
 
@@ -752,7 +752,7 @@ static int parse_named_label_statements()
         }
         else
         {   if (symbols[token_value].type != LABEL_T) {
-                ebf_cur_token_error("label name");
+                ebf_curtoken_error("label name");
                 return TRUE;
             }
             if (symbols[token_value].flags & CHANGE_SFLAG)
@@ -765,7 +765,7 @@ static int parse_named_label_statements()
 
         get_next_token();
         if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-        {   ebf_cur_token_error("';'");
+        {   ebf_curtoken_error("';'");
             put_token_back(); return FALSE;
         }
 
@@ -815,7 +815,7 @@ static void parse_statement_z(int break_label, int continue_label)
     {   parse_action(); goto StatementTerminator; }
 
     if (token_type == EOF_TT)
-    {   ebf_cur_token_error("statement"); return; }
+    {   ebf_curtoken_error("statement"); return; }
 
     /* If we don't see a keyword, this must be a function call or
        other expression-with-side-effects. */
@@ -847,7 +847,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value==SEMICOLON_SEP))
                          break;
                      if (token_type != DQ_TT)
-                         ebf_cur_token_error("text of box line in double-quotes");
+                         ebf_curtoken_error("text of box line in double-quotes");
                      {   int i, j;
                          for (i=0, j=0; token_text[i] != 0; j++)
                              if (token_text[i] == '@')
@@ -935,7 +935,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  if ((token_type != MISC_KEYWORD_TT)
                      || ((token_value != ON_MK)
                          && (token_value != OFF_MK)))
-                 {   ebf_cur_token_error("'on' or 'off'");
+                 {   ebf_curtoken_error("'on' or 'off'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -1199,7 +1199,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  {   get_next_token();
                      if ((token_type != SEP_TT)
                          || (token_value != SEMICOLON_SEP))
-                     {   ebf_cur_token_error("';'");
+                     {   ebf_curtoken_error("';'");
                          put_token_back();
                      }
                  }
@@ -1310,7 +1310,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  misc_keywords.enabled = FALSE;
                  if ((token_type != MISC_KEYWORD_TT)
                      || (token_value != TO_MK))
-                 {   ebf_cur_token_error("'to'");
+                 {   ebf_curtoken_error("'to'");
                      panic_mode_error_recovery();
                      return;
                  }
@@ -1355,7 +1355,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      (symbols[token_value].type == GLOBAL_VARIABLE_T))
                      AO.value = symbols[token_value].value;
                  else
-                 {   ebf_cur_token_error("'objectloop' variable");
+                 {   ebf_curtoken_error("'objectloop' variable");
                      panic_mode_error_recovery(); break;
                  }
                  misc_keywords.enabled = TRUE;
@@ -1687,7 +1687,7 @@ static void parse_statement_z(int break_label, int continue_label)
                          && (token_value != BOLD_MK)
                          && (token_value != UNDERLINE_MK)
                          && (token_value != FIXED_MK)))
-                 {   ebf_cur_token_error(
+                 {   ebf_curtoken_error(
 "'roman', 'bold', 'underline', 'reverse' or 'fixed'");
                      panic_mode_error_recovery();
                      break;
@@ -1753,7 +1753,7 @@ static void parse_statement_z(int break_label, int continue_label)
 
     get_next_token();
     if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-    {   ebf_cur_token_error("';'");
+    {   ebf_curtoken_error("';'");
         put_token_back();
     }
 }
@@ -1785,7 +1785,7 @@ static void parse_statement_g(int break_label, int continue_label)
     {   parse_action(); goto StatementTerminator; }
 
     if (token_type == EOF_TT)
-    {   ebf_cur_token_error("statement"); return; }
+    {   ebf_curtoken_error("statement"); return; }
 
     /* If we don't see a keyword, this must be a function call or
        other expression-with-side-effects. */
@@ -1816,7 +1816,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value==SEMICOLON_SEP))
                          break;
                      if (token_type != DQ_TT)
-                         ebf_cur_token_error("text of box line in double-quotes");
+                         ebf_curtoken_error("text of box line in double-quotes");
                      {   int i, j;
                          for (i=0, j=0; token_text[i] != 0; j++)
                              if (token_text[i] == '@')
@@ -1902,7 +1902,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  if ((token_type != MISC_KEYWORD_TT)
                      || ((token_value != ON_MK)
                          && (token_value != OFF_MK)))
-                 {   ebf_cur_token_error("'on' or 'off'");
+                 {   ebf_curtoken_error("'on' or 'off'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -2187,7 +2187,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  {   get_next_token();
                      if ((token_type != SEP_TT)
                          || (token_value != SEMICOLON_SEP))
-                     {   ebf_cur_token_error("';'");
+                     {   ebf_curtoken_error("';'");
                          put_token_back();
                      }
                  }
@@ -2324,7 +2324,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  misc_keywords.enabled = FALSE;
                  if ((token_type != MISC_KEYWORD_TT)
                      || (token_value != TO_MK))
-                 {   ebf_cur_token_error("'to'");
+                 {   ebf_curtoken_error("'to'");
                      panic_mode_error_recovery();
                      return;
                  }
@@ -2367,7 +2367,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      INITAOTV(&AO, GLOBALVAR_OT, symbols[token_value].value);
                  }
                  else {
-                     ebf_cur_token_error("'objectloop' variable");
+                     ebf_curtoken_error("'objectloop' variable");
                      panic_mode_error_recovery(); 
                      break;
                  }
@@ -2623,7 +2623,7 @@ static void parse_statement_g(int break_label, int continue_label)
                          && (token_value != BOLD_MK)
                          && (token_value != UNDERLINE_MK)
                          && (token_value != FIXED_MK)))
-                 {   ebf_cur_token_error(
+                 {   ebf_curtoken_error(
 "'roman', 'bold', 'underline', 'reverse' or 'fixed'");
                      panic_mode_error_recovery();
                      break;
@@ -2718,7 +2718,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
     get_next_token();
     if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-    {   ebf_cur_token_error("';'");
+    {   ebf_curtoken_error("';'");
         put_token_back();
     }
 }
@@ -2778,7 +2778,7 @@ extern void parse_statement_singleexpr(assembly_operand AO)
         /* StatementTerminator... */
         get_next_token();
         if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-        {   ebf_cur_token_error("';'");
+        {   ebf_curtoken_error("';'");
             put_token_back();
         }
     }

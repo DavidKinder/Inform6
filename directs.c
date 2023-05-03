@@ -34,7 +34,7 @@ static int ebf_error_recover(char *s1)
        utility function. You will see many error paths that look like:
           return ebf_error_recover(...);
     */
-    ebf_cur_token_error(s1);
+    ebf_curtoken_error(s1);
     panic_mode_error_recovery();
     return FALSE;
 }

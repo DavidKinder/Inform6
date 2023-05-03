@@ -319,7 +319,7 @@ extern void ebf_error(char *s1, char *s2)
     error(error_message_buff);
 }
 
-extern void ebf_cur_token_error(char *s)
+extern void ebf_curtoken_error(char *s)
 {
     /* This is "Expected (s) but found (the current token_text)". We use
        token_type as a hint for how to display token_text. */
