@@ -278,6 +278,7 @@ static int lex_pos;         /* Current write position in that lextext        */
 
 static int current, lookahead,          /* The latest character read, and    */
     lookahead2, lookahead3;             /* the three characters following it */
+                                        /* (zero means end-of-stream)        */
 
 static int pipeline_made;               /* Whether or not the pipeline of
                                            characters has been constructed
