@@ -1366,7 +1366,7 @@ static int32 construct_double(int wanthigh, int signbit, double intv, double fra
 /*                                                                           */
 /*   Note that file_load_chars(p, size) loads "size" bytes into buffer "p"   */
 /*   from the current input file.  If the file runs out, then if it was      */
-/*   the last source file 4 EOF characters are placed in the buffer: if it   */
+/*   the last source file 4 null characters are placed in the buffer: if it  */
 /*   was only an Include file ending, then a '\n' character is placed there  */
 /*   (essentially to force termination of any comment line) followed by      */
 /*   three harmless spaces.                                                  */
@@ -1873,8 +1873,8 @@ extern void get_next_token(void)
                     }
                     break;
                 }
-            } while (d != EOF);
-            if (d==EOF) ebf_error("'\''", "end of file");
+            } while (d != 0);
+            if (d==0) ebf_error("'\''", "end of file");
             lexdelc();
             circle[circle_position].type = SQ_TT;
             break;
@@ -1887,14 +1887,14 @@ extern void get_next_token(void)
                 {   lex_pos--;
                     while (lexlastc() == ' ') lex_pos--;
                     if (lexlastc() != '^') lexaddc(' ');
-                    while ((lookahead != EOF) &&
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                     (*get_next_char)();
                 }
                 else if (d == '\\')
                 {   int newline_passed = FALSE;
                     lex_pos--;
-                    while ((lookahead != EOF) &&
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                         if ((d = (*get_next_char)()) == '\n')
                             newline_passed = TRUE;
@@ -1906,8 +1906,8 @@ extern void get_next_token(void)
                             chb);
                     }
                 }
-            }   while ((d != EOF) && (d!='\"'));
-            if (d==EOF) ebf_error("'\"'", "end of file");
+            }   while ((d != 0) && (d!='\"'));
+            if (d==0) ebf_error("'\"'", "end of file");
             lexdelc();
             circle[circle_position].type = DQ_TT;
             break;
