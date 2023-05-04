@@ -309,7 +309,7 @@ extern void make_global()
 
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new global variable name", token_text);
+        ebf_curtoken_error("new global variable name");
         panic_mode_error_recovery(); return;
     }
 
@@ -443,7 +443,7 @@ extern void make_array()
 
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new array name", token_text);
+        ebf_curtoken_error("new array name");
         panic_mode_error_recovery(); return;
     }
 
@@ -479,7 +479,7 @@ extern void make_array()
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
     {
         discard_token_location(beginning_debug_location);
-        ebf_error("array definition", token_text);
+        ebf_curtoken_error("array definition");
         put_token_back();
         return;
     }
@@ -503,8 +503,7 @@ extern void make_array()
              array_type = BUFFER_ARRAY;
     else
     {   discard_token_location(beginning_debug_location);
-        ebf_error
-            ("'->', '-->', 'string', 'table' or 'buffer'", token_text);
+        ebf_curtoken_error("'->', '-->', 'string', 'table' or 'buffer'");
         panic_mode_error_recovery();
         return;
     }
@@ -643,7 +642,7 @@ extern void make_array()
 
             get_next_token();
             if (token_type != DQ_TT)
-            {   ebf_error("literal text in double-quotes", token_text);
+            {   ebf_curtoken_error("literal text in double-quotes");
                 token_text = "error";
             }
 
@@ -706,7 +705,7 @@ advance as part of 'Zcharacter table':", unicode);
                         been missed, and the programmer is now starting
                         a new routine                                        */
 
-                    ebf_error("']'", token_text);
+                    ebf_curtoken_error("']'");
                     put_token_back(); break;
                 }
                 put_token_back();

@@ -134,7 +134,7 @@ more",
     /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new attribute name", token_text);
+        ebf_curtoken_error("new attribute name");
         panic_mode_error_recovery(); 
         put_token_back();
         return;
@@ -156,8 +156,7 @@ more",
         if (!((token_type == SYMBOL_TT)
               && (symbols[token_value].type == ATTRIBUTE_T)))
         {   discard_token_location(beginning_debug_location);
-            ebf_error("an existing attribute name after 'alias'",
-                token_text);
+            ebf_curtoken_error("an existing attribute name after 'alias'");
             panic_mode_error_recovery();
             put_token_back();
             return;
@@ -252,7 +251,7 @@ extern void make_property(void)
     /* We hold onto token_text through the end of this Property directive, which should be okay. */
     if (token_type != SYMBOL_TT)
     {   discard_token_location(beginning_debug_location);
-        ebf_error("new property name", token_text);
+        ebf_curtoken_error("new property name");
         panic_mode_error_recovery();
         put_token_back();
         return;
@@ -313,8 +312,7 @@ extern void make_property(void)
         get_next_token();
         if (!((token_type == SYMBOL_TT)
             && (symbols[token_value].type == PROPERTY_T)))
-        {   ebf_error("an existing property name after 'alias'",
-                token_text);
+        {   ebf_curtoken_error("an existing property name after 'alias'");
             panic_mode_error_recovery();
             put_token_back();
             return;
@@ -1152,7 +1150,7 @@ static void properties_segment_z(int this_segment)
         }
 
         if (token_type != SYMBOL_TT)
-        {   ebf_error("property name", token_text);
+        {   ebf_curtoken_error("property name");
             return;
         }
 
@@ -1422,7 +1420,7 @@ static void properties_segment_g(int this_segment)
         }
 
         if (token_type != SYMBOL_TT)
-        {   ebf_error("property name", token_text);
+        {   ebf_curtoken_error("property name");
             return;
         }
 
@@ -1664,7 +1662,7 @@ static void attributes_segment(void)
             || (token_type == EOF_TT)
             || ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
         {   if (!truth_state)
-                ebf_error("attribute name after '~'", token_text);
+                ebf_curtoken_error("attribute name after '~'");
             put_token_back(); return;
         }
         if ((token_type == SEP_TT) && (token_value == COMMA_SEP)) return;
@@ -1675,7 +1673,7 @@ static void attributes_segment(void)
 
         if ((token_type != SYMBOL_TT)
             || (symbols[token_value].type != ATTRIBUTE_T))
-        {   ebf_error("name of an already-declared attribute", token_text);
+        {   ebf_curtoken_error("name of an already-declared attribute");
             return;
         }
 
@@ -1758,7 +1756,7 @@ static void classes_segment(void)
 
         if ((token_type != SYMBOL_TT)
             || (symbols[token_value].type != CLASS_T))
-        {   ebf_error("name of an already-declared class", token_text);
+        {   ebf_curtoken_error("name of an already-declared class");
             return;
         }
         if (current_defn_is_class && token_value == current_classname_symbol)
@@ -1878,7 +1876,7 @@ inconvenience, please contact the maintainers.");
     {   get_next_token();
         if (token_type != SYMBOL_TT)
         {   discard_token_location(beginning_debug_location);
-            ebf_error("new class name", token_text);
+            ebf_curtoken_error("new class name");
             panic_mode_error_recovery();
             return;
         }
@@ -2084,8 +2082,7 @@ extern void make_object(int nearby_flag,
     if (token_type == DQ_TT) textual_name = token_text;
     else
     {   if (token_type != SYMBOL_TT) {
-            ebf_error("name for new object or its textual short name",
-                token_text);
+            ebf_curtoken_error("name for new object or its textual short name");
         }
         else if (!(symbols[token_value].flags & UNKNOWN_SFLAG)) {
             ebf_symbol_error("new object", token_text, typename(symbols[token_value].type), symbols[token_value].line);
@@ -2113,10 +2110,9 @@ extern void make_object(int nearby_flag,
     {   if ((token_type != SYMBOL_TT)
             || (symbols[token_value].flags & UNKNOWN_SFLAG))
         {   if (textual_name == NULL)
-                ebf_error("parent object or the object's textual short name",
-                    token_text);
+                ebf_curtoken_error("parent object or the object's textual short name");
             else
-                ebf_error("parent object", token_text);
+                ebf_curtoken_error("parent object");
         }
         else goto SpecParent;
     }
@@ -2127,7 +2123,7 @@ extern void make_object(int nearby_flag,
     if (end_of_header()) goto HeaderPassed;
 
     if (specified_parent != -1)
-        ebf_error("body of object definition", token_text);
+        ebf_curtoken_error("body of object definition");
     else
     {   SpecParent:
         if ((symbols[token_value].type == OBJECT_T)
@@ -2135,7 +2131,7 @@ extern void make_object(int nearby_flag,
         {   specified_parent = symbols[token_value].value;
             symbols[token_value].flags |= USED_SFLAG;
         }
-        else ebf_error("name of (the parent) object", token_text);
+        else ebf_curtoken_error("name of (the parent) object");
     }
 
     /*  Now it really has to be the body of the definition.                  */
@@ -2143,7 +2139,7 @@ extern void make_object(int nearby_flag,
     get_next_token_with_directives();
     if (end_of_header()) goto HeaderPassed;
 
-    ebf_error("body of object definition", token_text);
+    ebf_curtoken_error("body of object definition");
 
     HeaderPassed:
     if (specified_class == -1) put_token_back();

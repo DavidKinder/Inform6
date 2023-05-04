@@ -375,9 +375,8 @@ but not used as a value:", unicode);
                     get_next_token();
                     system_constants.enabled = FALSE;
                     if (token_type != SYSTEM_CONSTANT_TT)
-                    {   ebf_error(
-                        "'r$', 'n$', 'g$' or internal Inform constant name after '#'",
-                        token_text);
+                    {   ebf_curtoken_error(
+                        "'r$', 'n$', 'g$' or internal Inform constant name after '#'");
                         break;
                     }
                     else
@@ -1915,7 +1914,7 @@ extern assembly_operand parse_expression(int context)
     directives.enabled = FALSE;
 
     if (get_next_etoken() == FALSE)
-    {   ebf_error("expression", token_text);
+    {   ebf_curtoken_error("expression");
         return AO;
     }
 
