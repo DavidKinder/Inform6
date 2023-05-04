@@ -1801,13 +1801,13 @@ int dict_entries;                     /* Total number of records entered     */
 /*   typedef, and operate directly on uchar arrays of length DICT_WORD_SIZE. */
 /*   In Z-code, DICT_WORD_SIZE will be 6, so the Z-code compiler will work   */
 /*   as before. In Glulx, it can be any value up to MAX_DICT_WORD_SIZE.      */
-/*   (That limit is defined as 40 in the header; it exists only for a few    */
-/*   static buffers, and can be increased without using significant memory.) */
+/*   (That limit is defined as 64 in the header. It exists only for a few    */
+/*   static buffers, plus an overflow bound for dict word lexing. It can     */
+/*   be increased without using significant memory.) */
 /*                                                                           */
-/*   ...Well, that certainly bit me on the butt, didn't it. In further       */
-/*   modifying the compiler to generate a Unicode dictionary, I have to      */
-/*   store four-byte values in the uchar array. This is handled by making    */
-/*   the array size DICT_WORD_BYTES (which is DICT_WORD_SIZE*DICT_CHAR_SIZE).*/
+/*   In further modifying the compiler to generate a Unicode dictionary,     */
+/*   I have to store four-byte values in the uchar array. We make the array  */
+/*   size DICT_WORD_BYTES (which is DICT_WORD_SIZE*DICT_CHAR_SIZE).          */
 /*   Then we store the 32-bit character value big-endian. This lets us       */
 /*   continue to compare arrays bytewise, which is a nice simplification.    */
 /* ------------------------------------------------------------------------- */
