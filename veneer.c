@@ -254,6 +254,10 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "CA__Pr",
         "obj id a b c d e f x y z s s2 n m;\
+         #IFV3;\
+         #Message error \"Object message calls are not supported in v3.\";\
+         obj = id = a = b = c = d = e = f = x = y = z = s = s2 = n = m = 0;\
+         #IFNOT;\
          if (obj < 1 || obj > #largest_object-255)\
          {   switch(Z__Region(obj))\
              { 2: if (id == call)\
@@ -315,6 +319,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
         default: return x-->m;\
             }\
          }\
+         #ENDIF;\
          rfalse;\
          ]"
     },
@@ -405,7 +410,11 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
              identifier = (identifier & $3f00) / $100;\
              if (~~(obj ofclass cla)) rfalse; i=0-->5;\
              if (cla == 2) return i+2*identifier-2;\
+             #IFV3;\
+             i = (i+60+cla*9)-->0;\
+             #IFNOT;\
              i = 0-->((i+124+cla*14)/2);\
+             #ENDIF;\
              i = CP__Tab(i + 2*(0->i) + 1, -1)+6;\
              return CP__Tab(i, identifier);\
          }\
@@ -675,6 +684,16 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "CP__Tab",
         "x id n l;\
+         #IFV3;\
+         while (1)\
+         {   n = x->0;\
+             if (n == 0) break;\
+             x++;\
+             if (id == (n & $1f)) return x;\
+             l = (n/$20)+1;\
+             x = x + l;\
+         }\
+         #IFNOT;\
          while ((n=0->x) ~= 0)\
          {   if (n & $80) { x++; l = (0->x) & $3f; }\
              else { if (n & $40) l=2; else l=1; }\
@@ -682,12 +701,17 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
              if ((n & $3f) == id) return x;\
              x = x + l;\
          }\
+         #ENDIF;\
          if (id<0) return x+1; rfalse; ]", "", "", "", "", ""
     },
     {   /*  Cl__Ms:   the five message-receiving properties of Classes       */
 
         "Cl__Ms",
         "obj id y a b c d x;\
+         #IFV3;\
+         #Message error \"Class messages are not supported in v3.\";\
+         obj = id = y = a = b = c = d = x = 0;\
+         #IFNOT;\
          switch(id)\
          {   create:\
                  if (children(obj)<=1) rfalse; x=child(obj);\
@@ -718,6 +742,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
                  { RT__Err(\"copy\", b, -obj); rfalse; }\
                  Copy__Primitive(a, b); rfalse;\
          }\
+         #ENDIF;\
          ]", "", "", ""
     },
     {   /*  RT__ChT:  check at run-time that a proposed object move is legal

@@ -319,6 +319,29 @@ extern void ebf_error(char *s1, char *s2)
     error(error_message_buff);
 }
 
+extern void ebf_curtoken_error(char *s)
+{
+    /* This is "Expected (s) but found (the current token_text)". We use
+       token_type as a hint for how to display token_text. */
+    
+    if (token_type == DQ_TT) {
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found string \"%s\"", s, token_text);
+    }
+    else if (token_type == SQ_TT && strlen(token_text)==1) {
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found char '%s'", s, token_text);
+    }
+    else if (token_type == SQ_TT) {
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found dict word '%s'", s, token_text);
+    }
+    else {
+        /* Symbols, unquoted strings, and numbers can be printed directly. EOF will have "<end of file>" in token_text. */
+        snprintf(error_message_buff, ERROR_BUFLEN, "Expected %s but found %s", s, token_text);
+    }
+    
+    ellipsize_error_message_buff();
+    error(error_message_buff);
+}
+
 extern void ebf_symbol_error(char *s1, char *name, char *type, brief_location report_line)
 {   snprintf(error_message_buff, ERROR_BUFLEN, "\"%s\" is a name already in use and may not be used as a %s (%s \"%s\" was defined at %s)", name, s1, type, name, location_text(report_line));
     ellipsize_error_message_buff();
