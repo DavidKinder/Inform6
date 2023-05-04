@@ -1803,7 +1803,7 @@ int dict_entries;                     /* Total number of records entered     */
 /*   as before. In Glulx, it can be any value up to MAX_DICT_WORD_SIZE.      */
 /*   (That limit is defined as 64 in the header. It exists only for a few    */
 /*   static buffers, plus an overflow bound for dict word lexing. It can     */
-/*   be increased without using significant memory.) */
+/*   be increased without using significant memory.)                         */
 /*                                                                           */
 /*   In further modifying the compiler to generate a Unicode dictionary,     */
 /*   I have to store four-byte values in the uchar array. We make the array  */
