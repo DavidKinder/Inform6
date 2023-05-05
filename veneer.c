@@ -435,7 +435,9 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
     },
     {
         /*  RL__Pr:  read the property length of an individual property value,
-                     returning 0 if it isn't provided by the given object    */
+                     returning 0 if it isn't provided by the given object.
+                     This is also used for inherited values (of the form
+                     class::prop). */
 
         "RL__Pr",
         "obj identifier x;\
