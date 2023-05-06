@@ -441,13 +441,7 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
 
         "RL__Pr",
         "obj identifier x;\
-         if (identifier<64 && identifier>0) {\
-             #IFV3;\
-             return obj.#identifier;\
-             #IFNOT;\
-             return obj.#identifier;\
-             #ENDIF;\
-         }\
+         if (identifier<64 && identifier>0) return obj.#identifier;\
          x = obj..&identifier;\
          if (x==0) rfalse;\
          #IFV3;\
