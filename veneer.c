@@ -444,16 +444,15 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          if (identifier<64 && identifier>0) return obj.#identifier;\
          x = obj..&identifier;\
          if (x==0) rfalse;\
-         #IFV3;\
-         if (identifier&$C000==$4000)\
+         if (identifier&$C000==$4000) {\
+             #IFV3;\
              return 1+((x-1)->0)/$20;\
-         return (x-1)->0;\
-         #IFNOT;\
-         if (identifier&$C000==$4000)\
+             #IFNOT;\
              switch (((x-1)->0)&$C0)\
              {  0: return 1;  $40: return 2;  $80: return ((x-1)->0)&$3F; }\
+             #ENDIF;\
+         }\
          return (x-1)->0;\
-         #ENDIF;\
          ]", "", "", "", "", ""
     },
     {
