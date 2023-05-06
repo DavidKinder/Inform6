@@ -601,8 +601,8 @@
 #define  MAX_ERRORS            100
 #define  MAX_IDENTIFIER_LENGTH  32
 #define  MAX_ABBREV_LENGTH      64
-#define  MAX_DICT_WORD_SIZE     40
-#define  MAX_DICT_WORD_BYTES    (40*4)
+#define  MAX_DICT_WORD_SIZE     64
+#define  MAX_DICT_WORD_BYTES    (MAX_DICT_WORD_SIZE*4)
 #define  MAX_NUM_ATTR_BYTES     39
 #define  MAX_VERB_WORD_SIZE    120
 

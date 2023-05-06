@@ -272,12 +272,19 @@ static int lex_pos;         /* Current write position in that lextext        */
 /* ------------------------------------------------------------------------- */
 /*   The lexer itself needs up to 3 characters of lookahead (it uses an      */
 /*   LR(3) grammar to translate characters into tokens).                     */
+/*                                                                           */
+/*   Past the end of the stream, we fill in zeros. This has the awkward      */
+/*   side effect that a zero byte in a source file will silently terminate   */
+/*   it, rather than producing an "illegal source character" error.          */
+/*   On the up side, we can compile veneer routines (which are null-         */
+/*   terminated strings) with no extra work.                                 */
 /* ------------------------------------------------------------------------- */
 
 #define LOOKAHEAD_SIZE 3
 
 static int current, lookahead,          /* The latest character read, and    */
     lookahead2, lookahead3;             /* the three characters following it */
+                                        /* (zero means end-of-stream)        */
 
 static int pipeline_made;               /* Whether or not the pipeline of
                                            characters has been constructed
@@ -1366,7 +1373,7 @@ static int32 construct_double(int wanthigh, int signbit, double intv, double fra
 /*                                                                           */
 /*   Note that file_load_chars(p, size) loads "size" bytes into buffer "p"   */
 /*   from the current input file.  If the file runs out, then if it was      */
-/*   the last source file 4 EOF characters are placed in the buffer: if it   */
+/*   the last source file 4 null characters are placed in the buffer: if it  */
 /*   was only an Include file ending, then a '\n' character is placed there  */
 /*   (essentially to force termination of any comment line) followed by      */
 /*   three harmless spaces.                                                  */
@@ -1534,7 +1541,7 @@ static int get_next_char_from_pipeline(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Source 2: from a string                                                 */
+/*   Source 2: from a (null-terminated) string                               */
 /* ------------------------------------------------------------------------- */
 
 static int source_to_analyse_pointer;            /*  Current read position   */
@@ -1574,7 +1581,8 @@ static int get_next_char_from_string(void)
 /*                                                                           */
 /*       restart_lexer(source, name) if source is NULL, initialise the lexer */
 /*                                       to read from source files;          */
-/*                                   otherwise, to read from this string.    */
+/*                                       otherwise, to read from this null-  */
+/*                                       terminated string.                  */
 /* ------------------------------------------------------------------------- */
 
 extern void release_token_texts(void)
@@ -1859,7 +1867,7 @@ extern void get_next_token(void)
             quoted_size=0;
             do
             {   e = d; d = (*get_next_char)(); lexaddc(d);
-                if (quoted_size++==64)
+                if (quoted_size++==MAX_DICT_WORD_SIZE)
                 {   error(
                     "Too much text for one pair of quotations '...' to hold");
                     lexaddc('\''); break;
@@ -1872,8 +1880,8 @@ extern void get_next_token(void)
                     }
                     break;
                 }
-            } while (d != EOF);
-            if (d==EOF) ebf_error("'\''", "end of file");
+            } while (d != 0);
+            if (d==0) ebf_error("'\''", "end of file");
             lexdelc();
             circle[circle_position].type = SQ_TT;
             break;
@@ -1886,14 +1894,14 @@ extern void get_next_token(void)
                 {   lex_pos--;
                     while (lexlastc() == ' ') lex_pos--;
                     if (lexlastc() != '^') lexaddc(' ');
-                    while ((lookahead != EOF) &&
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                     (*get_next_char)();
                 }
                 else if (d == '\\')
                 {   int newline_passed = FALSE;
                     lex_pos--;
-                    while ((lookahead != EOF) &&
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                         if ((d = (*get_next_char)()) == '\n')
                             newline_passed = TRUE;
@@ -1905,8 +1913,8 @@ extern void get_next_token(void)
                             chb);
                     }
                 }
-            }   while ((d != EOF) && (d!='\"'));
-            if (d==EOF) ebf_error("'\"'", "end of file");
+            }   while ((d != 0) && (d!='\"'));
+            if (d==0) ebf_error("'\"'", "end of file");
             lexdelc();
             circle[circle_position].type = DQ_TT;
             break;
