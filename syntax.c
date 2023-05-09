@@ -713,6 +713,8 @@ extern void parse_code_block(int break_label, int continue_label,
                         if (!constcount)
                         {
                             ebf_error("constant", "<expression>");
+                            panic_mode_error_recovery();
+                            continue;
                         }
 
                         if (constcount > MAX_SPEC_STACK)
