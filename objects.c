@@ -852,7 +852,13 @@ static int write_properties_between(int mark, int from, int to)
                 }
 
                 for (k=0; k<full_object.pp[j].l; k++)
-                {   if (full_object.pp[j].ao[k].marker != 0)
+                {
+                    if (k >= 32) {
+                        /* We catch this earlier, but we'll check again to avoid overflowing ao[] */
+                        error("Too many values for Z-machine property");
+                        break;
+                    }
+                    if (full_object.pp[j].ao[k].marker != 0)
                         backpatch_zmachine(full_object.pp[j].ao[k].marker,
                             PROP_ZA, mark);
                     properties_table[mark++] = full_object.pp[j].ao[k].value/256;
