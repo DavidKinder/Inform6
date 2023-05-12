@@ -1201,7 +1201,7 @@ static void emit_token(const token_data *t)
                 default:
                     warning("Property name in expression is not qualified by object");
             }
-        } /* if (is_property_t */
+        }
     }
 
     switch(arity)
@@ -1210,7 +1210,10 @@ static void emit_token(const token_data *t)
             if ((o1.marker == 0) && is_constant_ot(o1.type))
             {   switch(t->value)
                 {   case UNARY_MINUS_OP:
-                        x = (-(uint32)o1.value);
+                        if ((uint32)o1.value == 0x80000000)
+                          x = 0x80000000;
+                        else
+                          x = -o1.value;
                         goto FoldConstant;
                     case ARTNOT_OP: 
                          if (!glulx_mode)
