@@ -1867,11 +1867,6 @@ extern void get_next_token(void)
             quoted_size=0;
             do
             {   e = d; d = (*get_next_char)(); lexaddc(d);
-                if (quoted_size++==MAX_DICT_WORD_SIZE)
-                {   error(
-                    "Too much text for one pair of quotations '...' to hold");
-                    lexaddc('\''); break;
-                }
                 if ((d == '\'') && (e != '@'))
                 {   if (quoted_size == 1)
                     {   d = (*get_next_char)(); lexaddc(d);
