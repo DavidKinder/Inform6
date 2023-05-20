@@ -97,7 +97,7 @@ static memory_list English_verbs_given_memlist;
   int32   *adjectives; /* Allocated to no_adjectives */
   static memory_list adjectives_memlist;
 
-  static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES */
+  static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES, except it's sometimes no_adjectives+1 because we can bump it tentatively */
   static memory_list adjective_sort_code_memlist;
 
 /* ------------------------------------------------------------------------- */
@@ -440,7 +440,6 @@ static int make_adjective(char *English_word)
         table is left empty in GV2.                                          */
 
     int i; 
-    uchar new_sort_code[MAX_DICT_WORD_BYTES];
 
     if (no_adjectives >= 255) {
         error("Grammar version 1 cannot support more than 255 prepositions");
@@ -451,9 +450,13 @@ static int make_adjective(char *English_word)
         error("Grammar version 1 cannot be used with ZCODE_LESS_DICT_DATA");
         return 0;
     }
+
+    /* Allocate the extra space even though we might not need it. We'll use
+       the prospective new adjective_sort_code slot as a workspace. */
     ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);
     ensure_memory_list_available(&adjective_sort_code_memlist, (no_adjectives+1) * DICT_WORD_BYTES);
 
+    uchar *new_sort_code = adjective_sort_code+no_adjectives*DICT_WORD_BYTES;
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
         if (compare_sorts(new_sort_code,
@@ -461,8 +464,6 @@ static int make_adjective(char *English_word)
             return(0xff-i);
     adjectives[no_adjectives]
         = dictionary_add(English_word,8,0,0xff-no_adjectives);
-    copy_sorts(adjective_sort_code+no_adjectives*DICT_WORD_BYTES,
-        new_sort_code);
     return(0xff-no_adjectives++);
 }
 
@@ -548,8 +549,7 @@ static void register_verb(char *English_verb, int number)
 
     /* We set a hard limit of MAX_VERB_WORD_SIZE=120 because the
        English_verb_list table stores length in a leading byte. (We could
-       raise that to 250, really, but there's little point when
-       MAX_DICT_WORD_SIZE is 64.) */
+       raise that to 250, really.) */
     entrysize = strlen(English_verb)+4;
     if (entrysize > MAX_VERB_WORD_SIZE+4)
         error_fmt("Verb word is too long -- max length is %d", MAX_VERB_WORD_SIZE);
