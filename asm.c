@@ -79,9 +79,9 @@ static char opcode_syntax_string[128];  /*  Text buffer holding the correct
 static int routine_symbol;         /* The symbol index of the routine currently
                                       being compiled */
 static memory_list current_routine_name; /* The name of the routine currently
-                                      being compiled. (This may be longer
-                                      than MAX_IDENTIFIER_LENGTH, e.g. for
-                                      an "obj.prop" property routine.)       */
+                                      being compiled. (This may not be a
+                                      simple symbol, e.g. for an "obj.prop"
+                                      property routine.)                     */
 static int routine_locals;         /* The number of local variables used by
                                       the routine currently being compiled   */
 
@@ -3556,7 +3556,7 @@ extern void asm_allocate_arrays(void)
         "code area");
 
     initialise_memory_list(&current_routine_name,
-        sizeof(char), 3*MAX_IDENTIFIER_LENGTH, NULL,
+        sizeof(char), 64, NULL,
         "routine name currently being defined");
 }
 
