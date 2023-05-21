@@ -509,7 +509,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
     if ((embedded_flag == FALSE) && (veneer_mode == FALSE) && debug_flag)
         symbols[r_symbol].flags |= STAR_SFLAG;
 
-    packed_address = assemble_routine_header(no_locals, debug_flag,
+    packed_address = assemble_routine_header(debug_flag,
         name, embedded_flag, r_symbol);
 
     do

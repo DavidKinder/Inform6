@@ -886,13 +886,14 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 (We don't set local_variable.keywords because we're not
                 going to be parsing any code.)                               */
 
+            no_locals = k;
             strcpy(local_variable_names[0].text, "dummy1");
             strcpy(local_variable_names[1].text, "dummy2");
             strcpy(local_variable_names[2].text, "dummy3");
             strcpy(local_variable_names[3].text, "dummy4");
 
             assign_symbol(i,
-                assemble_routine_header(k, FALSE, symbols[i].name, FALSE, i),
+                assemble_routine_header(FALSE, symbols[i].name, FALSE, i),
                 ROUTINE_T);
 
             /*  Ensure the return value of a stubbed routine is false,

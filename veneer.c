@@ -34,8 +34,9 @@ extern void compile_initial_routine(void)
     assembly_operand AO;
 
     j = symbol_index("Main__", -1);
+    no_locals = 0;
     assign_symbol(j,
-        assemble_routine_header(0, FALSE, "Main__", FALSE, j),
+        assemble_routine_header(FALSE, "Main__", FALSE, j),
         ROUTINE_T);
     symbols[j].flags |= SYSTEM_SFLAG + USED_SFLAG;
     if (trace_fns_setting==3) symbols[j].flags |= STAR_SFLAG;
@@ -2226,12 +2227,13 @@ static void compile_symbol_table_routine(void)
     /* Assign local var names for the benefit of the debugging information 
        file. (We don't set local_variable.keywords because we're not
        going to be parsing any code.) */
+    no_locals = 2;
     strcpy(local_variable_names[0].text, "dummy1");
     strcpy(local_variable_names[1].text, "dummy2");
 
     veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
     assign_symbol(j,
-        assemble_routine_header(2, FALSE, "Symb__Tab", FALSE, j),
+        assemble_routine_header(FALSE, "Symb__Tab", FALSE, j),
         ROUTINE_T);
     symbols[j].flags |= SYSTEM_SFLAG + USED_SFLAG;
     if (trace_fns_setting==3) symbols[j].flags |= STAR_SFLAG;

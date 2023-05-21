@@ -82,8 +82,6 @@ static memory_list current_routine_name; /* The name of the routine currently
                                       being compiled. (This may not be a
                                       simple symbol, e.g. for an "obj.prop"
                                       property routine.)                     */
-static int routine_locals;         /* The number of local variables used by
-                                      the routine currently being compiled   */
 
 static int32 routine_start_pc;
 
@@ -1709,16 +1707,16 @@ extern void define_symbol_label(int symbol)
     labels[label].symbol = symbol;
 }
 
-extern int32 assemble_routine_header(int no_locals,
-    int routine_asterisked, char *name, int embedded_flag, int the_symbol)
+/* The local variables must already be set up; the no_locals variable
+   indicates how many exist. */
+extern int32 assemble_routine_header(int routine_asterisked, char *name,
+    int embedded_flag, int the_symbol)
 {   int i, rv;
     int stackargs = FALSE;
     int name_length;
 
     execution_never_reaches_here = EXECSTATE_REACHABLE;
 
-    routine_locals = no_locals;
-    
     ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES);
     for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
@@ -2031,7 +2029,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         debug_file_printf
             ("<byte-count>%d</byte-count>", zmachine_pc - routine_start_pc);
         write_debug_locations(locations);
-        for (i = 1; i <= routine_locals; ++i)
+        for (i = 1; i <= no_locals; ++i)
         {   debug_file_printf("<local-variable>");
             debug_file_printf("<identifier>%s</identifier>", variable_name(i));
             if (glulx_mode)
@@ -2057,7 +2055,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 
     /* Issue warnings about any local variables not used in the routine. */
 
-    for (i=1; i<=routine_locals; i++)
+    for (i=1; i<=no_locals; i++)
         if (!(variables[i].usage))
             dbnu_warning("Local variable", variable_name(i),
                 routine_starts_line);
