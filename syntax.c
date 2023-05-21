@@ -475,12 +475,6 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             break;
         }
 
-        if (strlen(token_text) > MAX_IDENTIFIER_LENGTH)
-        {   error_named("Local variable identifier too long:", token_text);
-            panic_mode_error_recovery();
-            break;
-        }
-
         if (no_locals == MAX_LOCAL_VARIABLES-1)
         {   error_fmt("Too many local variables for a routine; max is %d",
                 MAX_LOCAL_VARIABLES-1);

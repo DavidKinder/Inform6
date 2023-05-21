@@ -255,8 +255,7 @@ static lexeme_data circle[CIRCLE_SIZE];
 
 typedef struct lextext_s {
     char *text;
-    size_t size; /* Allocated size (including terminal null)
-                    This is always at least MAX_IDENTIFIER_LENGTH+1         */
+    size_t size; /* Allocated size (including terminal null)                 */
 } lextext;
 
 static lextext *lextexts; /* Allocated to no_lextexts */
@@ -1764,7 +1763,7 @@ extern void get_next_token(void)
         /* fresh lextext block; must init it */
         no_lextexts = lex_index+1;
         ensure_memory_list_available(&lextexts_memlist, no_lextexts);
-        lextexts[lex_index].size = MAX_IDENTIFIER_LENGTH + 1;
+        lextexts[lex_index].size = 64;   /* this can grow */
         lextexts[lex_index].text = my_malloc(lextexts[lex_index].size, "one lexeme text");
     }
     lex_pos = 0;
@@ -1960,26 +1959,11 @@ extern void get_next_token(void)
         case IDENTIFIER_CODE:    /* Letter or underscore: an identifier */
 
             lexaddc(d); n=1;
-            while ((n<=MAX_IDENTIFIER_LENGTH)
-                   && ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
+            while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                    || (tokeniser_grid[lookahead] == DIGIT_CODE)))
                 n++, lexaddc((*get_next_char)());
 
             lexaddc(0);
-
-            if (n > MAX_IDENTIFIER_LENGTH)
-            {
-                error_fmt(
-                    "Name exceeds the maximum length of %d characters: \"%s\"",
-                    MAX_IDENTIFIER_LENGTH, lextexts[lex_index].text);
-                /* Eat any further extra characters in the identifier */
-                while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
-                        || (tokeniser_grid[lookahead] == DIGIT_CODE)))
-                    (*get_next_char)();
-                /* Trim token so that it doesn't violate
-                   MAX_IDENTIFIER_LENGTH during error recovery */
-                lextexts[lex_index].text[MAX_IDENTIFIER_LENGTH] = 0;
-            }
 
             if (dont_enter_into_symbol_table)
             {   circle[circle_position].type = UQ_TT;
