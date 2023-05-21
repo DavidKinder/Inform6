@@ -56,6 +56,8 @@ symbolinfo *symbols;                           /* Allocated up to no_symbols */
 static memory_list symbols_memlist;
 symboldebuginfo *symbol_debug_info;            /* Allocated up to no_symbols */
 static memory_list symbol_debug_info_memlist;
+static char *temp_symbol_buf;        /* used in write_the_identifier_names() */
+static memory_list temp_symbol_buf_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory to hold the text of symbol names: note that this memory is       */
@@ -552,7 +554,7 @@ extern void issue_debug_symbol_warnings(void)
        int32 *array_name_strings;      /* Ditto for arrays                   */
 
 extern void write_the_identifier_names(void)
-{   int i, j, k, t, null_value; char idname_string[256];
+{   int i, j, k, t, null_value;
     static char unknown_attribute[20] = "<unknown attribute>";
 
     for (i=0; i<no_individual_properties; i++)
@@ -568,111 +570,128 @@ extern void write_the_identifier_names(void)
         if ((t == INDIVIDUAL_PROPERTY_T) || (t == PROPERTY_T))
         {   if (symbols[i].flags & ALIASED_SFLAG)
             {   if (individual_name_strings[symbols[i].value] == 0)
-                {   sprintf(idname_string, "%s", symbols[i].name);
+                {
+                    int sleni = strlen(symbols[i].name);
+                    ensure_memory_list_available(&temp_symbol_buf_memlist, sleni+1);
+                    sprintf(temp_symbol_buf, "%s", symbols[i].name);
 
                     for (j=i+1, k=0; (j<no_symbols && k<3); j++)
                     {   if ((symbols[j].type == symbols[i].type)
                             && (symbols[j].value == symbols[i].value))
-                        {   sprintf(idname_string+strlen(idname_string),
+                        {
+                            int slenj = strlen(symbols[j].name);
+                            ensure_memory_list_available(&temp_symbol_buf_memlist, strlen(temp_symbol_buf)+1+slenj+1);
+                            sprintf(temp_symbol_buf+strlen(temp_symbol_buf),
                                 "/%s", symbols[j].name);
                             k++;
                         }
                     }
 
                     individual_name_strings[symbols[i].value]
-                        = compile_string(idname_string, STRCTX_SYMBOL);
+                        = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
                 }
             }
             else
-            {   sprintf(idname_string, "%s", symbols[i].name);
-
+            {
                 individual_name_strings[symbols[i].value]
-                    = compile_string(idname_string, STRCTX_SYMBOL);
+                    = compile_string(symbols[i].name, STRCTX_SYMBOL);
             }
         }
         if (t == ATTRIBUTE_T)
-        {   if (symbols[i].flags & ALIASED_SFLAG)
+        {
+            if (symbols[i].flags & ALIASED_SFLAG)
             {   if (attribute_name_strings[symbols[i].value] == null_value)
-                {   sprintf(idname_string, "%s", symbols[i].name);
+                {
+                    int sleni = strlen(symbols[i].name);
+                    ensure_memory_list_available(&temp_symbol_buf_memlist, sleni+1);
+                    sprintf(temp_symbol_buf, "%s", symbols[i].name);
 
                     for (j=i+1, k=0; (j<no_symbols && k<3); j++)
                     {   if ((symbols[j].type == symbols[i].type)
                             && (symbols[j].value == symbols[i].value))
-                        {   sprintf(idname_string+strlen(idname_string),
+                        {
+                            int slenj = strlen(symbols[j].name);
+                            ensure_memory_list_available(&temp_symbol_buf_memlist, strlen(temp_symbol_buf)+1+slenj+1);
+                            sprintf(temp_symbol_buf+strlen(temp_symbol_buf),
                                 "/%s", symbols[j].name);
                             k++;
                         }
                     }
 
                     attribute_name_strings[symbols[i].value]
-                        = compile_string(idname_string, STRCTX_SYMBOL);
+                        = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
                 }
             }
             else
-            {   sprintf(idname_string, "%s", symbols[i].name);
-
+            {
                 attribute_name_strings[symbols[i].value]
-                    = compile_string(idname_string, STRCTX_SYMBOL);
+                    = compile_string(symbols[i].name, STRCTX_SYMBOL);
             }
         }
+        
         if (symbols[i].flags & ACTION_SFLAG)
-        {   sprintf(idname_string, "%s", symbols[i].name);
-            idname_string[strlen(idname_string)-3] = 0;
+        {
+            int sleni = strlen(symbols[i].name);
+            ensure_memory_list_available(&temp_symbol_buf_memlist, sleni+1);
+            sprintf(temp_symbol_buf, "%s", symbols[i].name);
+            temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
             if (debugfile_switch)
             {   debug_file_printf("<action>");
                 debug_file_printf
-                    ("<identifier>##%s</identifier>", idname_string);
+                    ("<identifier>##%s</identifier>", temp_symbol_buf);
                 debug_file_printf("<value>%d</value>", symbols[i].value);
                 debug_file_printf("</action>");
             }
 
             action_name_strings[symbols[i].value]
-                = compile_string(idname_string, STRCTX_SYMBOL);
+                = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
         }
     }
 
     for (i=0; i<no_symbols; i++)
     {   if (symbols[i].type == FAKE_ACTION_T)
-        {   sprintf(idname_string, "%s", symbols[i].name);
-            idname_string[strlen(idname_string)-3] = 0;
+        {
+            int sleni = strlen(symbols[i].name);
+            ensure_memory_list_available(&temp_symbol_buf_memlist, sleni+1);
+            sprintf(temp_symbol_buf, "%s", symbols[i].name);
+            temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
             action_name_strings[symbols[i].value
                     - ((grammar_version_number==1)?256:4096) + no_actions]
-                = compile_string(idname_string, STRCTX_SYMBOL);
+                = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
         }
     }
 
     for (j=0; j<no_arrays; j++)
-    {   i = arrays[j].symbol;
-        sprintf(idname_string, "%s", symbols[i].name);
-
+    {
         array_name_strings[j]
-            = compile_string(idname_string, STRCTX_SYMBOL);
+            = compile_string(symbols[i].name, STRCTX_SYMBOL);
     }
+    
   if (define_INFIX_switch)
   { for (i=0; i<no_symbols; i++)
     {   if (symbols[i].type == GLOBAL_VARIABLE_T)
-        {   sprintf(idname_string, "%s", symbols[i].name);
+        {
             array_name_strings[no_arrays + symbols[i].value -16]
-                = compile_string(idname_string, STRCTX_SYMBOL);
+                = compile_string(symbols[i].name, STRCTX_SYMBOL);
         }
     }
 
     for (i=0; i<no_named_routines; i++)
-    {   sprintf(idname_string, "%s", symbols[named_routine_symbols[i]].name);
-            array_name_strings[no_arrays + no_globals + i]
-                = compile_string(idname_string, STRCTX_SYMBOL);
+    {
+        array_name_strings[no_arrays + no_globals + i]
+            = compile_string(symbols[named_routine_symbols[i]].name, STRCTX_SYMBOL);
     }
 
     for (i=0, no_named_constants=0; i<no_symbols; i++)
     {   if (((symbols[i].type == OBJECT_T) || (symbols[i].type == CLASS_T)
             || (symbols[i].type == CONSTANT_T))
             && ((symbols[i].flags & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
-        {   sprintf(idname_string, "%s", symbols[i].name);
+        {
             array_name_strings[no_arrays + no_globals + no_named_routines
                 + no_named_constants++]
-                = compile_string(idname_string, STRCTX_SYMBOL);
+                = compile_string(symbols[i].name, STRCTX_SYMBOL);
         }
     }
   }
@@ -1526,6 +1545,7 @@ extern void init_symbols_vars(void)
     symbols = NULL;
     start_of_list = NULL;
     symbol_debug_info = NULL;
+    temp_symbol_buf = NULL;
 
     symbol_name_space_chunks = NULL;
     no_symbol_name_space_chunks = 0;
@@ -1570,6 +1590,11 @@ extern void symbols_allocate_arrays(void)
             sizeof(symboldebuginfo), 6400, (void**)&symbol_debug_info,
             "symbol debug backpatch info");
     }
+    
+    initialise_memory_list(&temp_symbol_buf_memlist,
+        sizeof(char), 64, (void**)&temp_symbol_buf,
+        "temporary symbol name");
+        
     start_of_list = my_calloc(sizeof(int32), HASH_TAB_SIZE,
                      "hash code list beginnings");
 
@@ -1623,6 +1648,8 @@ extern void symbols_free_arrays(void)
     {
         deallocate_memory_list(&symbol_debug_info_memlist);
     }
+    deallocate_memory_list(&temp_symbol_buf_memlist);
+    
     my_free(&start_of_list, "hash code list beginnings");
 
     if (symbol_replacements)
