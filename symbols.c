@@ -665,6 +665,7 @@ extern void write_the_identifier_names(void)
 
     for (j=0; j<no_arrays; j++)
     {
+        i = arrays[j].symbol;
         array_name_strings[j]
             = compile_string(symbols[i].name, STRCTX_SYMBOL);
     }
