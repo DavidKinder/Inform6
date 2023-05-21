@@ -656,13 +656,18 @@ static int *local_variable_hash_codes;
 int no_locals;
 
 /* Names of local variables in the current routine.
+   The values are positions in local_variable_names_memlist.
    This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
    is not included in this array.)
 
    (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES-1.
    But right now we just allocate the max.)
  */
-identstruct *local_variable_names;
+int *local_variable_name_offsets;
+
+static memory_list local_variable_names_memlist;
+/* How much of local_variable_names_memlist is used by the no_local locals. */
+static int local_variable_names_usage;
 
 static char one_letter_locals[128];
 
@@ -727,6 +732,37 @@ static void make_keywords_tables(void)
     }
 }
 
+extern void clear_local_variables(void)
+{
+    no_locals = 0;
+    local_variable_names_usage = 0;
+}
+
+extern void add_local_variable(char *name)
+{
+    int len;
+
+    if (no_locals+1 > MAX_LOCAL_VARIABLES-1) {
+        /* This should have been caught before we got here */
+        error("too many local variables");
+        return;
+    }
+    
+    len = strlen(name)+1;
+    ensure_memory_list_available(&local_variable_names_memlist, local_variable_names_usage + len);
+    local_variable_name_offsets[no_locals++] = local_variable_names_usage;
+    strcpy(local_variable_names_memlist.data+local_variable_names_usage, name);
+    local_variable_names_usage += len;
+}
+
+extern char *get_local_variable_name(int index)
+{
+    if (index < 0 || index >= no_locals)
+        return "???";   /* shouldn't happen */
+
+    return (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+}
+
 /* Look at the strings stored in local_variable_names (from 0 to no_locals).
    Set local_variables.keywords to point to these, and also prepare the
    hash tables.
@@ -739,7 +775,7 @@ extern void construct_local_variable_tables(void)
 
     for (i=0; i<no_locals; i++)
     {
-        char *p = local_variable_names[i].text;
+        char *p = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[i]);
         local_variables.keywords[i] = p;
         if (p[1] == 0)
         {   one_letter_locals[(uchar)p[0]] = i;
@@ -790,7 +826,9 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         if (index >= 0)
         {   for (;index<no_locals;index++)
             {   if (hashcode == local_variable_hash_codes[index])
-                {   if (strcmpcis(p, local_variable_names[index].text)==0)
+                {
+                    char *locname = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+                    if (strcmpcis(p, locname)==0)
                     {   circle[pos].type = LOCAL_VARIABLE_TT;
                         circle[pos].value = index+1;
                         return;
@@ -2122,6 +2160,9 @@ extern void init_lexer_vars(void)
     cur_lextexts = 0;
     lex_index = -1;
     lex_pos = -1;
+
+    no_locals = 0;
+    local_variable_names_usage = 0;
     
     blank_brief_location.file_index = -1;
     blank_brief_location.line_number = 0;
@@ -2170,8 +2211,11 @@ extern void lexer_allocate_arrays(void)
     keywords_data_table = my_calloc(sizeof(int), 3*MAX_KEYWORDS,
         "keyword hashing linked list");
     
-    local_variable_names = my_calloc(sizeof(identstruct), MAX_LOCAL_VARIABLES-1,
+    initialise_memory_list(&local_variable_names_memlist,
+        sizeof(char), MAX_LOCAL_VARIABLES*32, NULL,
         "text of local variable names");
+    local_variable_name_offsets = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES-1,
+        "offsets of local variable names");
     local_variable_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "local variable hash table");
     local_variable_hash_codes = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES,
@@ -2216,7 +2260,8 @@ extern void lexer_free_arrays(void)
     my_free(&keywords_hash_ends_table, "keyword hash end table");
     my_free(&keywords_data_table, "keyword hashing linked list");
 
-    my_free(&local_variable_names, "text of local variable names");
+    deallocate_memory_list(&local_variable_names_memlist);
+    my_free(&local_variable_name_offsets, "offsets of local variable names");
     my_free(&local_variable_hash_table, "local variable hash table");
     my_free(&local_variable_hash_codes, "local variable hash codes");
 

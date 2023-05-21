@@ -2518,7 +2518,7 @@ extern int  dont_enter_into_symbol_table;
 extern int  return_sp_as_variable;
 extern int  next_token_begins_syntax_line;
 extern int  no_locals;
-extern identstruct *local_variable_names;
+extern int *local_variable_name_offsets;
 
 extern int32 token_value;
 extern int   token_type;
@@ -2538,6 +2538,7 @@ extern void describe_token_triple(const char *text, int32 value, int type);
 extern void construct_local_variable_tables(void);
 extern void clear_local_variables(void);
 extern void add_local_variable(char *name);
+extern char *get_local_variable_name(int index);
 
 extern void declare_systemfile(void);
 extern int  is_systemfile(void);

@@ -489,7 +489,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         }
 
         for (i=0;i<no_locals;i++) {
-            if (strcmpcis(token_text, local_variable_names[i].text)==0)
+            if (strcmpcis(token_text, get_local_variable_name(i))==0)
                 error_named("Local variable defined twice:", token_text);
         }
         add_local_variable(token_text);

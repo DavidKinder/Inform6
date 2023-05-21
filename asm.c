@@ -307,7 +307,7 @@ extern int is_variable_ot(int otval)
 extern char *variable_name(int32 i)
 {
     if (i==0) return("sp");
-    if (i<MAX_LOCAL_VARIABLES) return local_variable_names[i-1].text;
+    if (i<MAX_LOCAL_VARIABLES) return get_local_variable_name(i-1);
 
     if (!glulx_mode) {
       if (i==255) return("TEMP1");
@@ -1721,8 +1721,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
     for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
     if (no_locals >= 1
-      && strcmpcis(local_variable_names[0].text, "_vararg_count")==0) {
-      stackargs = TRUE;
+        && strcmpcis(get_local_variable_name(0), "_vararg_count")==0) {
+        stackargs = TRUE;
     }
 
     if (veneer_mode) routine_starts_line = blank_brief_location;
