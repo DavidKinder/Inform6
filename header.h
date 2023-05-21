@@ -652,11 +652,6 @@ typedef struct brief_location_s
     int32 orig_line_number;
 } brief_location;
 
-typedef struct identstruct_s
-{
-    char text[MAX_IDENTIFIER_LENGTH+1];
-} identstruct;
-
 typedef struct assembly_operand_t
 {   int   type;     /* ?_OT value */
     int32 value;
