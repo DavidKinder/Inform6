@@ -100,6 +100,8 @@ static memory_list English_verbs_given_memlist;
   static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES, except it's sometimes no_adjectives+1 because we can bump it tentatively */
   static memory_list adjective_sort_code_memlist;
 
+  static memory_list action_symname_memlist; /* Used for temporary symbols */
+
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
@@ -308,7 +310,6 @@ static void new_action(char *b, int c)
 
 extern void make_fake_action(void)
 {   int i;
-    char action_sub[MAX_IDENTIFIER_LENGTH+4];
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -318,9 +319,15 @@ extern void make_fake_action(void)
         ebf_curtoken_error("new fake action name");
         panic_mode_error_recovery(); return;
     }
+
+    /* Enough space for "token__A". */
+    ensure_memory_list_available(&action_symname_memlist, strlen(token_text)+4);
+    char *action_sub = action_symname_memlist.data;
+    strcpy(action_sub, token_text);
+    strcat(action_sub, "__A");
+    
     /* Action symbols (including fake_actions) may collide with other kinds of symbols. So we don't check that. */
 
-    snprintf(action_sub, MAX_IDENTIFIER_LENGTH+4, "%s__A", token_text);
     i = symbol_index(action_sub, -1);
 
     if (!(symbols[i].flags & UNKNOWN_SFLAG))
@@ -354,11 +361,15 @@ extern assembly_operand action_of_name(char *name)
     /*  Returns the action number of the given name, creating it as a new
         action name if it isn't already known as such.                       */
 
-    char action_sub[MAX_IDENTIFIER_LENGTH+4];
     int j;
     assembly_operand AO;
 
-    snprintf(action_sub, MAX_IDENTIFIER_LENGTH+4, "%s__A", name);
+    /* Enough space for "name__A". */
+    ensure_memory_list_available(&action_symname_memlist, strlen(name)+4);
+    char *action_sub = action_symname_memlist.data;
+    strcpy(action_sub, name);
+    strcat(action_sub, "__A");
+    
     j = symbol_index(action_sub, -1);
 
     if (symbols[j].type == FAKE_ACTION_T)
@@ -398,12 +409,18 @@ extern assembly_operand action_of_name(char *name)
 
 extern void find_the_actions(void)
 {   int i; int32 j;
-    char action_name[MAX_IDENTIFIER_LENGTH+4];
-    char action_sub[MAX_IDENTIFIER_LENGTH+4];
 
     for (i=0; i<no_actions; i++)
-    {   strcpy(action_name, symbols[actions[i].symbol].name);
-        action_name[strlen(action_name) - 3] = '\0'; /* remove "__A" */
+    {
+        /* The name looks like "action__A". We're going to convert that to
+           "actionSub". Allocate enough space for both. */
+        int namelen = strlen(symbols[actions[i].symbol].name);
+        ensure_memory_list_available(&action_symname_memlist, 2*(namelen+1));
+        char *action_sub = action_symname_memlist.data;
+        char *action_name = action_symname_memlist.data + (namelen+1);
+        
+        strcpy(action_name, symbols[actions[i].symbol].name);
+        action_name[namelen - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");
         j = symbol_index(action_sub, -1);
@@ -1211,6 +1228,10 @@ extern void verbs_allocate_arrays(void)
         sizeof(uchar), 50*DICT_WORD_BYTES, (void**)&adjective_sort_code,
         "adjective sort codes");
 
+    initialise_memory_list(&action_symname_memlist,
+        sizeof(uchar), 32, NULL,
+        "action temporary symbols");
+    
     initialise_memory_list(&English_verb_list_memlist,
         sizeof(char), 2048, (void**)&English_verb_list,
         "register of verbs");
@@ -1233,6 +1254,7 @@ extern void verbs_free_arrays(void)
     deallocate_memory_list(&grammar_token_routine_memlist);
     deallocate_memory_list(&adjectives_memlist);
     deallocate_memory_list(&adjective_sort_code_memlist);
+    deallocate_memory_list(&action_symname_memlist);
     deallocate_memory_list(&English_verb_list_memlist);
     deallocate_memory_list(&English_verbs_given_memlist);
 }
