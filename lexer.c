@@ -652,6 +652,9 @@ static int *local_variable_hash_codes;
    119 for Glulx.
 */
 
+/* The number of local variables in the current routine. */
+int no_locals;
+
 /* Names of local variables in the current routine.
    This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
    is not included in this array.)
@@ -726,7 +729,9 @@ static void make_keywords_tables(void)
 
 /* Look at the strings stored in local_variable_names (from 0 to no_locals).
    Set local_variables.keywords to point to these, and also prepare the
-   hash tables. */
+   hash tables.
+   This must be called after add_local_variable(), but before we start
+   compiling function code. */
 extern void construct_local_variable_tables(void)
 {   int i, h;
     for (i=0; i<HASH_TAB_SIZE; i++) local_variable_hash_table[i] = -1;
@@ -2135,6 +2140,8 @@ extern void lexer_begin_pass(void)
     hash_printed_since_newline = FALSE;
 
     pipeline_made = FALSE;
+
+    no_locals = 0;
 
     restart_lexer(NULL, NULL);
 }

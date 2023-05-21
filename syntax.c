@@ -455,10 +455,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         restart_lexer(lexical_source, name);
     }
 
-    no_locals = 0;
-
-    for (i=0;i<MAX_LOCAL_VARIABLES-1;i++)
-        local_variable_names[i].text[0] = 0;
+    clear_local_variables();
 
     do
     {   statements.enabled = TRUE;
@@ -495,7 +492,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             if (strcmpcis(token_text, local_variable_names[i].text)==0)
                 error_named("Local variable defined twice:", token_text);
         }
-        strcpy(local_variable_names[no_locals++].text, token_text);
+        add_local_variable(token_text);
     } while(TRUE);
 
     /* Set up the local variable hash and the local_variables.keywords

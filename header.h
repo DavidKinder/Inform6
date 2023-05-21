@@ -2299,7 +2299,7 @@ extern void  make_upper_case(char *str);
 
 extern brief_location routine_starts_line;
 
-extern int  no_routines, no_named_routines, no_locals, no_termcs;
+extern int  no_routines, no_named_routines, no_termcs;
 extern int  terminating_characters[];
 
 extern int  parse_given_directive(int internal_flag);
@@ -2517,6 +2517,7 @@ extern int  total_source_line_count;
 extern int  dont_enter_into_symbol_table;
 extern int  return_sp_as_variable;
 extern int  next_token_begins_syntax_line;
+extern int  no_locals;
 extern identstruct *local_variable_names;
 
 extern int32 token_value;
@@ -2535,6 +2536,9 @@ extern void describe_token_triple(const char *text, int32 value, int type);
 #define describe_token(t) describe_token_triple((t)->text, (t)->value, (t)->type)
 
 extern void construct_local_variable_tables(void);
+extern void clear_local_variables(void);
+extern void add_local_variable(char *name);
+
 extern void declare_systemfile(void);
 extern int  is_systemfile(void);
 extern void report_errors_at_current_line(void);

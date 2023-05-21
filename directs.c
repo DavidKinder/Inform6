@@ -10,7 +10,6 @@
 
 int no_routines,                   /* Number of routines compiled so far     */
     no_named_routines,             /* Number not embedded in objects         */
-    no_locals,                     /* Number of locals in current routine    */
     no_termcs;                     /* Number of terminating characters       */
 int terminating_characters[32];
 
@@ -886,11 +885,11 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                 (We don't set local_variable.keywords because we're not
                 going to be parsing any code.)                               */
 
-            no_locals = k;
-            strcpy(local_variable_names[0].text, "dummy1");
-            strcpy(local_variable_names[1].text, "dummy2");
-            strcpy(local_variable_names[2].text, "dummy3");
-            strcpy(local_variable_names[3].text, "dummy4");
+            clear_local_variables();
+            if (k >= 1) add_local_variable("dummy1");
+            if (k >= 2) add_local_variable("dummy2");
+            if (k >= 3) add_local_variable("dummy3");
+            if (k >= 4) add_local_variable("dummy4");
 
             assign_symbol(i,
                 assemble_routine_header(FALSE, symbols[i].name, FALSE, i),
@@ -1294,7 +1293,6 @@ extern void init_directs_vars(void)
 extern void directs_begin_pass(void)
 {   no_routines = 0;
     no_named_routines = 0;
-    no_locals = 0;
     no_termcs = 0;
     constant_made_yet = FALSE;
     ifdef_sp = 0;
