@@ -124,6 +124,11 @@ uchar *translated_text;                /* Area holding translated strings
                                           static_strings_area below */
 static memory_list translated_text_memlist;
 
+static char *temp_symbol;              /* Temporary symbol name used while
+                                          processing "@(...)".               */
+static memory_list temp_symbol_memlist;
+
+
 static int32 text_out_pos;             /* The "program counter" during text
                                           translation: the next position to
                                           write Z-coded text output to       */
@@ -650,7 +655,6 @@ advance as part of 'Zcharacter table':", unicode);
             else if (text_in[i+1]=='(')
             {
                 /*   @(...) (dynamic string)   */
-                char dsymbol[MAX_IDENTIFIER_LENGTH+1];
                 int len = 0, digits = 0;
                 i += 2;
                 /* This accepts "12xyz" as a symbol, which it really isn't,
@@ -658,23 +662,25 @@ advance as part of 'Zcharacter table':", unicode);
                 while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
                     char ch = text_in[i++];
                     if (isdigit(ch)) digits++;
-                    dsymbol[len++] = ch;
+                    ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                    temp_symbol[len++] = ch;
                 }
-                dsymbol[len] = '\0';
+                ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                temp_symbol[len] = '\0';
                 j = -1;
-                /* We would like to parse dsymbol as *either* a decimal
+                /* We would like to parse temp_symbol as *either* a decimal
                    number or a constant symbol. */
                 if (text_in[i] != ')' || len == 0) {
                     error("'@(...)' abbreviation must contain a symbol");
                 }
                 else if (digits == len) {
                     /* all digits; parse as decimal */
-                    j = atoi(dsymbol);
+                    j = atoi(temp_symbol);
                 }
                 else {
-                    int sym = symbol_index(dsymbol, -1);
+                    int sym = symbol_index(temp_symbol, -1);
                     if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
-                        error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                        error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                     }
                     else {
                         symbols[sym].flags |= USED_SFLAG;
@@ -849,7 +855,6 @@ string.");
           while (isdigit(text_in[i])) i++; i--;
         }
         else if (text_in[i+1]=='(') {
-            char dsymbol[MAX_IDENTIFIER_LENGTH+1];
             int len = 0, digits = 0;
             i += 2;
             /* This accepts "12xyz" as a symbol, which it really isn't,
@@ -857,23 +862,25 @@ string.");
             while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
                 char ch = text_in[i++];
                 if (isdigit(ch)) digits++;
-                dsymbol[len++] = ch;
+                ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                temp_symbol[len++] = ch;
             }
-            dsymbol[len] = '\0';
+            ensure_memory_list_available(&temp_symbol_memlist, len+1);
+            temp_symbol[len] = '\0';
             j = -1;
-            /* We would like to parse dsymbol as *either* a decimal
+            /* We would like to parse temp_symbol as *either* a decimal
                number or a constant symbol. */
             if (text_in[i] != ')' || len == 0) {
                 error("'@(...)' abbreviation must contain a symbol");
             }
             else if (digits == len) {
                 /* all digits; parse as decimal */
-                j = atoi(dsymbol);
+                j = atoi(temp_symbol);
             }
             else {
-                int sym = symbol_index(dsymbol, -1);
+                int sym = symbol_index(temp_symbol, -1);
                 if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
-                    error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                    error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                 }
                 else {
                     symbols[sym].flags |= USED_SFLAG;
@@ -2658,6 +2665,8 @@ extern void init_text_vars(void)
     grandtable = NULL;
     grandflags = NULL;
 
+    translated_text = NULL;
+    temp_symbol = NULL;
     all_text = NULL;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
@@ -2705,6 +2714,10 @@ extern void text_allocate_arrays(void)
     initialise_memory_list(&translated_text_memlist,
         sizeof(uchar), 8000, (void**)&translated_text,
         "translated text holding area");
+    
+    initialise_memory_list(&temp_symbol_memlist,
+        sizeof(char), 32, (void**)&temp_symbol,
+        "temporary symbol name");
     
     initialise_memory_list(&all_text_memlist,
         sizeof(char), 0, (void**)&all_text,
@@ -2796,6 +2809,7 @@ extern void extract_all_text()
 extern void text_free_arrays(void)
 {
     deallocate_memory_list(&translated_text_memlist);
+    deallocate_memory_list(&temp_symbol_memlist);
     
     deallocate_memory_list(&all_text_memlist);
     
