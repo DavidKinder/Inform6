@@ -670,32 +670,33 @@ extern void write_the_identifier_names(void)
             = compile_string(symbols[i].name, STRCTX_SYMBOL);
     }
     
-  if (define_INFIX_switch)
-  { for (i=0; i<no_symbols; i++)
-    {   if (symbols[i].type == GLOBAL_VARIABLE_T)
-        {
-            array_name_strings[no_arrays + symbols[i].value -16]
-                = compile_string(symbols[i].name, STRCTX_SYMBOL);
-        }
-    }
-
-    for (i=0; i<no_named_routines; i++)
+    if (define_INFIX_switch)
     {
-        array_name_strings[no_arrays + no_globals + i]
-            = compile_string(symbols[named_routine_symbols[i]].name, STRCTX_SYMBOL);
-    }
-
-    for (i=0, no_named_constants=0; i<no_symbols; i++)
-    {   if (((symbols[i].type == OBJECT_T) || (symbols[i].type == CLASS_T)
-            || (symbols[i].type == CONSTANT_T))
-            && ((symbols[i].flags & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
+        for (i=0; i<no_symbols; i++)
+        {   if (symbols[i].type == GLOBAL_VARIABLE_T)
+            {
+                array_name_strings[no_arrays + symbols[i].value -16]
+                    = compile_string(symbols[i].name, STRCTX_SYMBOL);
+            }
+        }
+        
+        for (i=0; i<no_named_routines; i++)
         {
-            array_name_strings[no_arrays + no_globals + no_named_routines
-                + no_named_constants++]
-                = compile_string(symbols[i].name, STRCTX_SYMBOL);
+            array_name_strings[no_arrays + no_globals + i]
+                = compile_string(symbols[named_routine_symbols[i]].name, STRCTX_SYMBOL);
+        }
+        
+        for (i=0, no_named_constants=0; i<no_symbols; i++)
+        {   if (((symbols[i].type == OBJECT_T) || (symbols[i].type == CLASS_T)
+                 || (symbols[i].type == CONSTANT_T))
+                && ((symbols[i].flags & (UNKNOWN_SFLAG+ACTION_SFLAG))==0))
+            {
+                array_name_strings[no_arrays + no_globals + no_named_routines
+                                   + no_named_constants++]
+                    = compile_string(symbols[i].name, STRCTX_SYMBOL);
+            }
         }
     }
-  }
 
     veneer_mode = FALSE;
 }
