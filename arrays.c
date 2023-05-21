@@ -850,7 +850,7 @@ extern void arrays_allocate_arrays(void)
         "global variable values");
 
     initialise_memory_list(&current_array_name,
-        sizeof(char), MAX_IDENTIFIER_LENGTH+1, NULL,
+        sizeof(char), 32, NULL,
         "array name currently being defined");
 }
 
