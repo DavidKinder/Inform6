@@ -1707,8 +1707,8 @@ extern void define_symbol_label(int symbol)
     labels[label].symbol = symbol;
 }
 
-/* The local variables must already be set up; the no_locals variable
-   indicates how many exist. */
+/* The local variables must already be set up; no_locals indicates
+   how many exist. */
 extern int32 assemble_routine_header(int routine_asterisked, char *name,
     int embedded_flag, int the_symbol)
 {   int i, rv;
