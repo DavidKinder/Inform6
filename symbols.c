@@ -59,7 +59,8 @@ static memory_list symbol_debug_info_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Memory to hold the text of symbol names: note that this memory is       */
-/*   allocated as needed in chunks of size SYMBOLS_CHUNK_SIZE.               */
+/*   allocated as needed in chunks of size SYMBOLS_CHUNK_SIZE. (Or           */
+/*   larger, if needed for a particularly enormous symbol.)                  */
 /* ------------------------------------------------------------------------- */
 
 #define SYMBOLS_CHUNK_SIZE (4096)
@@ -277,17 +278,18 @@ extern int symbol_index(char *p, int hashcode)
 
     len = strlen(p);
     if (!symbols_free_space || symbols_free_space+len+1 >= symbols_ceiling)
-    {   symbols_free_space
-            = my_malloc(SYMBOLS_CHUNK_SIZE, "symbol names chunk");
-        symbols_ceiling = symbols_free_space + SYMBOLS_CHUNK_SIZE;
+    {
+        /* Allocate a new chunk whose size is big enough for the current
+           symbol, or SYMBOLS_CHUNK_SIZE, whichever is greater. */
+        int chunklen = SYMBOLS_CHUNK_SIZE;
+        if (chunklen < len+1)
+            chunklen = len+1;
+        symbols_free_space
+            = my_malloc(chunklen, "symbol names chunk");
+        symbols_ceiling = symbols_free_space + chunklen;
         ensure_memory_list_available(&symbol_name_space_chunks_memlist, no_symbol_name_space_chunks+1);
         symbol_name_space_chunks[no_symbol_name_space_chunks++]
             = symbols_free_space;
-        if (symbols_free_space+len+1 >= symbols_ceiling)
-        {
-            /* This should be impossible, since SYMBOLS_CHUNK_SIZE > MAX_IDENTIFIER_LENGTH. */
-            fatalerror("Symbol exceeds the maximum possible length");
-        }
     }
 
     strcpy(symbols_free_space, p);
@@ -1527,8 +1529,8 @@ extern void init_symbols_vars(void)
 
     symbol_name_space_chunks = NULL;
     no_symbol_name_space_chunks = 0;
-    symbols_free_space=NULL;
-    symbols_ceiling=NULL;
+    symbols_free_space = NULL;
+    symbols_ceiling = NULL;
 
     no_symbols = 0;
 
