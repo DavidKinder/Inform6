@@ -659,7 +659,7 @@ advance as part of 'Zcharacter table':", unicode);
                 i += 2;
                 /* This accepts "12xyz" as a symbol, which it really isn't,
                    but that just means it won't be found. */
-                while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+                while ((text_in[i] == '_' || isalnum(text_in[i]))) {
                     char ch = text_in[i++];
                     if (isdigit(ch)) digits++;
                     ensure_memory_list_available(&temp_symbol_memlist, len+1);
@@ -859,7 +859,7 @@ string.");
             i += 2;
             /* This accepts "12xyz" as a symbol, which it really isn't,
                but that just means it won't be found. */
-            while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+            while ((text_in[i] == '_' || isalnum(text_in[i]))) {
                 char ch = text_in[i++];
                 if (isdigit(ch)) digits++;
                 ensure_memory_list_available(&temp_symbol_memlist, len+1);
