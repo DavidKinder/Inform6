@@ -857,6 +857,7 @@ static opcodez internal_number_to_opcode_z(int32 i)
 
 static void make_opcode_syntax_z(opcodez opco)
 {   char *p = "", *q = opcode_syntax_string;
+    /* TODO: opcode_syntax_string[128] is unsafe */
     sprintf(q, "%s", opco.name);
     switch(opco.no)
     {   case ONE: p=" <operand>"; break;
@@ -904,6 +905,7 @@ static void make_opcode_syntax_g(opcodeg opco)
     int ix;
     char *cx;
     char *q = opcode_syntax_string;
+    /* TODO: opcode_syntax_string[128] is unsafe */
 
     sprintf(q, "%s", opco.name);
     sprintf(q+strlen(q), " <%d operand%s", opco.no,
@@ -1785,7 +1787,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
 
       if ((routine_asterisked) || (define_INFIX_switch))
       {   char fnt[256]; assembly_operand PV, RFA, CON, STP, SLF; int ln, ln2;
-
+          /* TODO: fnt[256] is unsafe */
+          
           ln = next_label++;
           ln2 = next_label++;
 
