@@ -888,6 +888,7 @@ static int write_property_block_z(char *shortname)
 
     if (shortname != NULL)
     {
+        /* The limit of 510 bytes, or 765 Z-characters, is a Z-spec limit. */
         i = translate_text(510,shortname,STRCTX_OBJNAME);
         if (i < 0) {
             error ("Short name of object exceeded 765 Z-characters");
