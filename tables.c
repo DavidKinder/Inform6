@@ -99,14 +99,20 @@ extern void write_serial_number(char *buffer)
         the ability to work out today's date                                 */
 
     time_t tt;  tt=time(0);
-    if (serial_code_given_in_program)
+    if (serial_code_given_in_program) {
         strcpy(buffer, serial_code_buffer);
-    else
+    }
+    else {
 #ifdef TIME_UNAVAILABLE
         sprintf(buffer,"970000");
 #else
-        strftime(buffer,10,"%y%m%d",localtime(&tt));
+        /* Write a six-digit date, null-terminated. Fall back to "970000"
+           if that fails. */
+        int len = strftime(buffer,7,"%y%m%d",localtime(&tt));
+        if (len != 6)
+            sprintf(buffer,"970000");
 #endif
+    }
 }
 
 static char percentage_buffer[64];
