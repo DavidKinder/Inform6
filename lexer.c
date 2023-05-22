@@ -741,7 +741,7 @@ extern void add_local_variable(char *name)
 {
     int len;
 
-    if (no_locals+1 > MAX_LOCAL_VARIABLES-1) {
+    if (no_locals >= MAX_LOCAL_VARIABLES-1) {
         /* This should have been caught before we got here */
         error("too many local variables");
         return;
