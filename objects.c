@@ -37,9 +37,11 @@ static fproptg full_object_g;          /* Equivalent for Glulx. This object
                                           are allocated dynamically as
                                           memory-lists                       */
 
-static char shortname_buffer[766];     /* Text buffer to hold the short name
+static char *shortname_buffer;         /* Text buffer to hold the short name
                                           (which is read in first, but
                                           written almost last)               */
+static memory_list shortname_buffer_memlist;
+
 static int parent_of_this_obj;
 
 static memory_list current_object_name; /* The name of the object currently
@@ -1897,6 +1899,7 @@ inconvenience, please contact the maintainers.");
 
     /*  Each class also creates a modest object representing itself:         */
 
+    ensure_memory_list_available(&shortname_buffer_memlist, strlen(token_text)+1);
     strcpy(shortname_buffer, token_text);
 
     assign_symbol(token_value, class_number, CLASS_T);
@@ -2077,6 +2080,7 @@ extern void make_object(int nearby_flag,
         }
     }
 
+    ensure_memory_list_available(&shortname_buffer_memlist, 2);
     sprintf(shortname_buffer, "?");
 
     segment_markers.enabled = TRUE;
@@ -2155,16 +2159,30 @@ extern void make_object(int nearby_flag,
         assign_symbol(internal_name_symbol, no_objects + 1, OBJECT_T);
 
     if (textual_name == NULL)
-    {   if (internal_name_symbol > 0)
+    {
+        if (internal_name_symbol > 0) {
+            ensure_memory_list_available(&shortname_buffer_memlist, strlen(symbols[internal_name_symbol].name)+4);
             sprintf(shortname_buffer, "(%s)",
                 symbols[internal_name_symbol].name);
-        else
+        }
+        else {
+            ensure_memory_list_available(&shortname_buffer_memlist, 32);
             sprintf(shortname_buffer, "(%d)", no_objects+1);
+        }
     }
     else
-    {   if (strlen(textual_name)>765)
-            error("Short name of object (in quotes) exceeded 765 characters");
-        strncpy(shortname_buffer, textual_name, 765);
+    {
+        if (!glulx_mode) {
+            /* This check is only advisory. It's possible that a string of less than 765 characters will encode to more than 510 bytes. We'll double-check in write_property_block_z(). */
+            if (strlen(textual_name)>765)
+                error("Short name of object (in quotes) exceeded 765 Z-characters");
+            ensure_memory_list_available(&shortname_buffer_memlist, 766);
+            strncpy(shortname_buffer, textual_name, 765);
+        }
+        else {
+            ensure_memory_list_available(&shortname_buffer_memlist, strlen(textual_name)+1);
+            strcpy(shortname_buffer, textual_name);
+        }
     }
 
     if (specified_parent != -1)
@@ -2261,7 +2279,8 @@ extern void init_objects_vars(void)
     properties_table = NULL;
     individuals_table = NULL;
     commonprops = NULL;
-
+    shortname_buffer = NULL;
+    
     objectsz = NULL;
     objectsg = NULL;
     objectatts = NULL;
@@ -2369,6 +2388,9 @@ extern void objects_allocate_arrays(void)
     initialise_memory_list(&current_object_name,
         sizeof(char), 32, NULL,
         "object name currently being defined");
+    initialise_memory_list(&shortname_buffer_memlist,
+        sizeof(char), 768, (void**)&shortname_buffer,
+        "textual name of object currently being defined");
     initialise_memory_list(&embedded_function_name,
         sizeof(char), 32, NULL,
         "temporary storage for inline function name");
@@ -2399,6 +2421,7 @@ extern void objects_free_arrays(void)
     my_free(&commonprops, "common property info");
     
     deallocate_memory_list(&current_object_name);
+    deallocate_memory_list(&shortname_buffer_memlist);
     deallocate_memory_list(&embedded_function_name);
     deallocate_memory_list(&objectsz_memlist);
     deallocate_memory_list(&objectsg_memlist);
