@@ -1582,7 +1582,12 @@ static int get_next_char_from_string(void)
     CurrentLB->chars_read++;
     if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
+
+    /* We shouldn't have \r when compiling from string (veneer function).
+       If we do, just shove it under the carpet. */
+    if (current == '\r') current = '\n';
     if (current == '\n') reached_new_line();
+    
     return(current);
 }
 
