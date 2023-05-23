@@ -896,6 +896,7 @@ static void make_tokeniser_grid(void)
     tokeniser_grid[0]    = EOF_CODE;
     tokeniser_grid[' ']  = WHITESPACE_CODE;
     tokeniser_grid['\n'] = WHITESPACE_CODE;
+    tokeniser_grid['\r'] = WHITESPACE_CODE;
     tokeniser_grid['$']  = RADIX_CODE;
     tokeniser_grid['!']  = COMMENT_CODE;
 
@@ -1536,7 +1537,28 @@ static int get_next_char_from_pipeline(void)
     CurrentLB->chars_read++;
     if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
-    if (current == '\n') reached_new_line();
+
+    /* The file is open in binary mode, so we have to do our own newline
+       conversion. (We want to do it consistently across all platforms.)
+
+       The strategy is to convert all \r (CR) characters to \n (LF), but
+       *don't* advance the line counter for \r if it's followed by \n.
+       The rest of the lexer treats multiple \n characters the same as
+       one, so the simple conversion will work out okay.
+
+       (Note that, for historical reasons, a ctrl-L (formfeed) is also
+       treated as \r. This conversion has already been handled by
+       source_to_iso_grid[].)
+    */
+    if (current == '\n') {
+        reached_new_line();
+    }
+    else if (current == '\r') {
+        current = '\n';
+        if (lookahead != '\n')
+            reached_new_line();
+    }
+    
     return(current);
 }
 
@@ -1756,7 +1778,7 @@ extern void get_next_token(void)
             goto StartTokenAgain;
 
         case COMMENT_CODE:
-            while ((lookahead != '\n') && (lookahead != 0))
+            while ((lookahead != '\n') && (lookahead != '\r') && (lookahead != 0))
                 (*get_next_char)();
             goto StartTokenAgain;
 
