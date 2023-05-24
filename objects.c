@@ -88,8 +88,9 @@ int no_attributes,                 /* Number of attributes defined so far    */
 /* Print a PROPS trace line. The f flag is 0 for an attribute, 1 for
    a common property, 2 for an individual property. */
 static void trace_s(char *name, int32 number, int f)
-{   if (!printprops_switch) return;
-    char *stype = "";
+{   char *stype = "";
+
+    if (!printprops_switch) return;
     if (f == 0) stype = "Attr";
     else if (f == 1) stype = "Prop";
     else if (f == 2) stype = "Indiv";

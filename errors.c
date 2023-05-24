@@ -435,9 +435,9 @@ extern void warning(char *s1)
 }
 
 extern void warning_fmt(const char *format, ...)
-{
+{   va_list argument_pointer;
+
     if (nowarnings_switch) { no_suppressed_warnings++; return; }
-    va_list argument_pointer;
     va_start(argument_pointer, format);
     vsnprintf(error_message_buff, ERROR_BUFLEN, format, argument_pointer);
     va_end(argument_pointer);

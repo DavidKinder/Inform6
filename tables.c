@@ -1589,7 +1589,8 @@ printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_M
 static void display_frequencies()
 {
     int i, j;
-    
+    char abbrev_string[MAX_ABBREV_LENGTH];
+
     printf("How frequently abbreviations were used, and roughly\n");
     printf("how many bytes they saved:  ('_' denotes spaces)\n");
     
@@ -1600,7 +1601,6 @@ static void display_frequencies()
         else
             saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
         
-        char abbrev_string[MAX_ABBREV_LENGTH];
         strcpy(abbrev_string,
                (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
         for (j=0; abbrev_string[j]!=0; j++)

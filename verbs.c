@@ -310,6 +310,8 @@ static void new_action(char *b, int c)
 
 extern void make_fake_action(void)
 {   int i;
+    char *action_sub = action_symname_memlist.data;
+
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -322,7 +324,6 @@ extern void make_fake_action(void)
 
     /* Enough space for "token__A". */
     ensure_memory_list_available(&action_symname_memlist, strlen(token_text)+4);
-    char *action_sub = action_symname_memlist.data;
     strcpy(action_sub, token_text);
     strcat(action_sub, "__A");
     
@@ -363,13 +364,13 @@ extern assembly_operand action_of_name(char *name)
 
     int j;
     assembly_operand AO;
+    char *action_sub = action_symname_memlist.data;
 
     /* Enough space for "name__A". */
     ensure_memory_list_available(&action_symname_memlist, strlen(name)+4);
-    char *action_sub = action_symname_memlist.data;
     strcpy(action_sub, name);
     strcat(action_sub, "__A");
-    
+
     j = symbol_index(action_sub, -1);
 
     if (symbols[j].type == FAKE_ACTION_T)
@@ -411,13 +412,13 @@ extern void find_the_actions(void)
 {   int i; int32 j;
 
     for (i=0; i<no_actions; i++)
-    {
-        /* The name looks like "action__A". We're going to convert that to
-           "actionSub". Allocate enough space for both. */
-        int namelen = strlen(symbols[actions[i].symbol].name);
-        ensure_memory_list_available(&action_symname_memlist, 2*(namelen+1));
+    {   int namelen = strlen(symbols[actions[i].symbol].name);
         char *action_sub = action_symname_memlist.data;
         char *action_name = (char *)action_symname_memlist.data + (namelen+1);
+
+        /* The name looks like "action__A". We're going to convert that to
+           "actionSub". Allocate enough space for both. */
+        ensure_memory_list_available(&action_symname_memlist, 2*(namelen+1));
         
         strcpy(action_name, symbols[actions[i].symbol].name);
         action_name[namelen - 3] = '\0'; /* remove "__A" */
@@ -456,7 +457,8 @@ static int make_adjective(char *English_word)
         This routine is used only in grammar version 1: the corresponding
         table is left empty in GV2.                                          */
 
-    int i; 
+    int i;
+    uchar *new_sort_code = adjective_sort_code+no_adjectives*DICT_WORD_BYTES;
 
     if (no_adjectives >= 255) {
         error("Grammar version 1 cannot support more than 255 prepositions");
@@ -473,7 +475,6 @@ static int make_adjective(char *English_word)
     ensure_memory_list_available(&adjectives_memlist, no_adjectives+1);
     ensure_memory_list_available(&adjective_sort_code_memlist, (no_adjectives+1) * DICT_WORD_BYTES);
 
-    uchar *new_sort_code = adjective_sort_code+no_adjectives*DICT_WORD_BYTES;
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
         if (compare_sorts(new_sort_code,
