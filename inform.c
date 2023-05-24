@@ -1523,6 +1523,16 @@ static int strcpyupper(char *to, char *from, int max)
 static void execute_icl_command(char *p);
 static int execute_dashdash_command(char *p, char *p2);
 
+/* Open a file and see whether the initial lines match the "!% ..." format
+   used for ICL commands. Stop when we reach a line that doesn't.
+   
+   This does not do line break conversion. It just reads to the next
+   \n (and ignores \r as whitespace). Therefore it will work on Unix and
+   DOS source files, but fail to cope with Mac-Classic (\r) source files.
+   I am not going to worry about this, because files from the Mac-Classic
+   era shouldn't have "!%" lines; that convention was invented well after
+   Mac switched over to \n format.
+ */
 static int execute_icl_header(char *argname)
 {
   FILE *command_file;
@@ -1535,7 +1545,7 @@ static int execute_icl_header(char *argname)
 
   do
     {   x = translate_in_filename(x, filename, argname, 0, 1);
-        command_file = fopen(filename,"r");
+        command_file = fopen(filename,"rb");
     } while ((command_file == NULL) && (x != 0));
   if (!command_file) {
     /* Fail silently. The regular compiler will try to open the file

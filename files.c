@@ -102,7 +102,7 @@ extern void load_sourcefile(char *filename_given, int same_directory_flag)
     do
     {   x = translate_in_filename(x, name, filename_given, same_directory_flag,
                 (total_files==0)?1:0);
-        handle = fopen(name,"r");
+        handle = fopen(name,"rb");
     } while ((handle == NULL) && (x != 0));
 
     InputFiles[total_files].filename = my_malloc(strlen(name)+1, "filename storage");
