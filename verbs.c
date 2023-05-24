@@ -412,14 +412,15 @@ extern void find_the_actions(void)
 {   int i; int32 j;
 
     for (i=0; i<no_actions; i++)
-    {   int namelen = strlen(symbols[actions[i].symbol].name);
-        char *action_sub = action_symname_memlist.data;
-        char *action_name = (char *)action_symname_memlist.data + (namelen+1);
+    {   char *action_sub, *action_name;
+        int namelen = strlen(symbols[actions[i].symbol].name);
 
         /* The name looks like "action__A". We're going to convert that to
            "actionSub". Allocate enough space for both. */
         ensure_memory_list_available(&action_symname_memlist, 2*(namelen+1));
-        
+        action_sub = action_symname_memlist.data;
+        action_name = (char *)action_symname_memlist.data + (namelen+1);
+
         strcpy(action_name, symbols[actions[i].symbol].name);
         action_name[namelen - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
