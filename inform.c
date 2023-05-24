@@ -160,13 +160,6 @@ static void select_target(int targ)
     MAX_LOCAL_VARIABLES = MAX_KEYWORD_GROUP_SIZE;
   }
 
-  if (DICT_WORD_SIZE > MAX_DICT_WORD_SIZE) {
-    DICT_WORD_SIZE = MAX_DICT_WORD_SIZE;
-    warning_fmt(
-      "DICT_WORD_SIZE cannot exceed MAX_DICT_WORD_SIZE; resetting to %d", 
-      MAX_DICT_WORD_SIZE);
-    /* MAX_DICT_WORD_SIZE can be increased in header.h without fear. */
-  }
   if (NUM_ATTR_BYTES > MAX_NUM_ATTR_BYTES) {
     NUM_ATTR_BYTES = MAX_NUM_ATTR_BYTES;
     warning_fmt(

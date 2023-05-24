@@ -455,10 +455,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         restart_lexer(lexical_source, name);
     }
 
-    no_locals = 0;
-
-    for (i=0;i<MAX_LOCAL_VARIABLES-1;i++)
-        local_variable_names[i].text[0] = 0;
+    clear_local_variables();
 
     do
     {   statements.enabled = TRUE;
@@ -478,12 +475,6 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
             break;
         }
 
-        if (strlen(token_text) > MAX_IDENTIFIER_LENGTH)
-        {   error_named("Local variable identifier too long:", token_text);
-            panic_mode_error_recovery();
-            break;
-        }
-
         if (no_locals == MAX_LOCAL_VARIABLES-1)
         {   error_fmt("Too many local variables for a routine; max is %d",
                 MAX_LOCAL_VARIABLES-1);
@@ -492,10 +483,10 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
         }
 
         for (i=0;i<no_locals;i++) {
-            if (strcmpcis(token_text, local_variable_names[i].text)==0)
+            if (strcmpcis(token_text, get_local_variable_name(i))==0)
                 error_named("Local variable defined twice:", token_text);
         }
-        strcpy(local_variable_names[no_locals++].text, token_text);
+        add_local_variable(token_text);
     } while(TRUE);
 
     /* Set up the local variable hash and the local_variables.keywords
@@ -509,7 +500,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
     if ((embedded_flag == FALSE) && (veneer_mode == FALSE) && debug_flag)
         symbols[r_symbol].flags |= STAR_SFLAG;
 
-    packed_address = assemble_routine_header(no_locals, debug_flag,
+    packed_address = assemble_routine_header(debug_flag,
         name, embedded_flag, r_symbol);
 
     do

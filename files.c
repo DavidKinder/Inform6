@@ -1205,9 +1205,9 @@ extern void open_transcript_file(char *what_of)
 
     transcript_open = TRUE;
 
-    sprintf(topline_buffer, "Transcript of the text of \"%s\"", what_of);
+    snprintf(topline_buffer, 256, "Transcript of the text of \"%s\"", what_of);
     write_to_transcript_file(topline_buffer, STRCTX_INFO);
-    sprintf(topline_buffer, "[From %s]", banner_line);
+    snprintf(topline_buffer, 256, "[From %s]", banner_line);
     write_to_transcript_file(topline_buffer, STRCTX_INFO);
     if (TRANSCRIPT_FORMAT == 1) {
         write_to_transcript_file("[I:info, G:game text, V:veneer text, L:lowmem string, A:abbreviation, D:dict word, O:object name, S:symbol, X:infix]", STRCTX_INFO);
@@ -1228,7 +1228,7 @@ extern void close_transcript_file(void)
     char sn_buffer[7];
 
     write_serial_number(sn_buffer);
-    sprintf(botline_buffer, "[End of transcript: release %d, serial %s]",
+    snprintf(botline_buffer, 256, "[End of transcript: release %d, serial %s]",
         release_number, sn_buffer);
     write_to_transcript_file("",  STRCTX_INFO);
     write_to_transcript_file(botline_buffer, STRCTX_INFO);

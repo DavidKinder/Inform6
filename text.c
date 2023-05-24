@@ -124,6 +124,11 @@ uchar *translated_text;                /* Area holding translated strings
                                           static_strings_area below */
 static memory_list translated_text_memlist;
 
+static char *temp_symbol;              /* Temporary symbol name used while
+                                          processing "@(...)".               */
+static memory_list temp_symbol_memlist;
+
+
 static int32 text_out_pos;             /* The "program counter" during text
                                           translation: the next position to
                                           write Z-coded text output to       */
@@ -650,31 +655,32 @@ advance as part of 'Zcharacter table':", unicode);
             else if (text_in[i+1]=='(')
             {
                 /*   @(...) (dynamic string)   */
-                char dsymbol[MAX_IDENTIFIER_LENGTH+1];
                 int len = 0, digits = 0;
                 i += 2;
                 /* This accepts "12xyz" as a symbol, which it really isn't,
                    but that just means it won't be found. */
-                while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+                while ((text_in[i] == '_' || isalnum(text_in[i]))) {
                     char ch = text_in[i++];
                     if (isdigit(ch)) digits++;
-                    dsymbol[len++] = ch;
+                    ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                    temp_symbol[len++] = ch;
                 }
-                dsymbol[len] = '\0';
+                ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                temp_symbol[len] = '\0';
                 j = -1;
-                /* We would like to parse dsymbol as *either* a decimal
+                /* We would like to parse temp_symbol as *either* a decimal
                    number or a constant symbol. */
                 if (text_in[i] != ')' || len == 0) {
                     error("'@(...)' abbreviation must contain a symbol");
                 }
                 else if (digits == len) {
                     /* all digits; parse as decimal */
-                    j = atoi(dsymbol);
+                    j = atoi(temp_symbol);
                 }
                 else {
-                    int sym = symbol_index(dsymbol, -1);
+                    int sym = symbol_index(temp_symbol, -1);
                     if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
-                        error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                        error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                     }
                     else {
                         symbols[sym].flags |= USED_SFLAG;
@@ -849,31 +855,32 @@ string.");
           while (isdigit(text_in[i])) i++; i--;
         }
         else if (text_in[i+1]=='(') {
-            char dsymbol[MAX_IDENTIFIER_LENGTH+1];
             int len = 0, digits = 0;
             i += 2;
             /* This accepts "12xyz" as a symbol, which it really isn't,
                but that just means it won't be found. */
-            while ((text_in[i] == '_' || isalnum(text_in[i])) && len < MAX_IDENTIFIER_LENGTH) {
+            while ((text_in[i] == '_' || isalnum(text_in[i]))) {
                 char ch = text_in[i++];
                 if (isdigit(ch)) digits++;
-                dsymbol[len++] = ch;
+                ensure_memory_list_available(&temp_symbol_memlist, len+1);
+                temp_symbol[len++] = ch;
             }
-            dsymbol[len] = '\0';
+            ensure_memory_list_available(&temp_symbol_memlist, len+1);
+            temp_symbol[len] = '\0';
             j = -1;
-            /* We would like to parse dsymbol as *either* a decimal
+            /* We would like to parse temp_symbol as *either* a decimal
                number or a constant symbol. */
             if (text_in[i] != ')' || len == 0) {
                 error("'@(...)' abbreviation must contain a symbol");
             }
             else if (digits == len) {
                 /* all digits; parse as decimal */
-                j = atoi(dsymbol);
+                j = atoi(temp_symbol);
             }
             else {
-                int sym = symbol_index(dsymbol, -1);
+                int sym = symbol_index(temp_symbol, -1);
                 if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
-                    error_named("'@(...)' abbreviation expected a known constant value, but contained", dsymbol);
+                    error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                 }
                 else {
                     symbols[sym].flags |= USED_SFLAG;
@@ -1800,10 +1807,7 @@ int dict_entries;                     /* Total number of records entered     */
 /*   In modifying the compiler for Glulx, I found it easier to discard the   */
 /*   typedef, and operate directly on uchar arrays of length DICT_WORD_SIZE. */
 /*   In Z-code, DICT_WORD_SIZE will be 6, so the Z-code compiler will work   */
-/*   as before. In Glulx, it can be any value up to MAX_DICT_WORD_SIZE.      */
-/*   (That limit is defined as 64 in the header. It exists only for a few    */
-/*   static buffers, plus an overflow bound for dict word lexing. It can     */
-/*   be increased without using significant memory.)                         */
+/*   as before. In Glulx, it can be any value.                               */
 /*                                                                           */
 /*   In further modifying the compiler to generate a Unicode dictionary,     */
 /*   I have to store four-byte values in the uchar array. We make the array  */
@@ -1827,8 +1831,8 @@ extern void copy_sorts(uchar *d1, uchar *d2)
         d1[i] = d2[i];
 }
 
-static uchar prepared_sort[MAX_DICT_WORD_BYTES];     /* Holds the sort code
-                                                        of current word */
+static memory_list prepared_sort_memlist;
+static uchar *prepared_sort;    /* Holds the sort code of current word */
 
 static int number_and_case;
 
@@ -1907,7 +1911,8 @@ apostrophe in", dword);
     for (; i<9; i++) wd[i]=5;
 
     /* The array of Z-chars is converted to two or three 2-byte blocks       */
-
+    ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
+    
     tot = wd[2] + wd[1]*(1<<5) + wd[0]*(1<<10);
     prepared_sort[1]=tot%0x100;
     prepared_sort[0]=(tot/0x100)%0x100;
@@ -1983,6 +1988,8 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
     if (k >= (unsigned)'A' && k <= (unsigned)'Z')
       k += ('a' - 'A');
 
+    ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
+    
     if (DICT_CHAR_SIZE == 1) {
       prepared_sort[i] = k;
     }
@@ -2658,6 +2665,8 @@ extern void init_text_vars(void)
     grandtable = NULL;
     grandflags = NULL;
 
+    translated_text = NULL;
+    temp_symbol = NULL;
     all_text = NULL;
 
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
@@ -2669,6 +2678,7 @@ extern void init_text_vars(void)
     dtree = NULL;
     final_dict_order = NULL;
     dict_sort_codes = NULL;
+    prepared_sort = NULL;
     dict_entries=0;
 
     static_strings_area = NULL;
@@ -2705,6 +2715,10 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 8000, (void**)&translated_text,
         "translated text holding area");
     
+    initialise_memory_list(&temp_symbol_memlist,
+        sizeof(char), 32, (void**)&temp_symbol,
+        "temporary symbol name");
+    
     initialise_memory_list(&all_text_memlist,
         sizeof(char), 0, (void**)&all_text,
         "transcription text for optimise");
@@ -2734,6 +2748,9 @@ extern void text_allocate_arrays(void)
     initialise_memory_list(&dict_sort_codes_memlist,
         sizeof(uchar), 1500*DICT_WORD_BYTES, (void**)&dict_sort_codes,
         "dictionary sort codes");
+    initialise_memory_list(&prepared_sort_memlist,
+        sizeof(uchar), DICT_WORD_BYTES, (void**)&prepared_sort,
+        "prepared sort buffer");
 
     final_dict_order = NULL; /* will be allocated at sort_dictionary() time */
 
@@ -2792,6 +2809,7 @@ extern void extract_all_text()
 extern void text_free_arrays(void)
 {
     deallocate_memory_list(&translated_text_memlist);
+    deallocate_memory_list(&temp_symbol_memlist);
     
     deallocate_memory_list(&all_text_memlist);
     
@@ -2804,6 +2822,7 @@ extern void text_free_arrays(void)
 
     deallocate_memory_list(&dtree_memlist);
     deallocate_memory_list(&dict_sort_codes_memlist);
+    deallocate_memory_list(&prepared_sort_memlist);
     my_free(&final_dict_order, "final dictionary ordering table");
 
     deallocate_memory_list(&dictionary_memlist);

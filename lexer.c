@@ -255,8 +255,7 @@ static lexeme_data circle[CIRCLE_SIZE];
 
 typedef struct lextext_s {
     char *text;
-    size_t size; /* Allocated size (including terminal null)
-                    This is always at least MAX_IDENTIFIER_LENGTH+1         */
+    size_t size; /* Allocated size (including terminal null)                 */
 } lextext;
 
 static lextext *lextexts; /* Allocated to no_lextexts */
@@ -652,14 +651,22 @@ static int *local_variable_hash_codes;
    119 for Glulx.
 */
 
+/* The number of local variables in the current routine. */
+int no_locals;
+
 /* Names of local variables in the current routine.
+   The values are positions in local_variable_names_memlist.
    This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
    is not included in this array.)
 
    (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES-1.
    But right now we just allocate the max.)
  */
-identstruct *local_variable_names;
+int *local_variable_name_offsets;
+
+static memory_list local_variable_names_memlist;
+/* How much of local_variable_names_memlist is used by the no_local locals. */
+static int local_variable_names_usage;
 
 static char one_letter_locals[128];
 
@@ -724,9 +731,42 @@ static void make_keywords_tables(void)
     }
 }
 
+extern void clear_local_variables(void)
+{
+    no_locals = 0;
+    local_variable_names_usage = 0;
+}
+
+extern void add_local_variable(char *name)
+{
+    int len;
+
+    if (no_locals >= MAX_LOCAL_VARIABLES-1) {
+        /* This should have been caught before we got here */
+        error("too many local variables");
+        return;
+    }
+    
+    len = strlen(name)+1;
+    ensure_memory_list_available(&local_variable_names_memlist, local_variable_names_usage + len);
+    local_variable_name_offsets[no_locals++] = local_variable_names_usage;
+    strcpy(local_variable_names_memlist.data+local_variable_names_usage, name);
+    local_variable_names_usage += len;
+}
+
+extern char *get_local_variable_name(int index)
+{
+    if (index < 0 || index >= no_locals)
+        return "???";   /* shouldn't happen */
+
+    return (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+}
+
 /* Look at the strings stored in local_variable_names (from 0 to no_locals).
    Set local_variables.keywords to point to these, and also prepare the
-   hash tables. */
+   hash tables.
+   This must be called after add_local_variable(), but before we start
+   compiling function code. */
 extern void construct_local_variable_tables(void)
 {   int i, h;
     for (i=0; i<HASH_TAB_SIZE; i++) local_variable_hash_table[i] = -1;
@@ -734,7 +774,7 @@ extern void construct_local_variable_tables(void)
 
     for (i=0; i<no_locals; i++)
     {
-        char *p = local_variable_names[i].text;
+        char *p = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[i]);
         local_variables.keywords[i] = p;
         if (p[1] == 0)
         {   one_letter_locals[(uchar)p[0]] = i;
@@ -785,7 +825,9 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         if (index >= 0)
         {   for (;index<no_locals;index++)
             {   if (hashcode == local_variable_hash_codes[index])
-                {   if (strcmpcis(p, local_variable_names[index].text)==0)
+                {
+                    char *locname = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+                    if (strcmpcis(p, locname)==0)
                     {   circle[pos].type = LOCAL_VARIABLE_TT;
                         circle[pos].value = index+1;
                         return;
@@ -1721,7 +1763,7 @@ extern void get_next_token(void)
         /* fresh lextext block; must init it */
         no_lextexts = lex_index+1;
         ensure_memory_list_available(&lextexts_memlist, no_lextexts);
-        lextexts[lex_index].size = MAX_IDENTIFIER_LENGTH + 1;
+        lextexts[lex_index].size = 64;   /* this can grow */
         lextexts[lex_index].text = my_malloc(lextexts[lex_index].size, "one lexeme text");
     }
     lex_pos = 0;
@@ -1867,11 +1909,6 @@ extern void get_next_token(void)
             quoted_size=0;
             do
             {   e = d; d = (*get_next_char)(); lexaddc(d);
-                if (quoted_size++==MAX_DICT_WORD_SIZE)
-                {   error(
-                    "Too much text for one pair of quotations '...' to hold");
-                    lexaddc('\''); break;
-                }
                 if ((d == '\'') && (e != '@'))
                 {   if (quoted_size == 1)
                     {   d = (*get_next_char)(); lexaddc(d);
@@ -1922,26 +1959,11 @@ extern void get_next_token(void)
         case IDENTIFIER_CODE:    /* Letter or underscore: an identifier */
 
             lexaddc(d); n=1;
-            while ((n<=MAX_IDENTIFIER_LENGTH)
-                   && ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
+            while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                    || (tokeniser_grid[lookahead] == DIGIT_CODE)))
                 n++, lexaddc((*get_next_char)());
 
             lexaddc(0);
-
-            if (n > MAX_IDENTIFIER_LENGTH)
-            {
-                error_fmt(
-                    "Name exceeds the maximum length of %d characters: \"%s\"",
-                    MAX_IDENTIFIER_LENGTH, lextexts[lex_index].text);
-                /* Eat any further extra characters in the identifier */
-                while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
-                        || (tokeniser_grid[lookahead] == DIGIT_CODE)))
-                    (*get_next_char)();
-                /* Trim token so that it doesn't violate
-                   MAX_IDENTIFIER_LENGTH during error recovery */
-                lextexts[lex_index].text[MAX_IDENTIFIER_LENGTH] = 0;
-            }
 
             if (dont_enter_into_symbol_table)
             {   circle[circle_position].type = UQ_TT;
@@ -2122,6 +2144,9 @@ extern void init_lexer_vars(void)
     cur_lextexts = 0;
     lex_index = -1;
     lex_pos = -1;
+
+    no_locals = 0;
+    local_variable_names_usage = 0;
     
     blank_brief_location.file_index = -1;
     blank_brief_location.line_number = 0;
@@ -2140,6 +2165,8 @@ extern void lexer_begin_pass(void)
     hash_printed_since_newline = FALSE;
 
     pipeline_made = FALSE;
+
+    no_locals = 0;
 
     restart_lexer(NULL, NULL);
 }
@@ -2168,8 +2195,11 @@ extern void lexer_allocate_arrays(void)
     keywords_data_table = my_calloc(sizeof(int), 3*MAX_KEYWORDS,
         "keyword hashing linked list");
     
-    local_variable_names = my_calloc(sizeof(identstruct), MAX_LOCAL_VARIABLES-1,
+    initialise_memory_list(&local_variable_names_memlist,
+        sizeof(char), MAX_LOCAL_VARIABLES*32, NULL,
         "text of local variable names");
+    local_variable_name_offsets = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES-1,
+        "offsets of local variable names");
     local_variable_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "local variable hash table");
     local_variable_hash_codes = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES,
@@ -2214,7 +2244,8 @@ extern void lexer_free_arrays(void)
     my_free(&keywords_hash_ends_table, "keyword hash end table");
     my_free(&keywords_data_table, "keyword hashing linked list");
 
-    my_free(&local_variable_names, "text of local variable names");
+    deallocate_memory_list(&local_variable_names_memlist);
+    my_free(&local_variable_name_offsets, "offsets of local variable names");
     my_free(&local_variable_hash_table, "local variable hash table");
     my_free(&local_variable_hash_codes, "local variable hash codes");
 

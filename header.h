@@ -599,10 +599,7 @@
 /* ------------------------------------------------------------------------- */
 
 #define  MAX_ERRORS            100
-#define  MAX_IDENTIFIER_LENGTH  32
 #define  MAX_ABBREV_LENGTH      64
-#define  MAX_DICT_WORD_SIZE     64
-#define  MAX_DICT_WORD_BYTES    (MAX_DICT_WORD_SIZE*4)
 #define  MAX_NUM_ATTR_BYTES     39
 #define  MAX_VERB_WORD_SIZE    120
 
@@ -653,11 +650,6 @@ typedef struct brief_location_s
     int32 orig_file_index;
     int32 orig_line_number;
 } brief_location;
-
-typedef struct identstruct_s
-{
-    char text[MAX_IDENTIFIER_LENGTH+1];
-} identstruct;
 
 typedef struct assembly_operand_t
 {   int   type;     /* ?_OT value */
@@ -2153,7 +2145,7 @@ extern void assemble_label_no(int n);
 extern int assemble_forward_label_no(int n);
 extern void assemble_jump(int n);
 extern void define_symbol_label(int symbol);
-extern int32 assemble_routine_header(int no_locals, int debug_flag,
+extern int32 assemble_routine_header(int debug_flag,
     char *name, int embedded_flag, int the_symbol);
 extern void assemble_routine_end(int embedded_flag, debug_locations locations);
 
@@ -2301,7 +2293,7 @@ extern void  make_upper_case(char *str);
 
 extern brief_location routine_starts_line;
 
-extern int  no_routines, no_named_routines, no_locals, no_termcs;
+extern int  no_routines, no_named_routines, no_termcs;
 extern int  terminating_characters[];
 
 extern int  parse_given_directive(int internal_flag);
@@ -2519,7 +2511,8 @@ extern int  total_source_line_count;
 extern int  dont_enter_into_symbol_table;
 extern int  return_sp_as_variable;
 extern int  next_token_begins_syntax_line;
-extern identstruct *local_variable_names;
+extern int  no_locals;
+extern int *local_variable_name_offsets;
 
 extern int32 token_value;
 extern int   token_type;
@@ -2537,6 +2530,10 @@ extern void describe_token_triple(const char *text, int32 value, int type);
 #define describe_token(t) describe_token_triple((t)->text, (t)->value, (t)->type)
 
 extern void construct_local_variable_tables(void);
+extern void clear_local_variables(void);
+extern void add_local_variable(char *name);
+extern char *get_local_variable_name(int index);
+
 extern void declare_systemfile(void);
 extern int  is_systemfile(void);
 extern void report_errors_at_current_line(void);
