@@ -750,7 +750,7 @@ extern void add_local_variable(char *name)
     len = strlen(name)+1;
     ensure_memory_list_available(&local_variable_names_memlist, local_variable_names_usage + len);
     local_variable_name_offsets[no_locals++] = local_variable_names_usage;
-    strcpy(local_variable_names_memlist.data+local_variable_names_usage, name);
+    strcpy((char *)local_variable_names_memlist.data+local_variable_names_usage, name);
     local_variable_names_usage += len;
 }
 
@@ -759,7 +759,7 @@ extern char *get_local_variable_name(int index)
     if (index < 0 || index >= no_locals)
         return "???";   /* shouldn't happen */
 
-    return (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+    return (char *)local_variable_names_memlist.data + local_variable_name_offsets[index];
 }
 
 /* Look at the strings stored in local_variable_names (from 0 to no_locals).
@@ -774,7 +774,7 @@ extern void construct_local_variable_tables(void)
 
     for (i=0; i<no_locals; i++)
     {
-        char *p = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[i]);
+        char *p = (char *)local_variable_names_memlist.data + local_variable_name_offsets[i];
         local_variables.keywords[i] = p;
         if (p[1] == 0)
         {   one_letter_locals[(uchar)p[0]] = i;
@@ -826,7 +826,7 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         {   for (;index<no_locals;index++)
             {   if (hashcode == local_variable_hash_codes[index])
                 {
-                    char *locname = (char *)(local_variable_names_memlist.data + local_variable_name_offsets[index]);
+                    char *locname = (char *)local_variable_names_memlist.data + local_variable_name_offsets[index];
                     if (strcmpcis(p, locname)==0)
                     {   circle[pos].type = LOCAL_VARIABLE_TT;
                         circle[pos].value = index+1;
