@@ -65,11 +65,16 @@ Wrapping the entire list in parens also works:
 Note that the <tt>to</tt> keyword does not support expressions. You cannot say <tt>(CONST) to (CONST+5):</tt>
 as a case. Also, case expressions only work within a switch statement. Top-level action cases must still be bare
 action names.
+<li><p>Inform identifiers can now be any length, and the entire identifier is significant. Dictionary words can also
+be any length. The DICT_WORD_SIZE limit still applies, but now dictionary words are silently trimmed to DICT_WORD_SIZE.
+For Glulx, DICT_WORD_SIZE can now be increased without limit.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>Grammar table lines entries which have no verb are now omitted. When this occurs a warning is printed, as this
 most likely indicates an oversight in the game's source code.
 <li><p>Error messages about invalid tokens are now more informative.
+<li><p>Inform now handles line breaks itself, rather than relying on the C standard library. This gives consistent
+handling of Windows and Unix style line breaks on all platforms.
 </ul>
 
 <h3>Bugs fixed</h3>
