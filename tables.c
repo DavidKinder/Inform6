@@ -1595,12 +1595,12 @@ static void display_frequencies()
     
     for (i=0; i<no_abbreviations; i++) {
         int32 saving;
+        char abbrev_string[MAX_ABBREV_LENGTH];
         if (!glulx_mode)
             saving = 2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3;
         else
             saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
         
-        char abbrev_string[MAX_ABBREV_LENGTH];
         strcpy(abbrev_string,
                (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
         for (j=0; abbrev_string[j]!=0; j++)
