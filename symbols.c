@@ -1252,15 +1252,15 @@ extern void locate_dead_functions(void)
        issue_unused_warnings(). But for the sake of thoroughness,
        we'll mark them specially. */
 
-    ix = symbol_index("Main__", -1);
-    if (symbols[ix].type == ROUTINE_T) {
+    ix = get_symbol_index("Main__");
+    if (ix >= 0 && symbols[ix].type == ROUTINE_T) {
         uint32 addr = symbols[ix].value * (glulx_mode ? 1 : scale_factor);
         tofunc = df_function_for_address(addr);
         if (tofunc)
             tofunc->usage |= DF_USAGE_MAIN;
     }
-    ix = symbol_index("Main", -1);
-    if (symbols[ix].type == ROUTINE_T) {
+    ix = get_symbol_index("Main");
+    if (ix >= 0 && symbols[ix].type == ROUTINE_T) {
         uint32 addr = symbols[ix].value * (glulx_mode ? 1 : scale_factor);
         tofunc = df_function_for_address(addr);
         if (tofunc)
