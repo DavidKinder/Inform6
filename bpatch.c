@@ -137,7 +137,7 @@ static int32 backpatch_value_z(int32 value)
                 break;
             }
             if (symbols[value].type != ROUTINE_T) {
-                ebf_error("routine named 'Main'", symbols[value].name);
+                ebf_symbol_error("'Main' routine", symbols[value].name, typename(symbols[value].type), symbols[value].line);
                 value = 0;
                 break;
             }
