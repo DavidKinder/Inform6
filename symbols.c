@@ -521,15 +521,18 @@ extern void issue_unused_warnings(void)
     }
     /*  Now back to mark anything necessary as used  */
 
-    i = symbol_index("Main", -1);
-    if (!(symbols[i].flags & UNKNOWN_SFLAG)) symbols[i].flags |= USED_SFLAG;
+    i = get_symbol_index("Main");
+    if (i >= 0 && !(symbols[i].flags & UNKNOWN_SFLAG)) {
+        symbols[i].flags |= USED_SFLAG;
+    }
 
     for (i=0;i<no_symbols;i++)
     {   if (((symbols[i].flags
              & (SYSTEM_SFLAG + UNKNOWN_SFLAG
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
-             && (symbols[i].type != OBJECT_T))
+             && (symbols[i].type != OBJECT_T)) {
             dbnu_warning(typename(symbols[i].type), symbols[i].name, symbols[i].line);
+        }
     }
 }
 
