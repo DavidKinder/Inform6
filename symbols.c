@@ -831,7 +831,7 @@ static void stockup_symbols(void)
         create_rsymbol("Grammar__Version", 1, CONSTANT_T);
     else
         create_rsymbol("Grammar__Version", 2, CONSTANT_T);
-    grammar_version_symbol = symbol_index("Grammar__Version", -1);
+    grammar_version_symbol = get_symbol_index("Grammar__Version");
 
     if (runtime_error_checking_switch)
         create_rsymbol("STRICT_MODE",0, CONSTANT_T);
