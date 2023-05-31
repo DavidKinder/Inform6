@@ -324,6 +324,7 @@ extern void end_symbol_scope(int k)
     */
 
     int j;
+    symbols[k].flags |= UNHASHED_SFLAG;
     j = hash_code_from_string(symbols[k].name);
     if (start_of_list[j] == k)
     {   start_of_list[j] = symbols[k].next_entry;
@@ -379,7 +380,7 @@ static void describe_flags(int flags)
     if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
-    if (flags & IMPORT_SFLAG)   printf("(Imported) ");
+    if (flags & UNHASHED_SFLAG) printf("(not in hash chain) ");
     if (flags & EXPORT_SFLAG)   printf("(Exported) ");
     if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & CHANGE_SFLAG)   printf("(value will change) ");
