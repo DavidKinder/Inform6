@@ -426,13 +426,12 @@ extern void find_the_actions(void)
         action_name[namelen - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");
-        j = symbol_index(action_sub, -1);
-        if (symbols[j].flags & UNKNOWN_SFLAG)
+        j = get_symbol_index(action_sub);
+        if (j < 0 || symbols[j].flags & UNKNOWN_SFLAG)
         {
             error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);
         }
-        else
-        if (symbols[j].type != ROUTINE_T)
+        else if (symbols[j].type != ROUTINE_T)
         {
             error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);
             error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, symbols[j].line);
