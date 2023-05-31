@@ -232,6 +232,8 @@ extern int symbol_index(char *p, int hashcode)
     /*  Return the index in the symbols array of symbol "p", creating a
         new symbol with that name if it isn't already there.
 
+        Provide the hashcode of p if you know it, or -1 if you don't.
+
         New symbols are created with flag UNKNOWN_SFLAG, value 0x100
         (a 2-byte quantity in Z-machine terms) and type CONSTANT_T.
 
