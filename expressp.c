@@ -311,8 +311,8 @@ but not used as a value:", unicode);
 
                     current_token.text += 3;
                     current_token.type = SYMBOL_TT;
-                    symbol = symbol_index(current_token.text, -1);
-                    if (symbols[symbol].type != GLOBAL_VARIABLE_T) {
+                    symbol = get_symbol_index(current_token.text);
+                    if (symbol < 0 || symbols[symbol].type != GLOBAL_VARIABLE_T) {
                         ebf_error(
                         "global variable name after '#g$'",
                         current_token.text);
