@@ -523,7 +523,7 @@ extern void issue_unused_warnings(void)
 
     for (i=0;i<no_symbols;i++)
     {   if (((symbols[i].flags
-             & (SYSTEM_SFLAG + UNKNOWN_SFLAG + EXPORT_SFLAG
+             & (SYSTEM_SFLAG + UNKNOWN_SFLAG
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
              && (symbols[i].type != OBJECT_T))
             dbnu_warning(typename(symbols[i].type), symbols[i].name, symbols[i].line);

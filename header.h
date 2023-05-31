@@ -1281,22 +1281,25 @@ typedef struct operator_s
 /*   Symbol flag definitions (in no significant order)                       */
 /* ------------------------------------------------------------------------- */
 
-#define UNKNOWN_SFLAG  1
-#define REPLACE_SFLAG  2
-#define USED_SFLAG     4
-#define DEFCON_SFLAG   8
-#define STUB_SFLAG     16
-#define IMPORT_SFLAG   32
-#define EXPORT_SFLAG   64
-#define ALIASED_SFLAG  128
+#define UNKNOWN_SFLAG  1     /* no definition known */
+#define REPLACE_SFLAG  2     /* routine marked for Replace */
+#define USED_SFLAG     4     /* referred to in code */
+#define DEFCON_SFLAG   8     /* defined by Default */
+#define STUB_SFLAG     16    /* defined by Stub */
+#define IMPORT_SFLAG   32    /* no longer used */
+#define EXPORT_SFLAG   64    /* no longer used */
+#define ALIASED_SFLAG  128   /* defined as property/attribute alias name */
 
-#define CHANGE_SFLAG   256
-#define SYSTEM_SFLAG   512
-#define INSF_SFLAG     1024
-#define UERROR_SFLAG   2048
-#define ACTION_SFLAG   4096
-#define REDEFINABLE_SFLAG  8192
-#define STAR_SFLAG    16384
+#define CHANGE_SFLAG   256   /* defined by Default with a value,
+                                or symbol has a backpatchable value */
+#define SYSTEM_SFLAG   512   /* created by compiler */
+#define INSF_SFLAG     1024  /* created in System_File */
+#define UERROR_SFLAG   2048  /* "No such constant" error issued */
+#define ACTION_SFLAG   4096  /* action name constant (Foo_A) */
+#define REDEFINABLE_SFLAG  8192  /* built-in symbol that can be redefined
+                                    by the user */
+#define STAR_SFLAG    16384  /* function defined with "*" or property named
+                                "foo_to" */
 
 /* ------------------------------------------------------------------------- */
 /*   Symbol type definitions                                                 */
