@@ -433,8 +433,7 @@ extern void find_the_actions(void)
         }
         else if (symbols[j].type != ROUTINE_T)
         {
-            error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);
-            error_named_at("-- ...Sub symbol found, but not a routine:", action_sub, symbols[j].line);
+            ebf_symbol_error("action's ...Sub routine", action_sub, typename(symbols[j].type), symbols[j].line);
         }
         else
         {   actions[i].byte_offset = symbols[j].value;
