@@ -678,8 +678,8 @@ advance as part of 'Zcharacter table':", unicode);
                     j = atoi(temp_symbol);
                 }
                 else {
-                    int sym = symbol_index(temp_symbol, -1);
-                    if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
+                    int sym = get_symbol_index(temp_symbol);
+                    if (sym < 0 || (symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
                         error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                     }
                     else {
@@ -878,8 +878,8 @@ string.");
                 j = atoi(temp_symbol);
             }
             else {
-                int sym = symbol_index(temp_symbol, -1);
-                if ((symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
+                int sym = get_symbol_index(temp_symbol);
+                if (sym < 0 || (symbols[sym].flags & UNKNOWN_SFLAG) || symbols[sym].type != CONSTANT_T || symbols[sym].marker) {
                     error_named("'@(...)' abbreviation expected a known constant value, but contained", temp_symbol);
                 }
                 else {
