@@ -1155,8 +1155,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                    version.
                    The calculation here is repeated from select_target(). */
                 DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
-                debtok = symbol_index("DICT_ENTRY_BYTES", -1);
-                if (!(symbols[debtok].flags & UNKNOWN_SFLAG))
+                debtok = get_symbol_index("DICT_ENTRY_BYTES");
+                if (debtok >= 0 && !(symbols[debtok].flags & UNKNOWN_SFLAG))
                 {
                     if (!(symbols[debtok].flags & REDEFINABLE_SFLAG))
                     {
