@@ -383,7 +383,6 @@ static void describe_flags(int flags)
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
     if (flags & UNHASHED_SFLAG) printf("(not in hash chain) ");
-    if (flags & EXPORT_SFLAG)   printf("(Exported) ");
     if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & SYSTEM_SFLAG)   printf("(System) ");

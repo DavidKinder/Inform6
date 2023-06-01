@@ -1287,7 +1287,7 @@ typedef struct operator_s
 #define DEFCON_SFLAG   8     /* defined by Default */
 #define STUB_SFLAG     16    /* defined by Stub */
 #define UNHASHED_SFLAG 32    /* removed from hash chain */
-#define EXPORT_SFLAG   64    /* flag no longer used */
+/*                     64       flag no longer used */
 #define ALIASED_SFLAG  128   /* defined as property/attribute alias name */
 
 #define CHANGE_SFLAG   256   /* defined by Default with a value,
