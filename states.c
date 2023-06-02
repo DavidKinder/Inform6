@@ -86,11 +86,7 @@ static void parse_action(void)
     }
     else
     {
-        /* The token might be a symbol, or not. I think which you get is a
-           matter of lookahead, which is part of the general problem with
-           lookahead and dont_enter_into_symbol_table. But we can work
-           around it here by checking both possibilities. */
-        if (token_type != UQ_TT && token_type != SYMBOL_TT) {
+        if (token_type != UQ_TT) {
             ebf_curtoken_error("name of action");
         }
         codegen_action = FALSE;
