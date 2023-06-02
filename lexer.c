@@ -797,7 +797,7 @@ extern void construct_local_variable_tables(void)
     }
 }
 
-static void interpret_identifier(char *p, int pos, int dirs_only_flag)
+static void interpret_identifier(char *p, int pos)
 {   int index, hashcode;
 
     /*  An identifier is either a keyword or a "symbol", a name which the
@@ -807,9 +807,39 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
     
     hashcode = hash_code_from_string(p);
 
-    /* dir_only_flag means we should only recognize directive keywords.      */
-    if (dirs_only_flag) goto KeywordSearch;
+    /*  If dont_enter_into_symbol_table is true, we skip all keywords
+        and just mark it as an unquoted string. Except that if
+        dont_enter_into_symbol_table is -2, we recognize directive keywords
+        (only).
+    */
 
+    if (dont_enter_into_symbol_table) {
+
+        if (dont_enter_into_symbol_table == -2) {
+            /* This is a simplified version of the keyword-checking loop
+               below. */
+            index = keywords_hash_table[hashcode];
+            while (index >= 0)
+            {   int *i = keywords_data_table + 3*index;
+                keyword_group *kg = keyword_groups[*i];
+                if (kg == &directives)
+                {   char *q = kg->keywords[*(i+1)];
+                    if (((kg->case_sensitive) && (strcmp(p, q)==0))
+                        || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
+                    {   circle[pos].type = kg->change_token_type;
+                        circle[pos].value = *(i+1);
+                        return;
+                    }
+                }
+                index = *(i+2);
+            }
+        }
+        
+        circle[pos].type = UQ_TT;
+        circle[pos].value = 0;
+        return;
+    }
+    
     /*  If this is assembly language, perhaps it is "sp"?                    */
 
     if (return_sp_as_variable && (p[0]=='s') && (p[1]=='p') && (p[2]==0))
@@ -847,13 +877,11 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
     /*  Now the bulk of the keywords.  Note that the lexer doesn't recognise
         the name of a system function which has been Replaced.               */
 
-    KeywordSearch:
     index = keywords_hash_table[hashcode];
     while (index >= 0)
     {   int *i = keywords_data_table + 3*index;
         keyword_group *kg = keyword_groups[*i];
-        if (((!dirs_only_flag) && (kg->enabled))
-            || (dirs_only_flag && (kg == &directives)))
+        if (kg->enabled)
         {   char *q = kg->keywords[*(i+1)];
             if (((kg->case_sensitive) && (strcmp(p, q)==0))
                 || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
@@ -867,8 +895,6 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         }
         index = *(i+2);
     }
-
-    if (dirs_only_flag) return;
 
     /*  Search for the name; create it if necessary.                         */
 
@@ -1799,7 +1825,7 @@ extern void get_next_token(void)
         if (context != circle[i].context)
         {   j = circle[i].type;
             if ((j==0) || ((j>=100) && (j<200)))
-                interpret_identifier(circle[i].text, i, FALSE);
+                interpret_identifier(circle[i].text, i);
             circle[i].context = context;
         }
         goto ReturnBack;
@@ -2017,15 +2043,7 @@ extern void get_next_token(void)
 
             lexaddc(0);
 
-            if (dont_enter_into_symbol_table)
-            {   circle[circle_position].type = UQ_TT;
-                circle[circle_position].value = 0;
-                if (dont_enter_into_symbol_table == -2)
-                    interpret_identifier(lextexts[lex_index].text, circle_position, TRUE);
-                break;
-            }
-
-            interpret_identifier(lextexts[lex_index].text, circle_position, FALSE);
+            interpret_identifier(lextexts[lex_index].text, circle_position);
             break;
 
         default:
