@@ -330,7 +330,7 @@ extern void end_symbol_scope(int k, int neveruse)
        and put_token_back().
 
        If you know the symbol has never been used, set neveruse and
-       it will be flagged as a compiler error if it *is* used.
+       it will be flagged as an error if it *is* used.
        
        If the symbol is not found in the hash table, this silently does
        nothing.

@@ -624,7 +624,7 @@ static int lexical_context(void)
 static void print_context(int c)
 {
     if (c < 0) {
-        printf("???");
+        printf("??? ");
         return;
     }
     if ((c & 1) != 0) printf("OPC ");
