@@ -1288,7 +1288,7 @@ typedef struct operator_s
 #define DEFCON_SFLAG   8     /* defined by Default */
 #define STUB_SFLAG     16    /* defined by Stub */
 #define UNHASHED_SFLAG 32    /* removed from hash chain */
-/*                     64       flag no longer used */
+#define DISCARDED_SFLAG 64   /* removed and should never have been used */
 #define ALIASED_SFLAG  128   /* defined as property/attribute alias name */
 
 #define CHANGE_SFLAG   256   /* defined by Default with a value,
@@ -2661,7 +2661,7 @@ extern int hash_code_from_string(char *p);
 extern int strcmpcis(char *p, char *q);
 extern int get_symbol_index(char *p);
 extern int symbol_index(char *lexeme_text, int hashcode, int *created);
-extern void end_symbol_scope(int k);
+extern void end_symbol_scope(int k, int neveruse);
 extern void describe_symbol(int k);
 extern void list_symbols(int level);
 extern void assign_marked_symbol(int index, int marker, int32 value, int type);

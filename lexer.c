@@ -1725,8 +1725,9 @@ extern void put_token_back(void)
     }
 
     if (circle[pos].type == SYMBOL_TT && circle[pos].newsymbol) {
-        //printf("### putting back a new symbol '%s'!\n", symbols[circle[pos].value].name);
-        end_symbol_scope(circle[pos].value); //### flag?
+        /* Remove the symbol from the symbol table. (Or mark it as unreachable
+           anyhow.) */
+        end_symbol_scope(circle[pos].value, TRUE);
         /* Remove new-symbol flag, and force reinterpretation next time
            we see the symbol. */
         circle[pos].newsymbol = FALSE;

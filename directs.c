@@ -1097,7 +1097,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (debugfile_switch)
         {   write_debug_undef(token_value);
         }
-        end_symbol_scope(token_value);
+        /* We remove it from the symbol table. But previous uses of the symbol
+           were valid, so we don't set neverused true. We also mark it
+           USED so that it can't trigger "symbol not used" warnings. */
+        end_symbol_scope(token_value, FALSE);
         symbols[token_value].flags |= USED_SFLAG;
         break;
 

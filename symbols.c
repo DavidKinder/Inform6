@@ -323,16 +323,25 @@ extern int symbol_index(char *p, int hashcode, int *created)
     return(no_symbols++);
 }
 
-extern void end_symbol_scope(int k)
+extern void end_symbol_scope(int k, int neveruse)
 {
     /* Remove the given symbol from the hash table, making it
-       invisible to symbol_index. This is used by the Undef directive.
+       invisible to symbol_index. This is used by the Undef directive
+       and put_token_back().
+
+       If you know the symbol has never been used, set neveruse and
+       it will be flagged as a compiler error if it *is* used.
+       
        If the symbol is not found in the hash table, this silently does
        nothing.
     */
 
     int j;
+    
     symbols[k].flags |= UNHASHED_SFLAG;
+    if (neveruse)
+        symbols[k].flags |= DISCARDED_SFLAG;
+        
     j = hash_code_from_string(symbols[k].name);
     if (start_of_list[j] == k)
     {   start_of_list[j] = symbols[k].next_entry;
@@ -537,6 +546,10 @@ extern void issue_unused_warnings(void)
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
              && (symbols[i].type != OBJECT_T)) {
             dbnu_warning(typename(symbols[i].type), symbols[i].name, symbols[i].line);
+        }
+        if ((symbols[i].flags & DISCARDED_SFLAG)
+            && (symbols[i].flags & USED_SFLAG)) {
+            error_named_at("Symbol was removed from the symbol table, but seems to be in use anyway", symbols[i].name, symbols[i].line);
         }
     }
 }
