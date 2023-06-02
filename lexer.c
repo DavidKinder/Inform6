@@ -808,9 +808,9 @@ static void interpret_identifier(char *p, int pos)
     hashcode = hash_code_from_string(p);
 
     /*  If dont_enter_into_symbol_table is true, we skip all keywords
-        and just mark it as an unquoted string. Except that if
-        dont_enter_into_symbol_table is -2, we recognize directive keywords
-        (only).
+        (and variables) and just mark the name as an unquoted string.
+        Except that if dont_enter_into_symbol_table is -2, we recognize
+        directive keywords (only).
     */
 
     if (dont_enter_into_symbol_table) {
