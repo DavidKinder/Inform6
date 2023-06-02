@@ -802,6 +802,7 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
 
     hashcode = hash_code_from_string(p);
 
+    /* dir_only_flag means we should only recognize directive keywords.      */
     if (dirs_only_flag) goto KeywordSearch;
 
     /*  If this is assembly language, perhaps it is "sp"?                    */
