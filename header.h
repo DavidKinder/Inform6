@@ -2659,7 +2659,7 @@ extern char *typename(int type);
 extern int hash_code_from_string(char *p);
 extern int strcmpcis(char *p, char *q);
 extern int get_symbol_index(char *p);
-extern int symbol_index(char *lexeme_text, int hashcode);
+extern int symbol_index(char *lexeme_text, int hashcode, int *created);
 extern void end_symbol_scope(int k);
 extern void describe_symbol(int k);
 extern void list_symbols(int level);

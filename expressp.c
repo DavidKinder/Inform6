@@ -363,7 +363,7 @@ but not used as a value:", unicode);
                         "'#r$Routine' can now be written just 'Routine'");
                     current_token.text += 3;
                     current_token.type = SYMBOL_TT;
-                    current_token.value = symbol_index(current_token.text, -1);
+                    current_token.value = symbol_index(current_token.text, -1, NULL);
                     goto ReceiveSymbol;
 
                 case HASHWDOLLAR_SEP:

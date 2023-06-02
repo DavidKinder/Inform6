@@ -795,6 +795,7 @@ extern void construct_local_variable_tables(void)
 
 static void interpret_identifier(char *p, int pos, int dirs_only_flag)
 {   int index, hashcode;
+    int created;
 
     /*  An identifier is either a keyword or a "symbol", a name which the
         lexical analyser leaves to higher levels of Inform to understand.    */
@@ -865,7 +866,7 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
 
     /*  Search for the name; create it if necessary.                         */
 
-    circle[pos].value = symbol_index(p, hashcode);
+    circle[pos].value = symbol_index(p, hashcode, &created);
     circle[pos].type = SYMBOL_TT;
 }
 

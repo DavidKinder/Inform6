@@ -329,7 +329,7 @@ extern void make_fake_action(void)
     
     /* Action symbols (including fake_actions) may collide with other kinds of symbols. So we don't check that. */
 
-    i = symbol_index(action_sub, -1);
+    i = symbol_index(action_sub, -1, NULL);
 
     if (!(symbols[i].flags & UNKNOWN_SFLAG))
     {   discard_token_location(beginning_debug_location);
@@ -372,7 +372,7 @@ extern assembly_operand action_of_name(char *name)
     strcpy(action_sub, name);
     strcat(action_sub, "__A");
     
-    j = symbol_index(action_sub, -1);
+    j = symbol_index(action_sub, -1, NULL);
 
     if (symbols[j].type == FAKE_ACTION_T)
     {   INITAO(&AO);
@@ -426,7 +426,7 @@ extern void find_the_actions(void)
         action_name[namelen - 3] = '\0'; /* remove "__A" */
         strcpy(action_sub, action_name);
         strcat(action_sub, "Sub");
-        j = symbol_index(action_sub, -1);
+        j = symbol_index(action_sub, -1, NULL);
         if (symbols[j].flags & UNKNOWN_SFLAG)
         {
             error_named_at("No ...Sub action routine found for action:", action_name, symbols[actions[i].symbol].line);

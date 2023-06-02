@@ -227,10 +227,13 @@ extern int get_symbol_index(char *p)
     return -1;
 }
 
-extern int symbol_index(char *p, int hashcode)
+extern int symbol_index(char *p, int hashcode, int *created)
 {
     /*  Return the index in the symbols array of symbol "p", creating a
         new symbol with that name if it isn't already there.
+
+        The optional created argument receives TRUE if the symbol
+        was newly created.
 
         Provide the hashcode of p if you know it, or -1 if you don't.
 
@@ -256,6 +259,7 @@ extern int symbol_index(char *p, int hashcode)
         {
             if (track_unused_routines)
                 df_note_function_symbol(this);
+            if (created) *created = FALSE;
             return this;
         }
         if (new_entry > 0) break;
@@ -315,6 +319,7 @@ extern int symbol_index(char *p, int hashcode)
 
     if (track_unused_routines)
         df_note_function_symbol(no_symbols);
+    if (created) *created = TRUE;
     return(no_symbols++);
 }
 
@@ -784,7 +789,7 @@ static void emit_debug_information_for_predefined_symbol
 }
 
 static void create_symbol(char *p, int32 value, int type)
-{   int i = symbol_index(p, -1);
+{   int i = symbol_index(p, -1, NULL);
     if (!(symbols[i].flags & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))) {
         /* Symbol already defined! */
         if (symbols[i].value == value && symbols[i].type == type) {
@@ -804,7 +809,7 @@ static void create_symbol(char *p, int32 value, int type)
 }
 
 static void create_rsymbol(char *p, int value, int type)
-{   int i = symbol_index(p, -1);
+{   int i = symbol_index(p, -1, NULL);
     /* This is only called for a few symbols with known names.
        They will not collide. */
     symbols[i].value = value; symbols[i].type = type; symbols[i].line = blank_brief_location;
