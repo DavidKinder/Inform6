@@ -230,12 +230,13 @@ extern int get_symbol_index(char *p)
 extern int symbol_index(char *p, int hashcode, int *created)
 {
     /*  Return the index in the symbols array of symbol "p", creating a
-        new symbol with that name if it isn't already there.
+        new symbol with that name if it isn't already there. This
+        always returns a valid symbol index.
 
         The optional created argument receives TRUE if the symbol
         was newly created.
 
-        Provide the hashcode of p if you know it, or -1 if you don't.
+        Pass in the hashcode of p if you know it, or -1 if you don't.
 
         New symbols are created with flag UNKNOWN_SFLAG, value 0x100
         (a 2-byte quantity in Z-machine terms) and type CONSTANT_T.
@@ -398,6 +399,7 @@ static void describe_flags(int flags)
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
     if (flags & UNHASHED_SFLAG) printf("(not in hash chain) ");
+    if (flags & DISCARDED_SFLAG)  printf("(removed, do not use) ");
     if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & SYSTEM_SFLAG)   printf("(System) ");
