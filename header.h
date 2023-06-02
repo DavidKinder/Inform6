@@ -814,6 +814,7 @@ typedef struct lexeme_data_s {
     char *text;  /* points at lextexts array */
     int32 value;
     int type;    /* a *_TT value */
+    int newsymbol; /* (for SYMBOL_TT) this symbol was first encountered here */
     debug_location location;
     int lextext; /* index of text string in lextexts */
     int context; /* lexical context used to interpret this token */

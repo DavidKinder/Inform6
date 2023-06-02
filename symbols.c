@@ -327,7 +327,8 @@ extern void end_symbol_scope(int k)
 {
     /* Remove the given symbol from the hash table, making it
        invisible to symbol_index. This is used by the Undef directive.
-       If the symbol is not found, this silently does nothing.
+       If the symbol is not found in the hash table, this silently does
+       nothing.
     */
 
     int j;
