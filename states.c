@@ -2468,10 +2468,16 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  sequence_point_follows = TRUE;
-                 ln = symbol_index("Class", -1);
-                 INITAOT(&AO2, CONSTANT_OT);
-                 AO2.value = symbols[ln].value;
-                 AO2.marker = OBJECT_MV;
+                 ln = get_symbol_index("Class");
+                 if (ln < 0) {
+                     error("No 'Class' object found");
+                     AO2 = zero_operand;
+                 }
+                 else {
+                     INITAOT(&AO2, CONSTANT_OT);
+                     AO2.value = symbols[ln].value;
+                     AO2.marker = OBJECT_MV;
+                 }
                  assembleg_store(AO, AO2);
 
                  assemble_label_no(ln = next_label++);
