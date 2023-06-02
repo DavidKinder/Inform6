@@ -599,12 +599,8 @@ static int lexical_context(void)
         always translate to the same output tokens whenever the context
         is the same.
 
-        ####
-        In fact, for efficiency reasons this number omits the bit of
-        information held in the variable "dont_enter_into_symbol_table".
-        Inform never needs to backtrack through tokens parsed in that
-        way (thankfully, as it would be expensive indeed to check
-        the tokens).                                                         */
+        (For many years, the "dont_enter_into_symbol_table" variable
+        was omitted from this number. But now we can include it.)            */
 
     int c = 0;
     if (opcode_names.enabled)         c |= 1;
@@ -876,11 +872,6 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
     /*  Search for the name; create it if necessary.                         */
 
     circle[pos].value = symbol_index(p, hashcode, &circle[pos].newsymbol);
-    if (FALSE && circle[pos].newsymbol) { //###
-        printf("### new symbol: ");
-        describe_token(&circle[pos]);
-        printf("\n");
-    } //###
     circle[pos].type = SYMBOL_TT;
 }
 
