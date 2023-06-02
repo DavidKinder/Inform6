@@ -639,6 +639,7 @@ static void print_context(int c)
     if ((c & 512) != 0) printf("SCON ");
     if ((c & 1024) != 0) printf("LV ");
     if ((c & 2048) != 0) printf("sp ");
+    if ((c & 4096) != 0) printf("dontent ");
 }
 
 static int *keywords_hash_table;
