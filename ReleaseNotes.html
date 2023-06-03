@@ -84,6 +84,8 @@ accept quoted strings and then ignore the quotes. This is now an error.
 <li><p>The case of a property having too many entries is now always an error, and is checked correctly in the case
 of compiling to Z-code V3.
 <li><p>An unclosed double quote at the end of a source file no longer causes the compiler to hang.
+<li><p>A number of issues relating to error messages giving incorrect information have been fixed by improving how the
+compiler handles backtracking through parsed symbols in some tricky cases.
 <li><p>The Z-code version of the veneer function <tt>Box__Routine</tt> (which is used in the implementation of the
 <tt>box</tt> statement) now contains a check to prevent calling the <tt>@set_cursor</tt> opcode with negative
 co-ordinates.
