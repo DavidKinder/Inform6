@@ -130,9 +130,17 @@ static int32 backpatch_value_z(int32 value)
             value += individuals_offset;
             break;
         case MAIN_MV:
-            value = symbol_index("Main", -1);
-            if (symbols[value].type != ROUTINE_T)
+            value = get_symbol_index("Main");
+            if (value < 0 || (symbols[value].flags & UNKNOWN_SFLAG)) {
                 error("No 'Main' routine has been defined");
+                value = 0;
+                break;
+            }
+            if (symbols[value].type != ROUTINE_T) {
+                ebf_symbol_error("'Main' routine", symbols[value].name, typename(symbols[value].type), symbols[value].line);
+                value = 0;
+                break;
+            }
             symbols[value].flags |= USED_SFLAG;
             value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)
@@ -277,9 +285,17 @@ static int32 backpatch_value_g(int32 value)
             value += individuals_offset;
             break;
         case MAIN_MV:
-            value = symbol_index("Main", -1);
-            if (symbols[value].type != ROUTINE_T)
+            value = get_symbol_index("Main");
+            if (value < 0 || (symbols[value].flags & UNKNOWN_SFLAG)) {
                 error("No 'Main' routine has been defined");
+                value = 0;
+                break;
+            }
+            if (symbols[value].type != ROUTINE_T) {
+                ebf_symbol_error("'Main' routine", symbols[value].name, typename(symbols[value].type), symbols[value].line);
+                value = 0;
+                break;
+            }
             symbols[value].flags |= USED_SFLAG;
             value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)

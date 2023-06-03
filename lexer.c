@@ -599,11 +599,8 @@ static int lexical_context(void)
         always translate to the same output tokens whenever the context
         is the same.
 
-        In fact, for efficiency reasons this number omits the bit of
-        information held in the variable "dont_enter_into_symbol_table".
-        Inform never needs to backtrack through tokens parsed in that
-        way (thankfully, as it would be expensive indeed to check
-        the tokens).                                                         */
+        (For many years, the "dont_enter_into_symbol_table" variable
+        was omitted from this number. But now we can include it.)            */
 
     int c = 0;
     if (opcode_names.enabled)         c |= 1;
@@ -619,11 +616,17 @@ static int lexical_context(void)
     if (local_variables.enabled)      c |= 1024;
 
     if (return_sp_as_variable)        c |= 2048;
+    if (dont_enter_into_symbol_table) c |= 4096;
+    
     return(c);
 }
 
 static void print_context(int c)
 {
+    if (c < 0) {
+        printf("??? ");
+        return;
+    }
     if ((c & 1) != 0) printf("OPC ");
     if ((c & 2) != 0) printf("DIR ");
     if ((c & 4) != 0) printf("TK ");
@@ -636,6 +639,7 @@ static void print_context(int c)
     if ((c & 512) != 0) printf("SCON ");
     if ((c & 1024) != 0) printf("LV ");
     if ((c & 2048) != 0) printf("sp ");
+    if ((c & 4096) != 0) printf("dontent ");
 }
 
 static int *keywords_hash_table;
@@ -793,16 +797,49 @@ extern void construct_local_variable_tables(void)
     }
 }
 
-static void interpret_identifier(char *p, int pos, int dirs_only_flag)
+static void interpret_identifier(char *p, int pos)
 {   int index, hashcode;
 
     /*  An identifier is either a keyword or a "symbol", a name which the
         lexical analyser leaves to higher levels of Inform to understand.    */
 
+    circle[pos].newsymbol = FALSE;
+    
     hashcode = hash_code_from_string(p);
 
-    if (dirs_only_flag) goto KeywordSearch;
+    /*  If dont_enter_into_symbol_table is true, we skip all keywords
+        (and variables) and just mark the name as an unquoted string.
+        Except that if dont_enter_into_symbol_table is -2, we recognize
+        directive keywords (only).
+    */
 
+    if (dont_enter_into_symbol_table) {
+
+        if (dont_enter_into_symbol_table == -2) {
+            /* This is a simplified version of the keyword-checking loop
+               below. */
+            index = keywords_hash_table[hashcode];
+            while (index >= 0)
+            {   int *i = keywords_data_table + 3*index;
+                keyword_group *kg = keyword_groups[*i];
+                if (kg == &directives)
+                {   char *q = kg->keywords[*(i+1)];
+                    if (((kg->case_sensitive) && (strcmp(p, q)==0))
+                        || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
+                    {   circle[pos].type = kg->change_token_type;
+                        circle[pos].value = *(i+1);
+                        return;
+                    }
+                }
+                index = *(i+2);
+            }
+        }
+        
+        circle[pos].type = UQ_TT;
+        circle[pos].value = 0;
+        return;
+    }
+    
     /*  If this is assembly language, perhaps it is "sp"?                    */
 
     if (return_sp_as_variable && (p[0]=='s') && (p[1]=='p') && (p[2]==0))
@@ -840,13 +877,11 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
     /*  Now the bulk of the keywords.  Note that the lexer doesn't recognise
         the name of a system function which has been Replaced.               */
 
-    KeywordSearch:
     index = keywords_hash_table[hashcode];
     while (index >= 0)
     {   int *i = keywords_data_table + 3*index;
         keyword_group *kg = keyword_groups[*i];
-        if (((!dirs_only_flag) && (kg->enabled))
-            || (dirs_only_flag && (kg == &directives)))
+        if (kg->enabled)
         {   char *q = kg->keywords[*(i+1)];
             if (((kg->case_sensitive) && (strcmp(p, q)==0))
                 || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
@@ -861,11 +896,9 @@ static void interpret_identifier(char *p, int pos, int dirs_only_flag)
         index = *(i+2);
     }
 
-    if (dirs_only_flag) return;
-
     /*  Search for the name; create it if necessary.                         */
 
-    circle[pos].value = symbol_index(p, hashcode);
+    circle[pos].value = symbol_index(p, hashcode, &circle[pos].newsymbol);
     circle[pos].type = SYMBOL_TT;
 }
 
@@ -1697,11 +1730,28 @@ extern void release_token_texts(void)
 extern void put_token_back(void)
 {   tokens_put_back++;
 
+    int pos = circle_position - tokens_put_back + 1;
+    if (pos<0) pos += CIRCLE_SIZE;
+
     if (tokens_trace_level > 0)
-    {   if (tokens_trace_level == 1) printf("<- ");
-        else printf("<-\n");
+    {
+        printf("<- ");
+        if (tokens_trace_level > 1) {
+            describe_token(&circle[pos]);
+            printf("\n");
+        }
     }
 
+    if (circle[pos].type == SYMBOL_TT && circle[pos].newsymbol) {
+        /* Remove the symbol from the symbol table. (Or mark it as unreachable
+           anyhow.) */
+        end_symbol_scope(circle[pos].value, TRUE);
+        /* Remove new-symbol flag, and force reinterpretation next time
+           we see the symbol. */
+        circle[pos].newsymbol = FALSE;
+        circle[pos].context = -1;
+    }
+    
     /*  The following error, of course, should never happen!                 */
 
     if (tokens_put_back == CIRCLE_SIZE)
@@ -1775,7 +1825,7 @@ extern void get_next_token(void)
         if (context != circle[i].context)
         {   j = circle[i].type;
             if ((j==0) || ((j>=100) && (j<200)))
-                interpret_identifier(circle[i].text, i, FALSE);
+                interpret_identifier(circle[i].text, i);
             circle[i].context = context;
         }
         goto ReturnBack;
@@ -1800,6 +1850,7 @@ extern void get_next_token(void)
     circle[circle_position].text = NULL; /* will fill in later */
     circle[circle_position].value = 0;
     circle[circle_position].type = 0;
+    circle[circle_position].newsymbol = FALSE;
     circle[circle_position].context = context;
 
     StartTokenAgain:
@@ -1992,15 +2043,7 @@ extern void get_next_token(void)
 
             lexaddc(0);
 
-            if (dont_enter_into_symbol_table)
-            {   circle[circle_position].type = UQ_TT;
-                circle[circle_position].value = 0;
-                if (dont_enter_into_symbol_table == -2)
-                    interpret_identifier(lextexts[lex_index].text, circle_position, TRUE);
-                break;
-            }
-
-            interpret_identifier(lextexts[lex_index].text, circle_position, FALSE);
+            interpret_identifier(lextexts[lex_index].text, circle_position);
             break;
 
         default:
@@ -2105,7 +2148,10 @@ extern void get_next_token(void)
         else
         {   printf("-> "); describe_token(&circle[i]);
             printf(" ");
-            if (tokens_trace_level > 2) print_context(circle[i].context);
+            if (tokens_trace_level > 2) {
+                if (circle[i].newsymbol) printf("newsym ");
+                print_context(circle[i].context);
+            }
             printf("\n");
         }
     }
@@ -2119,6 +2165,7 @@ extern void restart_lexer(char *lexical_source, char *name)
     for (i=0; i<CIRCLE_SIZE; i++)
     {   circle[i].type = 0;
         circle[i].value = 0;
+        circle[i].newsymbol = FALSE;
         circle[i].text = "(if this is ever visible, there is a bug)";
         circle[i].lextext = -1;
         circle[i].context = 0;

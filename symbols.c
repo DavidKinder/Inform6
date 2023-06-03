@@ -227,10 +227,16 @@ extern int get_symbol_index(char *p)
     return -1;
 }
 
-extern int symbol_index(char *p, int hashcode)
+extern int symbol_index(char *p, int hashcode, int *created)
 {
     /*  Return the index in the symbols array of symbol "p", creating a
-        new symbol with that name if it isn't already there.
+        new symbol with that name if it isn't already there. This
+        always returns a valid symbol index.
+
+        The optional created argument receives TRUE if the symbol
+        was newly created.
+
+        Pass in the hashcode of p if you know it, or -1 if you don't.
 
         New symbols are created with flag UNKNOWN_SFLAG, value 0x100
         (a 2-byte quantity in Z-machine terms) and type CONSTANT_T.
@@ -254,6 +260,7 @@ extern int symbol_index(char *p, int hashcode)
         {
             if (track_unused_routines)
                 df_note_function_symbol(this);
+            if (created) *created = FALSE;
             return this;
         }
         if (new_entry > 0) break;
@@ -313,17 +320,29 @@ extern int symbol_index(char *p, int hashcode)
 
     if (track_unused_routines)
         df_note_function_symbol(no_symbols);
+    if (created) *created = TRUE;
     return(no_symbols++);
 }
 
-extern void end_symbol_scope(int k)
+extern void end_symbol_scope(int k, int neveruse)
 {
     /* Remove the given symbol from the hash table, making it
-       invisible to symbol_index. This is used by the Undef directive.
-       If the symbol is not found, this silently does nothing.
+       invisible to symbol_index. This is used by the Undef directive
+       and put_token_back().
+
+       If you know the symbol has never been used, set neveruse and
+       it will be flagged as an error if it *is* used.
+       
+       If the symbol is not found in the hash table, this silently does
+       nothing.
     */
 
     int j;
+    
+    symbols[k].flags |= UNHASHED_SFLAG;
+    if (neveruse)
+        symbols[k].flags |= DISCARDED_SFLAG;
+        
     j = hash_code_from_string(symbols[k].name);
     if (start_of_list[j] == k)
     {   start_of_list[j] = symbols[k].next_entry;
@@ -379,8 +398,8 @@ static void describe_flags(int flags)
     if (flags & USED_SFLAG)     printf("(used) ");
     if (flags & DEFCON_SFLAG)   printf("(Defaulted) ");
     if (flags & STUB_SFLAG)     printf("(Stubbed) ");
-    if (flags & IMPORT_SFLAG)   printf("(Imported) ");
-    if (flags & EXPORT_SFLAG)   printf("(Exported) ");
+    if (flags & UNHASHED_SFLAG) printf("(not in hash chain) ");
+    if (flags & DISCARDED_SFLAG)  printf("(removed, do not use) ");
     if (flags & ALIASED_SFLAG)  printf("(aliased) ");
     if (flags & CHANGE_SFLAG)   printf("(value will change) ");
     if (flags & SYSTEM_SFLAG)   printf("(System) ");
@@ -518,15 +537,22 @@ extern void issue_unused_warnings(void)
     }
     /*  Now back to mark anything necessary as used  */
 
-    i = symbol_index("Main", -1);
-    if (!(symbols[i].flags & UNKNOWN_SFLAG)) symbols[i].flags |= USED_SFLAG;
+    i = get_symbol_index("Main");
+    if (i >= 0 && !(symbols[i].flags & UNKNOWN_SFLAG)) {
+        symbols[i].flags |= USED_SFLAG;
+    }
 
     for (i=0;i<no_symbols;i++)
     {   if (((symbols[i].flags
-             & (SYSTEM_SFLAG + UNKNOWN_SFLAG + EXPORT_SFLAG
+             & (SYSTEM_SFLAG + UNKNOWN_SFLAG
                 + INSF_SFLAG + USED_SFLAG + REPLACE_SFLAG)) == 0)
-             && (symbols[i].type != OBJECT_T))
+             && (symbols[i].type != OBJECT_T)) {
             dbnu_warning(typename(symbols[i].type), symbols[i].name, symbols[i].line);
+        }
+        if ((symbols[i].flags & DISCARDED_SFLAG)
+            && (symbols[i].flags & USED_SFLAG)) {
+            error_named_at("Symbol was removed from the symbol table, but seems to be in use anyway", symbols[i].name, symbols[i].line);
+        }
     }
 }
 
@@ -779,7 +805,7 @@ static void emit_debug_information_for_predefined_symbol
 }
 
 static void create_symbol(char *p, int32 value, int type)
-{   int i = symbol_index(p, -1);
+{   int i = symbol_index(p, -1, NULL);
     if (!(symbols[i].flags & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))) {
         /* Symbol already defined! */
         if (symbols[i].value == value && symbols[i].type == type) {
@@ -799,7 +825,7 @@ static void create_symbol(char *p, int32 value, int type)
 }
 
 static void create_rsymbol(char *p, int value, int type)
-{   int i = symbol_index(p, -1);
+{   int i = symbol_index(p, -1, NULL);
     /* This is only called for a few symbols with known names.
        They will not collide. */
     symbols[i].value = value; symbols[i].type = type; symbols[i].line = blank_brief_location;
@@ -825,7 +851,7 @@ static void stockup_symbols(void)
         create_rsymbol("Grammar__Version", 1, CONSTANT_T);
     else
         create_rsymbol("Grammar__Version", 2, CONSTANT_T);
-    grammar_version_symbol = symbol_index("Grammar__Version", -1);
+    grammar_version_symbol = get_symbol_index("Grammar__Version");
 
     if (runtime_error_checking_switch)
         create_rsymbol("STRICT_MODE",0, CONSTANT_T);
@@ -1246,15 +1272,15 @@ extern void locate_dead_functions(void)
        issue_unused_warnings(). But for the sake of thoroughness,
        we'll mark them specially. */
 
-    ix = symbol_index("Main__", -1);
-    if (symbols[ix].type == ROUTINE_T) {
+    ix = get_symbol_index("Main__");
+    if (ix >= 0 && symbols[ix].type == ROUTINE_T) {
         uint32 addr = symbols[ix].value * (glulx_mode ? 1 : scale_factor);
         tofunc = df_function_for_address(addr);
         if (tofunc)
             tofunc->usage |= DF_USAGE_MAIN;
     }
-    ix = symbol_index("Main", -1);
-    if (symbols[ix].type == ROUTINE_T) {
+    ix = get_symbol_index("Main");
+    if (ix >= 0 && symbols[ix].type == ROUTINE_T) {
         uint32 addr = symbols[ix].value * (glulx_mode ? 1 : scale_factor);
         tofunc = df_function_for_address(addr);
         if (tofunc)

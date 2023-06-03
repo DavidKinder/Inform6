@@ -1071,10 +1071,16 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     /* Test if inside the "Class" object... */
     INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
     assembleg_3(aload_gc, AO, AO3, stack_pointer);
-    ln = symbol_index("Class", -1);
-    AO3.value = symbols[ln].value;
-    AO3.marker = OBJECT_MV;
-    AO3.type = CONSTANT_OT;
+    ln = get_symbol_index("Class");
+    if (ln < 0) {
+        error("No 'Class' object found");
+        AO3 = zero_operand;
+    }
+    else {
+        AO3.value = symbols[ln].value;
+        AO3.marker = OBJECT_MV;
+        AO3.type = CONSTANT_OT;
+    }
     assembleg_2_branch(jne_gc, stack_pointer, AO3, passed_label);
   }
   
@@ -1092,10 +1098,16 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   }
   else {
     /* Build the symbol for "Object" */
-    ln = symbol_index("Object", -1);
-    AO2.value = symbols[ln].value;
-    AO2.marker = OBJECT_MV;
-    AO2.type = CONSTANT_OT;
+    ln = get_symbol_index("Object");
+    if (ln < 0) {
+        error("No 'Object' object found");
+        AO2 = zero_operand;
+    }
+    else {
+        AO2.value = symbols[ln].value;
+        AO2.marker = OBJECT_MV;
+        AO2.type = CONSTANT_OT;
+    }
     if (check_sp) {
       /* Push "Object" */
       assembleg_store(AO1, AO2);

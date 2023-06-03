@@ -33,7 +33,7 @@ extern void compile_initial_routine(void)
   int32 j;
     assembly_operand AO;
 
-    j = symbol_index("Main__", -1);
+    j = symbol_index("Main__", -1, NULL);
     clear_local_variables();
     assign_symbol(j,
         assemble_routine_header(FALSE, "Main__", FALSE, j),
@@ -2231,7 +2231,7 @@ static void compile_symbol_table_routine(void)
     add_local_variable("dummy1");
     add_local_variable("dummy2");
 
-    veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1);
+    veneer_mode = TRUE; j = symbol_index("Symb__Tab", -1, NULL);
     assign_symbol(j,
         assemble_routine_header(FALSE, "Symb__Tab", FALSE, j),
         ROUTINE_T);
@@ -2385,7 +2385,7 @@ extern void compile_veneer(void)
     {   try_veneer_again = FALSE;
         for (i=0; i<VENEER_ROUTINES; i++)
         {   if (veneer_routine_needs_compilation[i] == VR_CALLED)
-            {   j = symbol_index(VRs[i].name, -1);
+            {   j = symbol_index(VRs[i].name, -1, NULL);
                 if (symbols[j].flags & UNKNOWN_SFLAG)
                 {   veneer_mode = TRUE;
                     strcpy(veneer_source_area, VRs[i].source1);

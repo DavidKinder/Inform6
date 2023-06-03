@@ -1097,7 +1097,10 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
         if (debugfile_switch)
         {   write_debug_undef(token_value);
         }
-        end_symbol_scope(token_value);
+        /* We remove it from the symbol table. But previous uses of the symbol
+           were valid, so we don't set neverused true. We also mark it
+           USED so that it can't trigger "symbol not used" warnings. */
+        end_symbol_scope(token_value, FALSE);
         symbols[token_value].flags |= USED_SFLAG;
         break;
 
@@ -1155,8 +1158,8 @@ Fake_Action directives to a point after the inclusion of \"Parser\".)");
                    version.
                    The calculation here is repeated from select_target(). */
                 DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
-                debtok = symbol_index("DICT_ENTRY_BYTES", -1);
-                if (!(symbols[debtok].flags & UNKNOWN_SFLAG))
+                debtok = get_symbol_index("DICT_ENTRY_BYTES");
+                if (debtok >= 0 && !(symbols[debtok].flags & UNKNOWN_SFLAG))
                 {
                     if (!(symbols[debtok].flags & REDEFINABLE_SFLAG))
                     {

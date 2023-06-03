@@ -1878,7 +1878,7 @@ inconvenience, please contact the maintainers.");
 
     if (metaclass_flag)
     {   token_text = metaclass_name;
-        token_value = symbol_index(token_text, -1);
+        token_value = symbol_index(token_text, -1, NULL);
         token_type = SYMBOL_TT;
     }
     else
