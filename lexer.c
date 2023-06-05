@@ -1987,6 +1987,7 @@ extern void get_next_token(void)
             quoted_size=0;
             do
             {   e = d; d = (*get_next_char)(); lexaddc(d);
+                quoted_size++;
                 if ((d == '\'') && (e != '@'))
                 {   if (quoted_size == 1)
                     {   d = (*get_next_char)(); lexaddc(d);
@@ -2002,7 +2003,6 @@ extern void get_next_token(void)
             break;
 
         case DQUOTE_CODE:    /* Double-quotes: scan a literal string */
-            quoted_size=0;
             do
             {   d = (*get_next_char)(); lexaddc(d);
                 if (d == '\n')
