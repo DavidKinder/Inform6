@@ -248,6 +248,18 @@ extern void make_abbreviation(char *text)
 /*   specially during compilation.                                           */
 /* ------------------------------------------------------------------------- */
 
+/* TODO: When called from a print statement (parse_print()), it would be
+   nice to detect if the generated string is exactly one character. In that
+   case, we could return the character value and a flag to indicate the
+   caller could use @print_char/@streamchar/@new_line/@streamunichar
+   instead of printing a compiled string.
+
+   We'd need a new STRCTX value or two to distinguish direct-printed strings
+   from referenceable strings.
+
+   Currently, parse_print() checks for the "^" case manually, which is a
+   bit icky. */   
+   
 extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
     uchar *c;
