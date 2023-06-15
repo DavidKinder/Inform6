@@ -92,8 +92,8 @@ extern void *my_malloc(size_t size, char *whatfor)
     malloced_bytes+=size;
     if (c==0) fatalerror_memory_out(size, 1, whatfor);
     if (memout_switch)
-        printf("Allocating %ld bytes for %s at (%08lx)\n",
-            (long int) size,whatfor,(long int) c);
+        printf("Allocating %ld bytes for %s at (%p)\n",
+            (long int) size, whatfor, c);
     return(c);
 }
 
@@ -108,10 +108,8 @@ extern void my_realloc(void *pointer, size_t oldsize, size_t size,
     malloced_bytes+=(size-oldsize);
     if (c==0) fatalerror_memory_out(size, 1, whatfor);
     if (memout_switch)
-        printf("Increasing allocation from %ld to %ld bytes for %s was (%08lx) now (%08lx)\n",
-            (long int) oldsize, (long int) size, whatfor,
-            (long int) (*(int **)pointer), 
-            (long int) c);
+        printf("Increasing allocation from %ld to %ld bytes for %s was (%p) now (%p)\n",
+            (long int) oldsize, (long int) size, whatfor, pointer, c);
     *(int **)pointer = c;
 }
 
@@ -123,10 +121,9 @@ extern void *my_calloc(size_t size, size_t howmany, char *whatfor)
     if (c==0) fatalerror_memory_out(size, howmany, whatfor);
     if (memout_switch)
         printf("Allocating %ld bytes: array (%ld entries size %ld) \
-for %s at (%08lx)\n",
+for %s at (%p)\n",
             ((long int)size) * ((long int)howmany),
-            (long int)howmany,(long int)size,whatfor,
-            (long int) c);
+            (long int)howmany,(long int)size, whatfor, c);
     return(c);
 }
 
@@ -141,11 +138,11 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     malloced_bytes+=size*(howmany-oldhowmany);
     if (c==0) fatalerror_memory_out(size, howmany, whatfor);
     if (memout_switch)
-        printf("Increasing allocation from %ld to %ld bytes: array (%ld entries size %ld) for %s was (%08lx) now (%08lx)\n",
+        printf("Increasing allocation from %ld to %ld bytes: array (%ld entries size %ld) for %s was (%p) now (%p)\n",
             ((long int)size) * ((long int)oldhowmany),
             ((long int)size) * ((long int)howmany),
             (long int)howmany, (long int)size, whatfor,
-            (long int) *(int **)pointer, (long int) c);
+            pointer, c);
     *(int **)pointer = c;
 }
 
@@ -155,8 +152,8 @@ extern void my_free(void *pointer, char *whatitwas)
 {
     if (*(int **)pointer != NULL)
     {   if (memout_switch)
-            printf("Freeing memory for %s at (%08lx)\n",
-                whatitwas, (long int) (*(int **)pointer));
+            printf("Freeing memory for %s at (%p)\n",
+                whatitwas, pointer);
 #ifdef PC_QUICKC
         hfree(*(int **)pointer);
 #else
