@@ -296,6 +296,11 @@ static void parse_print_z(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
+              if (token_text[0] == '^' && token_text[1] == '\0') {
+                  /* The string "^" is always a simple newline. */
+                  assemblez_0(new_line_zc);
+                  break;
+              }
               if (strlen(token_text) > 32)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
                   AO.marker = STRING_MV;
@@ -526,6 +531,12 @@ static void parse_print_g(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
+              if (token_text[0] == '^' && token_text[1] == '\0') {
+                  /* The string "^" is always a simple newline. */
+                  INITAOTV(&AO, BYTECONSTANT_OT, 0x0A);
+                  assembleg_1(streamchar_gc, AO);
+                  break;
+              }
               /* We can't compile a string into the instruction,
                  so this always goes into the string area. */
               {   INITAOT(&AO, CONSTANT_OT);
@@ -555,7 +566,6 @@ static void parse_print_g(int finally_return)
                   get_next_token();
                   if ((token_type == SEP_TT) && (token_value == CLOSEB_SEP))
                   {   assembly_operand AO1;
-                      int ln, ln2;
 
                       put_token_back(); put_token_back();
                       local_variables.enabled = FALSE;
@@ -582,19 +592,15 @@ static void parse_print_g(int finally_return)
                                   AO1 = code_generate(
                                       parse_expression(QUANTITY_CONTEXT),
                                       QUANTITY_CONTEXT, -1);
-                                  if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0))
-                                  {   assembleg_2(stkpeek_gc, zero_operand, 
-                                      stack_pointer);
+                                  if (is_constant_ot(AO1.type) && AO1.marker == 0) {
+                                      if (AO1.value >= 0 && AO1.value < 0x100)
+                                          assembleg_1(streamchar_gc, AO1);
+                                      else
+                                          assembleg_1(streamunichar_gc, AO1);
                                   }
-                                  INITAOTV(&AO2, HALFCONSTANT_OT, 0x100);
-                                  assembleg_2_branch(jgeu_gc, AO1, AO2, 
-                                      ln = next_label++);
-                                  ln2 = next_label++;
-                                  assembleg_1(streamchar_gc, AO1);
-                                  assembleg_jump(ln2);
-                                  assemble_label_no(ln);
-                                  assembleg_1(streamunichar_gc, AO1);
-                                  assemble_label_no(ln2);
+                                  else {
+                                      assembleg_1(streamunichar_gc, AO1);
+                                  }
                                   goto PrintTermDone;
                               case ADDRESS_MK:
                                   if (runtime_error_checking_switch)
