@@ -569,7 +569,7 @@ extern void issue_debug_symbol_warnings(void)
 
 /* ------------------------------------------------------------------------- */
 /*   These are arrays used only during story file creation, and not          */
-/*   allocated until then.                                                   */
+/*   allocated until just before write_the_identifier_names() time.          */
 
        int32 *individual_name_strings; /* Packed addresses of Z-encoded
                                           strings of the names of the
