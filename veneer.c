@@ -1019,6 +1019,10 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
              print (name) cla, \"::\";\
              @ushiftr prop 16 prop;\
            }\
+           #IFDEF OMIT_SYMBOL_TABLE;\
+           ptab = maxcom = minind = maxind = str = 0;\
+           print \"<number \", prop, \">\";\
+           #IFNOT;\
            ptab = #identifiers_table;\
            maxcom = ptab-->1;\
            minind = INDIV_PROP_START;\
@@ -1034,6 +1038,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
              print (string) str;\
            else\
              print \"<number \", prop, \">\";\
+           #ENDIF;\
          ]", "", "", "", "", ""
     },
 
