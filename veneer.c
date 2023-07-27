@@ -200,11 +200,16 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
                  prop = (i-->0) & $7fff;\
              }\
          }",
-        "p = #identifiers_table;\
+        "#IFDEF OMIT_SYMBOL_TABLE;\
+         p = size = 0;\
+         print \"<number \", prop, \">\";\
+         #IFNOT;\
+         p = #identifiers_table;\
          size = p-->0;\
          if (prop<=0 || prop>=size || p-->prop==0)\
              print \"<number \", prop, \">\";\
          else print (string) p-->prop;\
+         #ENDIF;\
          ]", "", "", "", ""
     },
 
