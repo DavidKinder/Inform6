@@ -142,6 +142,7 @@ static char *version_name(int v)
         case 4: return "Plus";
         case 5: return "Advanced";
         case 6: return "Graphical";
+        case 7: return "Extended Alternate";
         case 8: return "Extended";
     }
     return "experimental format";
