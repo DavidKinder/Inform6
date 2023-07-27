@@ -628,10 +628,12 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          \", but it is longer than 2 bytes so you cannot use ~.~\";\
          else\
          {   print \" has no property \", (property) id;\
+             #IFNDEF OMIT_SYMBOL_TABLE;\
              p = #identifiers_table;\
              size = p-->0;\
              if (id<0 || id>=size)\
                  print \" (and nor has any other object)\";\
+             #ENDIF;\
          }\
          print \" to \", (string) crime, \" **]^\";\
          ]", ""
