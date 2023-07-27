@@ -1268,62 +1268,70 @@ static void construct_storyfile_g(void)
        number of actions
     */
 
-    identifier_names_offset = mark;
-    mark += 32; /* eight pairs of values, to be filled in. */
-
-    WriteInt32(p+identifier_names_offset+0, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+4, no_properties);
-    for (i=0; i<no_properties; i++) {
-      j = individual_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
+    if (!OMIT_SYMBOL_TABLE) {
+      identifier_names_offset = mark;
+      mark += 32; /* eight pairs of values, to be filled in. */
+  
+      WriteInt32(p+identifier_names_offset+0, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+4, no_properties);
+      for (i=0; i<no_properties; i++) {
+        j = individual_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+8, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+12, 
+        no_individual_properties-INDIV_PROP_START);
+      for (i=INDIV_PROP_START; i<no_individual_properties; i++) {
+        j = individual_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+16, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+20, NUM_ATTR_BYTES*8);
+      for (i=0; i<NUM_ATTR_BYTES*8; i++) {
+        j = attribute_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+24, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+28, no_actions + no_fake_actions);
+      action_names_offset = mark;
+      fake_action_names_offset = mark + 4*no_actions;
+      for (i=0; i<no_actions + no_fake_actions; i++) {
+        j = action_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      array_names_offset = mark;
+      WriteInt32(p+mark, no_arrays);
       mark += 4;
+      for (i=0; i<no_arrays; i++) {
+        j = array_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
     }
-
-    WriteInt32(p+identifier_names_offset+8, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+12, 
-      no_individual_properties-INDIV_PROP_START);
-    for (i=INDIV_PROP_START; i<no_individual_properties; i++) {
-      j = individual_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
+    else {
+      identifier_names_offset = mark;
+      action_names_offset = mark;
+      fake_action_names_offset = mark;
+      array_names_offset = mark;
     }
-
-    WriteInt32(p+identifier_names_offset+16, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+20, NUM_ATTR_BYTES*8);
-    for (i=0; i<NUM_ATTR_BYTES*8; i++) {
-      j = attribute_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }
-
-    WriteInt32(p+identifier_names_offset+24, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+28, no_actions + no_fake_actions);
-    action_names_offset = mark;
-    fake_action_names_offset = mark + 4*no_actions;
-    for (i=0; i<no_actions + no_fake_actions; i++) {
-      j = action_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }
-
-    array_names_offset = mark;
-    WriteInt32(p+mark, no_arrays);
-    mark += 4;
-    for (i=0; i<no_arrays; i++) {
-      j = array_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }    
 
     individuals_offset = mark;
 
