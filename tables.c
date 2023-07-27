@@ -266,21 +266,23 @@ static void construct_storyfile_z(void)
 
     ASSERT_ZCODE();
 
-    individual_name_strings =
-        my_calloc(sizeof(int32), no_individual_properties,
-            "identifier name strings");
-    action_name_strings =
-        my_calloc(sizeof(int32), no_actions + no_fake_actions,
-            "action name strings");
-    attribute_name_strings =
-        my_calloc(sizeof(int32), 48,
-            "attribute name strings");
-    array_name_strings =
-        my_calloc(sizeof(int32),
-            no_symbols,
-            "array name strings");
+    if (!OMIT_SYMBOL_TABLE) {
+        individual_name_strings =
+            my_calloc(sizeof(int32), no_individual_properties,
+                      "identifier name strings");
+        action_name_strings =
+            my_calloc(sizeof(int32), no_actions + no_fake_actions,
+                      "action name strings");
+        attribute_name_strings =
+            my_calloc(sizeof(int32), 48,
+                      "attribute name strings");
+        array_name_strings =
+            my_calloc(sizeof(int32),
+                      no_symbols,
+                      "array name strings");
 
-    write_the_identifier_names();
+        write_the_identifier_names();
+    }
 
     /*  We now know how large the buffer to hold our construction has to be  */
 
@@ -443,7 +445,7 @@ static void construct_storyfile_z(void)
 
     identifier_names_offset = mark;
 
-    if (TRUE)
+    if (!OMIT_SYMBOL_TABLE)
     {   p[mark++] = no_individual_properties/256;
         p[mark++] = no_individual_properties%256;
         for (i=1; i<no_individual_properties; i++)
@@ -477,6 +479,17 @@ static void construct_storyfile_z(void)
 
         id_names_length = (mark - identifier_names_offset)/2;
     }
+    else {
+        attribute_names_offset = mark;
+        action_names_offset = mark;
+        fake_action_names_offset = mark;
+        array_names_offset = mark;
+        global_names_offset = mark;
+        routine_names_offset = mark;
+        constant_names_offset = mark;
+        id_names_length = 0;
+    }
+    
     routine_flags_array_offset = mark;
 
     if (define_INFIX_switch)
@@ -853,12 +866,15 @@ or less.");
 
     if (!skip_backpatching)
     {   backpatch_zmachine_image_z();
-        for (i=1; i<id_names_length; i++)
-        {   int32 v = 256*p[identifier_names_offset + i*2]
-                      + p[identifier_names_offset + i*2 + 1];
-            if (v!=0) v += strings_offset/scale_factor;
-            p[identifier_names_offset + i*2] = v/256;
-            p[identifier_names_offset + i*2 + 1] = v%256;
+
+        if (!OMIT_SYMBOL_TABLE) {
+            for (i=1; i<id_names_length; i++)
+            {   int32 v = 256*p[identifier_names_offset + i*2]
+                    + p[identifier_names_offset + i*2 + 1];
+                if (v!=0) v += strings_offset/scale_factor;
+                p[identifier_names_offset + i*2] = v/256;
+                p[identifier_names_offset + i*2 + 1] = v%256;
+            }
         }
 
         mark = actions_at;
