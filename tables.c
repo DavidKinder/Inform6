@@ -259,6 +259,7 @@ static void construct_storyfile_z(void)
           grammar_table_at=0, charset_at=0, headerext_at=0,
           terminating_chars_at=0, unicode_at=0, id_names_length=0,
           static_arrays_at=0;
+    int32 rough_size;
     int skip_backpatching = FALSE;
     char *output_called = "story file";
 
@@ -282,8 +283,8 @@ static void construct_storyfile_z(void)
 
     /*  We now know how large the buffer to hold our construction has to be  */
 
-    zmachine_paged_memory = my_malloc(rough_size_of_paged_memory_z(),
-        "output buffer");
+    rough_size = rough_size_of_paged_memory_z();
+    zmachine_paged_memory = my_malloc(rough_size, "output buffer");
 
     /*  Foolish code to make this routine compile on all ANSI compilers      */
 
@@ -293,7 +294,8 @@ static void construct_storyfile_z(void)
         points its value will be recorded for milestones like
         "dictionary table start".  It begins at 0x40, just after the header  */
 
-    mark = 0x40;
+    for (mark=0; mark<0x40; mark++)
+        p[mark] = 0x0;
 
     /*  ----------------- Low Strings and Abbreviations -------------------- */
 
@@ -652,8 +654,11 @@ or less.");
     }
 
     /*  -------------------------- Code Area ------------------------------- */
-    /*  (From this point on we don't write any more into the "p" buffer.)    */
+    /*  (From this point on we don't write any higher into the "p" buffer.)  */
     /*  -------------------------------------------------------------------- */
+
+    if (mark > rough_size)
+        compiler_error("Paged size exceeds rough estimate.");
 
     Write_Code_At = mark;
     if (!OMIT_UNUSED_ROUTINES) {
@@ -1041,6 +1046,7 @@ static void construct_storyfile_g(void)
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
           grammar_table_at, arrays_at, static_arrays_at;
     int32 threespaces, code_length;
+    int32 rough_size;
 
     ASSERT_GLULX();
 
@@ -1065,8 +1071,8 @@ static void construct_storyfile_g(void)
 
     /*  We now know how large the buffer to hold our construction has to be  */
 
-    zmachine_paged_memory = my_malloc(rough_size_of_paged_memory_g(),
-        "output buffer");
+    rough_size = rough_size_of_paged_memory_g();
+    zmachine_paged_memory = my_malloc(rough_size, "output buffer");
 
     /*  Foolish code to make this routine compile on all ANSI compilers      */
 
@@ -1389,6 +1395,9 @@ table format requested (producing number 2 format instead)");
 
     RAM_Size = mark;
 
+    if (RAM_Size > rough_size)
+        compiler_error("RAM size exceeds rough estimate.");
+    
     Out_Size = Write_RAM_At + RAM_Size;
 
     /*  --------------------------- Offsets -------------------------------- */
