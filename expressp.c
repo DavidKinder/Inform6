@@ -777,10 +777,10 @@ static int32 value_of_system_constant_g(int t)
 
 extern int32 value_of_system_constant(int t)
 {
-    if (!glulx_mode)
-        return value_of_system_constant_z(t);
-    else
-        return value_of_system_constant_g(t);    
+  if (!glulx_mode)
+    return value_of_system_constant_z(t);
+  else
+    return value_of_system_constant_g(t);    
 }
 
 extern char *name_of_system_constant(int t)
