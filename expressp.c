@@ -593,7 +593,28 @@ int z_system_constant_list[] =
       -1 };
 
 static int32 value_of_system_constant_z(int t)
-{   switch(t)
+{
+    if (OMIT_SYMBOL_TABLE) {
+        /* Certain system constants refer to the symbol table, which
+           is meaningless if OMIT_SYMBOL_TABLE is set. */
+        switch(t)
+        {
+            case identifiers_table_SC:
+            case attribute_names_array_SC:
+            case property_names_array_SC:
+            case action_names_array_SC:
+            case fake_action_names_array_SC:
+            case array_names_offset_SC:
+            case global_names_array_SC:
+            case routine_names_array_SC:
+            case constant_names_array_SC:
+                error_named("OMIT_SYMBOL_TABLE omits system constant", system_constants.keywords[t]);
+            default:
+                break;
+        }
+    }
+    
+    switch(t)
     {   case adjectives_table_SC:
             return adjectives_offset;
         case actions_table_SC:
@@ -749,10 +770,10 @@ static int32 value_of_system_constant_g(int t)
 
 extern int32 value_of_system_constant(int t)
 {
-  if (!glulx_mode)
-    return value_of_system_constant_z(t);
-  else
-    return value_of_system_constant_g(t);    
+    if (!glulx_mode)
+        return value_of_system_constant_z(t);
+    else
+        return value_of_system_constant_g(t);    
 }
 
 extern char *name_of_system_constant(int t)
