@@ -1505,10 +1505,12 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
          if (id<0) print \"is not of class \", (name) -id;",
         "else\
          {   print \" has no property \", (property) id;\
+             #IFNDEF OMIT_SYMBOL_TABLE;\
              p = #identifiers_table;\
              size = INDIV_PROP_START + p-->3;\
              if (id<0 || id>=size)\
                  print \" (and nor has any other object)\";\
+             #ENDIF;\
          }\
          print \" to \", (string) crime, \" **]^\";\
          ]", ""
