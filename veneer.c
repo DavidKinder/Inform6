@@ -1467,8 +1467,13 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
          \" in the\"; switch(size&7){0,1:q=0; 2:print \" string\";\
          q=1; 3:print \" table\";q=1; 4:print \" buffer\";q=WORDSIZE;} \
          if(size&16) print\" (->)\"; if(size&8) print\" (-->)\";\
+         #IFDEF OMIT_SYMBOL_TABLE;\
+         \" array which has entries \", q, \" up to \",id,\" **]\";\
+         #IFNOT;\
          \" array ~\", (string) #array_names_offset-->(p+1),\
-         \"~, which has entries \", q, \" up to \",id,\" **]\"; }\
+         \"~, which has entries \", q, \" up to \",id,\" **]\";\
+         #ENDIF;\
+         }\
          if (crime >= 24 && crime <=27) { if (crime<=25) print \"read\";\
          else print \"write\"; print \" outside memory using \";\
          switch(crime) { 24,26:\"-> **]\"; 25,27:\"--> **]\"; } }\
