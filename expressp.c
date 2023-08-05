@@ -54,6 +54,8 @@ static int comma_allowed, arrow_allowed, superclass_allowed,
 
 int system_function_usage[NUMBER_SYSTEM_FUNCTIONS];
 
+static void check_system_constant_available(int);
+
 static int get_next_etoken(void)
 {   int v, symbol = 0, mark_symbol_as_used = FALSE,
         initial_bracket_level = bracket_level;
@@ -380,7 +382,9 @@ but not used as a value:", unicode);
                         break;
                     }
                     else
-                    {   current_token.type   = token_type;
+                    {
+                        check_system_constant_available(token_value);
+                        current_token.type   = token_type;
                         current_token.value  = token_value;
                         current_token.text   = token_text;
                         current_token.marker = INCON_MV;
@@ -592,8 +596,32 @@ int z_system_constant_list[] =
       grammar_table_SC,
       -1 };
 
+static void check_system_constant_available(int t)
+{
+    if (OMIT_SYMBOL_TABLE) {
+        /* Certain system constants refer to the symbol table, which
+           is meaningless if OMIT_SYMBOL_TABLE is set. */
+        switch(t)
+        {
+            case identifiers_table_SC:
+            case attribute_names_array_SC:
+            case property_names_array_SC:
+            case action_names_array_SC:
+            case fake_action_names_array_SC:
+            case array_names_offset_SC:
+            case global_names_array_SC:
+            case routine_names_array_SC:
+            case constant_names_array_SC:
+                error_named("OMIT_SYMBOL_TABLE omits system constant", system_constants.keywords[t]);
+            default:
+                break;
+        }
+    }
+}
+
 static int32 value_of_system_constant_z(int t)
-{   switch(t)
+{
+    switch(t)
     {   case adjectives_table_SC:
             return adjectives_offset;
         case actions_table_SC:

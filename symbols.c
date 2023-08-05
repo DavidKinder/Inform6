@@ -569,7 +569,7 @@ extern void issue_debug_symbol_warnings(void)
 
 /* ------------------------------------------------------------------------- */
 /*   These are arrays used only during story file creation, and not          */
-/*   allocated until then.                                                   */
+/*   allocated until just before write_the_identifier_names() time.          */
 
        int32 *individual_name_strings; /* Packed addresses of Z-encoded
                                           strings of the names of the
@@ -863,6 +863,9 @@ static void stockup_symbols(void)
     {   create_rsymbol("INFIX",      0, CONSTANT_T);
         create_symbol("infix__watching", 0, ATTRIBUTE_T);
     }
+
+    if (OMIT_SYMBOL_TABLE)
+        create_symbol("OMIT_SYMBOL_TABLE", 0, CONSTANT_T);
 
     create_symbol("WORDSIZE",        WORDSIZE, CONSTANT_T);
     /* DICT_ENTRY_BYTES must be REDEFINABLE_SFLAG because the Version directive can change it. */

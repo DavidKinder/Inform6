@@ -200,11 +200,16 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
                  prop = (i-->0) & $7fff;\
              }\
          }",
-        "p = #identifiers_table;\
+        "#IFDEF OMIT_SYMBOL_TABLE;\
+         p = size = 0;\
+         print \"<number \", prop, \">\";\
+         #IFNOT;\
+         p = #identifiers_table;\
          size = p-->0;\
          if (prop<=0 || prop>=size || p-->prop==0)\
              print \"<number \", prop, \">\";\
          else print (string) p-->prop;\
+         #ENDIF;\
          ]", "", "", "", ""
     },
 
@@ -588,8 +593,13 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          \" in the\"; switch(size&7){0,1:q=0; 2:print \" string\";\
          q=1; 3:print \" table\";q=1; 4:print \" buffer\";q=WORDSIZE;} \
          if(size&16) print\" (->)\"; if(size&8) print\" (-->)\";\
+         #IFDEF OMIT_SYMBOL_TABLE;\
+         \" array which has entries \", q, \" up to \",id,\" **]\";\
+         #IFNOT;\
          \" array ~\", (string) #array_names_offset-->p,\
-         \"~, which has entries \", q, \" up to \",id,\" **]\"; }\
+         \"~, which has entries \", q, \" up to \",id,\" **]\";\
+         #ENDIF;\
+         }\
          if (crime >= 24 && crime <=27) { if (crime<=25) print \"read\";\
          else print \"write\"; print \" outside memory using \";\
          switch(crime) { 24,26:\"-> **]\"; 25,27:\"--> **]\"; } }\
@@ -623,10 +633,12 @@ static VeneerRoutine VRs_z[VENEER_ROUTINES] =
          \", but it is longer than 2 bytes so you cannot use ~.~\";\
          else\
          {   print \" has no property \", (property) id;\
+             #IFNDEF OMIT_SYMBOL_TABLE;\
              p = #identifiers_table;\
              size = p-->0;\
              if (id<0 || id>=size)\
                  print \" (and nor has any other object)\";\
+             #ENDIF;\
          }\
          print \" to \", (string) crime, \" **]^\";\
          ]", ""
@@ -1007,6 +1019,10 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
              print (name) cla, \"::\";\
              @ushiftr prop 16 prop;\
            }\
+           #IFDEF OMIT_SYMBOL_TABLE;\
+           ptab = maxcom = minind = maxind = str = 0;\
+           print \"<number \", prop, \">\";\
+           #IFNOT;\
            ptab = #identifiers_table;\
            maxcom = ptab-->1;\
            minind = INDIV_PROP_START;\
@@ -1022,6 +1038,7 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
              print (string) str;\
            else\
              print \"<number \", prop, \">\";\
+           #ENDIF;\
          ]", "", "", "", "", ""
     },
 
@@ -1450,8 +1467,13 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
          \" in the\"; switch(size&7){0,1:q=0; 2:print \" string\";\
          q=1; 3:print \" table\";q=1; 4:print \" buffer\";q=WORDSIZE;} \
          if(size&16) print\" (->)\"; if(size&8) print\" (-->)\";\
+         #IFDEF OMIT_SYMBOL_TABLE;\
+         \" array which has entries \", q, \" up to \",id,\" **]\";\
+         #IFNOT;\
          \" array ~\", (string) #array_names_offset-->(p+1),\
-         \"~, which has entries \", q, \" up to \",id,\" **]\"; }\
+         \"~, which has entries \", q, \" up to \",id,\" **]\";\
+         #ENDIF;\
+         }\
          if (crime >= 24 && crime <=27) { if (crime<=25) print \"read\";\
          else print \"write\"; print \" outside memory using \";\
          switch(crime) { 24,26:\"-> **]\"; 25,27:\"--> **]\"; } }\
@@ -1483,10 +1505,12 @@ static VeneerRoutine VRs_g[VENEER_ROUTINES] =
          if (id<0) print \"is not of class \", (name) -id;",
         "else\
          {   print \" has no property \", (property) id;\
+             #IFNDEF OMIT_SYMBOL_TABLE;\
              p = #identifiers_table;\
              size = INDIV_PROP_START + p-->3;\
              if (id<0 || id>=size)\
                  print \" (and nor has any other object)\";\
+             #ENDIF;\
          }\
          print \" to \", (string) crime, \" **]^\";\
          ]", ""
