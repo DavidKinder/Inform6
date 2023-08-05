@@ -279,7 +279,7 @@ extern void make_global()
     int name_length;
     assembly_operand AO;
 
-    int32 globalnum;
+    uint32 globalnum;
     int32 global_symbol;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
@@ -400,7 +400,7 @@ extern void make_global()
                 4*globalnum);
     }
     
-    if (globalnum < 0 || globalnum >= global_initial_value_memlist.count)
+    if (globalnum >= global_initial_value_memlist.count)
         compiler_error("Globalnum out of range");
     global_initial_value[globalnum] = AO.value;
     
