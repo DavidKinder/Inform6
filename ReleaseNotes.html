@@ -68,6 +68,24 @@ action names.
 <li><p>Inform identifiers can now be any length, and the entire identifier is significant. Dictionary words can also
 be any length. The DICT_WORD_SIZE limit still applies, but now dictionary words are silently trimmed to DICT_WORD_SIZE.
 For Glulx, DICT_WORD_SIZE can now be increased without limit.
+<li><p>A new setting exists to omit the symbol names table, <tt>$OMIT_SYMBOL_TABLE</tt>. The symbol names table
+contains the names of all properties, attributes, fake actions, and arrays as strings, and is generally only used by
+debug library code and debug veneer error messages. When <tt>$OMIT_SYMBOL_TABLE=1</tt> is set:
+ <ul>
+ <li>The symbol names table is omitted from the game file, for both Glulx and Z-code.
+ <li>The <tt>print (property) p</tt> statement will print <tt>&lt;number 72&gt;</tt> (etc.) instead of the property name.
+ <li>The runtime error for a non-existent property <tt>(obj has no property prop to read)</tt> will similarly print
+ a number instead of the property name.
+ <li>The runtime error for array overflow <tt>(tried to read from -->5 in the array "arr"...)</tt> will omit the
+ array name.
+ <li>The following system constants are not available, and trying to use one is a compile-time error:
+ <tt>#identifiers_table</tt>, <tt>#attribute_names_array</tt>, <tt>#property_names_array</tt>, <tt>#action_names_array</tt>,
+ <tt>#fake_action_names_array</tt>, <tt>#array_names_offset</tt>, <tt>#global_names_array</tt>, <tt>#routine_names_array</tt>,
+ <tt>#constant_names_array</tt>.
+ </ul><br>
+Note that the Inform 6 library uses <tt>#identifiers_table</tt> for some debugging verbs, and the Infix library
+extension uses all the affected constants. To update such code, the relevant logic that uses these symbol names and
+constants would be put in a <tt>#Ifndef OMIT_SYMBOL_TABLE;</tt> block.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>The statement <tt>print "^";</tt> now compiles to a single opcode (<tt>@new_line</tt> for Z-code, or
