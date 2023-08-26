@@ -661,7 +661,6 @@ static void output_file_g(void)
         final_glulx_version = requested_glulx_version;
       }
     }
-    printf("### final glulx version = %x\n", final_glulx_version);
 
     /*  (1)  Output the header. We use sf_put here, instead of fputc,
         because the header is included in the checksum. */
