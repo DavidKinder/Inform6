@@ -1232,7 +1232,10 @@ extern void close_transcript_file(void)
         snprintf(botline_buffer, 256, "[Z-machine version %d]", version_number);
     }
     else {
-        snprintf(botline_buffer, 256, "[Glulx version %x]", final_glulx_version);
+        int32 major = (final_glulx_version >> 16) & 0xFFFF;
+        int32 minor = (final_glulx_version >> 8) & 0xFF;
+        int32 patch = final_glulx_version & 0xFF;
+        snprintf(botline_buffer, 256, "[Glulx version %d.%d.%d]", major, minor, patch);
     }
     write_to_transcript_file(botline_buffer, STRCTX_INFO);
     
