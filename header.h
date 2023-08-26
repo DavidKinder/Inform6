@@ -2475,7 +2475,7 @@ extern int
 extern int oddeven_packing_switch;
 
 extern int glulx_mode, compression_switch;
-extern int32 requested_glulx_version;
+extern int32 requested_glulx_version, final_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
     expr_trace_setting,     tokens_trace_setting,

@@ -606,7 +606,6 @@ static void output_file_z(void)
 static void output_file_g(void)
 {   char new_name[PATHLEN];
     int32 size, i, j, offset;
-    int32 VersionNum;
     uint32 code_length, size_before_code, next_cons_check;
     int use_function;
     int first_byte_of_triple, second_byte_of_triple, third_byte_of_triple;
@@ -633,35 +632,36 @@ static void output_file_g(void)
 
     /* Determine the version number. */
 
-    VersionNum = 0x00020000;
+    final_glulx_version = 0x00020000;
 
     /* Increase for various features the game may have used. */
     if (no_unicode_chars != 0 || (uses_unicode_features)) {
-      VersionNum = 0x00030000;
+      final_glulx_version = 0x00030000;
     }
     if (uses_memheap_features) {
-      VersionNum = 0x00030100;
+      final_glulx_version = 0x00030100;
     }
     if (uses_acceleration_features) {
-      VersionNum = 0x00030101;
+      final_glulx_version = 0x00030101;
     }
     if (uses_float_features) {
-      VersionNum = 0x00030102;
+      final_glulx_version = 0x00030102;
     }
     if (uses_double_features || uses_extundo_features) {
-      VersionNum = 0x00030103;
+      final_glulx_version = 0x00030103;
     }
 
     /* And check if the user has requested a specific version. */
     if (requested_glulx_version) {
-      if (requested_glulx_version < VersionNum) {
+      if (requested_glulx_version < final_glulx_version) {
         warning_fmt("Version 0x%08lx requested, but game features require version 0x%08lx",
-                    (long)requested_glulx_version, (long)VersionNum);
+                    (long)requested_glulx_version, (long)final_glulx_version);
       }
       else {
-        VersionNum = requested_glulx_version;
+        final_glulx_version = requested_glulx_version;
       }
     }
+    printf("### final glulx version = %x\n", final_glulx_version);
 
     /*  (1)  Output the header. We use sf_put here, instead of fputc,
         because the header is included in the checksum. */
@@ -672,10 +672,10 @@ static void output_file_g(void)
     sf_put('u');
     sf_put('l');
     /* Version number. */
-    sf_put((VersionNum >> 24));
-    sf_put((VersionNum >> 16));
-    sf_put((VersionNum >> 8));
-    sf_put((VersionNum));
+    sf_put((final_glulx_version >> 24));
+    sf_put((final_glulx_version >> 16));
+    sf_put((final_glulx_version >> 8));
+    sf_put((final_glulx_version));
     /* RAMSTART */
     sf_put((Write_RAM_At >> 24));
     sf_put((Write_RAM_At >> 16));
@@ -1227,10 +1227,19 @@ extern void close_transcript_file(void)
 {   char botline_buffer[256];
     char sn_buffer[7];
 
+    write_to_transcript_file("",  STRCTX_INFO);
+
+    if (!glulx_mode) {
+        snprintf(botline_buffer, 256, "[Z-machine version %d]", version_number);
+    }
+    else {
+        snprintf(botline_buffer, 256, "[Glulx version %x]", final_glulx_version);
+    }
+    write_to_transcript_file(botline_buffer, STRCTX_INFO);
+    
     write_serial_number(sn_buffer);
     snprintf(botline_buffer, 256, "[End of transcript: release %d, serial %s]",
         release_number, sn_buffer);
-    write_to_transcript_file("",  STRCTX_INFO);
     write_to_transcript_file(botline_buffer, STRCTX_INFO);
     write_to_transcript_file("",  STRCTX_INFO);
 
