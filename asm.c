@@ -2204,7 +2204,7 @@ static void transfer_routine_z(void)
                 addr = labels[j].offset - offset_of_next + 2;
             }
             if (addr<-0x2000 || addr>0x1fff) 
-                error("Branch out of range: routine is too large");
+                error_fmt("Branch out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr+=(int32) 0x10000L;
 
             addr=addr&0x3fff;
@@ -2235,7 +2235,7 @@ static void transfer_routine_z(void)
                 addr = labels[j].offset - new_pc;
             }
             if (addr<-0x8000 || addr>0x7fff) 
-                error("Jump out of range: routine is too large");
+                error_fmt("Jump out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr += (int32) 0x10000L;
             zcode_holding_area[i] = addr/256;
             zcode_holding_area[i+1] = addr%256;
