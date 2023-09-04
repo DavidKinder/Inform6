@@ -301,7 +301,7 @@ static void parse_print_z(int finally_return)
                   assemblez_0(new_line_zc);
                   break;
               }
-              if (strlen(token_text) > 32)
+              if (strlen(token_text) > ZCODE_MAX_INLINE_STRING)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
                   AO.marker = STRING_MV;
                   AO.value  = compile_string(token_text, STRCTX_GAME);
