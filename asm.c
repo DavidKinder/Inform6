@@ -3136,6 +3136,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     }
     else if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
     {
+        int32 start_pc = zcode_ha_size;
         if (asm_trace_level > 0) {
             printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
                    ((long int) zmachine_pc), "   ", "<bytes>");
@@ -3156,6 +3157,16 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         }
         if (asm_trace_level > 0) {
             printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
         }
         return;
     }
