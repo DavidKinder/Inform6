@@ -3136,6 +3136,10 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     }
     else if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
     {
+        if (asm_trace_level > 0) {
+            printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                   ((long int) zmachine_pc), "   ", "<bytes>");
+        }
         while (1) {
             assembly_operand AO;
             get_next_token();
@@ -3146,7 +3150,12 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             if (AO.marker != 0)
                 error("Entries in code byte arrays must be known constants");
             byteout((AO.value & 0xFF), 0);
-            printf("### val -> $%x\n", (AO.value & 0xFF));
+            if (asm_trace_level > 0) {
+                printf(" %02x", (AO.value & 0xFF));
+            }
+        }
+        if (asm_trace_level > 0) {
+            printf("\n");
         }
         return;
     }
