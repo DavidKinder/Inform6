@@ -618,6 +618,7 @@ extern void make_array()
                 put_token_back();
 
                 AO = parse_expression(ARRAY_CONTEXT);
+                /* TODO: detect expr error, exit loop */
 
                 if (i == 0)
                 {   get_next_token();
@@ -710,6 +711,7 @@ advance as part of 'Zcharacter table':", unicode);
                 }
                 put_token_back();
                 array_entry(i, is_static, parse_expression(ARRAY_CONTEXT));
+                /* TODO: detect expr error, exit loop */
                 i++;
             }
     }

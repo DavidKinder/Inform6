@@ -3142,6 +3142,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
             put_token_back();
             AO = parse_expression(ARRAY_CONTEXT);
+            /* TODO: detect expr error, exit loop */
             if (AO.marker != 0)
                 error("Entries in code byte arrays must be known constants");
             byteout((AO.value & 0xFF), 0);
