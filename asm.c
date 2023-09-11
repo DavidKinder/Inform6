@@ -3137,10 +3137,15 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     else if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
     {
         while (1) {
+            assembly_operand AO;
             get_next_token();
             if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            if (AO.marker != 0)
+                error("Entries in code byte arrays must be known constants");
+            printf("### val -> $%x\n", (AO.value & 0xFF));
         }
-        printf("### got @-->\n"); //###
         return;
     }
     else
