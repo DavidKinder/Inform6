@@ -3134,6 +3134,15 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         }
         O = custom_opcode_z;
     }
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
+    {
+        while (1) {
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+        }
+        printf("### got @-->\n"); //###
+        return;
+    }
     else
     {   if (token_type != OPCODE_NAME_TT)
         {   ebf_curtoken_error("an opcode name");
