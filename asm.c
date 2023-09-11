@@ -3144,6 +3144,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             AO = parse_expression(ARRAY_CONTEXT);
             if (AO.marker != 0)
                 error("Entries in code byte arrays must be known constants");
+            byteout((AO.value & 0xFF), 0);
             printf("### val -> $%x\n", (AO.value & 0xFF));
         }
         return;
