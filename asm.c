@@ -1238,7 +1238,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
                  j++, start_pc++)
             {   if (j%16==0) printf("\n                               ");
                 if (zcode_markers[start_pc] & 0x7f)
-                    printf("[%s]", describe_mv_short(zcode_markers[start_pc] & 0x7f));
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
                 printf("%02x ", zcode_holding_area[start_pc]);
             }
         }
@@ -1636,9 +1636,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
                 printf("%02x ", zcode_holding_area[start_pc]);
             }
             else {
-                printf("%02x", zcode_holding_area[start_pc]);
                 if (zcode_markers[start_pc])
-                    printf("{%02x}", zcode_markers[start_pc]);
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x", zcode_holding_area[start_pc]);
                 printf(" ");
             }
         }
@@ -3187,7 +3187,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
                  j++, start_pc++)
             {   if (j%16==0) printf("                               ");
                 if (zcode_markers[start_pc] & 0x7f)
-                    printf("[%s]", describe_mv_short(zcode_markers[start_pc] & 0x7f));
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
                 printf("%02x ", zcode_holding_area[start_pc]);
             }
             if (j) printf("\n");
