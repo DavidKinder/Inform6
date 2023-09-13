@@ -2255,6 +2255,7 @@ extern int32 zcode_backpatch_size, staticarray_backpatch_size,
 extern int   backpatch_marker, backpatch_error_flag;
 
 extern char *describe_mv(int mval);
+extern char *describe_mv_short(int mval);
 
 extern int32 backpatch_value(int32 value);
 extern void  backpatch_zmachine_image_z(void);
