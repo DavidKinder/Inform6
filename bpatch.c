@@ -34,6 +34,7 @@ extern char *describe_mv(int mval)
         case IROUTINE_MV:   return("routine");
         case VROUTINE_MV:   return("veneer routine");
         case ARRAY_MV:      return("internal array");
+        case STATIC_ARRAY_MV:  return("internal static array");
         case NO_OBJS_MV:    return("the number of objects");
         case INHERIT_MV:    return("inherited common p value");
         case INDIVPT_MV:    return("indiv prop table address");
@@ -65,6 +66,7 @@ extern char *describe_mv_short(int mval)
         case IROUTINE_MV:   return("rtn");
         case VROUTINE_MV:   return("vrtn");
         case ARRAY_MV:      return("arr");
+        case STATIC_ARRAY_MV:  return("stat-arr");
         case NO_OBJS_MV:    return("obj-count");
         case INHERIT_MV:    return("inh-com");
         case INDIVPT_MV:    return("indiv-ptab");
@@ -80,7 +82,12 @@ extern char *describe_mv_short(int mval)
         case ACTION_MV:     return("action");
         case OBJECT_MV:     return("obj");
 
+        case LABEL_MV:      return("lbl");
+        case DELETED_MV:    return("del");
+
     }
+    if (mval >= BRANCH_MV && mval < BRANCHMAX_MV) return "br";
+    
     return("???");
 }
 
