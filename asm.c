@@ -3170,7 +3170,8 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
                 byteout((AO.value & 0xFF), 0);
                 bytecount += 2;
                 if (asm_trace_level > 0) {
-                    printf(" %04x", (AO.value & 0xFFFF));
+                    printf(" ");
+                    print_operand(&AO, TRUE);
                 }
             }
         }
