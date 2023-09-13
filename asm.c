@@ -3150,6 +3150,9 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             put_token_back();
             AO = parse_expression(ARRAY_CONTEXT);
             /* TODO: detect expr error, exit loop */
+            if (execution_never_reaches_here) {
+                continue;
+            }
             if (!isword) {
                 if (AO.marker != 0)
                     error("Entries in code byte arrays must be known constants");
