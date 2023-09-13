@@ -3150,13 +3150,23 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             put_token_back();
             AO = parse_expression(ARRAY_CONTEXT);
             /* TODO: detect expr error, exit loop */
-            if (AO.marker != 0)
-                error("Entries in code byte arrays must be known constants");
-            if (AO.value >= 256)
-                warning("Entry in code byte array not in range 0 to 255");
-            byteout((AO.value & 0xFF), 0);
-            if (asm_trace_level > 0) {
-                printf(" %02x", (AO.value & 0xFF));
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+                byteout((AO.value & 0xFF), 0);
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 8) & 0xFF), AO.marker);
+                byteout((AO.value & 0xFF), 0);
+                if (asm_trace_level > 0) {
+                    printf(" %02x", ((AO.value >> 8) & 0xFF));
+                    printf(" %02x", (AO.value & 0xFF));
+                }
             }
         }
         if (asm_trace_level > 0) {
