@@ -3476,6 +3476,68 @@ S (store), SS (two stores), R (execution never continues)");
 
         O = custom_opcode_g;
     }
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
+    {
+        int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
+        int isword = (token_value == DARROW_SEP);
+        while (1) {
+            assembly_operand AO;
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            /* TODO: detect expr error, exit loop */
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
+            if (execution_never_reaches_here) {
+                continue;
+            }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
+            if (!isword) {
+                byteout((AO.value & 0xFF), 0);
+                bytecount++;
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 24) & 0xFF), AO.marker);
+                byteout(((AO.value >> 16) & 0xFF), 0);
+                byteout(((AO.value >> 8) & 0xFF), 0);
+                byteout((AO.value & 0xFF), 0);
+                bytecount += 4;
+                if (asm_trace_level > 0) {
+                    printf(" ");
+                    print_operand(&AO, TRUE);
+                }
+            }
+        }
+        if (bytecount > 0 && asm_trace_level > 0) {
+            printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                if (zcode_markers[start_pc])
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
+        }
+        return;
+    }
     else {
         if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
             ebf_curtoken_error("an opcode name");
