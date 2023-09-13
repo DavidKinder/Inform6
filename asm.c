@@ -3137,12 +3137,8 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
     {
         int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
         int isword = (token_value == DARROW_SEP);
-        if (asm_trace_level > 0) {
-            printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
-                ((long int) zmachine_pc), "   ",
-                isword?"<words>":"<bytes>");
-        }
         while (1) {
             assembly_operand AO;
             get_next_token();
@@ -3153,12 +3149,18 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             if (execution_never_reaches_here) {
                 continue;
             }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
             if (!isword) {
                 if (AO.marker != 0)
                     error("Entries in code byte arrays must be known constants");
                 if (AO.value >= 256)
                     warning("Entry in code byte array not in range 0 to 255");
                 byteout((AO.value & 0xFF), 0);
+                bytecount++;
                 if (asm_trace_level > 0) {
                     printf(" %02x", (AO.value & 0xFF));
                 }
@@ -3166,12 +3168,13 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             else {
                 byteout(((AO.value >> 8) & 0xFF), AO.marker);
                 byteout((AO.value & 0xFF), 0);
+                bytecount += 2;
                 if (asm_trace_level > 0) {
                     printf(" %04x", (AO.value & 0xFFFF));
                 }
             }
         }
-        if (asm_trace_level > 0) {
+        if (bytecount > 0 && asm_trace_level > 0) {
             printf("\n");
         }
         if (asm_trace_level>=2)
