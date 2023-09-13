@@ -3148,6 +3148,12 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             put_token_back();
             AO = parse_expression(ARRAY_CONTEXT);
             /* TODO: detect expr error, exit loop */
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
             if (execution_never_reaches_here) {
                 continue;
             }
@@ -3157,10 +3163,6 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
                     isword?"<words>":"<bytes>");
             }
             if (!isword) {
-                if (AO.marker != 0)
-                    error("Entries in code byte arrays must be known constants");
-                if (AO.value >= 256)
-                    warning("Entry in code byte array not in range 0 to 255");
                 byteout((AO.value & 0xFF), 0);
                 bytecount++;
                 if (asm_trace_level > 0) {
