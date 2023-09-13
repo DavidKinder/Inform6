@@ -3397,151 +3397,151 @@ static assembly_operand parse_operand_g(void)
 
 static void parse_assembly_g(void)
 {
-  opcodeg O;
-  assembly_operand AO;
-  int error_flag = FALSE, is_macro = FALSE;
+    opcodeg O;
+    assembly_operand AO;
+    int error_flag = FALSE, is_macro = FALSE;
 
-  AI.operand_count = 0;
-  AI.text = NULL;
+    AI.operand_count = 0;
+    AI.text = NULL;
 
-  opcode_names.enabled = TRUE;
-  opcode_macros.enabled = TRUE;
-  get_next_token();
-  opcode_names.enabled = FALSE;
-  opcode_macros.enabled = FALSE;
-
-  if (token_type == DQ_TT) {
-    char *cx;
-    int badflags;
-
-    AI.internal_number = -1;
-
-    /* The format is @"FlagsCount:Code". Flags (which are optional)
-       can include "S" for store, "SS" for two stores, "B" for branch
-       format, "R" if execution never continues after the opcode. The
-       Count is the number of arguments (currently limited to 0-9),
-       and the Code is a decimal integer representing the opcode
-       number.
-
-       So: @"S3:123" for a three-argument opcode (load, load, store)
-       whose opcode number is (decimal) 123. Or: @"2:234" for a
-       two-argument opcode (load, load) whose number is 234. */
-
-    custom_opcode_g.name = (uchar *) token_text;
-    custom_opcode_g.flags = 0;
-    custom_opcode_g.op_rules = 0;
-    custom_opcode_g.no = 0;
-
-    badflags = FALSE;
-
-    for (cx = token_text; *cx && *cx != ':'; cx++) {
-      if (badflags)
-      continue;
-
-      switch (*cx) {
-      case 'S':
-      if (custom_opcode_g.flags & St)
-        custom_opcode_g.flags |= St2;
-      else
-        custom_opcode_g.flags |= St;
-      break;
-      case 'B':
-      custom_opcode_g.flags |= Br;
-      break;
-      case 'R':
-      custom_opcode_g.flags |= Rf;
-      break;
-      default:
-      if (isdigit(*cx)) {
-        custom_opcode_g.no = (*cx) - '0';
-        break;
-      }
-      badflags = TRUE;
-      error("Unknown custom opcode flag: options are B (branch), \
-S (store), SS (two stores), R (execution never continues)");
-      break;
-      }
-    }
-
-    if (*cx != ':') {
-      error("Custom opcode must have colon");
-    }
-    else {
-      cx++;
-      if (!(*cx))
-      error("Custom opcode must have colon followed by opcode number");
-      else
-      custom_opcode_g.code = atoi(cx);
-    }
-
-    O = custom_opcode_g;
-  }
-  else {
-    if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
-      ebf_curtoken_error("an opcode name");
-      panic_mode_error_recovery();
-      return;
-    }
-    AI.internal_number = token_value;
-    if (token_type == OPCODE_MACRO_TT) {
-      O = internal_number_to_opmacro_g(AI.internal_number);
-      is_macro = TRUE;
-    }
-    else
-      O = internal_number_to_opcode_g(AI.internal_number);
-  }
-  
-  return_sp_as_variable = TRUE;
-
-  while (1) {
+    opcode_names.enabled = TRUE;
+    opcode_macros.enabled = TRUE;
     get_next_token();
-    
-    if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
-      break;
+    opcode_names.enabled = FALSE;
+    opcode_macros.enabled = FALSE;
 
-    if (AI.operand_count == 8) {
-      error("No assembly instruction may have more than 8 operands");
-      panic_mode_error_recovery(); 
-      break;
-    }
+    if (token_type == DQ_TT) {
+        char *cx;
+        int badflags;
 
-    if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
-      if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
-        error_flag = TRUE;
-        error("Branch opcode must have '?' label");
-        put_token_back();
-      }
-      AO.type = CONSTANT_OT;
-      AO.value = parse_label();
-      AO.marker = BRANCH_MV;
+        AI.internal_number = -1;
+
+        /* The format is @"FlagsCount:Code". Flags (which are optional)
+           can include "S" for store, "SS" for two stores, "B" for branch
+           format, "R" if execution never continues after the opcode. The
+           Count is the number of arguments (currently limited to 0-9),
+           and the Code is a decimal integer representing the opcode
+           number.
+
+           So: @"S3:123" for a three-argument opcode (load, load, store)
+           whose opcode number is (decimal) 123. Or: @"2:234" for a
+           two-argument opcode (load, load) whose number is 234. */
+
+        custom_opcode_g.name = (uchar *) token_text;
+        custom_opcode_g.flags = 0;
+        custom_opcode_g.op_rules = 0;
+        custom_opcode_g.no = 0;
+
+        badflags = FALSE;
+
+        for (cx = token_text; *cx && *cx != ':'; cx++) {
+            if (badflags)
+                continue;
+
+            switch (*cx) {
+            case 'S':
+                if (custom_opcode_g.flags & St)
+                    custom_opcode_g.flags |= St2;
+                else
+                    custom_opcode_g.flags |= St;
+                break;
+            case 'B':
+                custom_opcode_g.flags |= Br;
+                break;
+            case 'R':
+                custom_opcode_g.flags |= Rf;
+                break;
+            default:
+                if (isdigit(*cx)) {
+                    custom_opcode_g.no = (*cx) - '0';
+                    break;
+                }
+                badflags = TRUE;
+                error("Unknown custom opcode flag: options are B (branch), \
+S (store), SS (two stores), R (execution never continues)");
+                break;
+            }
+        }
+
+        if (*cx != ':') {
+            error("Custom opcode must have colon");
+        }
+        else {
+            cx++;
+            if (!(*cx))
+                error("Custom opcode must have colon followed by opcode number");
+            else
+                custom_opcode_g.code = atoi(cx);
+        }
+
+        O = custom_opcode_g;
     }
     else {
-      put_token_back();
-      AO = parse_operand_g();
+        if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
+            ebf_curtoken_error("an opcode name");
+            panic_mode_error_recovery();
+            return;
+        }
+        AI.internal_number = token_value;
+        if (token_type == OPCODE_MACRO_TT) {
+            O = internal_number_to_opmacro_g(AI.internal_number);
+            is_macro = TRUE;
+        }
+        else
+            O = internal_number_to_opcode_g(AI.internal_number);
+    }
+  
+    return_sp_as_variable = TRUE;
+
+    while (1) {
+        get_next_token();
+    
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
+            break;
+
+        if (AI.operand_count == 8) {
+            error("No assembly instruction may have more than 8 operands");
+            panic_mode_error_recovery(); 
+            break;
+        }
+
+        if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
+            if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
+                error_flag = TRUE;
+                error("Branch opcode must have '?' label");
+                put_token_back();
+            }
+            AO.type = CONSTANT_OT;
+            AO.value = parse_label();
+            AO.marker = BRANCH_MV;
+        }
+        else {
+            put_token_back();
+            AO = parse_operand_g();
+        }
+
+        AI.operand[AI.operand_count] = AO;
+        AI.operand_count++;
     }
 
-    AI.operand[AI.operand_count] = AO;
-    AI.operand_count++;
-  }
+    return_sp_as_variable = FALSE;
 
-  return_sp_as_variable = FALSE;
+    if (O.no != AI.operand_count) {
+        error_flag = TRUE;
+    }
 
-  if (O.no != AI.operand_count) {
-    error_flag = TRUE;
-  }
+    if (!error_flag) {
+        if (is_macro)
+            assembleg_macro(&AI);
+        else
+            assembleg_instruction(&AI);
+    }
 
-  if (!error_flag) {
-    if (is_macro)
-      assembleg_macro(&AI);
-    else
-      assembleg_instruction(&AI);
-  }
-
-  if (error_flag) {
-    make_opcode_syntax_g(O);
-    error_named("Assembly mistake: syntax is",
-      opcode_syntax_string);
-  }
+    if (error_flag) {
+        make_opcode_syntax_g(O);
+        error_named("Assembly mistake: syntax is",
+            opcode_syntax_string);
+    }
 }
 
 extern void parse_assembly(void)
