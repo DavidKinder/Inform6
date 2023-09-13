@@ -60,7 +60,7 @@ extern char *describe_mv_short(int mval)
 
         /*  Marker values used in ordinary story file backpatching  */
 
-        case DWORD_MV:      return("dictwd");
+        case DWORD_MV:      return("dict");
         case STRING_MV:     return("str");
         case INCON_MV:      return("syscon");
         case IROUTINE_MV:   return("rtn");
