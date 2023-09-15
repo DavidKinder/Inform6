@@ -1927,7 +1927,9 @@ typedef struct operator_s
 #define OBJECT_MV             16     /* Ref to internal object number */
 #define STATIC_ARRAY_MV       17     /* Ref to internal static array address */
 
-#define LARGEST_BPATCH_MV     17     /* Larger marker values are never written
+#define ERROR_MV              18     /* An error was reported while
+                                        generating this value */
+#define LARGEST_BPATCH_MV     18     /* Larger marker values are never written
                                         to backpatch tables */
 
 /* Values 32-35 were used only for module import/export. */

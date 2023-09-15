@@ -49,6 +49,9 @@ extern char *describe_mv(int mval)
         case ACTION_MV:     return("action");
         case OBJECT_MV:     return("internal object");
 
+        /* Only occurs secondary to another reported error */
+        case ERROR_MV:      return("error");
+
     }
     return("** No such MV **");
 }
