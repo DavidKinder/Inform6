@@ -1902,8 +1902,11 @@ extern assembly_operand parse_expression(int context)
         is constant and thus known at compile time.
 
         If an error has occurred in the expression, which recovery from was
-        not possible, then the return is (short constant) 0.  This should
-        minimise the chance of a cascade of further error messages.
+        not possible, then the return is (short constant) 0 with marker
+        value ERROR_MV.  The caller may check for this marker value to
+        decide whether to (e.g.) stop reading array values. Otherwise, it
+        will just be treated as a zero, which should minimise the chance
+        of a cascade of further error messages.
     */
 
     token_data a, b, pop; int i;
@@ -1946,6 +1949,7 @@ extern assembly_operand parse_expression(int context)
 
     if (get_next_etoken() == FALSE)
     {   ebf_curtoken_error("expression");
+        AO.marker = ERROR_MV;
         return AO;
     }
 
@@ -1959,6 +1963,7 @@ extern assembly_operand parse_expression(int context)
 
         if (sr_sp == 0)
         {   compiler_error("SR error: stack empty");
+            AO.marker = ERROR_MV;
             return(AO);
         }
 
@@ -1968,10 +1973,12 @@ extern assembly_operand parse_expression(int context)
         {   if (emitter_sp == 0)
             {   error("No expression between brackets '(' and ')'");
                 put_token_back();
+                AO.marker = ERROR_MV;
                 return AO;
             }
             if (emitter_sp > 1)
             {   compiler_error("SR error: emitter stack overfull");
+                AO.marker = ERROR_MV;
                 return AO;
             }
 
@@ -1999,6 +2006,7 @@ extern assembly_operand parse_expression(int context)
             if (context == CONSTANT_CONTEXT)
                 if (!is_constant_ot(AO.type))
                 {   AO = zero_operand;
+                    AO.marker = ERROR_MV;
                     ebf_error("constant", "<expression>");
                 }
             put_token_back();
