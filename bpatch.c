@@ -88,6 +88,9 @@ extern char *describe_mv_short(int mval)
         case LABEL_MV:      return("lbl");
         case DELETED_MV:    return("del");
 
+        /* Only occurs secondary to another reported error */
+        case ERROR_MV:      return("err");
+
     }
     if (mval >= BRANCH_MV && mval < BRANCHMAX_MV) return "br";
     
