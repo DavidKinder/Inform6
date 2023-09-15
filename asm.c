@@ -2250,6 +2250,7 @@ static void transfer_routine_z(void)
           default:
             switch(zcode_markers[i] & 0x7f)
             {   case NULL_MV: break;
+                case ERROR_MV: break;
                 case VARIABLE_MV:
                 case OBJECT_MV:
                 case ACTION_MV:
@@ -2474,6 +2475,8 @@ static void transfer_routine_g(void)
       else {
         switch(zcode_markers[i] & 0x7f) {
         case NULL_MV: 
+            break;
+        case ERROR_MV:
             break;
         case ACTION_MV:
         case IDENT_MV:

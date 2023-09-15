@@ -618,7 +618,8 @@ extern void make_array()
                 put_token_back();
 
                 AO = parse_expression(ARRAY_CONTEXT);
-                /* TODO: detect expr error, exit loop */
+                if (AO.marker == ERROR_MV)
+                    break;
 
                 if (i == 0)
                 {   get_next_token();
@@ -692,6 +693,7 @@ advance as part of 'Zcharacter table':", unicode);
             i = 0;
             while (TRUE)
             {
+                assembly_operand AO;
                 /* This isn't the start of a statement, but it's safe to
                    release token texts anyway. Expressions in an array
                    list are independent of each other. */
@@ -710,8 +712,10 @@ advance as part of 'Zcharacter table':", unicode);
                     put_token_back(); break;
                 }
                 put_token_back();
-                array_entry(i, is_static, parse_expression(ARRAY_CONTEXT));
-                /* TODO: detect expr error, exit loop */
+                AO = parse_expression(ARRAY_CONTEXT);
+                if (AO.marker == ERROR_MV)
+                    break;
+                array_entry(i, is_static, AO);
                 i++;
             }
     }
