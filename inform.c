@@ -34,7 +34,9 @@ int version_number,      /* 3 to 8 (Z-code)                                  */
 int32 scale_factor,      /* packed address multiplier                        */
     length_scale_factor; /* length-in-header multiplier                      */
 
-int32 requested_glulx_version;
+int32 requested_glulx_version; /* version requested via -v switch            */
+int32 final_glulx_version;     /* requested version combined with game
+                                  feature requirements                       */
 
 extern void select_version(int vn)
 {   version_number = vn;
@@ -334,6 +336,7 @@ static void reset_switch_settings(void)
     compression_switch = TRUE;
     glulx_mode = FALSE;
     requested_glulx_version = 0;
+    final_glulx_version = 0;
 
     /* These aren't switches, but for clarity we reset them too. */
     asm_trace_level = 0;
@@ -1109,13 +1112,13 @@ disabling -X switch\n");
 
     run_pass();
 
+    if (no_errors==0) { output_file(); output_has_occurred = TRUE; }
+    else { output_has_occurred = FALSE; }
+
     if (transcript_switch)
     {   write_dictionary_to_transcript();
         close_transcript_file();
     }
-
-    if (no_errors==0) { output_file(); output_has_occurred = TRUE; }
-    else { output_has_occurred = FALSE; }
 
     if (debugfile_switch)
     {   end_debug_file();
