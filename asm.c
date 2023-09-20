@@ -3146,6 +3146,9 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         int isword = (token_value == DARROW_SEP);
         while (1) {
             assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
             get_next_token();
             if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
             put_token_back();
@@ -3488,6 +3491,9 @@ S (store), SS (two stores), R (execution never continues)");
         int isword = (token_value == DARROW_SEP);
         while (1) {
             assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
             get_next_token();
             if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
             put_token_back();
