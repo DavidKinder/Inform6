@@ -86,6 +86,10 @@ debug library code and debug veneer error messages. When <tt>$OMIT_SYMBOL_TABLE=
 Note that the Inform 6 library uses <tt>#identifiers_table</tt> for some debugging verbs, and the Infix library
 extension uses all the affected constants. To update such code, the relevant logic that uses these symbol names and
 constants would be put in a <tt>#Ifndef OMIT_SYMBOL_TABLE;</tt> block.
+<li><p>A new setting <tt>$ZCODE_MAX_INLINE_STRING</tt> has been added to determine how long a string can be and still
+be compiled to a <tt>@print</tt> opcode, rather than be added to the string segment and compiled to a <tt>@print_paddr</tt>
+opcode. This setting has a default value of 32, which matches the previous behaviour of the compiler, where this limit
+was hard-coded at 32 characters.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>The statement <tt>print "^";</tt> now compiles to a single opcode (<tt>@new_line</tt> for Z-code, or
@@ -97,6 +101,7 @@ most likely indicates an oversight in the game's source code.
 <li><p>Error messages about invalid tokens are now more informative.
 <li><p>Inform now handles line breaks itself, rather than relying on the C standard library. This gives consistent
 handling of Windows and Unix style line breaks on all platforms.
+<li><p>The output file "gametext.txt" now includes the Z-code or Glulx version being compiled to.
 </ul>
 
 <h3>Bugs fixed</h3>
@@ -112,6 +117,8 @@ compiler handles backtracking through parsed symbols in some tricky cases.
 <tt>box</tt> statement) now contains a check to prevent calling the <tt>@set_cursor</tt> opcode with negative
 co-ordinates.
 <li><p>The veneer functions <tt>RA__Pr()</tt>, <tt>RL__Pr()</tt> and <tt>CP__Tab()</tt> are now correct for Z-code V3.
+<li><p>Errors in the declaration of arrays could sometimes cause the compiler to emit a large number of error messages,
+this is now fixed so that only the initial error is printed.
 </ul>
 
 <h2>Inform 6.41</h2>
