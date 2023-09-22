@@ -2092,6 +2092,8 @@ extern assembly_operand parse_expression(int context)
 
             case NOOP_E:             /* Missing operator error               */
                 error_named("Missing operator after", a.text);
+                /* We insert a "+" token so that the rest of the expression
+                   can be compiled. */
                 put_token_back();
                 current_token.type = OP_TT;
                 current_token.value = PLUS_OP;
