@@ -2091,7 +2091,7 @@ extern assembly_operand parse_expression(int context)
                 break;
 
             case NOOP_E:             /* Missing operator error               */
-                error("Missing operator: inserting '+'");
+                error_named("Missing operator after", a.text);
                 put_token_back();
                 current_token.type = OP_TT;
                 current_token.value = PLUS_OP;
