@@ -521,7 +521,7 @@ static int find_prec(const token_data *a, const token_data *b)
 
     if ((i == 16 || i == 19) && operators[b->value].usage == PRE_U) {
         /* (a=")" or default, b=OP) case where OP is a unary operator.
-           This looks like "(a ~b)" which is an error. */
+           This looks like "(a ~b)" or "((a) ~b)", which are errors. */
         return NOOP_E;
     }
 
