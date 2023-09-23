@@ -2078,6 +2078,8 @@ extern assembly_operand parse_expression(int context)
 
             case NOVAL_E:            /* Missing operand error                */
                 error_named("Missing operand after", a.text);
+                /* We insert a "0" token so that the rest of the expression
+                   can be compiled. */
                 put_token_back();
                 current_token.type = NUMBER_TT;
                 current_token.value = 0;
