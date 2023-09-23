@@ -519,7 +519,14 @@ static int find_prec(const token_data *a, const token_data *b)
         default:          i+=20; break;
     }
 
-    j = prec_table[i]; if (j != -1) return j;
+    if (i == 19 && operators[b->value].usage == PRE_U) {
+        /* (a=default, b=OP) case where OP is a unary operator.
+           This looks like "(a ~b)" which is an error. */
+        return NOOP_E;
+    }
+
+    j = prec_table[i];
+    if (j != -1) return j;
 
     l1 = operators[a->value].precedence;
     l2 = operators[b->value].precedence;
