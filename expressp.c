@@ -528,6 +528,8 @@ static int find_prec(const token_data *a, const token_data *b)
     j = prec_table[i];
     if (j != -1) return j;
 
+    /* -1 is the (a=OP, b=OP) case. We must compare the precedence of the
+       two operators. */
     l1 = operators[a->value].precedence;
     l2 = operators[b->value].precedence;
     if (operators[b->value].usage == PRE_U) return LOWER_P;
