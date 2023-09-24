@@ -502,23 +502,24 @@ static int find_prec(const token_data *a, const token_data *b)
             a GREATER_P a   if a left-associative
     */
 
-    int i, j, l1, l2;
+    int ai, bi, j, l1, l2;
 
     switch(a->type)
-    {   case SUBOPEN_TT:  i=0; break;
-        case SUBCLOSE_TT: i=1; break;
-        case ENDEXP_TT:   i=2; break;
-        case OP_TT:       i=3; break;
-        default:          i=4; break;
+    {   case SUBOPEN_TT:  ai=0; break;
+        case SUBCLOSE_TT: ai=1; break;
+        case ENDEXP_TT:   ai=2; break;
+        case OP_TT:       ai=3; break;
+        default:          ai=4; break;
     }
     switch(b->type)
-    {   case SUBOPEN_TT:  i+=0; break;
-        case SUBCLOSE_TT: i+=5; break;
-        case ENDEXP_TT:   i+=10; break;
-        case OP_TT:       i+=15; break;
-        default:          i+=20; break;
+    {   case SUBOPEN_TT:  bi=0; break;
+        case SUBCLOSE_TT: bi=1; break;
+        case ENDEXP_TT:   bi=2; break;
+        case OP_TT:       bi=3; break;
+        default:          bi=4; break;
     }
 
+#if 0 //###
     if ((i == 16 || i == 19) && operators[b->value].usage == PRE_U) {
         /* (a=")"/default, b=OP) case where OP is a unary prefix operator.
            This looks like "(a ~b)" or "((a) ~b)", which are errors. */
@@ -535,8 +536,9 @@ static int find_prec(const token_data *a, const token_data *b)
            together. */
         return NOOP_E;
     }
-
-    j = prec_table[i];
+#endif //###
+    
+    j = prec_table[ai+5*bi];
     if (j != -1) return j;
 
     /* -1 is the (a=OP, b=OP) case. We must compare the precedence of the
