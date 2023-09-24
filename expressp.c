@@ -508,6 +508,12 @@ static int find_prec(const token_data *a, const token_data *b)
 
     int ai, bi, j, l1, l2;
 
+    /*   Select a column and row in prec_table, based on the type of
+         a and b. If a/b is an operator, we have to distinguish three
+         columns/rows depending on whether the operator is prefix,
+         postfix, or neither.
+    */
+    
     switch(a->type)
     {   case SUBOPEN_TT:  ai=0; break;
         case SUBCLOSE_TT: ai=1; break;
@@ -541,7 +547,9 @@ static int find_prec(const token_data *a, const token_data *b)
     if (j != BYPREC) return j;
 
     /* BYPREC is the (a=OP, b=OP) cases. We must compare the precedence of the
-       two operators. (We've already eliminated invalid cases like (a++ --b).) */
+       two operators.
+       (We've already eliminated invalid cases like (a++ --b).)
+    */
     l1 = operators[a->value].precedence;
     l2 = operators[b->value].precedence;
     if (operators[b->value].usage == PRE_U) return LOWER_P;
