@@ -512,14 +512,28 @@ static int find_prec(const token_data *a, const token_data *b)
     {   case SUBOPEN_TT:  ai=0; break;
         case SUBCLOSE_TT: ai=1; break;
         case ENDEXP_TT:   ai=2; break;
-        case OP_TT:       ai=3; break;
+        case OP_TT:
+            if (operators[a->value].usage == PRE_U)
+                ai=3;
+            else if (operators[a->value].usage == POST_U)
+                ai=5;
+            else
+                ai=4;
+            break;
         default:          ai=6; break;
     }
     switch(b->type)
     {   case SUBOPEN_TT:  bi=0; break;
         case SUBCLOSE_TT: bi=1; break;
         case ENDEXP_TT:   bi=2; break;
-        case OP_TT:       bi=3; break;
+        case OP_TT:
+            if (operators[b->value].usage == PRE_U)
+                bi=3;
+            else if (operators[b->value].usage == POST_U)
+                bi=5;
+            else
+                bi=4;
+            break;
         default:          bi=6; break;
     }
 
