@@ -480,13 +480,13 @@ const int prec_table[49] = {
 
 /*   a .......   (         )           end       op:pre      op:bin      op:post     term      */
 
-/* b  (    */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    LOWER_P,    NOOP_E,
+/* b  (    */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    NOOP_E,     NOOP_E,
 /* .  )    */    EQUAL_P,  GREATER_P,  CLOSEB_E, GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
 /* .  end  */    OPENB_E,  GREATER_P,  NOVAL_E,  GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
-/* .  op:pre  */ LOWER_P,  GREATER_P,  LOWER_P,  BYPREC,     BYPREC,     BYPREC,     GREATER_P,
+/* .  op:pre  */ LOWER_P,  NOOP_E,     LOWER_P,  BYPREC,     BYPREC,     NOOP_E,     NOOP_E,
 /* .  op:bin  */ LOWER_P,  GREATER_P,  LOWER_P,  BYPREC,     BYPREC,     BYPREC,     GREATER_P,
 /* .  op:post */ LOWER_P,  GREATER_P,  LOWER_P,  BYPREC,     BYPREC,     BYPREC,     GREATER_P,
-/* .  term */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    LOWER_P,    NOOP_E
+/* .  term */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    NOOP_E,     NOOP_E
 
 };
 
