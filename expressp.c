@@ -474,15 +474,17 @@ but not used as a value:", unicode);
 #define OPENB_E     4       /* Expression ends with an open bracket */
 #define ASSOC_E     5       /* Associativity illegal error          */
 
-const int prec_table[25] = {
+const int prec_table[49] = {
 
-/* a .......... (         )           end       op          term             */
+/* a ..........   (         )           end       op:pre      op:bin      op:post     term      */
 
-/* b  (    */   LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    NOOP_E,
-/* .  )    */   EQUAL_P,  GREATER_P,  CLOSEB_E, GREATER_P,  GREATER_P,
-/* .  end  */   OPENB_E,  GREATER_P,  NOVAL_E,  GREATER_P,  GREATER_P,
-/* .  op   */   LOWER_P,  GREATER_P,  LOWER_P,  -1,         GREATER_P,
-/* .  term */   LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    NOOP_E
+/* b  (    */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    LOWER_P,    NOOP_E,
+/* .  )    */    EQUAL_P,  GREATER_P,  CLOSEB_E, GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
+/* .  end  */    OPENB_E,  GREATER_P,  NOVAL_E,  GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
+/* .  op:pre  */ LOWER_P,  GREATER_P,  LOWER_P,  -1,         -1,         -1,         GREATER_P,
+/* .  op:bin  */ LOWER_P,  GREATER_P,  LOWER_P,  -1,         -1,         -1,         GREATER_P,
+/* .  op:post */ LOWER_P,  GREATER_P,  LOWER_P,  -1,         -1,         -1,         GREATER_P,
+/* .  term */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    LOWER_P,    NOOP_E
 
 };
 
@@ -509,14 +511,14 @@ static int find_prec(const token_data *a, const token_data *b)
         case SUBCLOSE_TT: ai=1; break;
         case ENDEXP_TT:   ai=2; break;
         case OP_TT:       ai=3; break;
-        default:          ai=4; break;
+        default:          ai=6; break;
     }
     switch(b->type)
     {   case SUBOPEN_TT:  bi=0; break;
         case SUBCLOSE_TT: bi=1; break;
         case ENDEXP_TT:   bi=2; break;
         case OP_TT:       bi=3; break;
-        default:          bi=4; break;
+        default:          bi=6; break;
     }
 
 #if 0 //###
@@ -538,7 +540,7 @@ static int find_prec(const token_data *a, const token_data *b)
     }
 #endif //###
     
-    j = prec_table[ai+5*bi];
+    j = prec_table[ai+7*bi];
     if (j != -1) return j;
 
     /* -1 is the (a=OP, b=OP) case. We must compare the precedence of the
