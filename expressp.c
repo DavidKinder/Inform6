@@ -536,25 +536,6 @@ static int find_prec(const token_data *a, const token_data *b)
             break;
         default:          bi=6; break;
     }
-
-#if 0 //###
-    if ((i == 16 || i == 19) && operators[b->value].usage == PRE_U) {
-        /* (a=")"/default, b=OP) case where OP is a unary prefix operator.
-           This looks like "(a ~b)" or "((a) ~b)", which are errors. */
-        return NOOP_E;
-    }
-    if ((i == 3 || i == 23) && operators[a->value].usage == POST_U) {
-        /* (a=OP, b="("/default) case where OP is a unary postfix operator.
-           This looks like "(a++ b)" or "(a++ (b))", which are errors. */
-        return NOOP_E;
-    }
-    if (i == 18 && operators[a->value].usage == POST_U && operators[b->value].usage == PRE_U) {
-        /* (a=OP, b=OP) where a prefix op follows a postfix op.
-           This looks like "(a++ --b)". It's like both the above errors put
-           together. */
-        return NOOP_E;
-    }
-#endif //###
     
     j = prec_table[ai+7*bi];
     if (j != BYPREC) return j;
