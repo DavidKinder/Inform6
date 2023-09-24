@@ -474,7 +474,7 @@ but not used as a value:", unicode);
 #define OPENB_E     4       /* Expression ends with an open bracket */
 #define ASSOC_E     5       /* Associativity illegal error          */
 
-const int prec_table[] = {
+const int prec_table[25] = {
 
 /* a .......... (         )           end       op          term             */
 
