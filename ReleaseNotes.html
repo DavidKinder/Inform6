@@ -69,6 +69,13 @@ action names.
 <li><p>Inform identifiers can now be any length, and the entire identifier is significant. Dictionary words can also
 be any length. The DICT_WORD_SIZE limit still applies, but now dictionary words are silently trimmed to DICT_WORD_SIZE.
 For Glulx, DICT_WORD_SIZE can now be increased without limit.
+<li><p>Arbitrary bytes and words can be compiled into the game, using two new statements:
+<pre>
+  @ -> BYTE BYTE BYTE ...;
+  @ --> WORD WORD WORD ...;
+</pre>
+The given bytes or words are directly copied out into the function. (Words are two bytes in Z-code, and four bytes in
+Glulx.) The compiler assumes that the data forms valid opcodes, but does nothing to verify this.
 <li><p>A new setting exists to omit the symbol names table, <tt>$OMIT_SYMBOL_TABLE</tt>. The symbol names table
 contains the names of all properties, attributes, fake actions, and arrays as strings, and is generally only used by
 debug library code and debug veneer error messages. When <tt>$OMIT_SYMBOL_TABLE=1</tt> is set:
@@ -93,6 +100,8 @@ opcode. This setting has a default value of 32, which matches the previous behav
 was hard-coded at 32 characters.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
+<li><p>The <tt>--trace ASM=2</tt> option now shows backpatch markers as a short descriptive string, rather than as a
+number.
 <li><p>The statement <tt>print "^";</tt> now compiles to a single opcode (<tt>@new_line</tt> for Z-code, or
 <tt>@streamchar 10</tt> for Glulx) rather than printing a one character string.
 <li><p>For Glulx, with strict mode turned off, <tt>print (char) X;</tt> compiles to either <tt>@streamchar X</tt> or
@@ -120,6 +129,8 @@ co-ordinates.
 <li><p>The veneer functions <tt>RA__Pr()</tt>, <tt>RL__Pr()</tt> and <tt>CP__Tab()</tt> are now correct for Z-code V3.
 <li><p>Errors in the declaration of arrays could sometimes cause the compiler to emit a large number of error messages,
 this is now fixed so that only the initial error is printed.
+<li><p>Invalid expressions like <tt>(a++ b)</tt>, <tt>(a ~b)</tt>, <tt>(a++ ~b)</tt>, and <tt>(a++ --b)</tt> previously
+caused an internal compiler error, but now produce a sensible error message.
 </ul>
 
 <h2>Inform 6.41</h2>
