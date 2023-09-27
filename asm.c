@@ -1237,6 +1237,8 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         {   for (j=0;start_pc<zcode_ha_size;
                  j++, start_pc++)
             {   if (j%16==0) printf("\n                               ");
+                if (zcode_markers[start_pc] & 0x7f)
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
                 printf("%02x ", zcode_holding_area[start_pc]);
             }
         }
@@ -1634,9 +1636,9 @@ extern void assembleg_instruction(const assembly_instruction *AI)
                 printf("%02x ", zcode_holding_area[start_pc]);
             }
             else {
-                printf("%02x", zcode_holding_area[start_pc]);
                 if (zcode_markers[start_pc])
-                    printf("{%02x}", zcode_markers[start_pc]);
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x", zcode_holding_area[start_pc]);
                 printf(" ");
             }
         }
@@ -3137,6 +3139,71 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         }
         O = custom_opcode_z;
     }
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
+    {
+        int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
+        int isword = (token_value == DARROW_SEP);
+        while (1) {
+            assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            if (AO.marker == ERROR_MV) {
+                break;
+            }
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
+            if (execution_never_reaches_here) {
+                continue;
+            }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
+            if (!isword) {
+                byteout((AO.value & 0xFF), 0);
+                bytecount++;
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 8) & 0xFF), AO.marker);
+                byteout((AO.value & 0xFF), 0);
+                bytecount += 2;
+                if (asm_trace_level > 0) {
+                    printf(" ");
+                    print_operand(&AO, TRUE);
+                }
+            }
+        }
+        if (bytecount > 0 && asm_trace_level > 0) {
+            printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                if (zcode_markers[start_pc] & 0x7f)
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
+        }
+        return;
+    }
     else
     {   if (token_type != OPCODE_NAME_TT)
         {   ebf_curtoken_error("an opcode name");
@@ -3338,151 +3405,218 @@ static assembly_operand parse_operand_g(void)
 
 static void parse_assembly_g(void)
 {
-  opcodeg O;
-  assembly_operand AO;
-  int error_flag = FALSE, is_macro = FALSE;
+    opcodeg O;
+    assembly_operand AO;
+    int error_flag = FALSE, is_macro = FALSE;
 
-  AI.operand_count = 0;
-  AI.text = NULL;
+    AI.operand_count = 0;
+    AI.text = NULL;
 
-  opcode_names.enabled = TRUE;
-  opcode_macros.enabled = TRUE;
-  get_next_token();
-  opcode_names.enabled = FALSE;
-  opcode_macros.enabled = FALSE;
-
-  if (token_type == DQ_TT) {
-    char *cx;
-    int badflags;
-
-    AI.internal_number = -1;
-
-    /* The format is @"FlagsCount:Code". Flags (which are optional)
-       can include "S" for store, "SS" for two stores, "B" for branch
-       format, "R" if execution never continues after the opcode. The
-       Count is the number of arguments (currently limited to 0-9),
-       and the Code is a decimal integer representing the opcode
-       number.
-
-       So: @"S3:123" for a three-argument opcode (load, load, store)
-       whose opcode number is (decimal) 123. Or: @"2:234" for a
-       two-argument opcode (load, load) whose number is 234. */
-
-    custom_opcode_g.name = (uchar *) token_text;
-    custom_opcode_g.flags = 0;
-    custom_opcode_g.op_rules = 0;
-    custom_opcode_g.no = 0;
-
-    badflags = FALSE;
-
-    for (cx = token_text; *cx && *cx != ':'; cx++) {
-      if (badflags)
-      continue;
-
-      switch (*cx) {
-      case 'S':
-      if (custom_opcode_g.flags & St)
-        custom_opcode_g.flags |= St2;
-      else
-        custom_opcode_g.flags |= St;
-      break;
-      case 'B':
-      custom_opcode_g.flags |= Br;
-      break;
-      case 'R':
-      custom_opcode_g.flags |= Rf;
-      break;
-      default:
-      if (isdigit(*cx)) {
-        custom_opcode_g.no = (*cx) - '0';
-        break;
-      }
-      badflags = TRUE;
-      error("Unknown custom opcode flag: options are B (branch), \
-S (store), SS (two stores), R (execution never continues)");
-      break;
-      }
-    }
-
-    if (*cx != ':') {
-      error("Custom opcode must have colon");
-    }
-    else {
-      cx++;
-      if (!(*cx))
-      error("Custom opcode must have colon followed by opcode number");
-      else
-      custom_opcode_g.code = atoi(cx);
-    }
-
-    O = custom_opcode_g;
-  }
-  else {
-    if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
-      ebf_curtoken_error("an opcode name");
-      panic_mode_error_recovery();
-      return;
-    }
-    AI.internal_number = token_value;
-    if (token_type == OPCODE_MACRO_TT) {
-      O = internal_number_to_opmacro_g(AI.internal_number);
-      is_macro = TRUE;
-    }
-    else
-      O = internal_number_to_opcode_g(AI.internal_number);
-  }
-  
-  return_sp_as_variable = TRUE;
-
-  while (1) {
+    opcode_names.enabled = TRUE;
+    opcode_macros.enabled = TRUE;
     get_next_token();
-    
-    if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
-      break;
+    opcode_names.enabled = FALSE;
+    opcode_macros.enabled = FALSE;
 
-    if (AI.operand_count == 8) {
-      error("No assembly instruction may have more than 8 operands");
-      panic_mode_error_recovery(); 
-      break;
+    if (token_type == DQ_TT) {
+        char *cx;
+        int badflags;
+
+        AI.internal_number = -1;
+
+        /* The format is @"FlagsCount:Code". Flags (which are optional)
+           can include "S" for store, "SS" for two stores, "B" for branch
+           format, "R" if execution never continues after the opcode. The
+           Count is the number of arguments (currently limited to 0-9),
+           and the Code is a decimal integer representing the opcode
+           number.
+
+           So: @"S3:123" for a three-argument opcode (load, load, store)
+           whose opcode number is (decimal) 123. Or: @"2:234" for a
+           two-argument opcode (load, load) whose number is 234. */
+
+        custom_opcode_g.name = (uchar *) token_text;
+        custom_opcode_g.flags = 0;
+        custom_opcode_g.op_rules = 0;
+        custom_opcode_g.no = 0;
+
+        badflags = FALSE;
+
+        for (cx = token_text; *cx && *cx != ':'; cx++) {
+            if (badflags)
+                continue;
+
+            switch (*cx) {
+            case 'S':
+                if (custom_opcode_g.flags & St)
+                    custom_opcode_g.flags |= St2;
+                else
+                    custom_opcode_g.flags |= St;
+                break;
+            case 'B':
+                custom_opcode_g.flags |= Br;
+                break;
+            case 'R':
+                custom_opcode_g.flags |= Rf;
+                break;
+            default:
+                if (isdigit(*cx)) {
+                    custom_opcode_g.no = (*cx) - '0';
+                    break;
+                }
+                badflags = TRUE;
+                error("Unknown custom opcode flag: options are B (branch), \
+S (store), SS (two stores), R (execution never continues)");
+                break;
+            }
+        }
+
+        if (*cx != ':') {
+            error("Custom opcode must have colon");
+        }
+        else {
+            cx++;
+            if (!(*cx))
+                error("Custom opcode must have colon followed by opcode number");
+            else
+                custom_opcode_g.code = atoi(cx);
+        }
+
+        O = custom_opcode_g;
     }
-
-    if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
-      if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
-        error_flag = TRUE;
-        error("Branch opcode must have '?' label");
-        put_token_back();
-      }
-      AO.type = CONSTANT_OT;
-      AO.value = parse_label();
-      AO.marker = BRANCH_MV;
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
+    {
+        int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
+        int isword = (token_value == DARROW_SEP);
+        while (1) {
+            assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            if (AO.marker == ERROR_MV) {
+                break;
+            }
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
+            if (execution_never_reaches_here) {
+                continue;
+            }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
+            if (!isword) {
+                byteout((AO.value & 0xFF), 0);
+                bytecount++;
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 24) & 0xFF), AO.marker);
+                byteout(((AO.value >> 16) & 0xFF), 0);
+                byteout(((AO.value >> 8) & 0xFF), 0);
+                byteout((AO.value & 0xFF), 0);
+                bytecount += 4;
+                if (asm_trace_level > 0) {
+                    printf(" ");
+                    print_operand(&AO, TRUE);
+                }
+            }
+        }
+        if (bytecount > 0 && asm_trace_level > 0) {
+            printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                if (zcode_markers[start_pc])
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
+        }
+        return;
     }
     else {
-      put_token_back();
-      AO = parse_operand_g();
+        if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
+            ebf_curtoken_error("an opcode name");
+            panic_mode_error_recovery();
+            return;
+        }
+        AI.internal_number = token_value;
+        if (token_type == OPCODE_MACRO_TT) {
+            O = internal_number_to_opmacro_g(AI.internal_number);
+            is_macro = TRUE;
+        }
+        else
+            O = internal_number_to_opcode_g(AI.internal_number);
+    }
+  
+    return_sp_as_variable = TRUE;
+
+    while (1) {
+        get_next_token();
+    
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
+            break;
+
+        if (AI.operand_count == 8) {
+            error("No assembly instruction may have more than 8 operands");
+            panic_mode_error_recovery(); 
+            break;
+        }
+
+        if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
+            if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
+                error_flag = TRUE;
+                error("Branch opcode must have '?' label");
+                put_token_back();
+            }
+            AO.type = CONSTANT_OT;
+            AO.value = parse_label();
+            AO.marker = BRANCH_MV;
+        }
+        else {
+            put_token_back();
+            AO = parse_operand_g();
+        }
+
+        AI.operand[AI.operand_count] = AO;
+        AI.operand_count++;
     }
 
-    AI.operand[AI.operand_count] = AO;
-    AI.operand_count++;
-  }
+    return_sp_as_variable = FALSE;
 
-  return_sp_as_variable = FALSE;
+    if (O.no != AI.operand_count) {
+        error_flag = TRUE;
+    }
 
-  if (O.no != AI.operand_count) {
-    error_flag = TRUE;
-  }
+    if (!error_flag) {
+        if (is_macro)
+            assembleg_macro(&AI);
+        else
+            assembleg_instruction(&AI);
+    }
 
-  if (!error_flag) {
-    if (is_macro)
-      assembleg_macro(&AI);
-    else
-      assembleg_instruction(&AI);
-  }
-
-  if (error_flag) {
-    make_opcode_syntax_g(O);
-    error_named("Assembly mistake: syntax is",
-      opcode_syntax_string);
-  }
+    if (error_flag) {
+        make_opcode_syntax_g(O);
+        error_named("Assembly mistake: syntax is",
+            opcode_syntax_string);
+    }
 }
 
 extern void parse_assembly(void)

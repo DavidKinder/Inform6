@@ -34,6 +34,7 @@ extern char *describe_mv(int mval)
         case IROUTINE_MV:   return("routine");
         case VROUTINE_MV:   return("veneer routine");
         case ARRAY_MV:      return("internal array");
+        case STATIC_ARRAY_MV:  return("internal static array");
         case NO_OBJS_MV:    return("the number of objects");
         case INHERIT_MV:    return("inherited common p value");
         case INDIVPT_MV:    return("indiv prop table address");
@@ -54,6 +55,46 @@ extern char *describe_mv(int mval)
 
     }
     return("** No such MV **");
+}
+
+extern char *describe_mv_short(int mval)
+{   switch(mval)
+    {   case NULL_MV:       return("");
+
+        /*  Marker values used in ordinary story file backpatching  */
+
+        case DWORD_MV:      return("dict");
+        case STRING_MV:     return("str");
+        case INCON_MV:      return("syscon");
+        case IROUTINE_MV:   return("rtn");
+        case VROUTINE_MV:   return("vrtn");
+        case ARRAY_MV:      return("arr");
+        case STATIC_ARRAY_MV:  return("stat-arr");
+        case NO_OBJS_MV:    return("obj-count");
+        case INHERIT_MV:    return("inh-com");
+        case INDIVPT_MV:    return("indiv-ptab");
+        case INHERIT_INDIV_MV: return("inh-indiv");
+        case MAIN_MV:       return("main");
+        case SYMBOL_MV:     return("sym");
+
+        /*  Additional marker values used in Glulx backpatching
+            (IDENT_MV is not really used at all any more) */
+
+        case VARIABLE_MV:   return("glob");
+        case IDENT_MV:      return("prop");
+        case ACTION_MV:     return("action");
+        case OBJECT_MV:     return("obj");
+
+        case LABEL_MV:      return("lbl");
+        case DELETED_MV:    return("del");
+
+        /* Only occurs secondary to another reported error */
+        case ERROR_MV:      return("err");
+
+    }
+    if (mval >= BRANCH_MV && mval < BRANCHMAX_MV) return "br";
+    
+    return("???");
 }
 
 /* ------------------------------------------------------------------------- */
