@@ -462,27 +462,31 @@ but not used as a value:", unicode);
     return TRUE;
 }
 
-/* --- Operator precedences ------------------------------------------------ */
+/* --- Operator precedences and error values-------------------------------- */
 
 #define LOWER_P   101
 #define EQUAL_P   102
 #define GREATER_P 103
 
-#define e1        1       /* Missing operand error                */
-#define e2        2       /* Unexpected close bracket             */
-#define e3        3       /* Missing operator error               */
-#define e4        4       /* Expression ends with an open bracket */
-#define e5        5       /* Associativity illegal error          */
+#define BYPREC     -1       /* Compare the precedence of two operators */
 
-const int prec_table[] = {
+#define NOVAL_E     1       /* Missing operand error                */
+#define CLOSEB_E    2       /* Unexpected close bracket             */
+#define NOOP_E      3       /* Missing operator error               */
+#define OPENB_E     4       /* Expression ends with an open bracket */
+#define ASSOC_E     5       /* Associativity illegal error          */
 
-/* a .......... (         )           end       op          term             */
+const int prec_table[49] = {
 
-/* b  (    */   LOWER_P,  e3,         LOWER_P,  LOWER_P,    e3,
-/* .  )    */   EQUAL_P,  GREATER_P,  e2,       GREATER_P,  GREATER_P,
-/* .  end  */   e4,       GREATER_P,  e1,       GREATER_P,  GREATER_P,
-/* .  op   */   LOWER_P,  GREATER_P,  LOWER_P,  -1,         GREATER_P,
-/* .  term */   LOWER_P,  e3,         LOWER_P,  LOWER_P,    e3
+/*   a .......   (         )           end       op:pre      op:bin      op:post     term      */
+
+/* b  (    */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    NOOP_E,     NOOP_E,
+/* .  )    */    EQUAL_P,  GREATER_P,  CLOSEB_E, GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
+/* .  end  */    OPENB_E,  GREATER_P,  NOVAL_E,  GREATER_P,  GREATER_P,  GREATER_P,  GREATER_P,
+/* .  op:pre  */ LOWER_P,  NOOP_E,     LOWER_P,  BYPREC,     BYPREC,     NOOP_E,     NOOP_E,
+/* .  op:bin  */ LOWER_P,  GREATER_P,  LOWER_P,  BYPREC,     BYPREC,     BYPREC,     GREATER_P,
+/* .  op:post */ LOWER_P,  GREATER_P,  LOWER_P,  BYPREC,     BYPREC,     BYPREC,     GREATER_P,
+/* .  term */    LOWER_P,  NOOP_E,     LOWER_P,  LOWER_P,    LOWER_P,    NOOP_E,     NOOP_E
 
 };
 
@@ -491,7 +495,7 @@ static int find_prec(const token_data *a, const token_data *b)
     /*  We are comparing the precedence of tokens  a  and  b
         (where a occurs to the left of b).  If the expression is correct,
         the only possible values are GREATER_P, LOWER_P or EQUAL_P;
-        if it is malformed then one of e1 to e5 results.
+        if it is malformed then one of the *_E results.
 
         Note that this routine is not symmetrical and that the relation
         is not trichotomous.
@@ -502,25 +506,50 @@ static int find_prec(const token_data *a, const token_data *b)
             a GREATER_P a   if a left-associative
     */
 
-    int i, j, l1, l2;
+    int ai, bi, j, l1, l2;
 
+    /*   Select a column and row in prec_table, based on the type of
+         a and b. If a/b is an operator, we have to distinguish three
+         columns/rows depending on whether the operator is prefix,
+         postfix, or neither.
+    */
+    
     switch(a->type)
-    {   case SUBOPEN_TT:  i=0; break;
-        case SUBCLOSE_TT: i=1; break;
-        case ENDEXP_TT:   i=2; break;
-        case OP_TT:       i=3; break;
-        default:          i=4; break;
+    {   case SUBOPEN_TT:  ai=0; break;
+        case SUBCLOSE_TT: ai=1; break;
+        case ENDEXP_TT:   ai=2; break;
+        case OP_TT:
+            if (operators[a->value].usage == PRE_U)
+                ai=3;
+            else if (operators[a->value].usage == POST_U)
+                ai=5;
+            else
+                ai=4;
+            break;
+        default:          ai=6; break;
     }
     switch(b->type)
-    {   case SUBOPEN_TT:  i+=0; break;
-        case SUBCLOSE_TT: i+=5; break;
-        case ENDEXP_TT:   i+=10; break;
-        case OP_TT:       i+=15; break;
-        default:          i+=20; break;
+    {   case SUBOPEN_TT:  bi=0; break;
+        case SUBCLOSE_TT: bi=1; break;
+        case ENDEXP_TT:   bi=2; break;
+        case OP_TT:
+            if (operators[b->value].usage == PRE_U)
+                bi=3;
+            else if (operators[b->value].usage == POST_U)
+                bi=5;
+            else
+                bi=4;
+            break;
+        default:          bi=6; break;
     }
+    
+    j = prec_table[ai+7*bi];
+    if (j != BYPREC) return j;
 
-    j = prec_table[i]; if (j != -1) return j;
-
+    /* BYPREC is the (a=OP, b=OP) cases. We must compare the precedence of the
+       two operators.
+       (We've already eliminated invalid cases like (a++ --b).)
+    */
     l1 = operators[a->value].precedence;
     l2 = operators[b->value].precedence;
     if (operators[b->value].usage == PRE_U) return LOWER_P;
@@ -540,7 +569,7 @@ static int find_prec(const token_data *a, const token_data *b)
     switch(operators[a->value].associativity)
     {   case L_A: return GREATER_P;
         case R_A: return LOWER_P;
-        case 0:   return e5;
+        case 0:   return ASSOC_E;
     }
     return GREATER_P;
 }
@@ -1056,7 +1085,7 @@ static void add_bracket_layer_to_emitter_stack(int depth)
 {   /* There's no point in tracking bracket layers that don't fence off any values. */
     if (emitter_sp < depth + 1) return;
     if (expr_trace_level >= 2)
-        printf("Adding bracket layer\n");
+        printf("Adding bracket layer (depth %d)\n", depth);
     ++emitter_stack[emitter_sp-depth-1].bracket_count;
 }
 
@@ -2016,7 +2045,7 @@ extern assembly_operand parse_expression(int context)
 
         switch(find_prec(&a,&b))
         {
-            case e5:                 /* Associativity error                  */
+            case ASSOC_E:            /* Associativity error                  */
                 error_named("Brackets mandatory to clarify order of:",
                     a.text);
 
@@ -2076,8 +2105,10 @@ extern assembly_operand parse_expression(int context)
                 } while (find_prec(&sr_stack[sr_sp-1], &pop) != LOWER_P);
                 break;
 
-            case e1:                 /* Missing operand error                */
+            case NOVAL_E:            /* Missing operand error                */
                 error_named("Missing operand after", a.text);
+                /* We insert a "0" token so that the rest of the expression
+                   can be compiled. */
                 put_token_back();
                 current_token.type = NUMBER_TT;
                 current_token.value = 0;
@@ -2085,13 +2116,15 @@ extern assembly_operand parse_expression(int context)
                 current_token.text = "0";
                 break;
 
-            case e2:                 /* Unexpected close bracket             */
+            case CLOSEB_E:           /* Unexpected close bracket             */
                 error("Found '(' without matching ')'");
                 get_next_etoken();
                 break;
 
-            case e3:                 /* Missing operator error               */
-                error("Missing operator: inserting '+'");
+            case NOOP_E:             /* Missing operator error               */
+                error_named("Missing operator after", a.text);
+                /* We insert a "+" token so that the rest of the expression
+                   can be compiled. */
                 put_token_back();
                 current_token.type = OP_TT;
                 current_token.value = PLUS_OP;
@@ -2099,7 +2132,7 @@ extern assembly_operand parse_expression(int context)
                 current_token.text = "+";
                 break;
 
-            case e4:                 /* Expression ends with an open bracket */
+            case OPENB_E:            /* Expression ends with an open bracket */
                 error("Found '(' without matching ')'");
                 sr_sp--;
                 break;
