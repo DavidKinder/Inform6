@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "lexer" : Lexical analyser                                              */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -16,10 +16,9 @@ int total_source_line_count,            /* Number of source lines so far     */
                                            (generally as a result of an error
                                            message or the start of pass)     */
     dont_enter_into_symbol_table,       /* Return names as text (with
-                                           token type DQ_TT, i.e., as if
-                                           they had double-quotes around)
-                                           and not as entries in the symbol
-                                           table, when TRUE. If -2, only the
+                                           token type UQ_TT) and not as
+                                           entries in the symbol table,
+                                           when TRUE. If -2, only the
                                            keyword table is searched.        */
     return_sp_as_variable;              /* When TRUE, the word "sp" denotes
                                            the stack pointer variable
@@ -32,7 +31,7 @@ int next_token_begins_syntax_line;      /* When TRUE, start a new syntax
 int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 
 /* ------------------------------------------------------------------------- */
-/*   The lexer's output is a sequence of triples, each called a "token",     */
+/*   The lexer's output is a sequence of structs, each called a "token",     */
 /*   representing one lexical unit (or "lexeme") each.  Instead of providing */
 /*   "lookahead" (that is, always having available the next token after the  */
 /*   current one, so that syntax analysers higher up in Inform can have      */
@@ -46,6 +45,8 @@ int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 /* ------------------------------------------------------------------------- */
 /*   These three variables are set to the current token on a call to         */
 /*   get_next_token() (but are not changed by a call to put_token_back()).   */
+/*   (It would be tidier to use a token_data structure, rather than having   */
+/*   get_next_token() unpack three values. But this is the way it is.)       */
 /* ------------------------------------------------------------------------- */
 
 int token_type;
@@ -213,6 +214,11 @@ extern debug_locations get_token_location_end
 /*   maximum number of tokens ever put back at once, plus 1 (in effect, the  */
 /*   maximum token lookahead ever needed in syntax analysis, plus 1).        */
 /*                                                                           */
+/*   Note that the circle struct type is lexeme_data, whereas the expression */
+/*   code all works in token_data. They have slightly different needs. The   */
+/*   data is exported through the token_text, token_value, token_type        */
+/*   globals, so there's no need to use the same struct at both levels.      */
+/*                                                                           */
 /*   Unlike some compilers, Inform does not have a context-free lexer: in    */
 /*   fact it has 12288 different possible states.  However, the context only */
 /*   affects the interpretation of "identifiers": lexemes beginning with a   */
@@ -232,34 +238,52 @@ extern debug_locations get_token_location_end
      old-style "objectloop (a in b)" and a new "objectloop (a in b ...)".)   */
 
 static int circle_position;
-static token_data circle[CIRCLE_SIZE];
-
-static int token_contexts[CIRCLE_SIZE];
+static lexeme_data circle[CIRCLE_SIZE];
 
 /* ------------------------------------------------------------------------- */
 /*   A complication, however, is that the text of some lexemes needs to be   */
 /*   held in Inform's memory for much longer periods: for example, a         */
 /*   dictionary word lexeme (like "'south'") must have its text preserved    */
 /*   until the code generation time for the expression it occurs in, when    */
-/*   the dictionary reference is actually made.  Code generation in general  */
-/*   occurs as early as possible in Inform: pending some better method of    */
-/*   garbage collection, we simply use a buffer so large that unless         */
-/*   expressions spread across 10K of source code are found, there can be    */
-/*   no problem.                                                             */
+/*   the dictionary reference is actually made. We handle this by keeping    */
+/*   all lexeme text until the end of the statement (or, for top-level       */
+/*   directives, until the end of the directive). Then we call               */
+/*   release_token_texts() to start over. The lextexts array will therefore  */
+/*   grow to the largest number of lexemes in a single statement or          */
+/*   directive.                                                              */
 /* ------------------------------------------------------------------------- */
 
-static char *lexeme_memory;
-static char *lex_p;                     /* Current write position            */
+typedef struct lextext_s {
+    char *text;
+    size_t size; /* Allocated size (including terminal null)                 */
+} lextext;
+
+static lextext *lextexts; /* Allocated to no_lextexts */
+static memory_list lextexts_memlist;
+static int no_lextexts;
+
+static int cur_lextexts;    /* Number of lextexts in current use
+                               (cur_lextexts <= no_lextexts)                 */
+
+static int lex_index;       /* Index of lextext being written to             */
+static int lex_pos;         /* Current write position in that lextext        */
 
 /* ------------------------------------------------------------------------- */
 /*   The lexer itself needs up to 3 characters of lookahead (it uses an      */
 /*   LR(3) grammar to translate characters into tokens).                     */
+/*                                                                           */
+/*   Past the end of the stream, we fill in zeros. This has the awkward      */
+/*   side effect that a zero byte in a source file will silently terminate   */
+/*   it, rather than producing an "illegal source character" error.          */
+/*   On the up side, we can compile veneer routines (which are null-         */
+/*   terminated strings) with no extra work.                                 */
 /* ------------------------------------------------------------------------- */
 
 #define LOOKAHEAD_SIZE 3
 
 static int current, lookahead,          /* The latest character read, and    */
     lookahead2, lookahead3;             /* the three characters following it */
+                                        /* (zero means end-of-stream)        */
 
 static int pipeline_made;               /* Whether or not the pipeline of
                                            characters has been constructed
@@ -281,7 +305,10 @@ static int tokens_put_back;             /* Count of the number of backward
                                            moves made from the last-read
                                            token                             */
 
-extern void describe_token(token_data t)
+/* This gets called for both token_data and lexeme_data structs. It prints
+   a description of the common part (the text, value, type fields). 
+*/
+extern void describe_token_triple(const char *text, int32 value, int type)
 {
     /*  Many of the token types are not set in this file, but later on in
         Inform's higher stages (for example, in the expression evaluator);
@@ -289,51 +316,53 @@ extern void describe_token(token_data t)
 
     printf("{ ");
 
-    switch(t.type)
+    switch(type)
     {
         /*  The following token types occur in lexer output:                 */
 
         case SYMBOL_TT:          printf("symbol ");
-                                 describe_symbol(t.value);
+                                 describe_symbol(value);
                                  break;
-        case NUMBER_TT:          printf("literal number %d", t.value);
+        case NUMBER_TT:          printf("literal number %d", value);
                                  break;
-        case DQ_TT:              printf("string \"%s\"", t.text);
+        case DQ_TT:              printf("string \"%s\"", text);
                                  break;
-        case SQ_TT:              printf("string '%s'", t.text);
+        case SQ_TT:              printf("string '%s'", text);
                                  break;
-        case SEP_TT:             printf("separator '%s'", t.text);
+        case UQ_TT:              printf("barestring %s", text);
+                                 break;
+        case SEP_TT:             printf("separator '%s'", text);
                                  break;
         case EOF_TT:             printf("end of file");
                                  break;
 
-        case STATEMENT_TT:       printf("statement name '%s'", t.text);
+        case STATEMENT_TT:       printf("statement name '%s'", text);
                                  break;
-        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", t.text);
+        case SEGMENT_MARKER_TT:  printf("object segment marker '%s'", text);
                                  break;
-        case DIRECTIVE_TT:       printf("directive name '%s'", t.text);
+        case DIRECTIVE_TT:       printf("directive name '%s'", text);
                                  break;
-        case CND_TT:             printf("textual conditional '%s'", t.text);
+        case CND_TT:             printf("textual conditional '%s'", text);
                                  break;
-        case OPCODE_NAME_TT:     printf("opcode name '%s'", t.text);
+        case OPCODE_NAME_TT:     printf("opcode name '%s'", text);
                                  break;
-        case SYSFUN_TT:          printf("built-in function name '%s'", t.text);
+        case SYSFUN_TT:          printf("built-in function name '%s'", text);
                                  break;
-        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", t.text);
+        case LOCAL_VARIABLE_TT:  printf("local variable name '%s'", text);
                                  break;
-        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", t.text);
+        case MISC_KEYWORD_TT:    printf("statement keyword '%s'", text);
                                  break;
-        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", t.text);
+        case DIR_KEYWORD_TT:     printf("directive keyword '%s'", text);
                                  break;
-        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", t.text);
+        case TRACE_KEYWORD_TT:   printf("'trace' keyword '%s'", text);
                                  break;
-        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", t.text);
+        case SYSTEM_CONSTANT_TT: printf("system constant name '%s'", text);
                                  break;
 
         /*  The remaining are etoken types, not set by the lexer             */
 
         case OP_TT:              printf("operator '%s'",
-                                     operators[t.value].description);
+                                     operators[value].description);
                                  break;
         case ENDEXP_TT:          printf("end of expression");
                                  break;
@@ -341,26 +370,26 @@ extern void describe_token(token_data t)
                                  break;
         case SUBCLOSE_TT:        printf("close bracket");
                                  break;
-        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",t.text,t.value);
+        case LARGE_NUMBER_TT:    printf("large number: '%s'=%d",text,value);
                                  break;
-        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",t.text,t.value);
+        case SMALL_NUMBER_TT:    printf("small number: '%s'=%d",text,value);
                                  break;
-        case VARIABLE_TT:        printf("variable '%s'=%d", t.text, t.value);
+        case VARIABLE_TT:        printf("variable '%s'=%d", text, value);
                                  break;
-        case DICTWORD_TT:        printf("dictionary word '%s'", t.text);
+        case DICTWORD_TT:        printf("dictionary word '%s'", text);
                                  break;
-        case ACTION_TT:          printf("action name '%s'", t.text);
+        case ACTION_TT:          printf("action name '%s'", text);
                                  break;
 
         default:
             printf("** unknown token type %d, text='%s', value=%d **",
-            t.type, t.text, t.value);
+            type, text, value);
     }
     printf(" }");
 }
 
 /* ------------------------------------------------------------------------- */
-/*   All but one of the 280 Inform keywords (118 of them opcode names used   */
+/*   All but one of the Inform keywords (most of them opcode names used      */
 /*   only by the assembler).  (The one left over is "sp", a keyword used in  */
 /*   assembly language only.)                                                */
 /*                                                                           */
@@ -372,7 +401,9 @@ extern void describe_token(token_data t)
 /*   "header.h" but is otherwise not significant.                            */
 /* ------------------------------------------------------------------------- */
 
-#define MAX_KEYWORDS 350
+/* This must exceed the total number of keywords across all groups, 
+   including opcodes. */
+#define MAX_KEYWORDS (500)
 
 /* The values will be filled in at compile time, when we know
    which opcode set to use. */
@@ -426,11 +457,17 @@ static char *opcode_list_g[] = {
     "streamunichar",
     "mzero", "mcopy", "malloc", "mfree",
     "accelfunc", "accelparam",
+    "hasundo", "discardundo",
     "numtof", "ftonumz", "ftonumn", "ceil", "floor",
     "fadd", "fsub", "fmul", "fdiv", "fmod",
     "sqrt", "exp", "log", "pow",
     "sin", "cos", "tan", "asin", "acos", "atan", "atan2",
     "jfeq", "jfne", "jflt", "jfle", "jfgt", "jfge", "jisnan", "jisinf",
+    "numtod", "dtonumz", "dtonumn", "ftod", "dtof", "dceil", "dfloor",
+    "dadd", "dsub", "dmul", "ddiv", "dmodr", "dmodq",
+    "dsqrt", "dexp", "dlog", "dpow",
+    "dsin", "dcos", "dtan", "dasin", "dacos", "datan", "datan2",
+    "jdeq", "jdne", "jdlt", "jdle", "jdgt", "jdge", "jdisnan", "jdisinf",
     ""
 };
 
@@ -442,7 +479,7 @@ keyword_group opcode_macros =
 static char *opmacro_list_z[] = { "" };
 
 static char *opmacro_list_g[] = {
-    "pull", "push",
+    "pull", "push", "dload", "dstore",
     ""
 };
 
@@ -479,7 +516,7 @@ keyword_group directive_keywords =
     "string", "table", "buffer", "data", "initial", "initstr",
     "with", "private", "has", "class",
     "error", "fatalerror", "warning",
-    "terminating",
+    "terminating", "static", "individual",
     "" },
     DIR_KEYWORD_TT, FALSE, TRUE
 };
@@ -548,8 +585,10 @@ keyword_group *keyword_groups[12]
     &directive_keywords, &misc_keywords, &statements, &conditions,
     &system_functions, &system_constants, &opcode_macros};
 
+/* These keywords are set to point to local_variable_names entries when
+   a routine header is parsed. See construct_local_variable_tables().        */
 keyword_group local_variables =
-{ { "" },                                 /* Filled in when routine declared */
+{ { "" },
     LOCAL_VARIABLE_TT, FALSE, FALSE
 };
 
@@ -560,11 +599,8 @@ static int lexical_context(void)
         always translate to the same output tokens whenever the context
         is the same.
 
-        In fact, for efficiency reasons this number omits the bit of
-        information held in the variable "dont_enter_into_symbol_table".
-        Inform never needs to backtrack through tokens parsed in that
-        way (thankfully, as it would be expensive indeed to check
-        the tokens).                                                         */
+        (For many years, the "dont_enter_into_symbol_table" variable
+        was omitted from this number. But now we can include it.)            */
 
     int c = 0;
     if (opcode_names.enabled)         c |= 1;
@@ -580,11 +616,17 @@ static int lexical_context(void)
     if (local_variables.enabled)      c |= 1024;
 
     if (return_sp_as_variable)        c |= 2048;
+    if (dont_enter_into_symbol_table) c |= 4096;
+    
     return(c);
 }
 
 static void print_context(int c)
 {
+    if (c < 0) {
+        printf("??? ");
+        return;
+    }
     if ((c & 1) != 0) printf("OPC ");
     if ((c & 2) != 0) printf("DIR ");
     if ((c & 4) != 0) printf("TK ");
@@ -597,6 +639,7 @@ static void print_context(int c)
     if ((c & 512) != 0) printf("SCON ");
     if ((c & 1024) != 0) printf("LV ");
     if ((c & 2048) != 0) printf("sp ");
+    if ((c & 4096) != 0) printf("dontent ");
 }
 
 static int *keywords_hash_table;
@@ -605,8 +648,29 @@ static int *keywords_data_table;
 
 static int *local_variable_hash_table;
 static int *local_variable_hash_codes;
-char **local_variable_texts;
-static char *local_variable_text_table;
+
+/* Note that MAX_LOCAL_VARIABLES is the maximum number of local variables
+   for this VM, *including* "sp" (the stack pointer "local").
+   This used to be a memory setting. Now it is a constant: 16 for Z-code,
+   119 for Glulx.
+*/
+
+/* The number of local variables in the current routine. */
+int no_locals;
+
+/* Names of local variables in the current routine.
+   The values are positions in local_variable_names_memlist.
+   This is allocated to MAX_LOCAL_VARIABLES-1. (The stack pointer "local"
+   is not included in this array.)
+
+   (This could be a memlist, growing as needed up to MAX_LOCAL_VARIABLES-1.
+   But right now we just allocate the max.)
+ */
+int *local_variable_name_offsets;
+
+static memory_list local_variable_names_memlist;
+/* How much of local_variable_names_memlist is used by the no_local locals. */
+static int local_variable_names_usage;
 
 static char one_letter_locals[128];
 
@@ -624,11 +688,21 @@ static void make_keywords_tables(void)
     }
 
     for (j=0; *(oplist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opcode_list has overflowed opcode_names.keywords");
+            break;
+        }
         opcode_names.keywords[j] = oplist[j];
     }
     opcode_names.keywords[j] = "";
     
     for (j=0; *(maclist[j]); j++) {
+        if (j >= MAX_KEYWORD_GROUP_SIZE) {
+            /* Gotta increase MAX_KEYWORD_GROUP_SIZE */
+            compiler_error("opmacro_list has overflowed opcode_macros.keywords");
+            break;
+        }
         opcode_macros.keywords[j] = maclist[j];
     }
     opcode_macros.keywords[j] = "";
@@ -641,7 +715,13 @@ static void make_keywords_tables(void)
     for (i=1; i<=11; i++)
     {   keyword_group *kg = keyword_groups[i];
         for (j=0; *(kg->keywords[j]) != 0; j++)
-        {   h = hash_code_from_string(kg->keywords[j]);
+        {
+            if (tp >= MAX_KEYWORDS) {
+                /* Gotta increase MAX_KEYWORDS */
+                compiler_error("keywords_data_table has overflowed MAX_KEYWORDS");
+                break;
+            }
+            h = hash_code_from_string(kg->keywords[j]);
             if (keywords_hash_table[h] == -1)
                 keywords_hash_table[h] = tp;
             else
@@ -655,40 +735,111 @@ static void make_keywords_tables(void)
     }
 }
 
+extern void clear_local_variables(void)
+{
+    no_locals = 0;
+    local_variable_names_usage = 0;
+}
+
+extern void add_local_variable(char *name)
+{
+    int len;
+
+    if (no_locals >= MAX_LOCAL_VARIABLES-1) {
+        /* This should have been caught before we got here */
+        error("too many local variables");
+        return;
+    }
+    
+    len = strlen(name)+1;
+    ensure_memory_list_available(&local_variable_names_memlist, local_variable_names_usage + len);
+    local_variable_name_offsets[no_locals++] = local_variable_names_usage;
+    strcpy((char *)local_variable_names_memlist.data+local_variable_names_usage, name);
+    local_variable_names_usage += len;
+}
+
+extern char *get_local_variable_name(int index)
+{
+    if (index < 0 || index >= no_locals)
+        return "???";   /* shouldn't happen */
+
+    return (char *)local_variable_names_memlist.data + local_variable_name_offsets[index];
+}
+
+/* Look at the strings stored in local_variable_names (from 0 to no_locals).
+   Set local_variables.keywords to point to these, and also prepare the
+   hash tables.
+   This must be called after add_local_variable(), but before we start
+   compiling function code. */
 extern void construct_local_variable_tables(void)
-{   int i, h; char *p = local_variable_text_table;
+{   int i, h;
     for (i=0; i<HASH_TAB_SIZE; i++) local_variable_hash_table[i] = -1;
     for (i=0; i<128; i++) one_letter_locals[i] = MAX_LOCAL_VARIABLES;
 
     for (i=0; i<no_locals; i++)
-    {   char *q = local_variables.keywords[i];
-        if (q[1] == 0)
-        {   one_letter_locals[(uchar)q[0]] = i;
-            if (isupper(q[0])) one_letter_locals[tolower(q[0])] = i;
-            if (islower(q[0])) one_letter_locals[toupper(q[0])] = i;
+    {
+        char *p = (char *)local_variable_names_memlist.data + local_variable_name_offsets[i];
+        local_variables.keywords[i] = p;
+        if (p[1] == 0)
+        {   one_letter_locals[(uchar)p[0]] = i;
+            if (isupper(p[0])) one_letter_locals[tolower(p[0])] = i;
+            if (islower(p[0])) one_letter_locals[toupper(p[0])] = i;
         }
-        h = hash_code_from_string(q);
+        h = hash_code_from_string(p);
         if (local_variable_hash_table[h] == -1)
             local_variable_hash_table[h] = i;
         local_variable_hash_codes[i] = h;
-        local_variable_texts[i] = p;
-        strcpy(p, q);
-        p += strlen(p)+1;
     }
-    for (;i<MAX_LOCAL_VARIABLES-1;i++) 
-      local_variable_texts[i] = "<no such local variable>";
+    /* Clear the rest. */
+    for (;i<MAX_LOCAL_VARIABLES-1;i++) {
+        local_variables.keywords[i] = "";
+        local_variable_hash_codes[i] = 0;
+    }
 }
 
-static void interpret_identifier(int pos, int dirs_only_flag)
-{   int index, hashcode; char *p = circle[pos].text;
+static void interpret_identifier(char *p, int pos)
+{   int index, hashcode;
 
     /*  An identifier is either a keyword or a "symbol", a name which the
         lexical analyser leaves to higher levels of Inform to understand.    */
 
+    circle[pos].newsymbol = FALSE;
+    
     hashcode = hash_code_from_string(p);
 
-    if (dirs_only_flag) goto KeywordSearch;
+    /*  If dont_enter_into_symbol_table is true, we skip all keywords
+        (and variables) and just mark the name as an unquoted string.
+        Except that if dont_enter_into_symbol_table is -2, we recognize
+        directive keywords (only).
+    */
 
+    if (dont_enter_into_symbol_table) {
+
+        if (dont_enter_into_symbol_table == -2) {
+            /* This is a simplified version of the keyword-checking loop
+               below. */
+            index = keywords_hash_table[hashcode];
+            while (index >= 0)
+            {   int *i = keywords_data_table + 3*index;
+                keyword_group *kg = keyword_groups[*i];
+                if (kg == &directives)
+                {   char *q = kg->keywords[*(i+1)];
+                    if (((kg->case_sensitive) && (strcmp(p, q)==0))
+                        || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
+                    {   circle[pos].type = kg->change_token_type;
+                        circle[pos].value = *(i+1);
+                        return;
+                    }
+                }
+                index = *(i+2);
+            }
+        }
+        
+        circle[pos].type = UQ_TT;
+        circle[pos].value = 0;
+        return;
+    }
+    
     /*  If this is assembly language, perhaps it is "sp"?                    */
 
     if (return_sp_as_variable && (p[0]=='s') && (p[1]=='p') && (p[2]==0))
@@ -711,7 +862,9 @@ static void interpret_identifier(int pos, int dirs_only_flag)
         if (index >= 0)
         {   for (;index<no_locals;index++)
             {   if (hashcode == local_variable_hash_codes[index])
-                {   if (strcmpcis(p, local_variable_texts[index])==0)
+                {
+                    char *locname = (char *)local_variable_names_memlist.data + local_variable_name_offsets[index];
+                    if (strcmpcis(p, locname)==0)
                     {   circle[pos].type = LOCAL_VARIABLE_TT;
                         circle[pos].value = index+1;
                         return;
@@ -724,13 +877,11 @@ static void interpret_identifier(int pos, int dirs_only_flag)
     /*  Now the bulk of the keywords.  Note that the lexer doesn't recognise
         the name of a system function which has been Replaced.               */
 
-    KeywordSearch:
     index = keywords_hash_table[hashcode];
     while (index >= 0)
     {   int *i = keywords_data_table + 3*index;
         keyword_group *kg = keyword_groups[*i];
-        if (((!dirs_only_flag) && (kg->enabled))
-            || (dirs_only_flag && (kg == &directives)))
+        if (kg->enabled)
         {   char *q = kg->keywords[*(i+1)];
             if (((kg->case_sensitive) && (strcmp(p, q)==0))
                 || ((!(kg->case_sensitive)) && (strcmpcis(p, q)==0)))
@@ -745,11 +896,9 @@ static void interpret_identifier(int pos, int dirs_only_flag)
         index = *(i+2);
     }
 
-    if (dirs_only_flag) return;
-
     /*  Search for the name; create it if necessary.                         */
 
-    circle[pos].value = symbol_index(p, hashcode);
+    circle[pos].value = symbol_index(p, hashcode, &circle[pos].newsymbol);
     circle[pos].type = SYMBOL_TT;
 }
 
@@ -822,6 +971,7 @@ static void make_tokeniser_grid(void)
     tokeniser_grid[0]    = EOF_CODE;
     tokeniser_grid[' ']  = WHITESPACE_CODE;
     tokeniser_grid['\n'] = WHITESPACE_CODE;
+    tokeniser_grid['\r'] = WHITESPACE_CODE;
     tokeniser_grid['$']  = RADIX_CODE;
     tokeniser_grid['!']  = COMMENT_CODE;
 
@@ -940,6 +1090,8 @@ extern int is_systemfile(void)
 
 extern void set_origsource_location(char *source, int32 line, int32 charnum)
 {
+    int file_no;
+
     if (!source) {
         /* Clear the Origsource declaration. */
         CurrentLB->orig_file = 0;
@@ -950,7 +1102,7 @@ extern void set_origsource_location(char *source, int32 line, int32 charnum)
     }
 
     /* Get the file number for a new or existing InputFiles entry. */
-    int file_no = register_orig_sourcefile(source);
+    file_no = register_orig_sourcefile(source);
 
     CurrentLB->orig_file = file_no;
     CurrentLB->orig_source = InputFiles[file_no-1].filename;
@@ -1074,10 +1226,6 @@ static void reached_new_line(void)
         if (g_proc != true)
         {   free_arrays();
             close_all_source();
-            if (temporary_files_switch)
-                remove_temp_files();
-            if (store_the_text)
-                my_free(&all_text,"transcription text");
             abort_transcript_file();
             longjmp (g_fallback, 1);
         }
@@ -1128,8 +1276,7 @@ static double pow10_cheap(int expo)
 }
 
 /* Return the IEEE-754 single-precision encoding of a floating-point
- * number. See http://www.psc.edu/general/software/packages/ieee/ieee.php
- * for an explanation.
+ * number.
  *
  * The number is provided in the pieces it was parsed in:
  *    [+|-] intv "." fracv "e" [+|-]expo
@@ -1141,9 +1288,10 @@ static double pow10_cheap(int expo)
  * lexer should never do that).
  *
  * Note that using a float constant does *not* set the uses_float_features
- * flag (which would cause the game file to be labelled 3.1.2). There's
- * no VM feature here, just an integer. Of course, any use of the float
- * *opcodes* will set the flag.
+ * flag (which would cause the game file to be labelled 3.1.2). Same with 
+ * double constants and the uses_double_features flag. There's no VM
+ * feature here, just an integer. Of course, any use of the float *opcodes*
+ * will set the flag.
  *
  * The math functions in this routine require #including <math.h>, but
  * they should not require linking the math library (-lm). At least,
@@ -1201,7 +1349,91 @@ static int32 construct_float(int signbit, double intv, double fracv, int expo)
         }
     }
 
+    /* At this point, expo is less than 2^8; fbits is less than 2^23; neither is negative. */
     return (sign) | ((int32)(expo << 23)) | (fbits);
+}
+
+/* Same as the above, but we return *half* of a 64-bit double, depending on whether wanthigh is true (high half) or false (low half).
+ */
+static int32 construct_double(int wanthigh, int signbit, double intv, double fracv, int expo)
+{
+    double absval = (intv + fracv) * pow10_cheap(expo);
+    int32 sign = (signbit ? 0x80000000 : 0x0);
+    double mant;
+    uint32 fhi, flo;
+ 
+    if (isinf(absval)) {
+        goto Infinity;
+    }
+    if (isnan(absval)) {
+        goto NotANumber;
+    }
+
+    mant = frexp(absval, &expo);
+
+    /* Normalize mantissa to be in the range [1.0, 2.0) */
+    if (0.5 <= mant && mant < 1.0) {
+        mant *= 2.0;
+        expo--;
+    }
+    else if (mant == 0.0) {
+        expo = 0;
+    }
+    else {
+        goto Infinity;
+    }
+
+    if (expo >= 1024) {
+        goto Infinity;
+    }
+    else if (expo < -1022) {
+        /* Denormalized (very small) number */
+        mant = ldexp(mant, 1022 + expo);
+        expo = 0;
+    }
+    else if (!(expo == 0 && mant == 0.0)) {
+        expo += 1023;
+        mant -= 1.0; /* Get rid of leading 1 */
+    }
+
+    /* fhi receives the high 28 bits; flo the low 24 bits (total 52 bits) */
+    mant *= 268435456.0;          /* 2^28 */
+    fhi = (uint32)mant;           /* Truncate */
+    mant -= (double)fhi;
+    mant *= 16777216.0;           /* 2^24 */
+    flo = (uint32)(mant+0.5);     /* Round */
+    
+    if (flo >> 24) {
+        /* The carry propagated out of a string of 24 1 bits. */
+        flo = 0;
+        fhi++;
+        if (fhi >> 28) {
+            /* And it also propagated out of the next 28 bits. */
+            fhi = 0;
+            expo++;
+            if (expo >= 2047) {
+                goto Infinity;
+            }
+        }
+    }
+
+    /* At this point, expo is less than 2^11; fhi is less than 2^28; flo is less than 2^24; none are negative. */
+    if (wanthigh)
+        return (sign) | ((int32)(expo << 20)) | ((int32)(fhi >> 8));
+    else
+        return (int32)((fhi & 0xFF) << 24) | (int32)(flo);
+
+ Infinity:
+    if (wanthigh)
+        return sign | 0x7FF00000;
+    else
+        return 0x00000000;
+    
+ NotANumber:
+    if (wanthigh)
+        return sign | 0x7FF80000;
+    else
+        return 0x00000001;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1217,7 +1449,7 @@ static int32 construct_float(int signbit, double intv, double fracv, int expo)
 /*                                                                           */
 /*   Note that file_load_chars(p, size) loads "size" bytes into buffer "p"   */
 /*   from the current input file.  If the file runs out, then if it was      */
-/*   the last source file 4 EOF characters are placed in the buffer: if it   */
+/*   the last source file 4 null characters are placed in the buffer: if it  */
 /*   was only an Include file ending, then a '\n' character is placed there  */
 /*   (essentially to force termination of any comment line) followed by      */
 /*   three harmless spaces.                                                  */
@@ -1241,18 +1473,31 @@ typedef struct Sourcefile_s
     LexicalBlock LB;
 } Sourcefile;
 
-static Sourcefile *FileStack;
-static int File_sp;                              /*  Stack pointer           */
+static Sourcefile *FileStack;     /*  Allocated to FileStack_max */
+static memory_list FileStack_memlist;
+static int FileStack_max;         /*  The highest value that File_sp has
+                                      reached
+                                      (Filestack entries to this depth have
+                                      a buffer allocated)                    */
 
-static Sourcefile *CF;                           /*  Top entry on stack      */
+static int File_sp;               /*  Current stack pointer                  */
+static Sourcefile *CF;            /*  Top entry on stack (always equal to
+                                      FileStack[File_sp-1])                  */
 
 static int last_input_file;
 
+/* Set CF and CurrentLB.
+   This does not increment File_sp; the caller must do that. */
 static void begin_buffering_file(int i, int file_no)
 {   int j, cnt; uchar *p;
 
-    if (i >= MAX_INCLUSION_DEPTH) 
-       memoryerror("MAX_INCLUSION_DEPTH",MAX_INCLUSION_DEPTH);
+    CF = NULL;
+    CurrentLB = NULL;
+    
+    ensure_memory_list_available(&FileStack_memlist, i+1);
+    while (i >= FileStack_max) {
+        FileStack[FileStack_max++].buffer = my_malloc(SOURCE_BUFFER_SIZE+4, "source file buffer");
+    }
 
     p = (uchar *) FileStack[i].buffer;
 
@@ -1265,6 +1510,8 @@ static void begin_buffering_file(int i, int file_no)
     FileStack[i].file_no = file_no;
     FileStack[i].size = file_load_chars(file_no,
         (char *) p, SOURCE_BUFFER_SIZE);
+    /* If the file is shorter than SOURCE_BUFFER_SIZE, it's now closed already. We still need to set up the file entry though. */
+    
     lookahead  = source_to_iso_grid[p[0]];
     lookahead2 = source_to_iso_grid[p[1]];
     lookahead3 = source_to_iso_grid[p[2]];
@@ -1284,6 +1531,8 @@ static void begin_buffering_file(int i, int file_no)
     FileStack[i].LB.orig_source = NULL; FileStack[i].LB.orig_file = 0; 
     FileStack[i].LB.orig_line = 0; FileStack[i].LB.orig_char = 0;
 
+    InputFiles[file_no-1].initial_buffering = FALSE;
+    
     CurrentLB = &(FileStack[i].LB);
     CF = &(FileStack[i]);
 
@@ -1361,14 +1610,35 @@ static int get_next_char_from_pipeline(void)
     lookahead3 = source_to_iso_grid[p[CF->read_pos++]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
-    if (current == '\n') reached_new_line();
+
+    /* The file is open in binary mode, so we have to do our own newline
+       conversion. (We want to do it consistently across all platforms.)
+
+       The strategy is to convert all \r (CR) characters to \n (LF), but
+       *don't* advance the line counter for \r if it's followed by \n.
+       The rest of the lexer treats multiple \n characters the same as
+       one, so the simple conversion will work out okay.
+
+       (Note that, for historical reasons, a ctrl-L (formfeed) is also
+       treated as \r. This conversion has already been handled by
+       source_to_iso_grid[].)
+    */
+    if (current == '\n') {
+        reached_new_line();
+    }
+    else if (current == '\r') {
+        current = '\n';
+        if (lookahead != '\n')
+            reached_new_line();
+    }
+    
     return(current);
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Source 2: from a string                                                 */
+/*   Source 2: from a (null-terminated) string                               */
 /* ------------------------------------------------------------------------- */
 
 static int source_to_analyse_pointer;            /*  Current read position   */
@@ -1385,9 +1655,14 @@ static int get_next_char_from_string(void)
                     else lookahead3 = source_to_iso_grid[p[3]];
 
     CurrentLB->chars_read++;
-    if (forerrors_pointer < 511)
+    if (forerrors_pointer < FORERRORS_SIZE-1)
         forerrors_buff[forerrors_pointer++] = current;
+
+    /* We shouldn't have \r when compiling from string (veneer function).
+       If we do, just shove it under the carpet. */
+    if (current == '\r') current = '\n';
     if (current == '\n') reached_new_line();
+    
     return(current);
 }
 
@@ -1403,19 +1678,80 @@ static int get_next_char_from_string(void)
 /*                                       and move the read position forward  */
 /*                                       by one                              */
 /*                                                                           */
+/*       release_token_texts()       discard all the tokens that have been   */
+/*                                       read in, except for put-back ones   */
+/*                                                                           */
 /*       restart_lexer(source, name) if source is NULL, initialise the lexer */
 /*                                       to read from source files;          */
-/*                                   otherwise, to read from this string.    */
+/*                                       otherwise, to read from this null-  */
+/*                                       terminated string.                  */
 /* ------------------------------------------------------------------------- */
+
+extern void release_token_texts(void)
+{
+    /* This is called at the beginning of every (top-level) directive and
+       every statement. It drops all token usage so that the lextexts
+       array can be reused.
+
+       Call this immediately before a get_next_token() call.
+
+       This should *not* be called within parse_expression(). Expression
+       code generation relies on token data being retained across the whole
+       expression.
+    */
+    int ix;
+
+    token_text = NULL;
+    
+    if (tokens_put_back == 0) {
+        cur_lextexts = 0;
+        return;
+    }
+
+    /* If any tokens have been put back, we have to preserve their text.
+       Move their lextext usage to the head of the lextexts array. */
+    
+    for (ix=0; ix<tokens_put_back; ix++) {
+        int oldpos;
+        lextext temp;
+        int pos = circle_position - tokens_put_back + 1 + ix;
+        if (pos < 0) pos += CIRCLE_SIZE;
+
+        oldpos = circle[pos].lextext;
+        circle[pos].lextext = ix;
+        /* Swap the entire lextext structure (including size) */
+        temp = lextexts[ix];
+        lextexts[ix] = lextexts[oldpos];
+        lextexts[oldpos] = temp;
+    }
+    cur_lextexts = tokens_put_back;
+}
 
 extern void put_token_back(void)
 {   tokens_put_back++;
 
+    int pos = circle_position - tokens_put_back + 1;
+    if (pos<0) pos += CIRCLE_SIZE;
+
     if (tokens_trace_level > 0)
-    {   if (tokens_trace_level == 1) printf("<- ");
-        else printf("<-\n");
+    {
+        printf("<- ");
+        if (tokens_trace_level > 1) {
+            describe_token(&circle[pos]);
+            printf("\n");
+        }
     }
 
+    if (circle[pos].type == SYMBOL_TT && circle[pos].newsymbol) {
+        /* Remove the symbol from the symbol table. (Or mark it as unreachable
+           anyhow.) */
+        end_symbol_scope(circle[pos].value, TRUE);
+        /* Remove new-symbol flag, and force reinterpretation next time
+           we see the symbol. */
+        circle[pos].newsymbol = FALSE;
+        circle[pos].context = -1;
+    }
+    
     /*  The following error, of course, should never happen!                 */
 
     if (tokens_put_back == CIRCLE_SIZE)
@@ -1426,20 +1762,71 @@ assumption inside Inform");
     }
 }
 
-extern void get_next_token(void)
-{   int d, i, j, k, quoted_size, e, radix, context; int32 n; char *r;
-    int returning_a_put_back_token = TRUE;
+/* The get_next_token() code reads characters into the current lextext,
+   which is lextexts[lex_index]. It uses these routines to add and remove
+   characters, reallocing when necessary.
 
+   lex_pos is the current number of characters in the lextext. It is
+   not necessarily null-terminated until get_next_token() completes.
+ */
+
+/* Add one character */
+static void lexaddc(char ch)
+{
+    if ((size_t)lex_pos >= lextexts[lex_index].size) {
+        size_t newsize = lextexts[lex_index].size * 2;
+        my_realloc(&lextexts[lex_index].text, lextexts[lex_index].size, newsize, "one lexeme text");
+        lextexts[lex_index].size = newsize;
+    }
+    lextexts[lex_index].text[lex_pos++] = ch;
+}
+
+/* Remove the last character and ensure it's null-terminated */
+static void lexdelc(void)
+{
+    if (lex_pos > 0) {
+        lex_pos--;
+    }
+    lextexts[lex_index].text[lex_pos] = 0;
+}
+
+/* Return the last character */
+static char lexlastc(void)
+{
+    if (lex_pos == 0) {
+        return 0;
+    }
+    return lextexts[lex_index].text[lex_pos-1];
+}
+
+/* Add a string of characters (including the null) */
+static void lexadds(char *str)
+{
+    while (*str) {
+        lexaddc(*str);
+        str++;
+    }
+    lexaddc(0);
+}
+
+extern void get_next_token(void)
+{   int d, i, j, k, quoted_size, e, radix, context;
+    uint32 n;
+    char *r;
+    int floatend;
+    int returning_a_put_back_token = TRUE;
+    
     context = lexical_context();
 
     if (tokens_put_back > 0)
     {   i = circle_position - tokens_put_back + 1;
         if (i<0) i += CIRCLE_SIZE;
         tokens_put_back--;
-        if (context != token_contexts[i])
+        if (context != circle[i].context)
         {   j = circle[i].type;
             if ((j==0) || ((j>=100) && (j<200)))
-                interpret_identifier(i, FALSE);
+                interpret_identifier(circle[i].text, i);
+            circle[i].context = context;
         }
         goto ReturnBack;
     }
@@ -1448,12 +1835,23 @@ extern void get_next_token(void)
     if (circle_position == CIRCLE_SIZE-1) circle_position = 0;
     else circle_position++;
 
-    if (lex_p > lexeme_memory + 4*MAX_QTEXT_SIZE)
-        lex_p = lexeme_memory;
-
-    circle[circle_position].text = lex_p;
+    lex_index = cur_lextexts++;
+    if (lex_index >= no_lextexts) {
+        /* fresh lextext block; must init it */
+        no_lextexts = lex_index+1;
+        ensure_memory_list_available(&lextexts_memlist, no_lextexts);
+        lextexts[lex_index].size = 64;   /* this can grow */
+        lextexts[lex_index].text = my_malloc(lextexts[lex_index].size, "one lexeme text");
+    }
+    lex_pos = 0;
+    lextexts[lex_index].text[0] = 0; /* start with an empty string */
+    
+    circle[circle_position].lextext = lex_index;
+    circle[circle_position].text = NULL; /* will fill in later */
     circle[circle_position].value = 0;
-    *lex_p = 0;
+    circle[circle_position].type = 0;
+    circle[circle_position].newsymbol = FALSE;
+    circle[circle_position].context = context;
 
     StartTokenAgain:
     d = (*get_next_char)();
@@ -1478,14 +1876,13 @@ extern void get_next_token(void)
             goto StartTokenAgain;
 
         case COMMENT_CODE:
-            while ((lookahead != '\n') && (lookahead != 0))
+            while ((lookahead != '\n') && (lookahead != '\r') && (lookahead != 0))
                 (*get_next_char)();
             goto StartTokenAgain;
 
         case EOF_CODE:
             circle[circle_position].type = EOF_TT;
-            strcpy(lex_p, "<end of file>");
-            lex_p += strlen(lex_p) + 1;
+            lexadds("<end of file>");
             break;
 
         case DIGIT_CODE:
@@ -1494,51 +1891,54 @@ extern void get_next_token(void)
             n=0;
             do
             {   n = n*radix + character_digit_value[d];
-                *lex_p++ = d;
+                lexaddc(d);
             } while ((character_digit_value[lookahead] < radix)
                      && (d = (*get_next_char)(), TRUE));
 
-            *lex_p++ = 0;
+            lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
-            circle[circle_position].value = n;
+            circle[circle_position].value = (int32)n;
             break;
 
             FloatNumber:
+            /* When we reach here, d is the sign bit ('+' or '-').
+               If we're constructing a 32-bit float, floatend is 0;
+               for a 64-bit double, floatend is '>' for high, '<' for low. */
             {   int expo=0; double intv=0, fracv=0;
                 int expocount=0, intcount=0, fraccount=0;
                 int signbit = (d == '-');
-                *lex_p++ = d;
+                lexaddc(d);
                 while (character_digit_value[lookahead] < 10) {
                     intv = 10.0*intv + character_digit_value[lookahead];
                     intcount++;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                 }
                 if (lookahead == '.') {
                     double fracpow = 1.0;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                     while (character_digit_value[lookahead] < 10) {
                         fracpow *= 0.1;
                         fracv = fracv + fracpow*character_digit_value[lookahead];
                         fraccount++;
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                 }
                 if (lookahead == 'e' || lookahead == 'E') {
                     int exposign = 0;
-                    *lex_p++ = lookahead;
+                    lexaddc(lookahead);
                     (*get_next_char)();
                     if (lookahead == '+' || lookahead == '-') {
                         exposign = (lookahead == '-');
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                     while (character_digit_value[lookahead] < 10) {
                         expo = 10*expo + character_digit_value[lookahead];
                         expocount++;
-                        *lex_p++ = lookahead;
+                        lexaddc(lookahead);
                         (*get_next_char)();
                     }
                     if (expocount == 0)
@@ -1547,9 +1947,14 @@ extern void get_next_token(void)
                 }
                 if (intcount + fraccount == 0)
                     error("Floating-point literal must have digits");
-                n = construct_float(signbit, intv, fracv, expo);
+                if (floatend == '>')
+                    n = construct_double(TRUE, signbit, intv, fracv, expo);
+                else if (floatend == '<')
+                    n = construct_double(FALSE, signbit, intv, fracv, expo);
+                else                    
+                    n = construct_float(signbit, intv, fracv, expo);
             }
-            *lex_p++ = 0;
+            lexaddc(0);
             circle[circle_position].type = NUMBER_TT;
             circle[circle_position].value = n;
             if (!glulx_mode && dont_enter_into_symbol_table != -2) error("Floating-point literals are not available in Z-code");
@@ -1557,7 +1962,18 @@ extern void get_next_token(void)
 
         case RADIX_CODE:
             radix = 16; d = (*get_next_char)();
-            if (d == '-' || d == '+') { goto FloatNumber; }
+            if (d == '-' || d == '+') {
+                floatend = 0;
+                goto FloatNumber;
+            }
+            if (d == '<' || d == '>') {
+                floatend = d;
+                d = (*get_next_char)();
+                if (d == '-' || d == '+') {
+                    goto FloatNumber;
+                }
+                error("Signed number expected after '$<' or '$>'");
+            }
             if (d == '$') { d = (*get_next_char)(); radix = 2; }
             if (character_digit_value[d] >= radix)
             {   if (radix == 2)
@@ -1570,46 +1986,37 @@ extern void get_next_token(void)
         case QUOTE_CODE:     /* Single-quotes: scan a literal string */
             quoted_size=0;
             do
-            {   e = d; d = (*get_next_char)(); *lex_p++ = d;
-                if (quoted_size++==64)
-                {   error(
-                    "Too much text for one pair of quotations '...' to hold");
-                    *lex_p='\''; break;
-                }
+            {   e = d; d = (*get_next_char)(); lexaddc(d);
+                quoted_size++;
                 if ((d == '\'') && (e != '@'))
                 {   if (quoted_size == 1)
-                    {   d = (*get_next_char)(); *lex_p++ = d;
+                    {   d = (*get_next_char)(); lexaddc(d);
                         if (d != '\'')
                             error("No text between quotation marks ''");
                     }
                     break;
                 }
-            } while (d != EOF);
-            if (d==EOF) ebf_error("'\''", "end of file");
-            *(lex_p-1) = 0;
+            } while (d != 0);
+            if (d==0) ebf_error("'\''", "end of file");
+            lexdelc();
             circle[circle_position].type = SQ_TT;
             break;
 
         case DQUOTE_CODE:    /* Double-quotes: scan a literal string */
-            quoted_size=0;
             do
-            {   d = (*get_next_char)(); *lex_p++ = d;
-                if (quoted_size++==MAX_QTEXT_SIZE)
-                {   memoryerror("MAX_QTEXT_SIZE", MAX_QTEXT_SIZE);
-                    break;
-                }
+            {   d = (*get_next_char)(); lexaddc(d);
                 if (d == '\n')
-                {   lex_p--;
-                    while (*(lex_p-1) == ' ') lex_p--;
-                    if (*(lex_p-1) != '^') *lex_p++ = ' ';
-                    while ((lookahead != EOF) &&
+                {   lex_pos--;
+                    while (lexlastc() == ' ') lex_pos--;
+                    if (lexlastc() != '^') lexaddc(' ');
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                     (*get_next_char)();
                 }
                 else if (d == '\\')
                 {   int newline_passed = FALSE;
-                    lex_p--;
-                    while ((lookahead != EOF) &&
+                    lex_pos--;
+                    while ((lookahead != 0) &&
                           (tokeniser_grid[lookahead] == WHITESPACE_CODE))
                         if ((d = (*get_next_char)()) == '\n')
                             newline_passed = TRUE;
@@ -1621,42 +2028,22 @@ extern void get_next_token(void)
                             chb);
                     }
                 }
-            }   while ((d != EOF) && (d!='\"'));
-            if (d==EOF) ebf_error("'\"'", "end of file");
-            *(lex_p-1) = 0;
+            }   while ((d != 0) && (d!='\"'));
+            if (d==0) ebf_error("'\"'", "end of file");
+            lexdelc();
             circle[circle_position].type = DQ_TT;
             break;
 
         case IDENTIFIER_CODE:    /* Letter or underscore: an identifier */
 
-            *lex_p++ = d; n=1;
-            while ((n<=MAX_IDENTIFIER_LENGTH)
-                   && ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
+            lexaddc(d); n=1;
+            while (((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                    || (tokeniser_grid[lookahead] == DIGIT_CODE)))
-                n++, *lex_p++ = (*get_next_char)();
+                n++, lexaddc((*get_next_char)());
 
-            *lex_p++ = 0;
+            lexaddc(0);
 
-            if (n > MAX_IDENTIFIER_LENGTH)
-            {   char bad_length[100];
-                sprintf(bad_length,
-                    "Name exceeds the maximum length of %d characters:",
-                         MAX_IDENTIFIER_LENGTH);
-                error_named(bad_length, circle[circle_position].text);
-                /* Trim token so that it doesn't violate
-                   MAX_IDENTIFIER_LENGTH during error recovery */
-                circle[circle_position].text[MAX_IDENTIFIER_LENGTH] = 0;
-            }
-
-            if (dont_enter_into_symbol_table)
-            {   circle[circle_position].type = DQ_TT;
-                circle[circle_position].value = 0;
-                if (dont_enter_into_symbol_table == -2)
-                    interpret_identifier(circle_position, TRUE);
-                break;
-            }
-
-            interpret_identifier(circle_position, FALSE);
+            interpret_identifier(lextexts[lex_index].text, circle_position);
             break;
 
         default:
@@ -1666,24 +2053,25 @@ extern void get_next_token(void)
             for (j=e>>4, k=j+(e&0x0f); j<k; j++)
             {   r = (char *) separators[j];
                 if (r[1]==0)
-                {   *lex_p++=d; *lex_p++=0;
+                {   lexaddc(d);
+                    lexaddc(0);
                     goto SeparatorMatched;
                 }
                 else
                 if (r[2]==0)
                 {   if (*(r+1) == lookahead)
-                    {   *lex_p++=d;
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=0;
+                    {   lexaddc(d);
+                        lexaddc((*get_next_char)());
+                        lexaddc(0);
                         goto SeparatorMatched;
                     }
                 }
                 else
                 {   if ((*(r+1) == lookahead) && (*(r+2) == lookahead2))
-                    {   *lex_p++=d;
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=(*get_next_char)();
-                        *lex_p++=0;
+                    {   lexaddc(d);
+                        lexaddc((*get_next_char)());
+                        lexaddc((*get_next_char)());
+                        lexaddc(0);
                         goto SeparatorMatched;
                     }
                 }
@@ -1692,9 +2080,10 @@ extern void get_next_token(void)
             /*  The following contingency never in fact arises with the
                 current set of separators, but might in future  */
 
-            *lex_p++ = d; *lex_p++ = lookahead; *lex_p++ = lookahead2;
-            *lex_p++ = 0;
-            error_named("Unrecognised combination in source:", lex_p);
+            lexaddc(d); lexaddc(lookahead); lexaddc(lookahead2);
+            lexaddc(0);
+            error_named("Unrecognised combination in source:",
+                lextexts[lex_index].text);
             goto StartTokenAgain;
 
             SeparatorMatched:
@@ -1707,15 +2096,15 @@ extern void get_next_token(void)
                 case HASHWDOLLAR_SEP:
                     if (tokeniser_grid[lookahead] == WHITESPACE_CODE)
                     {   error_named("Character expected after",
-                            circle[circle_position].text);
+                            lextexts[lex_index].text);
                         break;
                     }
-                    lex_p--;
-                    *lex_p++ = (*get_next_char)();
+                    lex_pos--;
+                    lexaddc((*get_next_char)());
                     while ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                            || (tokeniser_grid[lookahead] == DIGIT_CODE))
-                        *lex_p++ = (*get_next_char)();
-                    *lex_p++ = 0;
+                        lexaddc((*get_next_char)());
+                    lexaddc(0);
                     break;
                 case HASHADOLLAR_SEP:
                 case HASHGDOLLAR_SEP:
@@ -1723,37 +2112,46 @@ extern void get_next_token(void)
                 case HASHHASH_SEP:
                     if (tokeniser_grid[lookahead] != IDENTIFIER_CODE)
                     {   error_named("Alphabetic character expected after",
-                            circle[circle_position].text);
+                            lextexts[lex_index].text);
                         break;
                     }
-                    lex_p--;
+                    lex_pos--;
                     while ((tokeniser_grid[lookahead] == IDENTIFIER_CODE)
                            || (tokeniser_grid[lookahead] == DIGIT_CODE))
-                        *lex_p++ = (*get_next_char)();
-                    *lex_p++ = 0;
+                        lexaddc((*get_next_char)());
+                    lexaddc(0);
                     break;
             }
             break;
     }
 
+    /* We can now assign the text pointer, since the lextext has finished reallocing. */
+    circle[circle_position].text = lextexts[lex_index].text;
     i = circle_position;
 
     ReturnBack:
+    /* We've either parsed a new token or selected a put-back one.
+       i is the circle-position of the token in question. Time to
+       export the token data where higher-level code can find it. */
     token_value = circle[i].value;
     token_type = circle[i].type;
     token_text = circle[i].text;
     if (!returning_a_put_back_token)
     {   set_token_location(circle[i].location);
     }
-    token_contexts[i] = context;
 
     if (tokens_trace_level > 0)
-    {   if (tokens_trace_level == 1)
+    {   if (tokens_trace_level == 1) {
             printf("'%s' ", circle[i].text);
+            if (circle[i].type == EOF_TT) printf("\n");
+        }
         else
-        {   printf("-> "); describe_token(circle[i]);
+        {   printf("-> "); describe_token(&circle[i]);
             printf(" ");
-            if (tokens_trace_level > 2) print_context(token_contexts[i]);
+            if (tokens_trace_level > 2) {
+                if (circle[i].newsymbol) printf("newsym ");
+                print_context(circle[i].context);
+            }
             printf("\n");
         }
     }
@@ -1767,11 +2165,17 @@ extern void restart_lexer(char *lexical_source, char *name)
     for (i=0; i<CIRCLE_SIZE; i++)
     {   circle[i].type = 0;
         circle[i].value = 0;
+        circle[i].newsymbol = FALSE;
         circle[i].text = "(if this is ever visible, there is a bug)";
-        token_contexts[i] = 0;
+        circle[i].lextext = -1;
+        circle[i].context = 0;
     }
 
-    lex_p = lexeme_memory;
+    cur_lextexts = 0;
+    /* But we don't touch no_lextexts; those allocated blocks can be reused */
+    lex_index = -1;
+    lex_pos = -1;
+    
     tokens_put_back = 0;
     forerrors_pointer = 0;
     dont_enter_into_symbol_table = FALSE;
@@ -1804,6 +2208,20 @@ extern void restart_lexer(char *lexical_source, char *name)
 
 extern void init_lexer_vars(void)
 {
+    FileStack = NULL;
+    FileStack_max = 0;
+    CF = NULL;
+    CurrentLB = NULL;
+
+    lextexts = NULL;
+    no_lextexts = 0;
+    cur_lextexts = 0;
+    lex_index = -1;
+    lex_pos = -1;
+
+    no_locals = 0;
+    local_variable_names_usage = 0;
+    
     blank_brief_location.file_index = -1;
     blank_brief_location.line_number = 0;
     blank_brief_location.orig_file_index = 0;
@@ -1822,6 +2240,8 @@ extern void lexer_begin_pass(void)
 
     pipeline_made = FALSE;
 
+    no_locals = 0;
+
     restart_lexer(NULL, NULL);
 }
 
@@ -1831,15 +2251,16 @@ extern void lexer_endpass(void)
 }
 
 extern void lexer_allocate_arrays(void)
-{   int i;
+{
+    initialise_memory_list(&FileStack_memlist,
+        sizeof(Sourcefile), 4, (void**)&FileStack,
+        "source file stack");
+    FileStack_max = 0;
 
-    FileStack = my_malloc(MAX_INCLUSION_DEPTH*sizeof(Sourcefile),
-        "filestack buffer");
-
-    for (i=0; i<MAX_INCLUSION_DEPTH; i++)
-    FileStack[i].buffer = my_malloc(SOURCE_BUFFER_SIZE+4, "source file buffer");
-
-    lexeme_memory = my_malloc(5*MAX_QTEXT_SIZE, "lexeme memory");
+    initialise_memory_list(&lextexts_memlist,
+        sizeof(lextext), 200, (void**)&lextexts,
+        "lexeme texts list");
+    cur_lextexts = 0;
 
     keywords_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "keyword hash table");
@@ -1847,16 +2268,16 @@ extern void lexer_allocate_arrays(void)
         "keyword hash end table");
     keywords_data_table = my_calloc(sizeof(int), 3*MAX_KEYWORDS,
         "keyword hashing linked list");
+    
+    initialise_memory_list(&local_variable_names_memlist,
+        sizeof(char), MAX_LOCAL_VARIABLES*32, NULL,
+        "text of local variable names");
+    local_variable_name_offsets = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES-1,
+        "offsets of local variable names");
     local_variable_hash_table = my_calloc(sizeof(int), HASH_TAB_SIZE,
         "local variable hash table");
-    local_variable_text_table = my_malloc(
-        (MAX_LOCAL_VARIABLES-1)*(MAX_IDENTIFIER_LENGTH+1),
-        "text of local variable names");
-
     local_variable_hash_codes = my_calloc(sizeof(int), MAX_LOCAL_VARIABLES,
         "local variable hash codes");
-    local_variable_texts = my_calloc(sizeof(char *), MAX_LOCAL_VARIABLES,
-        "local variable text pointers");
 
     make_tokeniser_grid();
     make_keywords_tables();
@@ -1879,23 +2300,28 @@ extern void lexer_allocate_arrays(void)
 }
 
 extern void lexer_free_arrays(void)
-{   int i; char *p;
+{   int ix;
+    CF = NULL;
+    CurrentLB = NULL;
 
-    for (i=0; i<MAX_INCLUSION_DEPTH; i++)
-    {   p = FileStack[i].buffer;
-        my_free(&p, "source file buffer");
+    for (ix=0; ix<FileStack_max; ix++) {
+        my_free(&FileStack[ix].buffer, "source file buffer");
     }
-    my_free(&FileStack, "filestack buffer");
-    my_free(&lexeme_memory, "lexeme memory");
+    deallocate_memory_list(&FileStack_memlist);
+
+    for (ix=0; ix<no_lextexts; ix++) {
+        my_free(&lextexts[ix].text, "one lexeme text");
+    }
+    deallocate_memory_list(&lextexts_memlist);
 
     my_free(&keywords_hash_table, "keyword hash table");
     my_free(&keywords_hash_ends_table, "keyword hash end table");
     my_free(&keywords_data_table, "keyword hashing linked list");
-    my_free(&local_variable_hash_table, "local variable hash table");
-    my_free(&local_variable_text_table, "text of local variable names");
 
+    deallocate_memory_list(&local_variable_names_memlist);
+    my_free(&local_variable_name_offsets, "offsets of local variable names");
+    my_free(&local_variable_hash_table, "local variable hash table");
     my_free(&local_variable_hash_codes, "local variable hash codes");
-    my_free(&local_variable_texts, "local variable text pointers");
 
     cleanup_token_locations(NULL);
 }

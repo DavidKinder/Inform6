@@ -2,15 +2,100 @@
 /*   "bpatch" : Keeps track of, and finally acts on, backpatch markers,      */
 /*              correcting symbol values not known at compilation time       */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
 #include "header.h"
 
-memory_block zcode_backpatch_table, zmachine_backpatch_table;
-int32 zcode_backpatch_size, zmachine_backpatch_size;
+uchar *staticarray_backpatch_table; /* Allocated to staticarray_backpatch_size */
+memory_list staticarray_backpatch_table_memlist;
+uchar *zmachine_backpatch_table; /* Allocated to zmachine_backpatch_size */
+memory_list zmachine_backpatch_table_memlist;
+uchar *zcode_backpatch_table; /* Allocated to zcode_backpatch_size */
+memory_list zcode_backpatch_table_memlist;
+int32 zcode_backpatch_size, staticarray_backpatch_size,
+    zmachine_backpatch_size;
+
+/* ------------------------------------------------------------------------- */
+/*   Marker values                                                           */
+/* ------------------------------------------------------------------------- */
+
+extern char *describe_mv(int mval)
+{   switch(mval)
+    {   case NULL_MV:       return("null");
+
+        /*  Marker values used in ordinary story file backpatching  */
+
+        case DWORD_MV:      return("dictionary word");
+        case STRING_MV:     return("string literal");
+        case INCON_MV:      return("system constant");
+        case IROUTINE_MV:   return("routine");
+        case VROUTINE_MV:   return("veneer routine");
+        case ARRAY_MV:      return("internal array");
+        case STATIC_ARRAY_MV:  return("internal static array");
+        case NO_OBJS_MV:    return("the number of objects");
+        case INHERIT_MV:    return("inherited common p value");
+        case INDIVPT_MV:    return("indiv prop table address");
+        case INHERIT_INDIV_MV: return("inherited indiv p value");
+        case MAIN_MV:       return("ref to Main");
+        case SYMBOL_MV:     return("ref to symbol value");
+
+        /*  Additional marker values used in Glulx backpatching
+            (IDENT_MV is not really used at all any more) */
+
+        case VARIABLE_MV:   return("global variable");
+        case IDENT_MV:      return("prop identifier number");
+        case ACTION_MV:     return("action");
+        case OBJECT_MV:     return("internal object");
+
+        /* Only occurs secondary to another reported error */
+        case ERROR_MV:      return("error");
+
+    }
+    return("** No such MV **");
+}
+
+extern char *describe_mv_short(int mval)
+{   switch(mval)
+    {   case NULL_MV:       return("");
+
+        /*  Marker values used in ordinary story file backpatching  */
+
+        case DWORD_MV:      return("dict");
+        case STRING_MV:     return("str");
+        case INCON_MV:      return("syscon");
+        case IROUTINE_MV:   return("rtn");
+        case VROUTINE_MV:   return("vrtn");
+        case ARRAY_MV:      return("arr");
+        case STATIC_ARRAY_MV:  return("stat-arr");
+        case NO_OBJS_MV:    return("obj-count");
+        case INHERIT_MV:    return("inh-com");
+        case INDIVPT_MV:    return("indiv-ptab");
+        case INHERIT_INDIV_MV: return("inh-indiv");
+        case MAIN_MV:       return("main");
+        case SYMBOL_MV:     return("sym");
+
+        /*  Additional marker values used in Glulx backpatching
+            (IDENT_MV is not really used at all any more) */
+
+        case VARIABLE_MV:   return("glob");
+        case IDENT_MV:      return("prop");
+        case ACTION_MV:     return("action");
+        case OBJECT_MV:     return("obj");
+
+        case LABEL_MV:      return("lbl");
+        case DELETED_MV:    return("del");
+
+        /* Only occurs secondary to another reported error */
+        case ERROR_MV:      return("err");
+
+    }
+    if (mval >= BRANCH_MV && mval < BRANCHMAX_MV) return "br";
+    
+    return("???");
+}
 
 /* ------------------------------------------------------------------------- */
 /*   The mending operation                                                   */
@@ -23,7 +108,7 @@ static int32 backpatch_value_z(int32 value)
 
     ASSERT_ZCODE();
 
-    if (asm_trace_level >= 4)
+    if (bpatch_trace_setting)
         printf("BP %s applied to %04x giving ",
             describe_mv(backpatch_marker), value);
 
@@ -32,6 +117,8 @@ static int32 backpatch_value_z(int32 value)
             value += strings_offset/scale_factor; break;
         case ARRAY_MV:
             value += variables_offset; break;
+        case STATIC_ARRAY_MV:
+            value += static_arrays_offset; break;
         case IROUTINE_MV:
             if (OMIT_UNUSED_ROUTINES)
                 value = df_stripped_address_for_address(value);
@@ -39,7 +126,7 @@ static int32 backpatch_value_z(int32 value)
             break;
         case VROUTINE_MV:
             if ((value<0) || (value>=VENEER_ROUTINES))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error
                     ("Backpatch veneer routine number out of range"))
                 {   printf("Illegal BP veneer routine number: %d\n", value);
@@ -57,7 +144,7 @@ static int32 backpatch_value_z(int32 value)
             value = no_objects; break;
         case INCON_MV:
             if ((value<0) || (value>=NO_SYSTEM_CONSTANTS))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error
                     ("Backpatch system constant number out of range"))
                 {   printf("Illegal BP system constant number: %d\n", value);
@@ -69,7 +156,7 @@ static int32 backpatch_value_z(int32 value)
             value = value_of_system_constant(value); break;
         case DWORD_MV:
             value = dictionary_offset + 7 +
-                    final_dict_order[value]*((version_number==3)?7:9);
+                    final_dict_order[value]*(DICT_ENTRY_BYTE_LENGTH);
             break;
         case ACTION_MV:
             break;
@@ -87,18 +174,26 @@ static int32 backpatch_value_z(int32 value)
             value += individuals_offset;
             break;
         case MAIN_MV:
-            value = symbol_index("Main", -1);
-            if (stypes[value] != ROUTINE_T)
+            value = get_symbol_index("Main");
+            if (value < 0 || (symbols[value].flags & UNKNOWN_SFLAG)) {
                 error("No 'Main' routine has been defined");
-            sflags[value] |= USED_SFLAG;
-            value = svals[value];
+                value = 0;
+                break;
+            }
+            if (symbols[value].type != ROUTINE_T) {
+                ebf_symbol_error("'Main' routine", symbols[value].name, typename(symbols[value].type), symbols[value].line);
+                value = 0;
+                break;
+            }
+            symbols[value].flags |= USED_SFLAG;
+            value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)
                 value = df_stripped_address_for_address(value);
             value += code_offset/scale_factor;
             break;
         case SYMBOL_MV:
             if ((value<0) || (value>=no_symbols))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error("Backpatch symbol number out of range"))
                 {   printf("Illegal BP symbol number: %d\n", value);
                     backpatch_error_flag = TRUE;
@@ -106,34 +201,32 @@ static int32 backpatch_value_z(int32 value)
                 value = 0;
                 break;
             }
-            if (sflags[value] & UNKNOWN_SFLAG)
-            {   if (!(sflags[value] & UERROR_SFLAG))
-                {   sflags[value] |= UERROR_SFLAG;
+            if (symbols[value].flags & UNKNOWN_SFLAG)
+            {   if (!(symbols[value].flags & UERROR_SFLAG))
+                {   symbols[value].flags |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        (char *) symbs[value], slines[value]);
+                        symbols[value].name, symbols[value].line);
                 }
             }
             else
-            if (sflags[value] & CHANGE_SFLAG)
-            {   sflags[value] &= (~(CHANGE_SFLAG));
-                backpatch_marker = (svals[value]/0x10000);
+            if (symbols[value].flags & CHANGE_SFLAG)
+            {   symbols[value].flags &= (~(CHANGE_SFLAG));
+                backpatch_marker = (symbols[value].marker);
                 if ((backpatch_marker < 0)
                     || (backpatch_marker > LARGEST_BPATCH_MV))
                 {
-                    if (no_link_errors == 0)
-                    {   compiler_error_named(
+                    compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        (char *) symbs[value]);
-                        backpatch_error_flag = TRUE;
-                    }
+                        symbols[value].name);
+                    backpatch_error_flag = TRUE;
                 }
                 else
-                    svals[value] = backpatch_value_z((svals[value]) % 0x10000);
+                    symbols[value].value = backpatch_value_z((symbols[value].value) % 0x10000);
             }
 
-            sflags[value] |= USED_SFLAG;
-            {   int t = stypes[value];
-                value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            {   int t = symbols[value].type;
+                value = symbols[value].value;
                 switch(t)
                 {   case ROUTINE_T: 
                         if (OMIT_UNUSED_ROUTINES)
@@ -141,11 +234,11 @@ static int32 backpatch_value_z(int32 value)
                         value += code_offset/scale_factor; 
                         break;
                     case ARRAY_T: value += variables_offset; break;
+                    case STATIC_ARRAY_T: value += static_arrays_offset; break;
                 }
             }
             break;
         default:
-            if (no_link_errors > 0) break;
             if (compiler_error("Illegal backpatch marker"))
             {   printf("Illegal backpatch marker %d value %04x\n",
                     backpatch_marker, value);
@@ -154,7 +247,7 @@ static int32 backpatch_value_z(int32 value)
             break;
     }
 
-    if (asm_trace_level >= 4) printf(" %04x\n", value);
+    if (bpatch_trace_setting) printf(" %04x\n", value);
 
     return(value);
 }
@@ -165,7 +258,7 @@ static int32 backpatch_value_g(int32 value)
 
     ASSERT_GLULX();
 
-    if (asm_trace_level >= 4)
+    if (bpatch_trace_setting)
         printf("BP %s applied to %04x giving ",
             describe_mv(backpatch_marker), value);
 
@@ -182,6 +275,8 @@ static int32 backpatch_value_g(int32 value)
             break;
         case ARRAY_MV:
             value += arrays_offset; break;
+        case STATIC_ARRAY_MV:
+            value += static_arrays_offset; break;
         case VARIABLE_MV:
             value = variables_offset + (4*value); break;
         case OBJECT_MV:
@@ -189,7 +284,7 @@ static int32 backpatch_value_g(int32 value)
             break;
         case VROUTINE_MV:
             if ((value<0) || (value>=VENEER_ROUTINES))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error
                     ("Backpatch veneer routine number out of range"))
                 {   printf("Illegal BP veneer routine number: %d\n", value);
@@ -207,7 +302,7 @@ static int32 backpatch_value_g(int32 value)
             value = no_objects; break;
         case INCON_MV:
             if ((value<0) || (value>=NO_SYSTEM_CONSTANTS))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error
                     ("Backpatch system constant number out of range"))
                 {   printf("Illegal BP system constant number: %d\n", value);
@@ -234,18 +329,26 @@ static int32 backpatch_value_g(int32 value)
             value += individuals_offset;
             break;
         case MAIN_MV:
-            value = symbol_index("Main", -1);
-            if (stypes[value] != ROUTINE_T)
+            value = get_symbol_index("Main");
+            if (value < 0 || (symbols[value].flags & UNKNOWN_SFLAG)) {
                 error("No 'Main' routine has been defined");
-            sflags[value] |= USED_SFLAG;
-            value = svals[value];
+                value = 0;
+                break;
+            }
+            if (symbols[value].type != ROUTINE_T) {
+                ebf_symbol_error("'Main' routine", symbols[value].name, typename(symbols[value].type), symbols[value].line);
+                value = 0;
+                break;
+            }
+            symbols[value].flags |= USED_SFLAG;
+            value = symbols[value].value;
             if (OMIT_UNUSED_ROUTINES)
                 value = df_stripped_address_for_address(value);
             value += code_offset;
             break;
         case SYMBOL_MV:
             if ((value<0) || (value>=no_symbols))
-            {   if (no_link_errors > 0) break;
+            {
                 if (compiler_error("Backpatch symbol number out of range"))
                 {   printf("Illegal BP symbol number: %d\n", value);
                     backpatch_error_flag = TRUE;
@@ -253,34 +356,32 @@ static int32 backpatch_value_g(int32 value)
                 value = 0;
                 break;
             }
-            if (sflags[value] & UNKNOWN_SFLAG)
-            {   if (!(sflags[value] & UERROR_SFLAG))
-                {   sflags[value] |= UERROR_SFLAG;
+            if (symbols[value].flags & UNKNOWN_SFLAG)
+            {   if (!(symbols[value].flags & UERROR_SFLAG))
+                {   symbols[value].flags |= UERROR_SFLAG;
                     error_named_at("No such constant as",
-                        (char *) symbs[value], slines[value]);
+                        symbols[value].name, symbols[value].line);
                 }
             }
             else
-            if (sflags[value] & CHANGE_SFLAG)
-            {   sflags[value] &= (~(CHANGE_SFLAG));
-                backpatch_marker = smarks[value];
+            if (symbols[value].flags & CHANGE_SFLAG)
+            {   symbols[value].flags &= (~(CHANGE_SFLAG));
+                backpatch_marker = symbols[value].marker;
                 if ((backpatch_marker < 0)
                     || (backpatch_marker > LARGEST_BPATCH_MV))
                 {
-                    if (no_link_errors == 0)
-                    {   compiler_error_named(
+                    compiler_error_named(
                         "Illegal backpatch marker attached to symbol",
-                        (char *) symbs[value]);
-                        backpatch_error_flag = TRUE;
-                    }
+                        symbols[value].name);
+                    backpatch_error_flag = TRUE;
                 }
                 else
-                    svals[value] = backpatch_value_g(svals[value]);
+                    symbols[value].value = backpatch_value_g(symbols[value].value);
             }
 
-            sflags[value] |= USED_SFLAG;
-            {   int t = stypes[value];
-                value = svals[value];
+            symbols[value].flags |= USED_SFLAG;
+            {   int t = symbols[value].type;
+                value = symbols[value].value;
                 switch(t)
                 {
                     case ROUTINE_T:
@@ -289,6 +390,7 @@ static int32 backpatch_value_g(int32 value)
                         value += code_offset;
                         break;
                     case ARRAY_T: value += arrays_offset; break;
+                    case STATIC_ARRAY_T: value += static_arrays_offset; break;
                     case OBJECT_T:
                     case CLASS_T:
                       value = object_tree_offset + 
@@ -299,6 +401,7 @@ static int32 backpatch_value_g(int32 value)
                       break;
                     case CONSTANT_T:
                     case INDIVIDUAL_PROPERTY_T:
+                    case PROPERTY_T:
                       /* value is unchanged */
                       break;
                     default:
@@ -309,7 +412,6 @@ symbol");
             }
             break;
         default:
-            if (no_link_errors > 0) break;
             if (compiler_error("Illegal backpatch marker"))
             {   printf("Illegal backpatch marker %d value %04x\n",
                     backpatch_marker, value);
@@ -318,7 +420,7 @@ symbol");
             break;
     }
 
-    if (asm_trace_level >= 4) printf(" %04x\n", value);
+    if (bpatch_trace_setting) printf(" %04x\n", value);
 
     return(value);
 }
@@ -332,35 +434,25 @@ extern int32 backpatch_value(int32 value)
 }
 
 static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
-{   if (module_switch)
-    {   if (zmachine_area == PROP_DEFAULTS_ZA) return;
-    }
-    else
-    {   if (mv == OBJECT_MV) return;
-        if (mv == IDENT_MV) return;
-        if (mv == ACTION_MV) return;
-    }
+{   
+    if (mv == OBJECT_MV) return;
+    if (mv == IDENT_MV) return;
+    if (mv == ACTION_MV) return;
 
-    /* printf("MV %d ZA %d Off %04x\n", mv, zmachine_area, offset); */
+    if (bpatch_trace_setting >= 2)
+        printf("BP added: MV %d ZA %d Off %04x\n", mv, zmachine_area, offset);
 
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, mv);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, zmachine_area);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, offset/256);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, offset%256);
+    ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+4);
+    zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = zmachine_area;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = offset/256;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = offset%256;
 }
 
 static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
-{   if (module_switch)
-    {   if (zmachine_area == PROP_DEFAULTS_ZA) return;
-    }
-    else
-    {   if (mv == IDENT_MV) return;
-        if (mv == ACTION_MV) return;
-    }
+{   
+    if (mv == IDENT_MV) return;
+    if (mv == ACTION_MV) return;
 
 /* The backpatch table format for Glulx:
    First, the marker byte.
@@ -368,20 +460,16 @@ static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
    Then the four-byte address.
 */
 
-/*    printf("+MV %d ZA %d Off %06x\n", mv, zmachine_area, offset);  */
+    if (bpatch_trace_setting >= 2)
+        printf("BP added: MV %d ZA %d Off %06x\n", mv, zmachine_area, offset);
 
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, mv);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, zmachine_area);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 24) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 16) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset >> 8) & 0xFF);
-    write_byte_to_memory_block(&zmachine_backpatch_table,
-        zmachine_backpatch_size++, (offset) & 0xFF);
+    ensure_memory_list_available(&zmachine_backpatch_table_memlist, zmachine_backpatch_size+6);
+    zmachine_backpatch_table[zmachine_backpatch_size++] = mv;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = zmachine_area;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 24) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 16) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset >> 8) & 0xFF;
+    zmachine_backpatch_table[zmachine_backpatch_size++] = (offset) & 0xFF;
 }
 
 extern void backpatch_zmachine(int mv, int zmachine_area, int32 offset)
@@ -398,12 +486,12 @@ extern void backpatch_zmachine_image_z(void)
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
     {   backpatch_marker
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm);
+            = zmachine_backpatch_table[bm];
         zmachine_area
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm+1);
+            = zmachine_backpatch_table[bm+1];
         offset
-          = 256*read_byte_from_memory_block(&zmachine_backpatch_table,bm+2)
-            + read_byte_from_memory_block(&zmachine_backpatch_table, bm+3);
+          = 256*zmachine_backpatch_table[bm+2]
+            + zmachine_backpatch_table[bm+3];
         bm += 4;
 
         switch(zmachine_area)
@@ -411,10 +499,10 @@ extern void backpatch_zmachine_image_z(void)
             case PROP_ZA:            addr = prop_values_offset; break;
             case INDIVIDUAL_PROP_ZA: addr = individuals_offset; break;
             case DYNAMIC_ARRAY_ZA:   addr = variables_offset; break;
+            case STATIC_ARRAY_ZA:    addr = static_arrays_offset; break;
             default:
-                if (no_link_errors == 0)
-                    if (compiler_error("Illegal area to backpatch"))
-                        backpatch_error_flag = TRUE;
+                if (compiler_error("Illegal area to backpatch"))
+                    backpatch_error_flag = TRUE;
         }
         addr += offset;
 
@@ -426,9 +514,8 @@ extern void backpatch_zmachine_image_z(void)
 
         if (backpatch_error_flag)
         {   backpatch_error_flag = FALSE;
-            if (no_link_errors == 0)
-                printf("*** MV %d ZA %d Off %04x ***\n",
-                    backpatch_marker, zmachine_area, offset);
+            printf("*** MV %d ZA %d Off %04x ***\n",
+                backpatch_marker, zmachine_area, offset);
         }
     }
 }
@@ -439,28 +526,26 @@ extern void backpatch_zmachine_image_g(void)
     backpatch_error_flag = FALSE;
     while (bm < zmachine_backpatch_size)
     {   backpatch_marker
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm);
+            = zmachine_backpatch_table[bm];
         zmachine_area
-            = read_byte_from_memory_block(&zmachine_backpatch_table, bm+1);
-        offset = read_byte_from_memory_block(&zmachine_backpatch_table, bm+2);
+            = zmachine_backpatch_table[bm+1];
+        offset = zmachine_backpatch_table[bm+2];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+3);
+          zmachine_backpatch_table[bm+3];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+4);
+          zmachine_backpatch_table[bm+4];
         offset = (offset << 8) |
-          read_byte_from_memory_block(&zmachine_backpatch_table, bm+5);
-            bm += 6;
-
-        /* printf("-MV %d ZA %d Off %06x\n", backpatch_marker, zmachine_area, offset);  */
+          zmachine_backpatch_table[bm+5];
+        bm += 6;
 
             switch(zmachine_area) {   
         case PROP_DEFAULTS_ZA:   addr = prop_defaults_offset+4; break;
         case PROP_ZA:            addr = prop_values_offset; break;
         case INDIVIDUAL_PROP_ZA: addr = individuals_offset; break;
-        case ARRAY_ZA:           addr = arrays_offset; break;
+        case DYNAMIC_ARRAY_ZA:   addr = arrays_offset; break;
         case GLOBALVAR_ZA:       addr = variables_offset; break;
+        /* STATIC_ARRAY_ZA is in ROM and therefore not handled here */
         default:
-          if (no_link_errors == 0)
             if (compiler_error("Illegal area to backpatch"))
               backpatch_error_flag = TRUE;
         }
@@ -478,9 +563,8 @@ extern void backpatch_zmachine_image_g(void)
 
         if (backpatch_error_flag)
         {   backpatch_error_flag = FALSE;
-            if (no_link_errors == 0)
-                printf("*** MV %d ZA %d Off %04x ***\n",
-                    backpatch_marker, zmachine_area, offset);
+            printf("*** MV %d ZA %d Off %04x ***\n",
+                backpatch_marker, zmachine_area, offset);
         }
     }
 }
@@ -490,22 +574,34 @@ extern void backpatch_zmachine_image_g(void)
 /* ------------------------------------------------------------------------- */
 
 extern void init_bpatch_vars(void)
-{   initialise_memory_block(&zcode_backpatch_table);
-    initialise_memory_block(&zmachine_backpatch_table);
+{   zcode_backpatch_table = NULL;
+    staticarray_backpatch_table = NULL;
+    zmachine_backpatch_table = NULL;
 }
 
 extern void bpatch_begin_pass(void)
 {   zcode_backpatch_size = 0;
+    staticarray_backpatch_size = 0;
     zmachine_backpatch_size = 0;
 }
 
 extern void bpatch_allocate_arrays(void)
 {
+    initialise_memory_list(&zcode_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&zcode_backpatch_table,
+        "code backpatch table");
+    initialise_memory_list(&staticarray_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&staticarray_backpatch_table,
+        "static array backpatch table");
+    initialise_memory_list(&zmachine_backpatch_table_memlist,
+        sizeof(uchar), 128, (void**)&zmachine_backpatch_table,
+        "machine backpatch table");
 }
 
 extern void bpatch_free_arrays(void)
-{   deallocate_memory_block(&zcode_backpatch_table);
-    deallocate_memory_block(&zmachine_backpatch_table);
+{   deallocate_memory_list(&zcode_backpatch_table_memlist);
+    deallocate_memory_list(&staticarray_backpatch_table_memlist);
+    deallocate_memory_list(&zmachine_backpatch_table_memlist);
 }
 
 /* ========================================================================= */

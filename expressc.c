@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "expressc" :  The expression code generator                             */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -390,7 +390,7 @@ static void value_in_void_context_z(assembly_operand AO)
         case SHORT_CONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbols[AO.value].name);
             break;
         case VARIABLE_OT:
             t = variable_name(AO.value);
@@ -435,12 +435,14 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
 
     assembly_operand zero_ao, max_ao, size_ao, en_ao, type_ao, an_ao,
         index_ao;
-    int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE, from_module = FALSE;
+    int x = 0, y = 0, byte_flag = FALSE, read_flag = FALSE;
 
-    if (AO1.marker == ARRAY_MV)
+    INITAO(&zero_ao);
+    INITAO(&size_ao);
+    INITAO(&type_ao);
+
+    if (AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV)
     {   
-        INITAO(&zero_ao);
-
         if ((oc == loadb_zc) || (oc == storeb_zc)) byte_flag=TRUE;
         else byte_flag = FALSE;
         if ((oc == loadb_zc) || (oc == loadw_zc)) read_flag=TRUE;
@@ -451,27 +453,35 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
 
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
-        {   if (AO1.value == svals[array_symbols[x]])
-            {   size_ao.value = array_sizes[x]; y=x;
+        {   if (((AO1.marker == ARRAY_MV) == (!arrays[x].loc))
+                && (AO1.value == symbols[arrays[x].symbol].value))
+            {   size_ao.value = arrays[x].size; y=x;
             }
         }
-        if (size_ao.value==-1) 
-            from_module=TRUE;
+        
+        if (arrays[y].loc && !read_flag) {
+            error("Cannot write to a static array");
+        }
+
+        if (size_ao.value==-1) {
+            /* This case was originally meant for module linking.
+               It should no longer be possible. */
+            compiler_error("Array size cannot be negative");
+        }
         else {
-            from_module=FALSE;
-            type_ao = zero_ao; type_ao.value = array_types[y];
+            type_ao = zero_ao; type_ao.value = arrays[y].type;
 
             if ((!is_systemfile()))
             {   if (byte_flag)
                 {
-                    if ((array_types[y] == WORD_ARRAY)
-                        || (array_types[y] == TABLE_ARRAY))
+                    if ((arrays[y].type == WORD_ARRAY)
+                        || (arrays[y].type == TABLE_ARRAY))
                         warning("Using '->' to access a --> or table array");
                 }
                 else
                 {
-                    if ((array_types[y] == BYTE_ARRAY)
-                        || (array_types[y] == STRING_ARRAY))
+                    if ((arrays[y].type == BYTE_ARRAY)
+                        || (arrays[y].type == STRING_ARRAY))
                     warning("Using '-->' to access a -> or string array");
                 }
             }
@@ -490,7 +500,7 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
     /* If we recognise AO1 as arising textually from a declared
        array, we can check bounds explicitly. */
 
-    if ((AO1.marker == ARRAY_MV) && (!from_module))
+    if ((AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV))
     {   
         int passed_label = next_label++, failed_label = next_label++,
             final_label = next_label++; 
@@ -499,15 +509,15 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         max_ao = size_ao;
 
         if (byte_flag
-            && ((array_types[y] == WORD_ARRAY)
-                || (array_types[y] == TABLE_ARRAY)))
+            && ((arrays[y].type == WORD_ARRAY)
+                || (arrays[y].type == TABLE_ARRAY)))
         {   max_ao.value = size_ao.value*2 + 1;
             type_ao.value += 8;
         }
         if ((!byte_flag)
-            && ((array_types[y] == BYTE_ARRAY)
-                || (array_types[y] == STRING_ARRAY) 
-                || (array_types[y] == BUFFER_ARRAY)))
+            && ((arrays[y].type == BYTE_ARRAY)
+                || (arrays[y].type == STRING_ARRAY) 
+                || (arrays[y].type == BUFFER_ARRAY)))
         {   if ((size_ao.value % 2) == 0)
                  max_ao.value = size_ao.value/2 - 1;
             else max_ao.value = (size_ao.value-1)/2;
@@ -519,10 +529,10 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
         if (max_ao.value >= 256) max_ao.type = LONG_CONSTANT_OT;
 
         /* Can't write to the size entry in a string or table */
-        if (((array_types[y] == STRING_ARRAY)
-             || (array_types[y] == TABLE_ARRAY))
+        if (((arrays[y].type == STRING_ARRAY)
+             || (arrays[y].type == TABLE_ARRAY))
             && (!read_flag))
-        {   if ((array_types[y] == TABLE_ARRAY) && byte_flag)
+        {   if ((arrays[y].type == TABLE_ARRAY) && byte_flag)
                 zero_ao.value = 2;
             else zero_ao.value = 1;
         }
@@ -695,6 +705,25 @@ static void compile_conditional_z(int oc,
 
     ASSERT_ZCODE(); 
 
+    switch (oc) {
+    case test_attr_zc:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
+        break;
+    case jin_zc:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
+        check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
+        break;
+    case 200:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
+        break;
+    case 201:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
+        break;
+    }
+    
     if (oc<200)
     {   if ((runtime_error_checking_switch) && (oc == jin_zc))
         {   if (flag) error_label = next_label++;
@@ -764,7 +793,7 @@ static void value_in_void_context_g(assembly_operand AO)
         case ZEROCONSTANT_OT:
             t = "<constant>";
             if (AO.marker == SYMBOL_MV)
-                t = (char *) (symbs[AO.value]);
+                t = (symbols[AO.value].name);
             break;
         case GLOBALVAR_OT:
         case LOCALVAR_OT:
@@ -802,31 +831,38 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     else 
       read_flag = FALSE;
 
-    if (AO1.marker == ARRAY_MV)
+    INITAO(&zero_ao);
+    INITAO(&size_ao);
+    INITAO(&type_ao);
+    
+    if (AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV)
     {   
-        INITAO(&zero_ao);
-
         size_ao = zero_ao; size_ao.value = -1;
         for (x=0; x<no_arrays; x++)
-        {   if (AO1.value == svals[array_symbols[x]])
-            {   size_ao.value = array_sizes[x]; y=x;
+        {   if (((AO1.marker == ARRAY_MV) == (!arrays[x].loc))
+                && (AO1.value == symbols[arrays[x].symbol].value))
+            {   size_ao.value = arrays[x].size; y=x;
             }
         }
         if (size_ao.value==-1) compiler_error("Array size can't be found");
 
-        type_ao = zero_ao; type_ao.value = array_types[y];
+        type_ao = zero_ao; type_ao.value = arrays[y].type;
+
+        if (arrays[y].loc && !read_flag) {
+            error("Cannot write to a static array");
+        }
 
         if ((!is_systemfile()))
         {   if (data_len == 1)
             {
-                if ((array_types[y] == WORD_ARRAY)
-                    || (array_types[y] == TABLE_ARRAY))
+                if ((arrays[y].type == WORD_ARRAY)
+                    || (arrays[y].type == TABLE_ARRAY))
                     warning("Using '->' to access a --> or table array");
             }
             else
             {
-                if ((array_types[y] == BYTE_ARRAY)
-                    || (array_types[y] == STRING_ARRAY))
+                if ((arrays[y].type == BYTE_ARRAY)
+                    || (arrays[y].type == STRING_ARRAY))
                  warning("Using '-->' to access a -> or string array");
             }
         }
@@ -842,31 +878,31 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     /* If we recognise AO1 as arising textually from a declared
        array, we can check bounds explicitly. */
 
-    if (AO1.marker == ARRAY_MV)
+    if (AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV)
     {   
         /* Calculate the largest permitted array entry + 1
            Here "size_ao.value" = largest permitted entry of its own kind */
         max_ao = size_ao;
         if (data_len == 1
-            && ((array_types[y] == WORD_ARRAY)
-                || (array_types[y] == TABLE_ARRAY)))
+            && ((arrays[y].type == WORD_ARRAY)
+                || (arrays[y].type == TABLE_ARRAY)))
         {   max_ao.value = size_ao.value*4 + 3;
             type_ao.value += 8;
         }
         if (data_len == 4
-            && ((array_types[y] == BYTE_ARRAY)
-                || (array_types[y] == STRING_ARRAY)
-                || (array_types[y] == BUFFER_ARRAY)))
+            && ((arrays[y].type == BYTE_ARRAY)
+                || (arrays[y].type == STRING_ARRAY)
+                || (arrays[y].type == BUFFER_ARRAY)))
         {   max_ao.value = (size_ao.value-3)/4;
             type_ao.value += 16;
         }
         max_ao.value++;
 
         /* Can't write to the size entry in a string or table */
-        if (((array_types[y] == STRING_ARRAY)
-             || (array_types[y] == TABLE_ARRAY))
+        if (((arrays[y].type == STRING_ARRAY)
+             || (arrays[y].type == TABLE_ARRAY))
             && (!read_flag))
-        {   if ((array_types[y] == TABLE_ARRAY) && data_len == 1)
+        {   if ((arrays[y].type == TABLE_ARRAY) && data_len == 1)
                 zero_ao.value = 4;
             else zero_ao.value = 1;
         }
@@ -967,7 +1003,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   assembly_operand AO, AO2, AO3;
   int ln;
   int check_sp = FALSE, passed_label, failed_label, last_label;
-
+  int pre_unreach;
+  
   if (veneer_mode) 
     return AO1;
 
@@ -989,6 +1026,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     return AO1;
   }
 
+  pre_unreach = execution_never_reaches_here;
+  
   passed_label = next_label++;
   failed_label = next_label++;  
 
@@ -1009,6 +1048,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     /* Allow classes */
     /* Test if zero... */
     assembleg_1_branch(jz_gc, AO, failed_label);
+    if (!pre_unreach && execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_NOWARN;
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
     INITAO(&AO3);
@@ -1019,6 +1060,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   else {
     /* Test if zero... */
     assembleg_1_branch(jz_gc, AO, failed_label);
+    if (!pre_unreach && execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_NOWARN;
     /* Test if first byte is 0x70... */
     assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
     INITAO(&AO3);
@@ -1028,10 +1071,16 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
     /* Test if inside the "Class" object... */
     INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
     assembleg_3(aload_gc, AO, AO3, stack_pointer);
-    ln = symbol_index("Class", -1);
-    AO3.value = svals[ln];
-    AO3.marker = OBJECT_MV;
-    AO3.type = CONSTANT_OT;
+    ln = get_symbol_index("Class");
+    if (ln < 0) {
+        error("No 'Class' object found");
+        AO3 = zero_operand;
+    }
+    else {
+        AO3.value = symbols[ln].value;
+        AO3.marker = OBJECT_MV;
+        AO3.type = CONSTANT_OT;
+    }
     assembleg_2_branch(jne_gc, stack_pointer, AO3, passed_label);
   }
   
@@ -1049,10 +1098,16 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
   }
   else {
     /* Build the symbol for "Object" */
-    ln = symbol_index("Object", -1);
-    AO2.value = svals[ln];
-    AO2.marker = OBJECT_MV;
-    AO2.type = CONSTANT_OT;
+    ln = get_symbol_index("Object");
+    if (ln < 0) {
+        error("No 'Object' object found");
+        AO2 = zero_operand;
+    }
+    else {
+        AO2.value = symbols[ln].value;
+        AO2.marker = OBJECT_MV;
+        AO2.type = CONSTANT_OT;
+    }
     if (check_sp) {
       /* Push "Object" */
       assembleg_store(AO1, AO2);
@@ -1088,6 +1143,8 @@ static void compile_conditional_g(condclass *cc,
       switch ((cc-condclasses)*2 + 500) {
 
       case HAS_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
+        check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
@@ -1166,6 +1223,8 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case IN_CC:
+        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
+        check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
         if (runtime_error_checking_switch) {
           if (flag) 
             error_label = next_label++;
@@ -1180,12 +1239,16 @@ static void compile_conditional_g(condclass *cc,
         break;
 
       case OFCLASS_CC:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
         assembleg_call_2(veneer_routine(OC__Cl_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
         AO1 = stack_pointer;
         break;
 
       case PROVIDES_CC:
+        /* first argument can be anything */
+        check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
         assembleg_call_2(veneer_routine(OP__Pr_VR), AO1, AO2, stack_pointer);
         the_zc = (flag ? jnz_gc : jz_gc);
         AO1 = stack_pointer;
@@ -1247,6 +1310,12 @@ static void generate_code_from(int n, int void_flag)
 
     if ((opnum == LOGAND_OP) || (opnum == LOGOR_OP))
     {   generate_code_from(below, FALSE);
+        if (execution_never_reaches_here) {
+            /* If the condition never falls through to here, then it
+               was an "... && 0 && ..." test. Our convention is to skip
+               the "not reached" warnings for this case. */
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        }
         generate_code_from(ET[below].right, FALSE);
         goto OperatorGenerated;
     }
@@ -1657,6 +1726,8 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_ADD_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
                  assemblez_2_to(get_prop_addr_zc, AO,
@@ -1667,6 +1738,8 @@ static void generate_code_from(int n, int void_flag)
 
         case PROP_NUM_OP:
              {   assembly_operand AO = ET[below].value;
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_NUM_RTE);
                  assemblez_2_to(get_prop_addr_zc, AO,
@@ -1679,49 +1752,70 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_OP:
-             {   assembly_operand AO = ET[below].value;
-
+             {
+                 check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+                 check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                        assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
-                         AO, ET[ET[below].right].value, temp_var1);
+                         ET[below].value, ET[ET[below].right].value, temp_var1);
                  else
-                 assemblez_2_to(get_prop_zc, AO,
+                 assemblez_2_to(get_prop_zc, ET[below].value,
                      ET[ET[below].right].value, temp_var1);
                  if (!void_flag) write_result_z(Result, temp_var1);
              }
              break;
 
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(RV__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              j=1; AI.operand[0] = veneer_routine(RA__Pr_VR);
              goto GenFunctionCallZ;
         case MPROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              j=1; AI.operand[0] = veneer_routine(RL__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              j=1; AI.operand[0] = veneer_routine(WV__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              j=1; AI.operand[0] = veneer_routine(IB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              j=1; AI.operand[0] = veneer_routine(DB__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              j=1; AI.operand[0] = veneer_routine(IA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              j=1; AI.operand[0] = veneer_routine(DA__Pr_VR);
              goto GenFunctionCallZ;
         case SUPERCLASS_OP:
              j=1; AI.operand[0] = veneer_routine(RA__Sc_VR);
              goto GenFunctionCallZ;
         case PROP_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
         case MESSAGE_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              j=1; AI.operand[0] = veneer_routine(CA__Pr_VR);
              goto GenFunctionCallZ;
 
@@ -1775,9 +1869,9 @@ static void generate_code_from(int n, int void_flag)
                                  arg_c++, arg_et = ET[arg_et].right)
                             {   if (ET[arg_et].value.type == VARIABLE_OT)
               error("Only constants can be used as possible 'random' results");
-                                array_entry(arg_c, ET[arg_et].value);
+                                array_entry(arg_c, FALSE, ET[arg_et].value);
                             }
-                            finish_array(arg_c);
+                            finish_array(arg_c, FALSE);
 
                             assemblez_1_to(random_zc, AO, temp_var1);
                             assemblez_dec(temp_var1);
@@ -1825,6 +1919,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF:
                          j=0; i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallZ;
 
                      case CHILDREN_SYSF:
@@ -1900,6 +1995,7 @@ static void generate_code_from(int n, int void_flag)
                  }
                  break;
              }
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
 
              GenFunctionCallZ:
 
@@ -1957,6 +2053,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              if (!void_flag)
              {   if (runtime_error_checking_switch)
                      assemblez_4_to(call_zc, veneer_routine(RT__ChPS_VR),
@@ -2100,6 +2198,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2112,6 +2212,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2124,6 +2226,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2136,6 +2240,8 @@ static void generate_code_from(int n, int void_flag)
              break;
 
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              assemblez_store(temp_var1, ET[below].value);
              assemblez_store(temp_var2, ET[ET[below].right].value);
              assemblez_2_to(get_prop_zc, temp_var1, temp_var2, temp_var3);
@@ -2153,7 +2259,7 @@ static void generate_code_from(int n, int void_flag)
             compiler_error("Expr code gen: Can't generate yet");
     }
   }
-  else {
+  else { /* Glulx */
     assembly_operand AO, AO2;
     if (operators[opnum].opcode_number_g != -1)
     {
@@ -2347,37 +2453,53 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_OP:
         case MESSAGE_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              AO = veneer_routine(RV__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_ADD_OP:
         case PROP_ADD_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".&\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
              AO = veneer_routine(RA__Pr_VR);
              goto TwoArgFunctionCall;
         case MPROP_NUM_OP:
         case PROP_NUM_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
              AO = veneer_routine(RL__Pr_VR);
              goto TwoArgFunctionCall;
 
         case PROP_CALL_OP:
         case MESSAGE_CALL_OP:
+             check_warn_symbol_has_metaclass(&ET[below].value, "\".()\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".()\" expression");
              AO2 = veneer_routine(CA__Pr_VR);
              i = below;
              goto DoFunctionCall;
 
         case MESSAGE_INC_OP:
         case PROPERTY_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"++.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"++.\" expression");
              AO = veneer_routine(IB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_DEC_OP:
         case PROPERTY_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\"--.\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"--.\" expression");
              AO = veneer_routine(DB__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_INC_OP:
         case PROPERTY_POST_INC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".++\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".++\" expression");
              AO = veneer_routine(IA__Pr_VR);
              goto TwoArgFunctionCall;
         case MESSAGE_POST_DEC_OP:
         case PROPERTY_POST_DEC_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".--\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".--\" expression");
              AO = veneer_routine(DA__Pr_VR);
              goto TwoArgFunctionCall;
         case SUPERCLASS_OP:
@@ -2397,6 +2519,8 @@ static void generate_code_from(int n, int void_flag)
 
         case PROPERTY_SETEQUALS_OP:
         case MESSAGE_SETEQUALS_OP:
+             check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
+             check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
              if (runtime_error_checking_switch && (!veneer_mode))
                  AO = veneer_routine(RT__ChPS_VR);
                else
@@ -2511,9 +2635,9 @@ static void generate_code_from(int n, int void_flag)
                             {   if (ET[arg_et].value.type == LOCALVAR_OT
                                     || ET[arg_et].value.type == GLOBALVAR_OT)
               error("Only constants can be used as possible 'random' results");
-                                array_entry(arg_c, ET[arg_et].value);
+                                array_entry(arg_c, FALSE, ET[arg_et].value);
                             }
-                            finish_array(arg_c);
+                            finish_array(arg_c, FALSE);
 
                             assembleg_2(random_gc, AO, stack_pointer);
                             assembleg_3(aload_gc, AO2, stack_pointer, Result);
@@ -2587,6 +2711,7 @@ static void generate_code_from(int n, int void_flag)
 
                      case INDIRECT_SYSF: 
                          i = ET[below].right;
+                         check_warn_symbol_type(&ET[i].value, ROUTINE_T, 0, "indirect function call");
                          goto IndirectFunctionCallG;
 
                      case GLK_SYSF: 
@@ -2656,6 +2781,7 @@ static void generate_code_from(int n, int void_flag)
                  break;
              }
 
+             check_warn_symbol_type(&ET[below].value, ROUTINE_T, 0, "function call");
              i = below;
 
              IndirectFunctionCallG:
@@ -2748,6 +2874,7 @@ static void generate_code_from(int n, int void_flag)
 
         if (ET[n].to_expression)
         {
+            int32 donelabel;
             if (void_flag) {
                 warning("Logical expression has no side-effects");
                 if (ET[n].true_label != -1)
@@ -2756,18 +2883,26 @@ static void generate_code_from(int n, int void_flag)
                     assemble_label_no(ET[n].false_label);
             }
             else if (ET[n].true_label != -1)
-            {   assemblez_1(push_zc, zero_operand);
-                assemblez_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, zero_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assemblez_1(push_zc, one_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             else
-            {   assemblez_1(push_zc, one_operand);
-                assemblez_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assemblez_1(push_zc, one_operand);
+                    assemblez_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assemblez_1(push_zc, zero_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
@@ -2780,6 +2915,7 @@ static void generate_code_from(int n, int void_flag)
 
         if (ET[n].to_expression)
         {   
+            int32 donelabel;
             if (void_flag) {
                 warning("Logical expression has no side-effects");
                 if (ET[n].true_label != -1)
@@ -2788,18 +2924,26 @@ static void generate_code_from(int n, int void_flag)
                     assemble_label_no(ET[n].false_label);
             }
             else if (ET[n].true_label != -1)
-            {   assembleg_store(stack_pointer, zero_operand);
-                assembleg_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, zero_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].true_label);
                 assembleg_store(stack_pointer, one_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             else
-            {   assembleg_store(stack_pointer, one_operand);
-                assembleg_jump(next_label++);
+            {
+                donelabel = next_label++;
+                if (!execution_never_reaches_here) {
+                    assembleg_store(stack_pointer, one_operand);
+                    assembleg_jump(donelabel);
+                }
                 assemble_label_no(ET[n].false_label);
                 assembleg_store(stack_pointer, zero_operand);
-                assemble_label_no(next_label-1);
+                assemble_forward_label_no(donelabel);
             }
             ET[n].value = stack_pointer;
         }
@@ -2856,7 +3000,7 @@ assembly_operand code_generate(assembly_operand AO, int context, int label)
     }
 
     if (expr_trace_level >= 2)
-    {   printf("Raw parse tree:\n"); show_tree(AO, FALSE);
+    {   printf("Raw parse tree:\n"); show_tree(&AO, FALSE);
     }
 
     if (context == CONDITION_CONTEXT)
@@ -2876,7 +3020,7 @@ assembly_operand code_generate(assembly_operand AO, int context, int label)
             default: printf("* ILLEGAL *"); break;
         }
         printf(" context with annotated tree:\n");
-        show_tree(AO, TRUE);
+        show_tree(&AO, TRUE);
     }
 
     generate_code_from(AO.value, (context==VOID_CONTEXT));

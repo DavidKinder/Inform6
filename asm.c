@@ -1,34 +1,39 @@
 /* ------------------------------------------------------------------------- */
 /*   "asm" : The Inform assembler                                            */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
 #include "header.h"
 
-uchar *zcode_holding_area;         /* Area holding code yet to be transferred
+static uchar *zcode_holding_area;  /* Area holding code yet to be transferred
                                       to either zcode_area or temp file no 1 */
-uchar *zcode_markers;              /* Bytes holding marker values for this
+static memory_list zcode_holding_area_memlist;
+static uchar *zcode_markers;       /* Bytes holding marker values for this
                                       code                                   */
+static memory_list zcode_markers_memlist;
 static int zcode_ha_size;          /* Number of bytes in holding area        */
 
-memory_block zcode_area;           /* Block to hold assembled code (if
-                                      temporary files are not being used)    */
+uchar *zcode_area;                 /* Array to hold assembled code           */
+
+memory_list zcode_area_memlist;    /* Manages zcode_area                     */
 
 int32 zmachine_pc;                 /* PC position of assembly (byte offset
                                       from start of Z-code area)             */
 
 int32 no_instructions;             /* Number of instructions assembled       */
-int execution_never_reaches_here,  /* TRUE if the current PC value in the
+int execution_never_reaches_here;  /* nonzero if the current PC value in the
                                       code area cannot be reached: e.g. if
                                       the previous instruction was a "quit"
-                                      opcode and no label is set to here     */
-    next_label,                    /* Used to count the labels created all
+                                      opcode and no label is set to here
+                                      (see EXECSTATE flags for more) */
+int next_label,                    /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
-int no_sequence_points;            /* Kept for statistics purposes only      */
+int no_sequence_points;            /* Total over all routines; kept for
+                                      statistics purposes only               */
 
 static int label_moved_error_already_given;
                                    /* When one label has moved, all subsequent
@@ -47,18 +52,19 @@ int uses_acceleration_features;    /* Makes use of Glulx acceleration (3.1.1)
                                       features?                              */
 int uses_float_features;           /* Makes use of Glulx floating-point (3.1.2)
                                       features?                              */
+int uses_extundo_features;         /* Makes use of Glulx extended undo (3.1.3)
+                                      features?                              */
+int uses_double_features;          /* Makes use of Glulx double-prec (3.1.3)
+                                      features?                              */
 
 debug_location statement_debug_location;
                                    /* Location of current statement          */
 
 
-int32 *variable_tokens;            /* The allocated size is 
-                                      (MAX_LOCAL_VARIABLES +
-                                      MAX_GLOBAL_VARIABLES). The entries 
-                                      MAX_LOCAL_VARIABLES and up give the 
-                                      symbol table index for the names of 
-                                      the global variables                   */
-int *variable_usage;               /* TRUE if referred to, FALSE otherwise   */
+variableinfo *variables;           /* The allocated size is 
+                                      (MAX_LOCAL_VARIABLES + no_globals).
+                                      Local variables first, then globals.   */
+memory_list variables_memlist;
 
 assembly_instruction AI;           /* A structure used to hold the full
                                       specification of a single Z-code
@@ -72,14 +78,15 @@ static char opcode_syntax_string[128];  /*  Text buffer holding the correct
 
 static int routine_symbol;         /* The symbol index of the routine currently
                                       being compiled */
-static char *routine_name;         /* The name of the routine currently being
-                                      compiled                               */
-static int routine_locals;         /* The number of local variables used by
-                                      the routine currently being compiled   */
+static memory_list current_routine_name; /* The name of the routine currently
+                                      being compiled. (This may not be a
+                                      simple symbol, e.g. for an "obj.prop"
+                                      property routine.)                     */
 
 static int32 routine_start_pc;
 
-int32 *named_routine_symbols;
+int32 *named_routine_symbols;      /* Allocated up to no_named_routines      */
+static memory_list named_routine_symbols_memlist;
 
 static void transfer_routine_z(void);
 static void transfer_routine_g(void);
@@ -88,34 +95,160 @@ static void transfer_routine_g(void);
 /*   Label data                                                              */
 /* ------------------------------------------------------------------------- */
 
+static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
+                             These are allocated sequentially, but accessed
+                             as a double-linked list from first_label
+                             to last_label (in PC order). */
+static memory_list labels_memlist;
 static int first_label, last_label;
-static int32 *label_offsets;       /* Double-linked list of label offsets    */
-static int   *label_next,          /* (i.e. zmachine_pc values) in PC order  */
-             *label_prev;
-static int32 *label_symbols;       /* Symbol numbers if defined in source    */
 
-static int   *sequence_point_labels;
-                                   /* Label numbers for each                 */
-static debug_location *sequence_point_locations;
-                                   /* Source code references for each        */
-                                   /* (used for making debugging file)       */
+static int *labeluse;     /* Flags indicating whether a given label has been
+                             used as a branch target yet. */
+static memory_list labeluse_memlist;
+static int labeluse_size; /* Entries up to here are initialized */
 
+static sequencepointinfo *sequence_points; /* Allocated to next_sequence_point.
+                                              Only used when debugfile_switch
+                                              is set.                        */
+static memory_list sequence_points_memlist;
+
+/* ------------------------------------------------------------------------- */
+/*   Label management                                                        */
+/* ------------------------------------------------------------------------- */
+
+/* The stripping of unreachable code requires a bit of explanation.
+
+   As we compile a function, we update the execution_never_reaches_here
+   flag to reflect whether the current line is reachable. If the flag
+   is set (EXECSTATE_UNREACHABLE), we skip generating opcodes,
+   compiling strings, and so on. (See assemblez_instruction(),
+   assembleg_instruction(), and compile_string() for these checks.)
+
+   If we're *between* functions, the execution_never_reaches_here flag
+   is always clear (EXECSTATE_REACHABLE), so global strings are
+   compiled correctly.
+
+   In general, every time we compile a JUMP or RETURN opcode, the flag
+   gets set. Every time we compile a label, the flag gets cleared.
+   This makes sense if you consider a common "while" loop:
+
+     while (true) {
+       ...
+       if (flag) break;
+       ...
+     }
+     ...
+
+   This is compiled as:
+
+     .TopLabel;
+     ...
+     @jnz flag ?ExitLabel;
+     ...
+     @jump TopLabel;
+     .ExitLabel;
+     ...
+   
+   Code after an unconditional JUMP is obviously unreachable. But the
+   next thing that happens is the .ExitLabel, which is the target of a
+   branch, so the next line is reachable again.
+
+   However, if the unreachable flag is set when we *begin* a statement
+   (or braced block of statements), we can get tougher. We set the
+   EXECSTATE_ENTIRE flag for the entire duration of the statement or
+   block. This flag cannot be cleared by compiling labels. An example
+   of this:
+
+     if (DOSTUFF) {
+       while (true) {
+         if (flag) break;
+       }
+     }
+
+   If the DOSTUFF constant is false, the entire "while" loop is definitely
+   unreachable. So we should skip .TopLabel, .ExitLabel, and everything
+   in between. To ensure this, we set EXECSTATE_ENTIRE upon entering the
+   "if {...}" braced block, and reset it upon leaving.
+
+   (See parse_code_block() and parse_statement() for the (slightly fugly)
+   bit-fidding that accomplishes this.)
+
+   As an added optimization, some labels are known to be "forward"; they
+   are only reached by forward jumps. (.ExitLabel above is an example.)
+   If we reach a forward label and nothing has in fact jumped there,
+   the label is dead and we can skip it. (And thus also skip clearing
+   the unreachable flag!)
+
+   To understand *that*, consider a "while true" loop with no "break":
+
+     while (true) {
+       ...
+       if (flag) return;
+       ...
+     }
+
+   This never branches to .ExitLabel. So when we reach .ExitLabel,
+   we can say for sure that *nothing* branches there. So we skip
+   compiling that label. The unreachable flag is left set (because we
+   just finished the jump to .TopLabel). Thus, any code following the
+   entire loop is known to be unreachable, and we can righteously
+   complain about it.
+
+   (In contrast, .TopLabel cannot be skipped because it might be the
+   target of a *backwards* branch later on. In fact there might be
+   several -- any "continue" in the loop will jump to .TopLabel.)
+*/
+
+/* Set the position of the given label. The offset will be the current
+   zmachine_pc, or -1 if the label is definitely unused.
+
+   This adds the label to a linked list (via first_label, last_label).
+
+   The linked list must be in increasing PC order. We know this will
+   be true because we call this as we run through the function, so
+   zmachine_pc always increases.
+
+   (It won't necessarily be in *label index* order, though.)
+*/
 static void set_label_offset(int label, int32 offset)
 {
-    if (label >= MAX_LABELS) memoryerror("MAX_LABELS", MAX_LABELS);
+    ensure_memory_list_available(&labels_memlist, label+1);
 
-    label_offsets[label] = offset;
+    labels[label].offset = offset;
+    labels[label].symbol = -1;
+    if (offset < 0) {
+        /* Mark this label as invalid and don't put it in the linked list. */
+        labels[label].prev = -1;
+        labels[label].next = -1;
+        return;
+    }
+    
     if (last_label == -1)
-    {   label_prev[label] = -1;
+    {   labels[label].prev = -1;
         first_label = label;
     }
     else
-    {   label_prev[label] = last_label;
-        label_next[last_label] = label;
+    {   labels[label].prev = last_label;
+        labels[last_label].next = label;
     }
     last_label = label;
-    label_next[label] = -1;
-    label_symbols[label] = -1;
+    labels[label].next = -1;
+}
+
+/* Set a flag indicating that the given label has been jumped to. */
+static void mark_label_used(int label)
+{
+    if (label < 0)
+        return;
+
+    /* Entries from 0 to labeluse_size have meaningful values.
+       If we have to increase labeluse_size, initialize the new
+       entries to FALSE. */
+    ensure_memory_list_available(&labeluse_memlist, label+1);
+    for (; labeluse_size < label+1; labeluse_size++) {
+        labeluse[labeluse_size] = FALSE;
+    }
+    labeluse[label] = TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -174,7 +307,7 @@ extern int is_variable_ot(int otval)
 extern char *variable_name(int32 i)
 {
     if (i==0) return("sp");
-    if (i<MAX_LOCAL_VARIABLES) return local_variable_texts[i-1];
+    if (i<MAX_LOCAL_VARIABLES) return get_local_variable_name(i-1);
 
     if (!glulx_mode) {
       if (i==255) return("TEMP1");
@@ -205,25 +338,57 @@ extern char *variable_name(int32 i)
       }
     }
 
-    return ((char *) symbs[variable_tokens[i]]);
+    return (symbols[variables[i].token].name);
 }
 
-static void print_operand_z(assembly_operand o)
-{   switch(o.type)
+/* Print symbolic information about the AO, if there is any. */
+static void print_operand_annotation(const assembly_operand *o)
+{
+    int any = FALSE;
+    if (o->marker) {
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", describe_mv(o->marker));
+        switch (o->marker) {
+        case VROUTINE_MV:
+            printf(": %s", veneer_routine_name(o->value));
+            break;
+        case INCON_MV:
+            printf(": %s", name_of_system_constant(o->value));
+            break;
+        case DWORD_MV:
+            printf(": '");
+            print_dict_word(o->value);
+            printf("'");
+            break;
+        }
+    }
+    if (o->symindex >= 0 && o->symindex < no_symbols) {
+        printf((!any) ? " (" : ": ");
+        any = TRUE;
+        printf("%s", symbols[o->symindex].name);
+    }
+    if (any) printf(")");       
+}
+
+static void print_operand_z(const assembly_operand *o, int annotate)
+{   switch(o->type)
     {   case EXPRESSION_OT: printf("expr_"); break;
         case LONG_CONSTANT_OT: printf("long_"); break;
         case SHORT_CONSTANT_OT: printf("short_"); break;
         case VARIABLE_OT:
-             if (o.value==0) { printf("sp"); return; }
-             printf("%s", variable_name(o.value)); return;
+             if (o->value==0) { printf("sp"); return; }
+             printf("%s", variable_name(o->value)); return;
         case OMITTED_OT: printf("<no value>"); return;
     }
-    printf("%d", o.value);
+    printf("%d", o->value);
+    if (annotate)
+        print_operand_annotation(o);
 }
 
-static void print_operand_g(assembly_operand o)
+static void print_operand_g(const assembly_operand *o, int annotate)
 {
-  switch (o.type) {
+  switch (o->type) {
   case EXPRESSION_OT: printf("expr_"); break;
   case CONSTANT_OT: printf("long_"); break;
   case HALFCONSTANT_OT: printf("short_"); break;
@@ -231,32 +396,34 @@ static void print_operand_g(assembly_operand o)
   case ZEROCONSTANT_OT: printf("zero_"); return;
   case DEREFERENCE_OT: printf("*"); break;
   case GLOBALVAR_OT: 
-    printf("%s (global_%d)", variable_name(o.value), o.value); 
+    printf("global_%d (%s)", o->value, variable_name(o->value)); 
     return;
   case LOCALVAR_OT: 
-    if (o.value == 0)
+    if (o->value == 0)
       printf("stackptr"); 
     else
-      printf("%s (local_%d)", variable_name(o.value), o.value-1); 
+      printf("local_%d (%s)", o->value-1, variable_name(o->value)); 
     return;
   case SYSFUN_OT:
-    if (o.value >= 0 && o.value < NUMBER_SYSTEM_FUNCTIONS)
-      printf("%s", system_functions.keywords[o.value]);
+    if (o->value >= 0 && o->value < NUMBER_SYSTEM_FUNCTIONS)
+      printf("%s", system_functions.keywords[o->value]);
     else
       printf("<unnamed system function>");
     return;
   case OMITTED_OT: printf("<no value>"); return;
   default: printf("???_"); break; 
   }
-  printf("%d", o.value);
+  printf("%d", o->value);
+  if (annotate)
+    print_operand_annotation(o);
 }
 
-extern void print_operand(assembly_operand o)
+extern void print_operand(const assembly_operand *o, int annotate)
 {
   if (!glulx_mode)
-    print_operand_z(o);
+    print_operand_z(o, annotate);
   else
-    print_operand_g(o);
+    print_operand_g(o, annotate);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -264,8 +431,9 @@ extern void print_operand(assembly_operand o)
 /* ------------------------------------------------------------------------- */
 
 static void byteout(int32 i, int mv)
-{   if (zcode_ha_size >= MAX_ZCODE_SIZE)
-        memoryerror("MAX_ZCODE_SIZE",MAX_ZCODE_SIZE);
+{
+    ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+1);
+    ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+1);
     zcode_markers[zcode_ha_size] = (uchar) mv;
     zcode_holding_area[zcode_ha_size++] = (uchar) i;
     zmachine_pc++;
@@ -273,7 +441,7 @@ static void byteout(int32 i, int mv)
 
 /* ------------------------------------------------------------------------- */
 /*   A database of the 115 canonical Infocom opcodes in Versions 3 to 6      */
-/*   And of the however-many-there-are Glulx opcode                          */
+/*   And of the however-many-there-are Glulx opcodes                         */
 /* ------------------------------------------------------------------------- */
 
 typedef struct opcodez
@@ -324,6 +492,8 @@ typedef struct opcodeg
 #define GOP_MemHeap      2   /* uses_memheap_features */
 #define GOP_Acceleration 4   /* uses_acceleration_features */
 #define GOP_Float        8   /* uses_float_features */
+#define GOP_ExtUndo     16   /* uses_extundo_features */
+#define GOP_Double      32   /* uses_double_features */
 
     /* Codes for the number of operands */
 
@@ -592,6 +762,8 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "mfree",      0x179,  0, GOP_MemHeap, 1 },
   { (uchar *) "accelfunc",  0x180,  0, GOP_Acceleration, 2 },
   { (uchar *) "accelparam", 0x181,  0, GOP_Acceleration, 2 },
+  { (uchar *) "hasundo",    0x128,  St, GOP_ExtUndo, 1 },
+  { (uchar *) "discardundo",0x129,   0, GOP_ExtUndo, 0 },
   { (uchar *) "numtof",     0x190,  St, GOP_Float, 2 },
   { (uchar *) "ftonumz",    0x191,  St, GOP_Float, 2 },
   { (uchar *) "ftonumn",    0x192,  St, GOP_Float, 2 },
@@ -621,13 +793,47 @@ static opcodeg opcodes_table_g[] = {
   { (uchar *) "jfge",       0x1C5,  Br, GOP_Float, 3 },
   { (uchar *) "jisnan",     0x1C8,  Br, GOP_Float, 2 },
   { (uchar *) "jisinf",     0x1C9,  Br, GOP_Float, 2 },
+  { (uchar *) "numtod",     0x200,  St|St2, GOP_Double, 3 },
+  { (uchar *) "dtonumz",    0x201,  St, GOP_Double, 3 },
+  { (uchar *) "dtonumn",    0x202,  St, GOP_Double, 3 },
+  { (uchar *) "ftod",       0x203,  St|St2, GOP_Double, 3 },
+  { (uchar *) "dtof",       0x204,  St, GOP_Double, 3 },
+  { (uchar *) "dceil",      0x208,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dfloor",     0x209,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dadd",       0x210,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsub",       0x211,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmul",       0x212,  St|St2, GOP_Double, 6 },
+  { (uchar *) "ddiv",       0x213,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmodr",      0x214,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dmodq",      0x215,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsqrt",      0x218,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dexp",       0x219,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dlog",       0x21A,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dpow",       0x21B,  St|St2, GOP_Double, 6 },
+  { (uchar *) "dsin",       0x220,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dcos",       0x221,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dtan",       0x222,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dasin",      0x223,  St|St2, GOP_Double, 4 },
+  { (uchar *) "dacos",      0x224,  St|St2, GOP_Double, 4 },
+  { (uchar *) "datan",      0x225,  St|St2, GOP_Double, 4 },
+  { (uchar *) "datan2",     0x226,  St|St2, GOP_Double, 6 },
+  { (uchar *) "jdeq",       0x230,  Br, GOP_Double, 7 },
+  { (uchar *) "jdne",       0x231,  Br, GOP_Double, 7 },
+  { (uchar *) "jdlt",       0x232,  Br, GOP_Double, 5 },
+  { (uchar *) "jdle",       0x233,  Br, GOP_Double, 5 },
+  { (uchar *) "jdgt",       0x234,  Br, GOP_Double, 5 },
+  { (uchar *) "jdge",       0x235,  Br, GOP_Double, 5 },
+  { (uchar *) "jdisnan",    0x238,  Br, GOP_Double, 3 },
+  { (uchar *) "jdisinf",    0x239,  Br, GOP_Double, 3 },
 };
 
 /* The opmacros table is used for fake opcodes. The opcode numbers are
    ignored; this table is only used for argument parsing. */
 static opcodeg opmacros_table_g[] = {
-  { (uchar *) "pull", 0, St, 0, 1 },
-  { (uchar *) "push", 0,  0, 0, 1 },
+  { (uchar *) "pull",   pull_gm,       St, 0, 1 },
+  { (uchar *) "push",   push_gm,        0, 0, 1 },
+  { (uchar *) "dload",  dload_gm,  St|St2, 0, 3 },
+  { (uchar *) "dstore", dstore_gm,      0, 0, 3 },
 };
 
 static opcodeg custom_opcode_g;
@@ -651,6 +857,7 @@ static opcodez internal_number_to_opcode_z(int32 i)
 
 static void make_opcode_syntax_z(opcodez opco)
 {   char *p = "", *q = opcode_syntax_string;
+    /* TODO: opcode_syntax_string[128] is unsafe */
     sprintf(q, "%s", opco.name);
     switch(opco.no)
     {   case ONE: p=" <operand>"; break;
@@ -698,6 +905,7 @@ static void make_opcode_syntax_g(opcodeg opco)
     int ix;
     char *cx;
     char *q = opcode_syntax_string;
+    /* TODO: opcode_syntax_string[128] is unsafe */
 
     sprintf(q, "%s", opco.name);
     sprintf(q+strlen(q), " <%d operand%s", opco.no,
@@ -752,10 +960,6 @@ static void make_opcode_syntax_g(opcodeg opco)
 /* This is for Z-code only. */
 static void write_operand(assembly_operand op)
 {   int32 j;
-    if (module_switch && (op.marker != 0))
-    {   if ((op.marker != VARIABLE_MV) && (op.type == SHORT_CONSTANT_OT))
-            op.type = LONG_CONSTANT_OT;
-    }
     j=op.value;
     switch(op.type)
     {   case LONG_CONSTANT_OT:
@@ -765,7 +969,7 @@ static void write_operand(assembly_operand op)
             byteout(j, 0);
             else byteout(j, 0x80 + op.marker); return;
         case VARIABLE_OT:
-            byteout(j, (module_switch)?(0x80 + op.marker):0); return;
+            byteout(j, 0); return;
         case CONSTANT_OT:
         case HALFCONSTANT_OT:
         case BYTECONSTANT_OT:
@@ -779,15 +983,25 @@ static void write_operand(assembly_operand op)
     }
 }
 
-extern void assemblez_instruction(assembly_instruction *AI)
+extern void assemblez_instruction(const assembly_instruction *AI)
 {
-    uchar *start_pc, *operands_pc;
+    int32 operands_pc;
+    int32 start_pc;
     int32 offset, j, topbits=0, types_byte1, types_byte2;
     int operand_rules, min=0, max=0, no_operands_given, at_seq_point = FALSE;
     assembly_operand o1, o2;
     opcodez opco;
 
     ASSERT_ZCODE();
+
+    if (execution_never_reaches_here) {
+        if (!(execution_never_reaches_here & EXECSTATE_NOWARN)) {
+            warning("This statement can never be reached");
+            /* only show the warning once */
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        }
+        return;
+    }
 
     offset = zmachine_pc;
 
@@ -797,8 +1011,10 @@ extern void assemblez_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -812,11 +1028,8 @@ extern void assemblez_instruction(assembly_instruction *AI)
         return;
     }
 
-    if (execution_never_reaches_here)
-        warning("This statement can never be reached");
-
     operand_rules = opco.op_rules;
-    execution_never_reaches_here = ((opco.flags & Rf) != 0);
+    execution_never_reaches_here = ((opco.flags & Rf) ? EXECSTATE_UNREACHABLE : EXECSTATE_REACHABLE);
 
     if (opco.flags2_set != 0) flags2_requirements[opco.flags2_set] = 1;
 
@@ -827,7 +1040,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
 
     /* 1. Write the opcode byte(s) */
 
-    start_pc = zcode_holding_area + zcode_ha_size;
+    start_pc = zcode_ha_size;
 
     switch(opco.no)
     {   case VAR_LONG: topbits=0xc0; min=0; max=8; break;
@@ -842,23 +1055,31 @@ extern void assemblez_instruction(assembly_instruction *AI)
     }
     byteout(opco.code + topbits, 0);
 
-    operands_pc = zcode_holding_area + zcode_ha_size;
+    operands_pc = zcode_ha_size;
 
     /* 2. Dispose of the special rules LABEL and TEXT */
 
     if (operand_rules==LABEL)
     {   j = (AI->operand[0]).value;
+        mark_label_used(j);
         byteout(j/256, LABEL_MV); byteout(j%256, 0);
         goto Instruction_Done;
     }
 
     if (operand_rules==TEXT)
     {   int32 i;
-        uchar *tmp = translate_text(zcode_holding_area + zcode_ha_size, zcode_holding_area+MAX_ZCODE_SIZE, AI->text);
-        if (!tmp)
-            memoryerror("MAX_ZCODE_SIZE", MAX_ZCODE_SIZE);
-        j = subtract_pointers(tmp, (zcode_holding_area + zcode_ha_size));
-        for (i=0; i<j; i++) zcode_markers[zcode_ha_size++] = 0;
+        j = translate_text(-1, AI->text, STRCTX_GAMEOPC);
+        if (j < 0) {
+            error("text translation failed");
+            j = 0;
+        }
+        ensure_memory_list_available(&zcode_markers_memlist, zcode_ha_size+j);
+        ensure_memory_list_available(&zcode_holding_area_memlist, zcode_ha_size+j);
+        for (i=0; i<j; i++) {
+            zcode_holding_area[zcode_ha_size] = translated_text[i];
+            zcode_markers[zcode_ha_size] = 0;
+            zcode_ha_size++;
+        }
         zmachine_pc += j;
         goto Instruction_Done;
     }
@@ -889,13 +1110,13 @@ extern void assemblez_instruction(assembly_instruction *AI)
                 else
                     types_byte2 = (types_byte2 & (~mask)) + o1.type*multi;
             }
-            *operands_pc=types_byte1;
-            if (opco.no == VAR_LONG) *(operands_pc+1)=types_byte2;
+            zcode_holding_area[operands_pc]=types_byte1;
+            if (opco.no == VAR_LONG) zcode_holding_area[operands_pc+1]=types_byte2;
             break;
 
         case ONE:
             o1 = AI->operand[0];
-            *start_pc=(*start_pc) + o1.type*0x10;
+            zcode_holding_area[start_pc] += o1.type*0x10;
             write_operand(o1);
             break;
 
@@ -906,12 +1127,12 @@ extern void assemblez_instruction(assembly_instruction *AI)
             /* Transfer to VAR form if either operand is a long constant */
 
             if ((o1.type==LONG_CONSTANT_OT)||(o2.type==LONG_CONSTANT_OT))
-            {   *start_pc=(*start_pc) + 0xc0;
+            {   zcode_holding_area[start_pc] += 0xc0;
                 byteout(o1.type*0x40 + o2.type*0x10 + 0x0f, 0);
             }
             else
-            {   if (o1.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x40;
-                if (o2.type==VARIABLE_OT) *start_pc=(*start_pc) + 0x20;
+            {   if (o1.type==VARIABLE_OT) zcode_holding_area[start_pc] += 0x40;
+                if (o2.type==VARIABLE_OT) zcode_holding_area[start_pc] += 0x20;
             }
             write_operand(o1);
             write_operand(o2);
@@ -921,17 +1142,18 @@ extern void assemblez_instruction(assembly_instruction *AI)
     /* 4. Assemble a Store destination, if needed */
 
     if ((AI->store_variable_number) != -1)
-    {   if (AI->store_variable_number >= MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES) {
+    {   if (AI->store_variable_number >= MAX_LOCAL_VARIABLES+MAX_ZCODE_GLOBAL_VARS) {
             goto OpcodeSyntaxError;
         }
         o1.type = VARIABLE_OT;
         o1.value = AI->store_variable_number;
-        variable_usage[o1.value] = TRUE;
+        variables[o1.value].usage = TRUE;
         o1.marker = 0;
 
         /*  Note that variable numbers 249 to 255 (i.e. globals 233 to 239)
             are used as scratch workspace, so need no mapping between
-            modules and story files: nor do local variables 0 to 15  */
+            modules and story files: nor do local variables 0 to 15.
+            (Modules no longer exist but why drop a good comment.) */
 
         if ((o1.value >= MAX_LOCAL_VARIABLES) && (o1.value < 249))
             o1.marker = VARIABLE_MV;
@@ -943,7 +1165,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
     if (AI->branch_label_number != -1)
     {   int32 addr, long_form;
         int branch_on_true = (AI->branch_flag)?1:0;
-
+        mark_label_used(AI->branch_label_number);
         switch (AI->branch_label_number)
         {   case -2: addr = 2; branch_on_true = 0; long_form = 0; break;
                                                  /* branch nowhere, carry on */
@@ -981,7 +1203,7 @@ extern void assemblez_instruction(assembly_instruction *AI)
         for (i=0; i<AI->operand_count; i++)
         {   if ((i==0) && (opco.op_rules == VARIAB))
             {   if ((AI->operand[0]).type == VARIABLE_OT)
-                {   printf("["); print_operand_z(AI->operand[i]); }
+                {   printf("["); print_operand_z(&AI->operand[i], TRUE); }
                 else
                     printf("%s", variable_name((AI->operand[0]).value));
             }
@@ -989,14 +1211,14 @@ extern void assemblez_instruction(assembly_instruction *AI)
             if ((i==0) && (opco.op_rules == LABEL))
             {   printf("L%d", AI->operand[0].value);
             }
-            else print_operand_z(AI->operand[i]);
+            else print_operand_z(&AI->operand[i], TRUE);
             printf(" ");
         }
         if (AI->store_variable_number != -1)
         {   assembly_operand AO;
             printf("-> ");
             AO.type = VARIABLE_OT; AO.value = AI->store_variable_number;
-            print_operand_z(AO); printf(" ");
+            print_operand_z(&AO, TRUE); printf(" ");
         }
 
         switch(AI->branch_label_number)
@@ -1012,16 +1234,16 @@ extern void assemblez_instruction(assembly_instruction *AI)
         }
 
         if (asm_trace_level>=2)
-        {   for (j=0;start_pc<zcode_holding_area + zcode_ha_size;
+        {   for (j=0;start_pc<zcode_ha_size;
                  j++, start_pc++)
             {   if (j%16==0) printf("\n                               ");
-                printf("%02x ", *start_pc);
+                if (zcode_markers[start_pc] & 0x7f)
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
+                printf("%02x ", zcode_holding_area[start_pc]);
             }
         }
         printf("\n");
     }
-
-    if (module_switch) flush_link_data();
 
     return;
 
@@ -1031,11 +1253,13 @@ extern void assemblez_instruction(assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
-static void assembleg_macro(assembly_instruction *AI)
+static void assembleg_macro(const assembly_instruction *AI)
 {
-    /* validate macro syntax first */
     int ix, no_operands_given;
     opcodeg opco;
+    assembly_operand AMO_0, AMO_1, AMO_2;
+    
+    /* validate macro syntax first */
     
     opco = internal_number_to_opmacro_g(AI->internal_number);
     no_operands_given = AI->operand_count;
@@ -1062,14 +1286,51 @@ static void assembleg_macro(assembly_instruction *AI)
         }
     }
     
-    /* expand the macro */
-    switch (AI->internal_number) {
-        case pull_gm:
-            assembleg_store(AI->operand[0], stack_pointer);
+    /* Expand the macro.
+       The assembleg_() functions overwrite AI, so we need to copy out
+       its operands before we call them. */
+    
+    switch (opco.code) {
+        case pull_gm:   /* @pull STORE */
+            AMO_0 = AI->operand[0];
+            assembleg_store(AMO_0, stack_pointer);
             break;
         
-        case push_gm:
-            assembleg_store(stack_pointer, AI->operand[0]);
+        case push_gm:   /* @push LOAD */
+            AMO_0 = AI->operand[0];
+            assembleg_store(stack_pointer, AMO_0);
+            break;
+
+        case dload_gm:   /* @dload LOAD STORELO STOREHI */
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                /* addr is on the stack */
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(aload_gc, temp_var3, one_operand, AMO_1);
+                assembleg_3(aload_gc, temp_var3, zero_operand, AMO_2);
+            }
+            else {
+                assembleg_3(aload_gc, AMO_0, one_operand, AMO_1);
+                assembleg_3(aload_gc, AMO_0, zero_operand, AMO_2);
+            }
+            break;
+
+        case dstore_gm:   /* @dload LOAD LOADHI LOADLO */
+            AMO_0 = AI->operand[0];
+            AMO_1 = AI->operand[1];
+            AMO_2 = AI->operand[2];
+            if ((AMO_0.type == LOCALVAR_OT) && (AMO_0.value == 0)) {
+                /* addr is on the stack */
+                assembleg_store(temp_var3, stack_pointer);
+                assembleg_3(astore_gc, temp_var3, zero_operand, AMO_1);
+                assembleg_3(astore_gc, temp_var3, one_operand, AMO_2);
+            }
+            else {
+                assembleg_3(astore_gc, AMO_0, zero_operand, AMO_1);
+                assembleg_3(astore_gc, AMO_0, one_operand, AMO_2);
+            }
             break;
         
         default:
@@ -1085,15 +1346,25 @@ static void assembleg_macro(assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
-extern void assembleg_instruction(assembly_instruction *AI)
+extern void assembleg_instruction(const assembly_instruction *AI)
 {
-    uchar *start_pc, *opmodes_pc;
+    int32 opmodes_pc;
+    int32 start_pc;
     int32 offset, j;
     int no_operands_given, at_seq_point = FALSE;
     int ix, k;
     opcodeg opco;
 
     ASSERT_GLULX();
+
+    if (execution_never_reaches_here) {
+        if (!(execution_never_reaches_here & EXECSTATE_NOWARN)) {
+            warning("This statement can never be reached");
+            /* only show the warning once */
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        }
+        return;
+    }
 
     offset = zmachine_pc;
 
@@ -1103,8 +1374,10 @@ extern void assembleg_instruction(assembly_instruction *AI)
     if (sequence_point_follows)
     {   sequence_point_follows = FALSE; at_seq_point = TRUE;
         if (debugfile_switch)
-        {   sequence_point_labels[next_sequence_point] = next_label;
-            sequence_point_locations[next_sequence_point] =
+        {
+            ensure_memory_list_available(&sequence_points_memlist, next_sequence_point+1);
+            sequence_points[next_sequence_point].label = next_label;
+            sequence_points[next_sequence_point].location =
                 statement_debug_location;
             set_label_offset(next_label++, zmachine_pc);
         }
@@ -1113,10 +1386,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
     opco = internal_number_to_opcode_g(AI->internal_number);
 
-    if (execution_never_reaches_here)
-        warning("This statement can never be reached");
-
-    execution_never_reaches_here = ((opco.flags & Rf) != 0);
+    execution_never_reaches_here = ((opco.flags & Rf) ? EXECSTATE_UNREACHABLE : EXECSTATE_REACHABLE);
 
     if (opco.op_rules & GOP_Unicode) {
         uses_unicode_features = TRUE;
@@ -1130,12 +1400,18 @@ extern void assembleg_instruction(assembly_instruction *AI)
     if (opco.op_rules & GOP_Float) {
         uses_float_features = TRUE;
     }
+    if (opco.op_rules & GOP_ExtUndo) {
+        uses_extundo_features = TRUE;
+    }
+    if (opco.op_rules & GOP_Double) {
+        uses_double_features = TRUE;
+    }
 
     no_operands_given = AI->operand_count;
 
     /* 1. Write the opcode byte(s) */
 
-    start_pc = zcode_holding_area + zcode_ha_size; 
+    start_pc = zcode_ha_size; 
 
     if (opco.code < 0x80) {
       byteout(opco.code, 0);
@@ -1155,7 +1431,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
        every two operands (rounded up). We write zeroes for now; 
        when the operands are written, we'll go back and fix them. */
 
-    opmodes_pc = zcode_holding_area + zcode_ha_size;
+    opmodes_pc = zcode_ha_size;
 
     for (ix=0; ix<opco.no; ix+=2) {
       byteout(0, 0);
@@ -1180,6 +1456,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
                 compiler_error("Assembling branch without BRANCH_MV marker");
                 goto OpcodeSyntaxError; 
             }
+            mark_label_used(k);
             if (k == -2) {
                 k = 2; /* branch no-op */
                 type = BYTECONSTANT_OT;
@@ -1197,8 +1474,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
             }
             else {
                 /* branch to label k */
-                j = subtract_pointers((zcode_holding_area + zcode_ha_size), 
-                    opmodes_pc);
+                j = (zcode_ha_size - opmodes_pc);
                 j = 2*j - ix;
                 marker = BRANCH_MV + j;
                 if (!(marker >= BRANCH_MV && marker < BRANCHMAX_MV)) {
@@ -1327,7 +1603,7 @@ extern void assembleg_instruction(assembly_instruction *AI)
 
       if (ix & 1)
           j = (j << 4);
-      opmodes_pc[ix/2] |= j;
+      zcode_holding_area[opmodes_pc+ix/2] |= j;
     }
 
     /* Print assembly trace. */
@@ -1346,31 +1622,29 @@ extern void assembleg_instruction(assembly_instruction *AI)
                 printf("to L%d", AI->operand[i].value);
             }
           else {
-            print_operand_g(AI->operand[i]);
+            print_operand_g(&AI->operand[i], TRUE);
           }
           printf(" ");
       }
 
       if (asm_trace_level>=2) {
         for (j=0;
-            start_pc<zcode_holding_area + zcode_ha_size;
+            start_pc<zcode_ha_size;
             j++, start_pc++) {
             if (j%16==0) printf("\n                               ");
             if (/* DISABLES CODE */ (0)) {
-                printf("%02x ", *start_pc);
+                printf("%02x ", zcode_holding_area[start_pc]);
             }
             else {
-                printf("%02x", *start_pc);
-                if (zcode_markers[start_pc-zcode_holding_area])
-                    printf("{%02x}", zcode_markers[start_pc-zcode_holding_area]);
+                if (zcode_markers[start_pc])
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x", zcode_holding_area[start_pc]);
                 printf(" ");
             }
         }
       }
       printf("\n");
     }
-
-    if (module_switch) flush_link_data();
 
     return;
 
@@ -1380,33 +1654,79 @@ extern void assembleg_instruction(assembly_instruction *AI)
     error_named("Assembly mistake: syntax is", opcode_syntax_string);
 }
 
+/* Set up this label at zmachine_pc.
+   This resets the execution_never_reaches_here flag, since every label
+   is assumed to be reachable. 
+   However, if STRIP_UNREACHABLE_LABELS and EXECSTATE_ENTIRE are both set,
+   that's not true. The entire statement is being skipped, so we can safely
+   skip all unused labels within it.
+   ("Unused" meaning there are no forward jumps to the label. We can't
+   do anything about *backward* jumps because we haven't seen them yet!)
+   (If STRIP_UNREACHABLE_LABELS is not set, the ENTIRE flag is ignored.)
+*/
 extern void assemble_label_no(int n)
 {
+    int inuse = (n >= 0 && n < labeluse_size && labeluse[n]);
+    
+    if ((!inuse) && (execution_never_reaches_here & EXECSTATE_ENTIRE) && STRIP_UNREACHABLE_LABELS) {
+        /* We're not going to compile this label at all. Set a negative
+           offset, which will trip an error if this label is jumped to. */
+        set_label_offset(n, -1);
+        return;
+    }
+
     if (asm_trace_level > 0)
         printf("%5d  +%05lx    .L%d\n", ErrorReport.line_number,
             ((long int) zmachine_pc), n);
     set_label_offset(n, zmachine_pc);
-    execution_never_reaches_here = FALSE;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
+}
+
+/* This is the same as assemble_label_no, except we only set up the label
+   if there has been a forward branch to it.
+   Returns whether the label is created.
+   Only use this for labels which never have backwards branches!
+*/
+extern int assemble_forward_label_no(int n)
+{
+    if (n >= 0 && n < labeluse_size && labeluse[n]) {
+        assemble_label_no(n);
+        return TRUE;
+    }
+    else {
+        /* There were no forward branches to this label and we promise
+           there will be no backwards branches to it. Set a negative
+           offset, which will trip an error if we break our promise. */
+        set_label_offset(n, -1);
+        return FALSE;
+    }
 }
 
 extern void define_symbol_label(int symbol)
-{   label_symbols[svals[symbol]] = symbol;
+{
+    int label = symbols[symbol].value;
+    /* We may be creating a new label (label = next_label) or filling in
+       the value of an old one. So we call ensure. */
+    ensure_memory_list_available(&labels_memlist, label+1);
+    labels[label].symbol = symbol;
 }
 
-extern int32 assemble_routine_header(int no_locals,
-    int routine_asterisked, char *name, int embedded_flag, int the_symbol)
+/* The local variables must already be set up; no_locals indicates
+   how many exist. */
+extern int32 assemble_routine_header(int routine_asterisked, char *name,
+    int embedded_flag, int the_symbol)
 {   int i, rv;
     int stackargs = FALSE;
     int name_length;
 
-    execution_never_reaches_here = FALSE;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 
-    routine_locals = no_locals;
-    for (i=0; i<MAX_LOCAL_VARIABLES; i++) variable_usage[i] = FALSE;
+    ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES);
+    for (i=0; i<MAX_LOCAL_VARIABLES; i++) variables[i].usage = FALSE;
 
-    if (no_locals >= 1 
-      && !strcmp(local_variables.keywords[0], "_vararg_count")) {
-      stackargs = TRUE;
+    if (no_locals >= 1
+        && strcmpcis(get_local_variable_name(0), "_vararg_count")==0) {
+        stackargs = TRUE;
     }
 
     if (veneer_mode) routine_starts_line = blank_brief_location;
@@ -1435,9 +1755,8 @@ extern int32 assemble_routine_header(int no_locals,
 
     routine_symbol = the_symbol;
     name_length = strlen(name) + 1;
-    routine_name =
-      my_malloc(name_length * sizeof(char), "temporary copy of routine name");
-    strncpy(routine_name, name, name_length);
+    ensure_memory_list_available(&current_routine_name, name_length);
+    strncpy(current_routine_name.data, name, name_length);
 
     /*  Update the routine counter                                           */
 
@@ -1463,13 +1782,15 @@ extern int32 assemble_routine_header(int no_locals,
           for (i=0; i<no_locals; i++) { byteout(0,0); byteout(0,0); }
 
       next_label = 0; next_sequence_point = 0; last_label = -1;
+      labeluse_size = 0;
 
       /*  Compile code to print out text like "a=3, b=4, c=5" when the       */
       /*  function is called, if it's required.                              */
 
       if ((routine_asterisked) || (define_INFIX_switch))
       {   char fnt[256]; assembly_operand PV, RFA, CON, STP, SLF; int ln, ln2;
-
+          /* TODO: fnt[256] is unsafe */
+          
           ln = next_label++;
           ln2 = next_label++;
 
@@ -1482,7 +1803,8 @@ extern int32 assemble_routine_header(int no_locals,
             }
             else
             {   i = no_named_routines++;
-                  named_routine_symbols[i] = the_symbol;
+                ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
+                named_routine_symbols[i] = the_symbol;
                 CON.value = i/8; CON.type = LONG_CONSTANT_OT; CON.marker = 0;
                 RFA.value = routine_flags_array_SC;
                 RFA.type = LONG_CONSTANT_OT; RFA.marker = INCON_MV;
@@ -1509,6 +1831,7 @@ extern int32 assemble_routine_header(int no_locals,
         assemble_label_no(ln);
         sprintf(fnt, ") ]^"); AI.text = fnt;
         assemblez_0(print_zc);
+        AI.text = NULL;
         assemble_label_no(ln2);
       }
 
@@ -1545,6 +1868,7 @@ extern int32 assemble_routine_header(int no_locals,
       }
 
       next_label = 0; next_sequence_point = 0; last_label = -1; 
+      labeluse_size = 0;
 
       if ((routine_asterisked) || (define_INFIX_switch)) {
         int ix;
@@ -1556,13 +1880,14 @@ extern int32 assemble_routine_header(int no_locals,
           }
           else {
             i = no_named_routines++;
+            ensure_memory_list_available(&named_routine_symbols_memlist, no_named_routines);
             named_routine_symbols[i] = the_symbol;
           }
         }
         sprintf(fnt, "[ %s(", name);
         AO.marker = STRING_MV;
         AO.type   = CONSTANT_OT;
-        AO.value  = compile_string(fnt, FALSE, FALSE);
+        AO.value  = compile_string(fnt, STRCTX_INFIX);
         assembleg_1(streamstr_gc, AO);
 
         if (!stackargs) {
@@ -1570,7 +1895,7 @@ extern int32 assemble_routine_header(int no_locals,
             sprintf(fnt, "%s%s = ", (ix==1)?"":", ", variable_name(ix));
             AO.marker = STRING_MV;
             AO.type   = CONSTANT_OT;
-            AO.value  = compile_string(fnt, FALSE, FALSE);
+            AO.value  = compile_string(fnt, STRCTX_INFIX);
             assembleg_1(streamstr_gc, AO);
             AO.marker = 0;
             AO.type = LOCALVAR_OT;
@@ -1583,7 +1908,7 @@ extern int32 assemble_routine_header(int no_locals,
           sprintf(fnt, "%s = ", variable_name(1));
           AO.marker = STRING_MV;
           AO.type   = CONSTANT_OT;
-          AO.value  = compile_string(fnt, FALSE, FALSE);
+          AO.value  = compile_string(fnt, STRCTX_INFIX);
           assembleg_1(streamstr_gc, AO);
           AO.marker = 0;
           AO.type = LOCALVAR_OT;
@@ -1617,7 +1942,7 @@ extern int32 assemble_routine_header(int no_locals,
 
         AO.marker = STRING_MV;
         AO.type   = CONSTANT_OT;
-        AO.value  = compile_string(") ]^", FALSE, FALSE);
+        AO.value  = compile_string(") ]^", STRCTX_INFIX);
         assembleg_1(streamstr_gc, AO);
       }
     }
@@ -1666,25 +1991,26 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 
     if (debugfile_switch)
     {
+        char *routine_name = current_routine_name.data;
         debug_file_printf("<routine>");
         if (embedded_flag)
         {   debug_file_printf
                 ("<identifier artificial=\"true\">%s</identifier>",
                  routine_name);
         }
-        else if (sflags[routine_symbol] & REPLACE_SFLAG)
+        else if (symbols[routine_symbol].flags & REPLACE_SFLAG)
         {   /* The symbol type will be set to ROUTINE_T once the replaced
                version has been given; if it is already set, we must be dealing
                with a replacement, and we can use the routine name as-is.
                Otherwise we look for a rename.  And if that doesn't work, we
                fall back to an artificial identifier. */
-            if (stypes[routine_symbol] == ROUTINE_T)
+            if (symbols[routine_symbol].type == ROUTINE_T)
             {   /* Optional because there may be further replacements. */
                 write_debug_optional_identifier(routine_symbol);
             }
             else if (find_symbol_replacement(&routine_symbol))
             {   debug_file_printf
-                    ("<identifier>%s</identifier>", symbs[routine_symbol]);
+                    ("<identifier>%s</identifier>", symbols[routine_symbol].name);
             }
             else
             {   debug_file_printf
@@ -1708,7 +2034,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         debug_file_printf
             ("<byte-count>%d</byte-count>", zmachine_pc - routine_start_pc);
         write_debug_locations(locations);
-        for (i = 1; i <= routine_locals; ++i)
+        for (i = 1; i <= no_locals; ++i)
         {   debug_file_printf("<local-variable>");
             debug_file_printf("<identifier>%s</identifier>", variable_name(i));
             if (glulx_mode)
@@ -1724,67 +2050,61 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
         {   debug_file_printf("<sequence-point>");
             debug_file_printf("<address>");
             write_debug_code_backpatch
-                (label_offsets[sequence_point_labels[i]]);
+                (labels[sequence_points[i].label].offset);
             debug_file_printf("</address>");
-            write_debug_location(sequence_point_locations[i]);
+            write_debug_location(sequence_points[i].location);
             debug_file_printf("</sequence-point>");
         }
         debug_file_printf("</routine>");
     }
 
-    my_free(&routine_name, "temporary copy of routine name");
-
     /* Issue warnings about any local variables not used in the routine. */
 
-    for (i=1; i<=routine_locals; i++)
-        if (!(variable_usage[i]))
+    for (i=1; i<=no_locals; i++)
+        if (!(variables[i].usage))
             dbnu_warning("Local variable", variable_name(i),
                 routine_starts_line);
 
     for (i=0; i<next_label; i++)
-    {   int j = label_symbols[i];
+    {   int j = labels[i].symbol;
         if (j != -1)
-        {   if (sflags[j] & CHANGE_SFLAG)
+        {   if (symbols[j].flags & CHANGE_SFLAG)
                 error_named_at("Routine contains no such label as",
-                    (char *) symbs[j], slines[j]);
+                    symbols[j].name, symbols[j].line);
             else
-                if ((sflags[j] & USED_SFLAG) == 0)
-                    dbnu_warning("Label", (char *) symbs[j], slines[j]);
-            stypes[j] = CONSTANT_T;
-            sflags[j] = UNKNOWN_SFLAG;
+                if ((symbols[j].flags & USED_SFLAG) == 0)
+                    dbnu_warning("Label", symbols[j].name, symbols[j].line);
+            symbols[j].type = CONSTANT_T;
+            symbols[j].flags = UNKNOWN_SFLAG;
         }
     }
     no_sequence_points += next_sequence_point;
     next_label = 0; next_sequence_point = 0;
+    labeluse_size = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 }
 
 /* ------------------------------------------------------------------------- */
 /*   Called when the holding area contains an entire routine of code:        */
 /*   backpatches the labels, issues module markers, then dumps the routine   */
 /*   into longer-term storage.                                               */
+/*                                                                           */
 /*   Note that in the code received, all branches have long form, and their  */
 /*   contents are not an offset but the label numbers they branch to.        */
 /*   Similarly, LABEL operands (those of "jump" instructions) are label      */
 /*   numbers.  So this routine must change the label numbers to offsets,     */
 /*   slimming the code down as it does so to take advantage of short-form    */
 /*   branch operands where possible.                                         */
+/*                                                                           */
+/*   zcode_ha_size is the number of bytes added since the last transfer      */
+/*   call. So we transfer starting at (zmachine_pc - zcode_ha_size). But we  */
+/*   might transfer fewer bytes than that.                                   */
 /* ------------------------------------------------------------------------- */
-
-static int32 adjusted_pc;
-
-static void transfer_to_temp_file(uchar *c)
-{   fputc(*c,Temp2_fp);
-    adjusted_pc++;
-}
-
-static void transfer_to_zcode_area(uchar *c)
-{   write_byte_to_memory_block(&zcode_area, adjusted_pc++, *c);
-}
 
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
-    void (* transfer_byte)(uchar *);
+    int32 adjusted_pc;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -1793,12 +2113,12 @@ static void transfer_routine_z(void)
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
 
-    transfer_byte =
-        (temporary_files_switch)?transfer_to_temp_file:transfer_to_zcode_area;
-
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (2nd bytes in branches converted to
-            short form) with DELETED_MV.                                     */
+            short form) with DELETED_MV.
+            We also look for jumps that can be entirely eliminated (because
+            they are jumping to the very next instruction). The opcode and
+            both label bytes get DELETED_MV. */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] == BRANCH_MV)
@@ -1806,10 +2126,25 @@ static void transfer_routine_z(void)
                 printf("Branch detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
             if (asm_trace_level >= 4)
-                printf("To label %d, which is %d from here\n",
-                    j, label_offsets[j]-pc);
-            if ((label_offsets[j] >= pc+2) && (label_offsets[j] < pc+64))
-            {   if (asm_trace_level >= 4) printf("Short form\n");
+                printf("...To label %d, which is %d from here\n",
+                    j, labels[j].offset-pc);
+            if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
+            {   if (asm_trace_level >= 4) printf("...Using short form\n");
+                zcode_markers[i+1] = DELETED_MV;
+            }
+        }
+        else if (zcode_markers[i] == LABEL_MV)
+        {
+            if (asm_trace_level >= 4)
+                printf("Jump detected at offset %04x\n", pc);
+            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            if (asm_trace_level >= 4)
+                printf("...To label %d, which is %d from here\n",
+                    j, labels[j].offset-pc);
+            if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
+                if (asm_trace_level >= 4) printf("...Deleting jump\n");
+                zcode_markers[i-1] = DELETED_MV;
+                zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
         }
@@ -1828,17 +2163,18 @@ static void transfer_routine_z(void)
         {   printf("Opening label: %d\n", first_label);
             for (i=0;i<next_label;i++)
                 printf("Label %d offset %04x next -> %d previous -> %d\n",
-                    i, label_offsets[i], label_next[i], label_prev[i]);
+                    i, labels[i].offset, labels[i].next, labels[i].prev);
         }
 
+        /* label will advance through the linked list as pc increases. */
         for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
             i<zcode_ha_size; i++, pc++)
-        {   while ((label != -1) && (label_offsets[label] == pc))
+        {   while ((label != -1) && (labels[label].offset == pc))
             {   if (asm_trace_level >= 4)
                     printf("Position of L%d corrected from %04x to %04x\n",
-                        label, label_offsets[label], new_pc);
-                label_offsets[label] = new_pc;
-                label = label_next[label];
+                        label, labels[label].offset, new_pc);
+                labels[label].offset = new_pc;
+                label = labels[label].next;
             }
            if (zcode_markers[i] != DELETED_MV) new_pc++;
         }
@@ -1848,6 +2184,8 @@ static void transfer_routine_z(void)
             operands with offsets to those labels.  Also issue markers, now
             that we know where they occur in the final Z-code area.          */
 
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
+    
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++)
     {   switch(zcode_markers[i])
         { case BRANCH_MV:
@@ -1857,9 +2195,18 @@ static void transfer_routine_z(void)
             branch_on_true = ((zcode_holding_area[i]) & 0x80);
             offset_of_next = new_pc + long_form + 1;
 
-            addr = label_offsets[j] - offset_of_next + 2;
+            if (labels[j].offset < 0) {
+                char *lname = "(anon)";
+                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                    lname = symbols[labels[j].symbol].name;
+                error_named("Attempt to jump to an unreachable label", lname);
+                addr = 0;
+            }
+            else {
+                addr = labels[j].offset - offset_of_next + 2;
+            }
             if (addr<-0x2000 || addr>0x1fff) 
-                fatalerror("Branch out of range: divide the routine up?");
+                error_fmt("Branch out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr+=(int32) 0x10000L;
 
             addr=addr&0x3fff;
@@ -1874,18 +2221,27 @@ static void transfer_routine_z(void)
                 }
                 zcode_holding_area[i] = branch_on_true + 0x40 + (addr&0x3f);
             }
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
           case LABEL_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
-            addr = label_offsets[j] - new_pc;
+            if (labels[j].offset < 0) {
+                char *lname = "(anon)";
+                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                    lname = symbols[labels[j].symbol].name;
+                error_named("Attempt to jump to an unreachable label", lname);
+                addr = 0;
+            }
+            else {
+                addr = labels[j].offset - new_pc;
+            }
             if (addr<-0x8000 || addr>0x7fff) 
-                fatalerror("Jump out of range: divide the routine up?");
+                error_fmt("Jump out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr += (int32) 0x10000L;
             zcode_holding_area[i] = addr/256;
             zcode_holding_area[i+1] = addr%256;
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
           case DELETED_MV:
@@ -1894,11 +2250,12 @@ static void transfer_routine_z(void)
           default:
             switch(zcode_markers[i] & 0x7f)
             {   case NULL_MV: break;
+                case ERROR_MV: break;
                 case VARIABLE_MV:
                 case OBJECT_MV:
                 case ACTION_MV:
                 case IDENT_MV:
-                    if (!module_switch) break;
+                    break;
                 default:
                     if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV)
                     {   compiler_error("Illegal code backpatch value");
@@ -1907,18 +2264,24 @@ static void transfer_routine_z(void)
                         break;
                     }
 
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++,
-                        zcode_markers[i] + 32*(new_pc/65536));
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++, (new_pc/256)%256);
-                    write_byte_to_memory_block(&zcode_backpatch_table,
-                        zcode_backpatch_size++, new_pc%256);
+                    if (bpatch_trace_setting >= 2)
+                        printf("BP added: MV %d PC %04x\n", zcode_markers[i], new_pc);
+
+                    ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+3);
+                    zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i] + 32*(new_pc/65536);
+                    zcode_backpatch_table[zcode_backpatch_size++] = (new_pc/256)%256;
+                    zcode_backpatch_table[zcode_backpatch_size++] = new_pc%256;
                     break;
             }
-            transfer_byte(zcode_holding_area + i); new_pc++;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
         }
+    }
+
+    /* Consistency check */
+    if (new_pc - rstart_pc > zcode_ha_size || adjusted_pc != new_pc)
+    {
+        fatalerror("Optimisation increased routine length or failed to match; should not happen");
     }
 
     if (asm_trace_level >= 3)
@@ -1929,13 +2292,12 @@ static void transfer_routine_z(void)
     /*  Insert null bytes if necessary to ensure the next routine address is */
     /*  expressible as a packed address                                      */
 
-    {   uchar zero[1];
-        zero[0] = 0;
-        if (oddeven_packing_switch)
-            while ((adjusted_pc%(scale_factor*2))!=0) transfer_byte(zero);
-        else
-            while ((adjusted_pc%scale_factor)!=0) transfer_byte(zero);
-    }
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+2*scale_factor);
+
+    if (oddeven_packing_switch)
+        while ((adjusted_pc%(scale_factor*2))!=0) zcode_area[adjusted_pc++] = 0;
+    else
+        while ((adjusted_pc%scale_factor)!=0) zcode_area[adjusted_pc++] = 0;
 
     zmachine_pc = adjusted_pc;
     zcode_ha_size = 0;
@@ -1944,7 +2306,7 @@ static void transfer_routine_z(void)
 static void transfer_routine_g(void)
 {   int32 i, j, pc, new_pc, label, form_len, offset_of_next, addr,
           rstart_pc;
-    void (* transfer_byte)(uchar *);
+    int32 adjusted_pc;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -1953,12 +2315,12 @@ static void transfer_routine_g(void)
              (long int) adjusted_pc, zcode_ha_size, next_label);
     }
 
-    transfer_byte =
-        (temporary_files_switch)?transfer_to_temp_file:transfer_to_zcode_area;
-
     /*  (1) Scan through for branches and make short/long decisions in each
             case.  Mark omitted bytes (bytes 2-4 in branches converted to
-            short form) with DELETED_MV.                                     */
+            short form) with DELETED_MV.
+            We also look for branches that can be entirely eliminated (because
+            they are jumping to the very next instruction). The opcode and
+            all label bytes get DELETED_MV. */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
@@ -1971,16 +2333,25 @@ static void transfer_routine_g(void)
             | (zcode_holding_area[i+2] << 8)
             | (zcode_holding_area[i+3]));
         offset_of_next = pc + 4;
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        addr = (labels[j].offset - offset_of_next) + 2;
+        opmodebyte = i - ((opmodeoffset+1)/2);
         if (asm_trace_level >= 4)
-            printf("To label %d, which is (%d-2) = %d from here\n",
-                j, addr, label_offsets[j] - offset_of_next);
-        if (addr >= -0x80 && addr < 0x80) {
+            printf("...To label %d, which is (%d-2) = %d from here\n",
+                j, addr, labels[j].offset - offset_of_next);
+        if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
+            if (asm_trace_level >= 4) printf("...Deleting branch\n");
+            zcode_markers[i-2] = DELETED_MV;
+            zcode_markers[i-1] = DELETED_MV;
+            zcode_markers[i] = DELETED_MV;
+            zcode_markers[i+1] = DELETED_MV;
+            zcode_markers[i+2] = DELETED_MV;
+            zcode_markers[i+3] = DELETED_MV;
+        }
+        else if (addr >= -0x80 && addr < 0x80) {
             if (asm_trace_level >= 4) printf("...Byte form\n");
             zcode_markers[i+1] = DELETED_MV;
             zcode_markers[i+2] = DELETED_MV;
             zcode_markers[i+3] = DELETED_MV;
-            opmodebyte = i - ((opmodeoffset+1)/2);
             if ((opmodeoffset & 1) == 0)
                 zcode_holding_area[opmodebyte] = 
                     (zcode_holding_area[opmodebyte] & 0xF0) | 0x01;
@@ -1992,7 +2363,6 @@ static void transfer_routine_g(void)
             if (asm_trace_level >= 4) printf("...Short form\n");
             zcode_markers[i+2] = DELETED_MV;
             zcode_markers[i+3] = DELETED_MV;
-            opmodebyte = i - ((opmodeoffset+1)/2);
             if ((opmodeoffset & 1) == 0)
                 zcode_holding_area[opmodebyte] = 
                     (zcode_holding_area[opmodebyte] & 0xF0) | 0x02;
@@ -2015,18 +2385,19 @@ static void transfer_routine_g(void)
         printf("Opening label: %d\n", first_label);
         for (i=0;i<next_label;i++)
             printf("Label %d offset %04x next -> %d previous -> %d\n",
-                i, label_offsets[i], label_next[i], label_prev[i]);
+                i, labels[i].offset, labels[i].next, labels[i].prev);
       }
 
+      /* label will advance through the linked list as pc increases. */
       for (i=0, pc=adjusted_pc, new_pc=adjusted_pc, label = first_label;
         i<zcode_ha_size; 
         i++, pc++) {
-        while ((label != -1) && (label_offsets[label] == pc)) {
+        while ((label != -1) && (labels[label].offset == pc)) {
             if (asm_trace_level >= 4)
                 printf("Position of L%d corrected from %04x to %04x\n",
-                label, label_offsets[label], new_pc);
-            label_offsets[label] = new_pc;
-            label = label_next[label];
+                label, labels[label].offset, new_pc);
+            labels[label].offset = new_pc;
+            label = labels[label].next;
         }
         if (zcode_markers[i] != DELETED_MV) new_pc++;
       }
@@ -2036,6 +2407,8 @@ static void transfer_routine_g(void)
             operands with offsets to those labels.  Also issue markers, now
             that we know where they occur in the final Z-code area.          */
 
+    ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
+    
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++) {
 
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
@@ -2057,20 +2430,29 @@ static void transfer_routine_g(void)
            after it. */
         offset_of_next = new_pc + form_len;
 
-        addr = (label_offsets[j] - offset_of_next) + 2;
+        if (labels[j].offset < 0) {
+            char *lname = "(anon)";
+            if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                lname = symbols[labels[j].symbol].name;
+            error_named("Attempt to jump to an unreachable label", lname);
+            addr = 0;
+        }
+        else {
+            addr = (labels[j].offset - offset_of_next) + 2;
+        }
         if (asm_trace_level >= 4) {
             printf("Branch at offset %04x: %04x (%s)\n",
                 new_pc, addr, ((form_len == 1) ? "byte" :
                 ((form_len == 2) ? "short" : "long")));
         }
         if (form_len == 1) {
-            if (addr < -0x80 && addr >= 0x80) {
+            if (addr < -0x80 || addr >= 0x80) {
                 error("*** Label out of range for byte branch ***");
             }
-        zcode_holding_area[i] = (addr) & 0xFF;
+            zcode_holding_area[i] = (addr) & 0xFF;
         }
         else if (form_len == 2) {
-            if (addr < -0x8000 && addr >= 0x8000) {
+            if (addr < -0x8000 || addr >= 0x8000) {
                 error("*** Label out of range for short branch ***");
             }
             zcode_holding_area[i] = (addr >> 8) & 0xFF;
@@ -2082,7 +2464,7 @@ static void transfer_routine_g(void)
             zcode_holding_area[i+2] = (addr >> 8) & 0xFF;
             zcode_holding_area[i+3] = (addr) & 0xFF;
         }
-        transfer_byte(zcode_holding_area + i); new_pc++;
+        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
       }
       else if (zcode_markers[i] == LABEL_MV) {
           error("*** No LABEL opcodes in Glulx ***");
@@ -2094,9 +2476,11 @@ static void transfer_routine_g(void)
         switch(zcode_markers[i] & 0x7f) {
         case NULL_MV: 
             break;
+        case ERROR_MV:
+            break;
         case ACTION_MV:
         case IDENT_MV:
-            if (!module_switch) break;
+            break;
         case OBJECT_MV:
         case VARIABLE_MV:
         default:
@@ -2111,24 +2495,25 @@ static void transfer_routine_g(void)
              Then a byte indicating the data size to be patched (1, 2, 4).
              Then the four-byte address (new_pc).
           */
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++,
-            zcode_markers[i]);
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++,
-            4);
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 24) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 16) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, ((new_pc >> 8) & 0xFF));
-          write_byte_to_memory_block(&zcode_backpatch_table,
-            zcode_backpatch_size++, (new_pc & 0xFF));
+          if (bpatch_trace_setting >= 2)
+              printf("BP added: MV %d size %d PC %04x\n", zcode_markers[i], 4, new_pc);
+          ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+6);
+          zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i];
+          zcode_backpatch_table[zcode_backpatch_size++] = 4;
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 24) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 16) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 8) & 0xFF);
+          zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
           break;
         }
-        transfer_byte(zcode_holding_area + i); new_pc++;
+        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
       }
+    }
+
+    /* Consistency check */
+    if (new_pc - rstart_pc > zcode_ha_size || adjusted_pc != new_pc)
+    {
+        fatalerror("Optimisation increased routine length or failed to match; should not happen");
     }
 
     if (asm_trace_level >= 3)
@@ -2200,7 +2585,22 @@ void assemblez_1_to(int internal_number,
 
 void assemblez_1_branch(int internal_number,
     assembly_operand o1, int label, int flag)
-{   AI.internal_number = internal_number;
+{
+    /* Some clever optimizations first. A constant is always or never equal
+       to zero. */
+    if (o1.marker == 0 && is_constant_ot(o1.type)) {
+        if (internal_number == jz_zc) {
+            if ((flag && o1.value == 0) || (!flag && o1.value != 0)) {
+                assemblez_jump(label);
+                return;
+            }
+            else {
+                /* assemble nothing at all! */
+                return;
+            }
+        }
+    }
+    AI.internal_number = internal_number;
     AI.operand_count = 1;
     AI.operand[0] = o1;
     AI.branch_label_number = label;
@@ -2550,9 +2950,6 @@ void assembleg_1_branch(int internal_number,
         if ((internal_number == jz_gc && o1.value == 0)
           || (internal_number == jnz_gc && o1.value != 0)) {
             assembleg_0_branch(jump_gc, label);
-            /* We clear the "can't reach statement" flag here, 
-               so that "if (1)" doesn't produce that warning. */
-            execution_never_reaches_here = 0;
             return;
         }
         if ((internal_number == jz_gc && o1.value != 0)
@@ -2703,8 +3100,7 @@ static void parse_assembly_z(void)
         if (i>0) token_text[i-1] = ':';
 
         if (n==-1)
-        {   ebf_error("Expected 0OP, 1OP, 2OP, VAR, EXT, VAR_LONG or EXT_LONG",
-                token_text);
+        {   ebf_curtoken_error("Expected 0OP, 1OP, 2OP, VAR, EXT, VAR_LONG or EXT_LONG");
             n = EXT;
         }
         custom_opcode_z.no = n;
@@ -2720,10 +3116,9 @@ static void parse_assembly_z(void)
                 case TWO: max = 32; break;
             }
             if ((custom_opcode_z.code < min) || (custom_opcode_z.code >= max))
-            {   char range[32];
-                sprintf(range, "%d to %d", min, max-1);
-            error_named("For this operand type, opcode number must be in range",
-                    range);
+            {
+                error_fmt("For this operand type, opcode number must be in range %d to %d",
+                          min, max-1);
                 custom_opcode_z.code = min;
             }
         }
@@ -2744,9 +3139,74 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
         }
         O = custom_opcode_z;
     }
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
+    {
+        int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
+        int isword = (token_value == DARROW_SEP);
+        while (1) {
+            assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            if (AO.marker == ERROR_MV) {
+                break;
+            }
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
+            if (execution_never_reaches_here) {
+                continue;
+            }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
+            if (!isword) {
+                byteout((AO.value & 0xFF), 0);
+                bytecount++;
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 8) & 0xFF), AO.marker);
+                byteout((AO.value & 0xFF), 0);
+                bytecount += 2;
+                if (asm_trace_level > 0) {
+                    printf(" ");
+                    print_operand(&AO, TRUE);
+                }
+            }
+        }
+        if (bytecount > 0 && asm_trace_level > 0) {
+            printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                if (zcode_markers[start_pc] & 0x7f)
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc] & 0x7f));
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
+        }
+        return;
+    }
     else
     {   if (token_type != OPCODE_NAME_TT)
-        {   ebf_error("an opcode name", token_text);
+        {   ebf_curtoken_error("an opcode name");
             panic_mode_error_recovery();
             return;
         }
@@ -2759,15 +3219,17 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     if (O.op_rules == TEXT)
     {   get_next_token();
         if (token_type != DQ_TT)
-            ebf_error("literal text in double-quotes", token_text);
+            ebf_curtoken_error("literal text in double-quotes");
         AI.text = token_text;
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) return;
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
         {   assemblez_instruction(&AI);
+            AI.text = NULL;
             return;
         }
-        ebf_error("semicolon ';' after print string", token_text);
+        ebf_curtoken_error("semicolon ';' after print string");
+        AI.text = NULL;
         put_token_back();
         return;
     }
@@ -2784,17 +3246,17 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             get_next_token();
             if ((token_type != SYMBOL_TT)
                 && (token_type != LOCAL_VARIABLE_TT))
-                ebf_error("variable name or 'sp'", token_text);
+                ebf_curtoken_error("variable name or 'sp'");
             n = 255;
             if (token_type == LOCAL_VARIABLE_TT) n = token_value;
             else
             {   if (strcmp(token_text, "sp") == 0) n = 0;
                 else
-                {   if (stypes[token_value] != GLOBAL_VARIABLE_T)
+                {   if (symbols[token_value].type != GLOBAL_VARIABLE_T)
                         error_named(
                             "Store '->' destination not 'sp' or a variable:",
                             token_text);
-                    else n = svals[token_value];
+                    else n = symbols[token_value].value;
                 }
             }
             AI.store_variable_number = n;
@@ -2824,7 +3286,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
                     n = parse_label();
                 }
                 else
-                    ebf_error("label name after '?' or '?~'", token_text);
+                    ebf_curtoken_error("label name after '?' or '?~'");
             }
             AI.branch_label_number = n;
             continue;
@@ -2843,7 +3305,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             AI.operand[AI.operand_count++] = parse_operand_z();
             get_next_token();
             if (!((token_type == SEP_TT) && (token_value == CLOSE_SQUARE_SEP)))
-            {   ebf_error("']'", token_text);
+            {   ebf_curtoken_error("']'");
                 put_token_back();
             }
         }
@@ -2943,150 +3405,218 @@ static assembly_operand parse_operand_g(void)
 
 static void parse_assembly_g(void)
 {
-  opcodeg O;
-  assembly_operand AO;
-  int error_flag = FALSE, is_macro = FALSE;
+    opcodeg O;
+    assembly_operand AO;
+    int error_flag = FALSE, is_macro = FALSE;
 
-  AI.operand_count = 0;
+    AI.operand_count = 0;
+    AI.text = NULL;
 
-  opcode_names.enabled = TRUE;
-  opcode_macros.enabled = TRUE;
-  get_next_token();
-  opcode_names.enabled = FALSE;
-  opcode_macros.enabled = FALSE;
-
-  if (token_type == DQ_TT) {
-    char *cx;
-    int badflags;
-
-    AI.internal_number = -1;
-
-    /* The format is @"FlagsCount:Code". Flags (which are optional)
-       can include "S" for store, "SS" for two stores, "B" for branch
-       format, "R" if execution never continues after the opcode. The
-       Count is the number of arguments (currently limited to 0-9),
-       and the Code is a decimal integer representing the opcode
-       number.
-
-       So: @"S3:123" for a three-argument opcode (load, load, store)
-       whose opcode number is (decimal) 123. Or: @"2:234" for a
-       two-argument opcode (load, load) whose number is 234. */
-
-    custom_opcode_g.name = (uchar *) token_text;
-    custom_opcode_g.flags = 0;
-    custom_opcode_g.op_rules = 0;
-    custom_opcode_g.no = 0;
-
-    badflags = FALSE;
-
-    for (cx = token_text; *cx && *cx != ':'; cx++) {
-      if (badflags)
-      continue;
-
-      switch (*cx) {
-      case 'S':
-      if (custom_opcode_g.flags & St)
-        custom_opcode_g.flags |= St2;
-      else
-        custom_opcode_g.flags |= St;
-      break;
-      case 'B':
-      custom_opcode_g.flags |= Br;
-      break;
-      case 'R':
-      custom_opcode_g.flags |= Rf;
-      break;
-      default:
-      if (isdigit(*cx)) {
-        custom_opcode_g.no = (*cx) - '0';
-        break;
-      }
-      badflags = TRUE;
-      error("Unknown custom opcode flag: options are B (branch), \
-S (store), SS (two stores), R (execution never continues)");
-      break;
-      }
-    }
-
-    if (*cx != ':') {
-      error("Custom opcode must have colon");
-    }
-    else {
-      cx++;
-      if (!(*cx))
-      error("Custom opcode must have colon followed by opcode number");
-      else
-      custom_opcode_g.code = atoi(cx);
-    }
-
-    O = custom_opcode_g;
-  }
-  else {
-    if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
-      ebf_error("an opcode name", token_text);
-      panic_mode_error_recovery();
-      return;
-    }
-    AI.internal_number = token_value;
-    if (token_type == OPCODE_MACRO_TT) {
-      O = internal_number_to_opmacro_g(AI.internal_number);
-      is_macro = TRUE;
-    }
-    else
-      O = internal_number_to_opcode_g(AI.internal_number);
-  }
-  
-  return_sp_as_variable = TRUE;
-
-  while (1) {
+    opcode_names.enabled = TRUE;
+    opcode_macros.enabled = TRUE;
     get_next_token();
-    
-    if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
-      break;
+    opcode_names.enabled = FALSE;
+    opcode_macros.enabled = FALSE;
 
-    if (AI.operand_count == 8) {
-      error("No assembly instruction may have more than 8 operands");
-      panic_mode_error_recovery(); 
-      break;
+    if (token_type == DQ_TT) {
+        char *cx;
+        int badflags;
+
+        AI.internal_number = -1;
+
+        /* The format is @"FlagsCount:Code". Flags (which are optional)
+           can include "S" for store, "SS" for two stores, "B" for branch
+           format, "R" if execution never continues after the opcode. The
+           Count is the number of arguments (currently limited to 0-9),
+           and the Code is a decimal integer representing the opcode
+           number.
+
+           So: @"S3:123" for a three-argument opcode (load, load, store)
+           whose opcode number is (decimal) 123. Or: @"2:234" for a
+           two-argument opcode (load, load) whose number is 234. */
+
+        custom_opcode_g.name = (uchar *) token_text;
+        custom_opcode_g.flags = 0;
+        custom_opcode_g.op_rules = 0;
+        custom_opcode_g.no = 0;
+
+        badflags = FALSE;
+
+        for (cx = token_text; *cx && *cx != ':'; cx++) {
+            if (badflags)
+                continue;
+
+            switch (*cx) {
+            case 'S':
+                if (custom_opcode_g.flags & St)
+                    custom_opcode_g.flags |= St2;
+                else
+                    custom_opcode_g.flags |= St;
+                break;
+            case 'B':
+                custom_opcode_g.flags |= Br;
+                break;
+            case 'R':
+                custom_opcode_g.flags |= Rf;
+                break;
+            default:
+                if (isdigit(*cx)) {
+                    custom_opcode_g.no = (*cx) - '0';
+                    break;
+                }
+                badflags = TRUE;
+                error("Unknown custom opcode flag: options are B (branch), \
+S (store), SS (two stores), R (execution never continues)");
+                break;
+            }
+        }
+
+        if (*cx != ':') {
+            error("Custom opcode must have colon");
+        }
+        else {
+            cx++;
+            if (!(*cx))
+                error("Custom opcode must have colon followed by opcode number");
+            else
+                custom_opcode_g.code = atoi(cx);
+        }
+
+        O = custom_opcode_g;
     }
-
-    if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
-      if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
-        error_flag = TRUE;
-        error("Branch opcode must have '?' label");
-        put_token_back();
-      }
-      AO.type = CONSTANT_OT;
-      AO.value = parse_label();
-      AO.marker = BRANCH_MV;
+    else if ((token_type == SEP_TT) && (token_value == ARROW_SEP || token_value == DARROW_SEP))
+    {
+        int32 start_pc = zcode_ha_size;
+        int bytecount = 0;
+        int isword = (token_value == DARROW_SEP);
+        while (1) {
+            assembly_operand AO;
+            /* This isn't the start of a statement, but it's safe to
+               release token texts anyway. */
+            release_token_texts();
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
+            put_token_back();
+            AO = parse_expression(ARRAY_CONTEXT);
+            if (AO.marker == ERROR_MV) {
+                break;
+            }
+            if (!isword) {
+                if (AO.marker != 0)
+                    error("Entries in code byte arrays must be known constants");
+                if (AO.value >= 256)
+                    warning("Entry in code byte array not in range 0 to 255");
+            }
+            if (execution_never_reaches_here) {
+                continue;
+            }
+            if (bytecount == 0 && asm_trace_level > 0) {
+                printf("%5d  +%05lx %3s %-12s", ErrorReport.line_number,
+                    ((long int) zmachine_pc), "   ",
+                    isword?"<words>":"<bytes>");
+            }
+            if (!isword) {
+                byteout((AO.value & 0xFF), 0);
+                bytecount++;
+                if (asm_trace_level > 0) {
+                    printf(" %02x", (AO.value & 0xFF));
+                }
+            }
+            else {
+                byteout(((AO.value >> 24) & 0xFF), AO.marker);
+                byteout(((AO.value >> 16) & 0xFF), 0);
+                byteout(((AO.value >> 8) & 0xFF), 0);
+                byteout((AO.value & 0xFF), 0);
+                bytecount += 4;
+                if (asm_trace_level > 0) {
+                    printf(" ");
+                    print_operand(&AO, TRUE);
+                }
+            }
+        }
+        if (bytecount > 0 && asm_trace_level > 0) {
+            printf("\n");
+        }
+        if (asm_trace_level>=2)
+        {
+            int j;
+            for (j=0;start_pc<zcode_ha_size;
+                 j++, start_pc++)
+            {   if (j%16==0) printf("                               ");
+                if (zcode_markers[start_pc])
+                    printf("{%s}", describe_mv_short(zcode_markers[start_pc]));
+                printf("%02x ", zcode_holding_area[start_pc]);
+            }
+            if (j) printf("\n");
+        }
+        return;
     }
     else {
-      put_token_back();
-      AO = parse_operand_g();
+        if (token_type != OPCODE_NAME_TT && token_type != OPCODE_MACRO_TT) {
+            ebf_curtoken_error("an opcode name");
+            panic_mode_error_recovery();
+            return;
+        }
+        AI.internal_number = token_value;
+        if (token_type == OPCODE_MACRO_TT) {
+            O = internal_number_to_opmacro_g(AI.internal_number);
+            is_macro = TRUE;
+        }
+        else
+            O = internal_number_to_opcode_g(AI.internal_number);
+    }
+  
+    return_sp_as_variable = TRUE;
+
+    while (1) {
+        get_next_token();
+    
+        if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) 
+            break;
+
+        if (AI.operand_count == 8) {
+            error("No assembly instruction may have more than 8 operands");
+            panic_mode_error_recovery(); 
+            break;
+        }
+
+        if ((O.flags & Br) && (AI.operand_count == O.no-1)) {
+            if (!((token_type == SEP_TT) && (token_value == BRANCH_SEP))) {
+                error_flag = TRUE;
+                error("Branch opcode must have '?' label");
+                put_token_back();
+            }
+            AO.type = CONSTANT_OT;
+            AO.value = parse_label();
+            AO.marker = BRANCH_MV;
+        }
+        else {
+            put_token_back();
+            AO = parse_operand_g();
+        }
+
+        AI.operand[AI.operand_count] = AO;
+        AI.operand_count++;
     }
 
-    AI.operand[AI.operand_count] = AO;
-    AI.operand_count++;
-  }
+    return_sp_as_variable = FALSE;
 
-  return_sp_as_variable = FALSE;
+    if (O.no != AI.operand_count) {
+        error_flag = TRUE;
+    }
 
-  if (O.no != AI.operand_count) {
-    error_flag = TRUE;
-  }
+    if (!error_flag) {
+        if (is_macro)
+            assembleg_macro(&AI);
+        else
+            assembleg_instruction(&AI);
+    }
 
-  if (!error_flag) {
-    if (is_macro)
-      assembleg_macro(&AI);
-    else
-      assembleg_instruction(&AI);
-  }
-
-  if (error_flag) {
-    make_opcode_syntax_g(O);
-    error_named("Assembly mistake: syntax is",
-      opcode_syntax_string);
-  }
+    if (error_flag) {
+        make_opcode_syntax_g(O);
+        error_named("Assembly mistake: syntax is",
+            opcode_syntax_string);
+    }
 }
 
 extern void parse_assembly(void)
@@ -3101,15 +3631,6 @@ extern void parse_assembly(void)
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
 
-extern void asm_begin_pass(void)
-{   no_instructions = 0;
-    zmachine_pc = 0;
-    no_sequence_points = 0;
-    next_label = 0;
-    next_sequence_point = 0;
-    zcode_ha_size = 0;
-}
-
 extern void init_asm_vars(void)
 {   int i;
 
@@ -3119,56 +3640,77 @@ extern void init_asm_vars(void)
     uses_memheap_features = FALSE;
     uses_acceleration_features = FALSE;
     uses_float_features = FALSE;
+    uses_extundo_features = FALSE;
+    uses_double_features = FALSE;
 
+    labels = NULL;
+    sequence_points = NULL;
     sequence_point_follows = TRUE;
     label_moved_error_already_given = FALSE;
 
-    initialise_memory_block(&zcode_area);
+    zcode_area = NULL;
+}
+
+extern void asm_begin_pass(void)
+{   no_instructions = 0;
+    zmachine_pc = 0;
+    no_sequence_points = 0;
+    next_label = 0;
+    labeluse_size = 0;
+    next_sequence_point = 0;
+    zcode_ha_size = 0;
+    execution_never_reaches_here = EXECSTATE_REACHABLE;
 }
 
 extern void asm_allocate_arrays(void)
-{   if ((debugfile_switch) && (MAX_LABELS < 2000)) MAX_LABELS = 2000;
+{
+    initialise_memory_list(&variables_memlist,
+        sizeof(variableinfo), 200, (void**)&variables,
+        "variables");
 
-    variable_tokens = my_calloc(sizeof(int32),  
-        MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable tokens");
-    variable_usage = my_calloc(sizeof(int),  
-        MAX_LOCAL_VARIABLES+MAX_GLOBAL_VARIABLES, "variable usage");
+    initialise_memory_list(&labels_memlist,
+        sizeof(labelinfo), 1000, (void**)&labels,
+        "labels");
+    initialise_memory_list(&labeluse_memlist,
+        sizeof(int), 1000, (void**)&labeluse,
+        "labeluse");
+    initialise_memory_list(&sequence_points_memlist,
+        sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
+        "sequence points");
 
-    label_offsets = my_calloc(sizeof(int32), MAX_LABELS, "label offsets");
-    label_symbols = my_calloc(sizeof(int32), MAX_LABELS, "label symbols");
-    label_next = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    label_prev = my_calloc(sizeof(int), MAX_LABELS, "label dll 1");
-    sequence_point_labels
-        = my_calloc(sizeof(int), MAX_LABELS, "sequence point labels");
-    sequence_point_locations
-        = my_calloc(sizeof(debug_location),
-                    MAX_LABELS,
-                    "sequence point locations");
+    initialise_memory_list(&zcode_holding_area_memlist,
+        sizeof(uchar), 2000, (void**)&zcode_holding_area,
+        "compiled routine code area");
+    initialise_memory_list(&zcode_markers_memlist,
+        sizeof(uchar), 2000, (void**)&zcode_markers,
+        "compiled routine markers area");
 
-    zcode_holding_area = my_malloc(MAX_ZCODE_SIZE,"compiled routine code area");
-    zcode_markers = my_malloc(MAX_ZCODE_SIZE, "compiled routine code area");
+    initialise_memory_list(&named_routine_symbols_memlist,
+        sizeof(int32), 1000, (void**)&named_routine_symbols,
+        "named routine symbols");
 
-    named_routine_symbols
-        = my_calloc(sizeof(int32), MAX_SYMBOLS, "named routine symbols");
+    initialise_memory_list(&zcode_area_memlist,
+        sizeof(uchar), 8192, (void**)&zcode_area,
+        "code area");
+
+    initialise_memory_list(&current_routine_name,
+        sizeof(char), 64, NULL,
+        "routine name currently being defined");
 }
 
 extern void asm_free_arrays(void)
 {
-    my_free(&variable_tokens, "variable tokens");
-    my_free(&variable_usage, "variable usage");
+    deallocate_memory_list(&variables_memlist);
 
-    my_free(&label_offsets, "label offsets");
-    my_free(&label_symbols, "label symbols");
-    my_free(&label_next, "label dll 1");
-    my_free(&label_prev, "label dll 2");
-    my_free(&sequence_point_labels, "sequence point labels");
-    my_free(&sequence_point_locations, "sequence point locations");
+    deallocate_memory_list(&labels_memlist);
+    deallocate_memory_list(&sequence_points_memlist);
 
-    my_free(&zcode_holding_area, "compiled routine code area");
-    my_free(&zcode_markers, "compiled routine code markers");
+    deallocate_memory_list(&zcode_holding_area_memlist);
+    deallocate_memory_list(&zcode_markers_memlist);
 
-    my_free(&named_routine_symbols, "named routine symbols");
-    deallocate_memory_block(&zcode_area);
+    deallocate_memory_list(&named_routine_symbols_memlist);
+    deallocate_memory_list(&zcode_area_memlist);
+    deallocate_memory_list(&current_routine_name);
 }
 
 /* ========================================================================= */

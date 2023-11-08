@@ -1,8 +1,8 @@
 /* ------------------------------------------------------------------------- */
 /*   "states" :  Statement translator                                        */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -16,13 +16,13 @@ static int match_colon(void)
 of a 'for' loop specification: replacing ';' with ':'");
         else
         if (token_value != COLON_SEP)
-        {   ebf_error("':'", token_text);
+        {   ebf_curtoken_error("':'");
             panic_mode_error_recovery();
             return(FALSE);
         }
     }
     else
-    {   ebf_error("':'", token_text);
+    {   ebf_curtoken_error("':'");
         panic_mode_error_recovery();
         return(FALSE);
     }
@@ -33,14 +33,14 @@ static void match_open_bracket(void)
 {   get_next_token();
     if ((token_type == SEP_TT) && (token_value == OPENB_SEP)) return;
     put_token_back();
-    ebf_error("'('", token_text);
+    ebf_curtoken_error("'('");
 }
 
 extern void match_close_bracket(void)
 {   get_next_token();
     if ((token_type == SEP_TT) && (token_value == CLOSEB_SEP)) return;
     put_token_back();
-    ebf_error("')'", token_text);
+    ebf_curtoken_error("')'");
 }
 
 static void parse_action(void)
@@ -85,7 +85,11 @@ static void parse_action(void)
         codegen_action = TRUE;
     }
     else
-    {   codegen_action = FALSE;
+    {
+        if (token_type != UQ_TT) {
+            ebf_curtoken_error("name of action");
+        }
+        codegen_action = FALSE;
         AO2 = action_of_name(token_text);
     }
 
@@ -108,7 +112,7 @@ static void parse_action(void)
     }
     if (!((token_type == SEP_TT) && (token_value == GREATER_SEP || token_value == COMMA_SEP)))
     {
-        ebf_error("',' or '>'", token_text);
+        ebf_curtoken_error("',' or '>'");
     }
 
     if ((token_type == SEP_TT) && (token_value == COMMA_SEP))
@@ -122,7 +126,7 @@ static void parse_action(void)
         get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
         {
-            ebf_error("'>'", token_text);
+            ebf_curtoken_error("'>'");
         }
     }
 
@@ -130,7 +134,7 @@ static void parse_action(void)
     {   get_next_token();
         if (!((token_type == SEP_TT) && (token_value == GREATER_SEP)))
         {   put_token_back();
-            ebf_error("'>>'", token_text);
+            ebf_curtoken_error("'>>'");
         }
     }
 
@@ -170,7 +174,7 @@ static void parse_action(void)
             if (version_number==4)
                 assemblez_4_to(call_vs_zc, AO, AO2, AO3, AO4, temp_var1);
             else
-                assemblez_4(call_zc, AO, AO2, AO3, AO4);
+                assemblez_4_to(call_zc, AO, AO2, AO3, AO4, temp_var1);
             break;
           case 3:
             AO5 = code_generate(AO5, QUANTITY_CONTEXT, -1);
@@ -246,20 +250,20 @@ extern int parse_label(void)
     get_next_token();
 
     if ((token_type == SYMBOL_TT) &&
-        (stypes[token_value] == LABEL_T))
-    {   sflags[token_value] |= USED_SFLAG;
-        return(svals[token_value]);
+        (symbols[token_value].type == LABEL_T))
+    {   symbols[token_value].flags |= USED_SFLAG;
+        return(symbols[token_value].value);
     }
 
-    if ((token_type == SYMBOL_TT) && (sflags[token_value] & UNKNOWN_SFLAG))
+    if ((token_type == SYMBOL_TT) && (symbols[token_value].flags & UNKNOWN_SFLAG))
     {   assign_symbol(token_value, next_label, LABEL_T);
         define_symbol_label(token_value);
         next_label++;
-        sflags[token_value] |= CHANGE_SFLAG + USED_SFLAG;
-        return(svals[token_value]);
+        symbols[token_value].flags |= CHANGE_SFLAG + USED_SFLAG;
+        return(symbols[token_value].value);
     }
 
-    ebf_error("label name", token_text);
+    ebf_curtoken_error("label name");
     return 0;
 }
 
@@ -292,10 +296,15 @@ static void parse_print_z(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
-              if (strlen(token_text) > 32)
+              if (token_text[0] == '^' && token_text[1] == '\0') {
+                  /* The string "^" is always a simple newline. */
+                  assemblez_0(new_line_zc);
+                  break;
+              }
+              if ((int)strlen(token_text) > ZCODE_MAX_INLINE_STRING)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
                   AO.marker = STRING_MV;
-                  AO.value  = compile_string(token_text, FALSE, FALSE);
+                  AO.value  = compile_string(token_text, STRCTX_GAME);
                   assemblez_1(print_paddr_zc, AO);
                   if (finally_return)
                   {   get_next_token();
@@ -416,19 +425,21 @@ static void parse_print_z(int finally_return)
                           break;
 
                         case SYMBOL_TT:
-                          if (sflags[token_value] & UNKNOWN_SFLAG)
+                          if (symbols[token_value].flags & UNKNOWN_SFLAG)
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
+                              AO.symindex = token_value;
                           }
                           else
                           {   INITAOT(&AO, LONG_CONSTANT_OT);
-                              AO.value = svals[token_value];
+                              AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
-                              if (stypes[token_value] != ROUTINE_T)
-                                ebf_error("printing routine name", token_text);
+                              AO.symindex = token_value;
+                              if (symbols[token_value].type != ROUTINE_T)
+                                ebf_curtoken_error("printing routine name");
                           }
-                          sflags[token_value] |= USED_SFLAG;
+                          symbols[token_value].flags |= USED_SFLAG;
 
                           PrintByRoutine:
 
@@ -447,7 +458,7 @@ static void parse_print_z(int finally_return)
                                 QUANTITY_CONTEXT, -1), temp_var1);
                           goto PrintTermDone;
 
-                        default: ebf_error("print specification", token_text);
+                        default: ebf_curtoken_error("print specification");
                           get_next_token();
                           assemblez_1(print_num_zc,
                           code_generate(parse_expression(QUANTITY_CONTEXT),
@@ -477,13 +488,13 @@ static void parse_print_z(int finally_return)
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         if ((token_type != SEP_TT) || (token_value != COMMA_SEP))
-        {   ebf_error("comma", token_text);
+        {   ebf_curtoken_error("comma");
             panic_mode_error_recovery(); return;
         }
         else get_next_token();
     } while(TRUE);
 
-    if (count == 0) ebf_error("something to print", token_text);
+    if (count == 0) ebf_curtoken_error("something to print");
     if (finally_return)
     {   assemblez_0(new_line_zc);
         assemblez_0(rtrue_zc);
@@ -520,11 +531,17 @@ static void parse_print_g(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
+              if (token_text[0] == '^' && token_text[1] == '\0') {
+                  /* The string "^" is always a simple newline. */
+                  INITAOTV(&AO, BYTECONSTANT_OT, 0x0A);
+                  assembleg_1(streamchar_gc, AO);
+                  break;
+              }
               /* We can't compile a string into the instruction,
                  so this always goes into the string area. */
               {   INITAOT(&AO, CONSTANT_OT);
                   AO.marker = STRING_MV;
-                  AO.value  = compile_string(token_text, FALSE, FALSE);
+                  AO.value  = compile_string(token_text, STRCTX_GAME);
                   assembleg_1(streamstr_gc, AO);
                   if (finally_return)
                   {   get_next_token();
@@ -549,7 +566,6 @@ static void parse_print_g(int finally_return)
                   get_next_token();
                   if ((token_type == SEP_TT) && (token_value == CLOSEB_SEP))
                   {   assembly_operand AO1;
-                      int ln, ln2;
 
                       put_token_back(); put_token_back();
                       local_variables.enabled = FALSE;
@@ -576,19 +592,15 @@ static void parse_print_g(int finally_return)
                                   AO1 = code_generate(
                                       parse_expression(QUANTITY_CONTEXT),
                                       QUANTITY_CONTEXT, -1);
-                                  if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0))
-                                  {   assembleg_2(stkpeek_gc, zero_operand, 
-                                      stack_pointer);
+                                  if (is_constant_ot(AO1.type) && AO1.marker == 0) {
+                                      if (AO1.value >= 0 && AO1.value < 0x100)
+                                          assembleg_1(streamchar_gc, AO1);
+                                      else
+                                          assembleg_1(streamunichar_gc, AO1);
                                   }
-                                  INITAOTV(&AO2, HALFCONSTANT_OT, 0x100);
-                                  assembleg_2_branch(jgeu_gc, AO1, AO2, 
-                                      ln = next_label++);
-                                  ln2 = next_label++;
-                                  assembleg_1(streamchar_gc, AO1);
-                                  assembleg_jump(ln2);
-                                  assemble_label_no(ln);
-                                  assembleg_1(streamunichar_gc, AO1);
-                                  assemble_label_no(ln2);
+                                  else {
+                                      assembleg_1(streamunichar_gc, AO1);
+                                  }
                                   goto PrintTermDone;
                               case ADDRESS_MK:
                                   if (runtime_error_checking_switch)
@@ -651,19 +663,21 @@ static void parse_print_g(int finally_return)
                           break;
 
                         case SYMBOL_TT:
-                          if (sflags[token_value] & UNKNOWN_SFLAG)
+                          if (symbols[token_value].flags & UNKNOWN_SFLAG)
                           {   INITAOT(&AO, CONSTANT_OT);
                               AO.value = token_value;
                               AO.marker = SYMBOL_MV;
+                              AO.symindex = token_value;
                           }
                           else
                           {   INITAOT(&AO, CONSTANT_OT);
-                              AO.value = svals[token_value];
+                              AO.value = symbols[token_value].value;
                               AO.marker = IROUTINE_MV;
-                              if (stypes[token_value] != ROUTINE_T)
-                                ebf_error("printing routine name", token_text);
+                              AO.symindex = token_value;
+                              if (symbols[token_value].type != ROUTINE_T)
+                                ebf_curtoken_error("printing routine name");
                           }
-                          sflags[token_value] |= USED_SFLAG;
+                          symbols[token_value].flags |= USED_SFLAG;
 
                           PrintByRoutine:
 
@@ -675,7 +689,7 @@ static void parse_print_g(int finally_return)
                             AO2);
                           goto PrintTermDone;
 
-                        default: ebf_error("print specification", token_text);
+                        default: ebf_curtoken_error("print specification");
                           get_next_token();
                           assembleg_1(streamnum_gc,
                           code_generate(parse_expression(QUANTITY_CONTEXT),
@@ -705,13 +719,13 @@ static void parse_print_g(int finally_return)
         get_next_token();
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         if ((token_type != SEP_TT) || (token_value != COMMA_SEP))
-        {   ebf_error("comma", token_text);
+        {   ebf_curtoken_error("comma");
             panic_mode_error_recovery(); return;
         }
         else get_next_token();
     } while(TRUE);
 
-    if (count == 0) ebf_error("something to print", token_text);
+    if (count == 0) ebf_curtoken_error("something to print");
     if (finally_return)
     {
         INITAOTV(&AO, BYTECONSTANT_OT, 0x0A);
@@ -721,56 +735,72 @@ static void parse_print_g(int finally_return)
     }
 }
 
+/* Parse any number of ".Label;" lines before a statement.
+   Returns whether a statement can in fact follow. */
+static int parse_named_label_statements()
+{
+    while ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
+    {   /*  That is, a full stop, signifying a label  */
+
+        get_next_token();
+        if (token_type != SYMBOL_TT)
+        {
+            ebf_curtoken_error("label name");
+            return TRUE;
+        }
+
+        if (symbols[token_value].flags & UNKNOWN_SFLAG)
+        {   assign_symbol(token_value, next_label, LABEL_T);
+            symbols[token_value].flags |= USED_SFLAG;
+            assemble_label_no(next_label);
+            define_symbol_label(token_value);
+            next_label++;
+        }
+        else
+        {   if (symbols[token_value].type != LABEL_T) {
+                ebf_curtoken_error("label name");
+                return TRUE;
+            }
+            if (symbols[token_value].flags & CHANGE_SFLAG)
+            {   symbols[token_value].flags &= (~(CHANGE_SFLAG));
+                assemble_label_no(symbols[token_value].value);
+                define_symbol_label(token_value);
+            }
+            else error_named("Duplicate definition of label:", token_text);
+        }
+
+        get_next_token();
+        if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
+        {   ebf_curtoken_error("';'");
+            put_token_back(); return FALSE;
+        }
+
+        /*  Interesting point of Inform grammar: a statement can only
+            consist solely of a label when it is immediately followed
+            by a "}".                                                    */
+
+        get_next_token();
+        if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
+        {   put_token_back(); return FALSE;
+        }
+        /* The following line prevents labels from influencing the positions
+           of sequence points. */
+        statement_debug_location = get_token_location();
+        
+        /* Another label might follow */
+    }
+
+    /* On with the statement */
+    return TRUE;
+}
+
 static void parse_statement_z(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag;
+    int pre_unreach, labelexists;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
     ASSERT_ZCODE();
-
-    if ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
-    {   /*  That is, a full stop, signifying a label  */
-
-        get_next_token();
-        if (token_type == SYMBOL_TT)
-        {
-            if (sflags[token_value] & UNKNOWN_SFLAG)
-            {   assign_symbol(token_value, next_label, LABEL_T);
-                sflags[token_value] |= USED_SFLAG;
-                assemble_label_no(next_label);
-                define_symbol_label(token_value);
-                next_label++;
-            }
-            else
-            {   if (stypes[token_value] != LABEL_T) goto LabelError;
-                if (sflags[token_value] & CHANGE_SFLAG)
-                {   sflags[token_value] &= (~(CHANGE_SFLAG));
-                    assemble_label_no(svals[token_value]);
-                    define_symbol_label(token_value);
-                }
-                else error_named("Duplicate definition of label:", token_text);
-            }
-
-            get_next_token();
-            if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-            {   ebf_error("';'", token_text);
-                put_token_back(); return;
-            }
-
-            /*  Interesting point of Inform grammar: a statement can only
-                consist solely of a label when it is immediately followed
-                by a "}".                                                    */
-
-            get_next_token();
-            if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
-            {   put_token_back(); return;
-            }
-            statement_debug_location = get_token_location();
-            parse_statement(break_label, continue_label);
-            return;
-        }
-        LabelError: ebf_error("label name", token_text);
-    }
 
     if ((token_type == SEP_TT) && (token_value == HASH_SEP))
     {   parse_directive(TRUE);
@@ -791,8 +821,10 @@ static void parse_statement_z(int break_label, int continue_label)
     {   parse_action(); goto StatementTerminator; }
 
     if (token_type == EOF_TT)
-    {   ebf_error("statement", token_text); return; }
+    {   ebf_curtoken_error("statement"); return; }
 
+    /* If we don't see a keyword, this must be a function call or
+       other expression-with-side-effects. */
     if (token_type != STATEMENT_TT)
     {   put_token_back();
         AO = parse_expression(VOID_CONTEXT);
@@ -821,8 +853,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value==SEMICOLON_SEP))
                          break;
                      if (token_type != DQ_TT)
-                         ebf_error("text of box line in double-quotes",
-                             token_text);
+                         ebf_curtoken_error("text of box line in double-quotes");
                      {   int i, j;
                          for (i=0, j=0; token_text[i] != 0; j++)
                              if (token_text[i] == '@')
@@ -840,9 +871,9 @@ static void parse_statement_z(int break_label, int continue_label)
                          if (j > ln2) ln2 = j;
                      }
                      put_token_back();
-                     array_entry(ln++,parse_expression(CONSTANT_CONTEXT));
+                     array_entry(ln++, FALSE, parse_expression(CONSTANT_CONTEXT));
                  } while (TRUE);
-                 finish_array(ln);
+                 finish_array(ln, FALSE);
                  if (ln == 0)
                      error("No lines of text given for 'box' display");
 
@@ -888,7 +919,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
                  if ((token_type == STATEMENT_TT)
                      && (token_value == UNTIL_CODE))
-                 {   assemble_label_no(ln2);
+                 {   assemble_forward_label_no(ln2);
                      match_open_bracket();
                      AO = parse_expression(CONDITION_CONTEXT);
                      match_close_bracket();
@@ -896,7 +927,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else error("'do' without matching 'until'");
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  break;
 
     /*  -------------------------------------------------------------------- */
@@ -910,7 +941,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  if ((token_type != MISC_KEYWORD_TT)
                      || ((token_value != ON_MK)
                          && (token_value != OFF_MK)))
-                 {   ebf_error("'on' or 'off'", token_text);
+                 {   ebf_curtoken_error("'on' or 'off'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -961,6 +992,10 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -980,10 +1015,9 @@ static void parse_statement_z(int break_label, int continue_label)
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
                                  assemblez_jump(ln);
-                             assemble_label_no(ln2);
+                             assemble_forward_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -991,7 +1025,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1001,7 +1034,6 @@ static void parse_statement_z(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
@@ -1066,16 +1098,10 @@ static void parse_statement_z(int break_label, int continue_label)
                      statement_debug_location = spare_debug_location2;
                      if (flag > 0)
                      {   INITAOTV(&AO3, SHORT_CONSTANT_OT, flag);
-                         if (module_switch
-                             && (flag>=MAX_LOCAL_VARIABLES) && (flag<LOWEST_SYSTEM_VAR_NUMBER))
-                             AO3.marker = VARIABLE_MV;
                          assemblez_1(inc_zc, AO3);
                      }
                      else
                      {   INITAOTV(&AO3, SHORT_CONSTANT_OT, -flag);
-                         if ((module_switch) && (flag>=MAX_LOCAL_VARIABLES)
-                             && (flag<LOWEST_SYSTEM_VAR_NUMBER))
-                             AO3.marker = VARIABLE_MV;
                          assemblez_1(dec_zc, AO3);
                      }
                      assemblez_jump(ln);
@@ -1092,7 +1118,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      }
                  }
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -1102,6 +1128,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == VARIABLE_OT) && (AO.value == 0))
                  {   INITAOTV(&AO, SHORT_CONSTANT_OT, 252);
                      if (version_number != 6) assemblez_1(pull_zc, AO);
@@ -1116,15 +1143,12 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = clear_attr_zc;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (stypes[token_value] != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text);
-                         ln = set_attr_zc;
+                     {   ln = set_attr_zc;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch)
                      {   ln2 = (ln==set_attr_zc)?RT__ChG_VR:RT__ChGt_VR;
                          if (version_number >= 5)
@@ -1145,8 +1169,9 @@ static void parse_statement_z(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case IF_CODE:
-                 flag = FALSE;
+                 flag = FALSE; /* set if there's an "else" */
                  ln2 = 0;
+                 pre_unreach = execution_never_reaches_here;
 
                  match_open_bracket();
                  AO = parse_expression(CONDITION_CONTEXT);
@@ -1164,20 +1189,37 @@ static void parse_statement_z(int break_label, int continue_label)
                      ln = next_label++;
                  }
 
+                 /* The condition */
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
+                 if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
+                     /* If the condition never falls through to here, then
+                        it was an "if (0)" test. Our convention is to skip
+                        the "not reached" warnings for this case. */
+                     execution_never_reaches_here |= EXECSTATE_NOWARN;
+                 }
+
+                 /* The "if" block */
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
                  {   get_next_token();
                      if ((token_type != SEP_TT)
                          || (token_value != SEMICOLON_SEP))
-                     {   ebf_error("';'", token_text);
+                     {   ebf_curtoken_error("';'");
                          put_token_back();
                      }
                  }
 
                  statements.enabled = TRUE;
                  get_next_token();
+
+                 /* An #if directive around the ELSE clause is legal. */
+                 while ((token_type == SEP_TT) && (token_value == HASH_SEP))
+                 {   parse_directive(TRUE);
+                     statements.enabled = TRUE;
+                     get_next_token();
+                 }
+                 
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
@@ -1190,13 +1232,46 @@ static void parse_statement_z(int break_label, int continue_label)
                  }
                  else put_token_back();
 
-                 if (ln >= 0) assemble_label_no(ln);
+                 /* The "else" label (or end of statement, if there is no "else") */
+                 labelexists = FALSE;
+                 if (ln >= 0) labelexists = assemble_forward_label_no(ln);
 
                  if (flag)
-                 {   parse_code_block(break_label, continue_label, 0);
-                     if (ln >= 0) assemble_label_no(ln2);
-                 }
+                 {
+                     /* If labelexists is false, then we started with
+                        "if (1)". In this case, we don't want a "not
+                        reached" warning on the "else" block. We
+                        temporarily disable the NOWARN flag, and restore it
+                        afterwards. */
+                     int saved_unreach = 0;
+                     if (execution_never_reaches_here && !labelexists) {
+                         saved_unreach = execution_never_reaches_here;
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
 
+                     /* The "else" block */
+                     parse_code_block(break_label, continue_label, 0);
+
+                     if (execution_never_reaches_here && !labelexists) {
+                         if (saved_unreach & EXECSTATE_NOWARN)
+                             execution_never_reaches_here |= EXECSTATE_NOWARN;
+                         else
+                             execution_never_reaches_here &= ~EXECSTATE_NOWARN;
+                     }
+
+                     /* The post-"else" label */
+                     if (ln >= 0) assemble_forward_label_no(ln2);
+                 }
+                 else
+                 {
+                     /* There was no "else". If we're unreachable, then the
+                        statement returned unconditionally, which means 
+                        "if (1) return". Skip warnings. */
+                     if (!pre_unreach && execution_never_reaches_here) {
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
+                 }
+                         
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -1241,7 +1316,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  misc_keywords.enabled = FALSE;
                  if ((token_type != MISC_KEYWORD_TT)
                      || (token_value != TO_MK))
-                 {   ebf_error("'to'", token_text);
+                 {   ebf_curtoken_error("'to'");
                      panic_mode_error_recovery();
                      return;
                  }
@@ -1249,6 +1324,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_3(call_vn_zc, veneer_routine(RT__ChT_VR),
@@ -1281,15 +1358,12 @@ static void parse_statement_z(int break_label, int continue_label)
                      AO.value = token_value;
                  else
                  if ((token_type == SYMBOL_TT) &&
-                     (stypes[token_value] == GLOBAL_VARIABLE_T))
-                     AO.value = svals[token_value];
+                     (symbols[token_value].type == GLOBAL_VARIABLE_T))
+                     AO.value = symbols[token_value].value;
                  else
-                 {   ebf_error("'objectloop' variable", token_text);
+                 {   ebf_curtoken_error("'objectloop' variable");
                      panic_mode_error_recovery(); break;
                  }
-                 if ((module_switch) && (AO.value >= MAX_LOCAL_VARIABLES)
-                     && (AO.value < LOWEST_SYSTEM_VAR_NUMBER))
-                     AO.marker = VARIABLE_MV;
                  misc_keywords.enabled = TRUE;
                  get_next_token(); flag = TRUE;
                  misc_keywords.enabled = FALSE;
@@ -1468,6 +1542,7 @@ static void parse_statement_z(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                  {   if (version_number >= 5)
                          assemblez_2(call_2n_zc, veneer_routine(RT__ChR_VR),
@@ -1576,10 +1651,19 @@ static void parse_statement_z(int break_label, int continue_label)
                  assemblez_2_to(loadw_zc, AO, AO2, AO3);
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                     /* Compile-time check */
+                     if (AO2.value < 0 || AO2.value >= 96 || AO2.value >= MAX_DYNAMIC_STRINGS) {
+                         error_max_dynamic_strings(AO2.value);
+                         AO2.value = 0;
+                     }
+                 }
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, LONG_CONSTANT_OT);
-                     AO4.value = compile_string(token_text, TRUE, TRUE);
+                     /* This string must be in low memory so that the
+                        dynamic string table can refer to it. */
+                     AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                  }
                  else
                  {   put_token_back();
@@ -1609,9 +1693,8 @@ static void parse_statement_z(int break_label, int continue_label)
                          && (token_value != BOLD_MK)
                          && (token_value != UNDERLINE_MK)
                          && (token_value != FIXED_MK)))
-                 {   ebf_error(
-"'roman', 'bold', 'underline', 'reverse' or 'fixed'",
-                         token_text);
+                 {   ebf_curtoken_error(
+"'roman', 'bold', 'underline', 'reverse' or 'fixed'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -1640,7 +1723,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  assemblez_store(AO2, AO);
 
                  parse_code_block(ln = next_label++, continue_label, 1);
-                 assemble_label_no(ln);
+                 assemble_forward_label_no(ln);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -1658,7 +1741,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  parse_code_block(ln2, ln, 0);
                  sequence_point_follows = FALSE;
                  assemblez_jump(ln);
-                 assemble_label_no(ln2);
+                 assemble_forward_label_no(ln2);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -1676,63 +1759,18 @@ static void parse_statement_z(int break_label, int continue_label)
 
     get_next_token();
     if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-    {   ebf_error("';'", token_text);
+    {   ebf_curtoken_error("';'");
         put_token_back();
     }
 }
 
 static void parse_statement_g(int break_label, int continue_label)
 {   int ln, ln2, ln3, ln4, flag, onstack;
+    int pre_unreach, labelexists;
     assembly_operand AO, AO2, AO3, AO4;
     debug_location spare_debug_location1, spare_debug_location2;
 
     ASSERT_GLULX();
-
-    if ((token_type == SEP_TT) && (token_value == PROPERTY_SEP))
-    {   /*  That is, a full stop, signifying a label  */
-
-        get_next_token();
-        if (token_type == SYMBOL_TT)
-        {
-            if (sflags[token_value] & UNKNOWN_SFLAG)
-            {   assign_symbol(token_value, next_label, LABEL_T);
-                sflags[token_value] |= USED_SFLAG;
-                assemble_label_no(next_label);
-                define_symbol_label(token_value);
-                next_label++;
-            }
-            else
-            {   if (stypes[token_value] != LABEL_T) goto LabelError;
-                if (sflags[token_value] & CHANGE_SFLAG)
-                {   sflags[token_value] &= (~(CHANGE_SFLAG));
-                    assemble_label_no(svals[token_value]);
-                    define_symbol_label(token_value);
-                }
-                else error_named("Duplicate definition of label:", token_text);
-            }
-
-            get_next_token();
-            if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-            {   ebf_error("';'", token_text);
-                put_token_back(); return;
-            }
-
-            /*  Interesting point of Inform grammar: a statement can only
-                consist solely of a label when it is immediately followed
-                by a "}".                                                    */
-
-            get_next_token();
-            if ((token_type == SEP_TT) && (token_value == CLOSE_BRACE_SEP))
-            {   put_token_back(); return;
-            }
-            /* The following line prevents labels from influencing the positions
-               of sequence points. */
-            statement_debug_location = get_token_location();
-            parse_statement(break_label, continue_label);
-            return;
-        }
-        LabelError: ebf_error("label name", token_text);
-    }
 
     if ((token_type == SEP_TT) && (token_value == HASH_SEP))
     {   parse_directive(TRUE);
@@ -1753,8 +1791,10 @@ static void parse_statement_g(int break_label, int continue_label)
     {   parse_action(); goto StatementTerminator; }
 
     if (token_type == EOF_TT)
-    {   ebf_error("statement", token_text); return; }
+    {   ebf_curtoken_error("statement"); return; }
 
+    /* If we don't see a keyword, this must be a function call or
+       other expression-with-side-effects. */
     if (token_type != STATEMENT_TT)
     {   put_token_back();
         AO = parse_expression(VOID_CONTEXT);
@@ -1782,8 +1822,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value==SEMICOLON_SEP))
                          break;
                      if (token_type != DQ_TT)
-                         ebf_error("text of box line in double-quotes",
-                             token_text);
+                         ebf_curtoken_error("text of box line in double-quotes");
                      {   int i, j;
                          for (i=0, j=0; token_text[i] != 0; j++)
                              if (token_text[i] == '@')
@@ -1801,9 +1840,9 @@ static void parse_statement_g(int break_label, int continue_label)
                          if (j > ln2) ln2 = j;
                      }
                      put_token_back();
-                     array_entry(ln++,parse_expression(CONSTANT_CONTEXT));
+                     array_entry(ln++, FALSE, parse_expression(CONSTANT_CONTEXT));
                  } while (TRUE);
-                 finish_array(ln);
+                 finish_array(ln, FALSE);
                  if (ln == 0)
                      error("No lines of text given for 'box' display");
 
@@ -1847,7 +1886,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
                  if ((token_type == STATEMENT_TT)
                      && (token_value == UNTIL_CODE))
-                 {   assemble_label_no(ln2);
+                 {   assemble_forward_label_no(ln2);
                      match_open_bracket();
                      AO = parse_expression(CONDITION_CONTEXT);
                      match_close_bracket();
@@ -1855,7 +1894,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  else error("'do' without matching 'until'");
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  break;
 
     /*  -------------------------------------------------------------------- */
@@ -1869,7 +1908,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  if ((token_type != MISC_KEYWORD_TT)
                      || ((token_value != ON_MK)
                          && (token_value != OFF_MK)))
-                 {   ebf_error("'on' or 'off'", token_text);
+                 {   ebf_curtoken_error("'on' or 'off'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -1902,6 +1941,10 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  /*  Initialisation code  */
+                 AO.type = OMITTED_OT;
+                 spare_debug_location1 = statement_debug_location;
+                 AO2.type = OMITTED_OT; flag = 0;
+                 spare_debug_location2 = statement_debug_location;
 
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
@@ -1921,10 +1964,9 @@ static void parse_statement_g(int break_label, int continue_label)
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
                                  assembleg_jump(ln);
-                             assemble_label_no(ln2);
+                             assemble_forward_label_no(ln2);
                              return;
                          }
-                         AO.type = OMITTED_OT;
                          goto ParseUpdate;
                      }
                      put_token_back();
@@ -1932,7 +1974,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  get_next_token();
-                 AO.type = OMITTED_OT;
                  if (!((token_type==SEP_TT)&&(token_value==COLON_SEP)))
                  {   put_token_back();
                      spare_debug_location1 = get_token_location();
@@ -1942,7 +1983,6 @@ static void parse_statement_g(int break_label, int continue_label)
                  get_next_token();
 
                  ParseUpdate:
-                 AO2.type = OMITTED_OT; flag = 0;
                  if (!((token_type==SEP_TT)&&(token_value==CLOSEB_SEP)))
                  {   put_token_back();
                      spare_debug_location2 = get_token_location();
@@ -2037,7 +2077,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      }
                  }
 
-                 assemble_label_no(ln3);
+                 assemble_forward_label_no(ln3);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -2047,6 +2087,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case GIVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                           QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"give\" statement");
                  if ((AO.type == LOCALVAR_OT) && (AO.value == 0))
                      onstack = TRUE;
                  else
@@ -2064,15 +2105,12 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type == SEP_TT)&&(token_value == ARTNOT_SEP))
                          ln = 0;
                      else
-                     {   if ((token_type == SYMBOL_TT)
-                             && (stypes[token_value] != ATTRIBUTE_T))
-                           warning_named("This is not a declared Attribute:",
-                             token_text);
-                         ln = 1;
+                     {   ln = 1;
                          put_token_back();
                      }
                      AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                                QUANTITY_CONTEXT, -1);
+                     check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"give\" statement");
                      if (runtime_error_checking_switch && (!veneer_mode))
                      {   ln2 = (ln ? RT__ChG_VR : RT__ChGt_VR);
                          if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
@@ -2119,8 +2157,9 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case IF_CODE:
-                 flag = FALSE;
+                 flag = FALSE; /* set if there's an "else" */
                  ln2 = 0;
+                 pre_unreach = execution_never_reaches_here;
 
                  match_open_bracket();
                  AO = parse_expression(CONDITION_CONTEXT);
@@ -2138,20 +2177,37 @@ static void parse_statement_g(int break_label, int continue_label)
                      ln = next_label++;
                  }
 
+                 /* The condition */
                  code_generate(AO, CONDITION_CONTEXT, ln);
 
+                 if (!pre_unreach && ln >= 0 && execution_never_reaches_here) {
+                     /* If the condition never falls through to here, then
+                        it was an "if (0)" test. Our convention is to skip
+                        the "not reached" warnings for this case. */
+                     execution_never_reaches_here |= EXECSTATE_NOWARN;
+                 }
+
+                 /* The "if" block */
                  if (ln >= 0) parse_code_block(break_label, continue_label, 0);
                  else
                  {   get_next_token();
                      if ((token_type != SEP_TT)
                          || (token_value != SEMICOLON_SEP))
-                     {   ebf_error("';'", token_text);
+                     {   ebf_curtoken_error("';'");
                          put_token_back();
                      }
                  }
 
                  statements.enabled = TRUE;
                  get_next_token();
+                 
+                 /* An #if directive around the ELSE clause is legal. */
+                 while ((token_type == SEP_TT) && (token_value == HASH_SEP))
+                 {   parse_directive(TRUE);
+                     statements.enabled = TRUE;
+                     get_next_token();
+                 }
+                 
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
@@ -2164,11 +2220,44 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  else put_token_back();
 
-                 if (ln >= 0) assemble_label_no(ln);
+                 /* The "else" label (or end of statement, if there is no "else") */
+                 labelexists = FALSE;
+                 if (ln >= 0) labelexists = assemble_forward_label_no(ln);
 
                  if (flag)
-                 {   parse_code_block(break_label, continue_label, 0);
-                     if (ln >= 0) assemble_label_no(ln2);
+                 {
+                     /* If labelexists is false, then we started with
+                        "if (1)". In this case, we don't want a "not
+                        reached" warning on the "else" block. We
+                        temporarily disable the NOWARN flag, and restore it
+                        afterwards. */
+                     int saved_unreach = 0;
+                     if (execution_never_reaches_here && !labelexists) {
+                         saved_unreach = execution_never_reaches_here;
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
+
+                     /* The "else" block */
+                     parse_code_block(break_label, continue_label, 0);
+
+                     if (execution_never_reaches_here && !labelexists) {
+                         if (saved_unreach & EXECSTATE_NOWARN)
+                             execution_never_reaches_here |= EXECSTATE_NOWARN;
+                         else
+                             execution_never_reaches_here &= ~EXECSTATE_NOWARN;
+                     }
+
+                     /* The post-"else" label */
+                     if (ln >= 0) assemble_forward_label_no(ln2);
+                 }
+                 else
+                 {
+                     /* There was no "else". If we're unreachable, then the
+                        statement returned unconditionally, which means 
+                        "if (1) return". Skip warnings. */
+                     if (!pre_unreach && execution_never_reaches_here) {
+                         execution_never_reaches_here |= EXECSTATE_NOWARN;
+                     }
                  }
 
                  return;
@@ -2241,7 +2330,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  misc_keywords.enabled = FALSE;
                  if ((token_type != MISC_KEYWORD_TT)
                      || (token_value != TO_MK))
-                 {   ebf_error("'to'", token_text);
+                 {   ebf_curtoken_error("'to'");
                      panic_mode_error_recovery();
                      return;
                  }
@@ -2249,6 +2338,8 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
                  AO = code_generate(AO, QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"move\" statement");
+                 check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"move\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_2(veneer_routine(RT__ChT_VR), AO, AO2,
                          zero_operand);
@@ -2278,11 +2369,11 @@ static void parse_statement_g(int break_label, int continue_label)
                      INITAOTV(&AO, LOCALVAR_OT, token_value);
                  }
                  else if ((token_type == SYMBOL_TT) &&
-                   (stypes[token_value] == GLOBAL_VARIABLE_T)) {
-                     INITAOTV(&AO, GLOBALVAR_OT, svals[token_value]);
+                   (symbols[token_value].type == GLOBAL_VARIABLE_T)) {
+                     INITAOTV(&AO, GLOBALVAR_OT, symbols[token_value].value);
                  }
                  else {
-                     ebf_error("'objectloop' variable", token_text);
+                     ebf_curtoken_error("'objectloop' variable");
                      panic_mode_error_recovery(); 
                      break;
                  }
@@ -2379,10 +2470,16 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
 
                  sequence_point_follows = TRUE;
-                 ln = symbol_index("Class", -1);
-                 INITAOT(&AO2, CONSTANT_OT);
-                 AO2.value = svals[ln];
-                 AO2.marker = OBJECT_MV;
+                 ln = get_symbol_index("Class");
+                 if (ln < 0) {
+                     error("No 'Class' object found");
+                     AO2 = zero_operand;
+                 }
+                 else {
+                     INITAOT(&AO2, CONSTANT_OT);
+                     AO2.value = symbols[ln].value;
+                     AO2.marker = OBJECT_MV;
+                 }
                  assembleg_store(AO, AO2);
 
                  assemble_label_no(ln = next_label++);
@@ -2431,6 +2528,7 @@ static void parse_statement_g(int break_label, int continue_label)
         case REMOVE_CODE:
                  AO = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
                  if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
                      assembleg_call_1(veneer_routine(RT__ChR_VR), AO,
                          zero_operand);
@@ -2500,10 +2598,19 @@ static void parse_statement_g(int break_label, int continue_label)
         case STRING_CODE:
                  AO2 = code_generate(parse_expression(QUANTITY_CONTEXT),
                      QUANTITY_CONTEXT, -1);
+                 if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                     /* Compile-time check */
+                     if (AO2.value < 0 || AO2.value >= MAX_DYNAMIC_STRINGS) {
+                         error_max_dynamic_strings(AO2.value);
+                     }
+                 }
                  get_next_token();
                  if (token_type == DQ_TT)
                  {   INITAOT(&AO4, CONSTANT_OT);
-                     AO4.value = compile_string(token_text, TRUE, TRUE);
+                     /* This is not actually placed in low memory; Glulx
+                        has no such concept. We use the LOWSTRING flag
+                        for compatibility with older compiler behavior. */
+                     AO4.value = compile_string(token_text, STRCTX_LOWSTRING);
                      AO4.marker = STRING_MV;
                  }
                  else
@@ -2528,9 +2635,8 @@ static void parse_statement_g(int break_label, int continue_label)
                          && (token_value != BOLD_MK)
                          && (token_value != UNDERLINE_MK)
                          && (token_value != FIXED_MK)))
-                 {   ebf_error(
-"'roman', 'bold', 'underline', 'reverse' or 'fixed'",
-                         token_text);
+                 {   ebf_curtoken_error(
+"'roman', 'bold', 'underline', 'reverse' or 'fixed'");
                      panic_mode_error_recovery();
                      break;
                  }
@@ -2579,7 +2685,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  assembleg_store(temp_var1, AO); 
 
                  parse_code_block(ln = next_label++, continue_label, 1);
-                 assemble_label_no(ln);
+                 assemble_forward_label_no(ln);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -2597,7 +2703,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  parse_code_block(ln2, ln, 0);
                  sequence_point_follows = FALSE;
                  assembleg_jump(ln);
-                 assemble_label_no(ln2);
+                 assemble_forward_label_no(ln2);
                  return;
 
     /*  -------------------------------------------------------------------- */
@@ -2624,17 +2730,75 @@ static void parse_statement_g(int break_label, int continue_label)
 
     get_next_token();
     if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
-    {   ebf_error("';'", token_text);
+    {   ebf_curtoken_error("';'");
         put_token_back();
     }
 }
 
 extern void parse_statement(int break_label, int continue_label)
 {
-  if (!glulx_mode)
-    parse_statement_z(break_label, continue_label);
-  else
-    parse_statement_g(break_label, continue_label);
+    int res;
+    int saved_entire_flag;
+    
+    res = parse_named_label_statements();
+    if (!res)
+        return;
+
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+ 
+    if (!glulx_mode)
+        parse_statement_z(break_label, continue_label);
+    else
+        parse_statement_g(break_label, continue_label);
+
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
+}
+
+/* This does the same work as parse_statement(), but it's called if you've
+   already parsed an expression (in void context) and you want to generate
+   it as a statement. Essentially it's a copy of parse_statement() and
+   parse_statement_z/g(), except we skip straight to the "expression-with-
+   side-effects" bit and omit everything else.
+
+   The caller doesn't need to pass break_label/continue_label; they're
+   not used for this code path.
+*/
+extern void parse_statement_singleexpr(assembly_operand AO)
+{
+    int res;
+    int saved_entire_flag;
+    
+    res = parse_named_label_statements();
+    if (!res)
+        return;
+
+    saved_entire_flag = (execution_never_reaches_here & EXECSTATE_ENTIRE);
+    if (execution_never_reaches_here)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+
+    code_generate(AO, VOID_CONTEXT, -1);
+    
+    if (vivc_flag) {
+        panic_mode_error_recovery();
+    }
+    else {
+        /* StatementTerminator... */
+        get_next_token();
+        if ((token_type != SEP_TT) || (token_value != SEMICOLON_SEP))
+        {   ebf_curtoken_error("';'");
+            put_token_back();
+        }
+    }
+
+    if (saved_entire_flag)
+        execution_never_reaches_here |= EXECSTATE_ENTIRE;
+    else
+        execution_never_reaches_here &= ~EXECSTATE_ENTIRE;
 }
 
 /* ========================================================================= */

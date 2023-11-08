@@ -1,10 +1,10 @@
 /* ------------------------------------------------------------------------- */
-/*   "tables" :  Constructs the story file or module (the output) up to the  */
-/*               end of dynamic memory, gluing together all the required     */
+/*   "tables" :  Constructs the story file (the output) up to the end        */
+/*               of dynamic memory, gluing together all the required         */
 /*               tables.                                                     */
 /*                                                                           */
-/*   Part of Inform 6.34                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2018                                 */
+/*   Part of Inform 6.42                                                     */
+/*   copyright (c) Graham Nelson 1993 - 2023                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -18,7 +18,7 @@ uchar *zmachine_paged_memory;          /* Where we shall store the story file
                                           at the end of the compilation pass */
 
 /* In Glulx, zmachine_paged_memory contains all of RAM -- i.e. all but
-   the header, the code, and the static strings. */
+   the header, the code, the static arrays, and the static strings. */
 
 /* ------------------------------------------------------------------------- */
 /*   Offsets of various areas in the Z-machine: these are set to nominal     */
@@ -58,7 +58,8 @@ int32 code_offset,
       routine_flags_array_offset,
       global_names_offset,
       global_flags_array_offset,
-      array_flags_array_offset;
+      array_flags_array_offset,
+      static_arrays_offset;
 int32 arrays_offset,
       object_tree_offset,
       grammar_table_offset,
@@ -85,7 +86,7 @@ int flags2_requirements[16];           /* An array of which bits in Flags 2 of
                                           Values are 0 or 1.                 */
 
 /* ------------------------------------------------------------------------- */
-/*   Construct story/module file (up to code area start).                    */
+/*   Construct story file (up to code area start).                           */
 /*                                                                           */
 /*   (To understand what follows, you really need to look at the run-time    */
 /*   system's specification, the Z-Machine Standards document.)              */
@@ -98,18 +99,39 @@ extern void write_serial_number(char *buffer)
         the ability to work out today's date                                 */
 
     time_t tt;  tt=time(0);
-    if (serial_code_given_in_program)
+    if (serial_code_given_in_program) {
         strcpy(buffer, serial_code_buffer);
-    else
+    }
+    else {
 #ifdef TIME_UNAVAILABLE
         sprintf(buffer,"970000");
 #else
-        strftime(buffer,10,"%y%m%d",localtime(&tt));
+        /* Write a six-digit date, null-terminated. Fall back to "970000"
+           if that fails. */
+        int len = strftime(buffer,7,"%y%m%d",localtime(&tt));
+        if (len != 6)
+            sprintf(buffer,"970000");
 #endif
+    }
 }
 
-static void percentage(char *name, int32 x, int32 total)
-{   printf("   %-20s %2d.%d%%\n",name,x*100/total,(x*1000/total)%10);
+static char percentage_buffer[64];
+
+static char *show_percentage(int32 x, int32 total)
+{
+    if (memory_map_setting < 2) {
+        percentage_buffer[0] = '\0';
+    }
+    else if (x == 0) {
+        sprintf(percentage_buffer, "  ( --- )");
+    }
+    else if (memory_map_setting < 3) {
+        sprintf(percentage_buffer, "  (%.1f %%)", (float)x * 100.0 / (float)total);
+    }
+    else {
+        sprintf(percentage_buffer, "  (%.1f %%, %d bytes)", (float)x * 100.0 / (float)total, x);
+    }
+    return percentage_buffer;
 }
 
 static char *version_name(int v)
@@ -120,6 +142,7 @@ static char *version_name(int v)
         case 4: return "Plus";
         case 5: return "Advanced";
         case 6: return "Graphical";
+        case 7: return "Extended Alternate";
         case 8: return "Extended";
     }
     return "experimental format";
@@ -140,7 +163,7 @@ static int32 rough_size_of_paged_memory_z(void)
     ASSERT_ZCODE();
 
     total = 64                                                     /* header */
-            + 2 + subtract_pointers(low_strings_top, low_strings)
+            + 2 + low_strings_top
                                                          /* low strings pool */
             + 6*32;                                   /* abbreviations table */
 
@@ -155,7 +178,7 @@ static int32 rough_size_of_paged_memory_z(void)
     total += 2*((version_number==3)?31:63)        /* property default values */
             + no_objects*((version_number==3)?9:14)     /* object tree table */
             + properties_table_size            /* property values of objects */
-            + (no_classes+1)*(module_switch?4:2)
+            + (no_classes+1)*2
                                                /* class object numbers table */
             + no_symbols*2                       /* names of numerous things */
             + individuals_length                 /* tables of prop variables */
@@ -174,8 +197,10 @@ static int32 rough_size_of_paged_memory_z(void)
               + 2*no_actions                              /* action routines */
               + 2*no_grammar_token_routines;     /* general parsing routines */
 
-    total += (subtract_pointers(dictionary_top, dictionary))  /* dictionary */
-             + ((module_switch)?30:0);                        /* module map */
+    total += (dictionary_top)                            /* dictionary size */
+             + (0);                                           /* module map */
+
+    total += static_array_area_size;                       /* static arrays */
 
     total += scale_factor*0x100            /* maximum null bytes before code */
             + 1000;             /* fudge factor (in case the above is wrong) */
@@ -187,7 +212,7 @@ static int32 rough_size_of_paged_memory_g(void)
 {
     /*  This function calculates a modest over-estimate of the amount of
         memory required to store the machine's paged memory area
-        (that is, everything up to the start of the code area).              */
+        (that is, everything past the start of RAM). */
 
     int32 total;
 
@@ -196,7 +221,8 @@ static int32 rough_size_of_paged_memory_g(void)
     /* No header for us! */
     total = 1000; /* bit of a fudge factor */
 
-    total += dynamic_array_area_size; /* arrays and global variables */
+    total += no_globals * 4; /* global variables */
+    total += dynamic_array_area_size; /* arrays */
 
     total += no_objects * OBJECT_BYTE_LENGTH; /* object tables */
     total += properties_table_size; /* property tables */
@@ -217,7 +243,7 @@ static int32 rough_size_of_paged_memory_g(void)
     total += 4 + no_actions * 4; /* actions functions table */
 
     total += 4;
-    total += subtract_pointers(dictionary_top, dictionary);
+    total += dictionary_top;
 
     while (total % GPAGESIZE)
       total++;
@@ -229,35 +255,39 @@ static void construct_storyfile_z(void)
 {   uchar *p;
     int32 i, j, k, l, mark, objs, strings_length, code_length,
           limit=0, excess=0, extend_offset=0, headerext_length=0;
-    int32 globals_at=0, link_table_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
+    int32 globals_at=0, dictionary_at=0, actions_at=0, preactions_at=0,
           abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
-          map_of_module=0, grammar_table_at=0, charset_at=0, headerext_at=0,
-          terminating_chars_at=0, unicode_at=0, id_names_length=0;
+          grammar_table_at=0, charset_at=0, headerext_at=0,
+          terminating_chars_at=0, unicode_at=0, id_names_length=0,
+          static_arrays_at=0;
+    int32 rough_size;
     int skip_backpatching = FALSE;
-    char *output_called = (module_switch)?"module":"story file";
+    char *output_called = "story file";
 
     ASSERT_ZCODE();
 
-    individual_name_strings =
-        my_calloc(sizeof(int32), no_individual_properties,
-            "identifier name strings");
-    action_name_strings =
-        my_calloc(sizeof(int32), no_actions + no_fake_actions,
-            "action name strings");
-    attribute_name_strings =
-        my_calloc(sizeof(int32), 48,
-            "attribute name strings");
-    array_name_strings =
-        my_calloc(sizeof(int32),
-            no_symbols,
-            "array name strings");
+    if (!OMIT_SYMBOL_TABLE) {
+        individual_name_strings =
+            my_calloc(sizeof(int32), no_individual_properties,
+                      "identifier name strings");
+        action_name_strings =
+            my_calloc(sizeof(int32), no_actions + no_fake_actions,
+                      "action name strings");
+        attribute_name_strings =
+            my_calloc(sizeof(int32), 48,
+                      "attribute name strings");
+        array_name_strings =
+            my_calloc(sizeof(int32),
+                      no_symbols,
+                      "array name strings");
 
-    write_the_identifier_names();
+        write_the_identifier_names();
+    }
 
     /*  We now know how large the buffer to hold our construction has to be  */
 
-    zmachine_paged_memory = my_malloc(rough_size_of_paged_memory_z(),
-        "output buffer");
+    rough_size = rough_size_of_paged_memory_z();
+    zmachine_paged_memory = my_malloc(rough_size, "output buffer");
 
     /*  Foolish code to make this routine compile on all ANSI compilers      */
 
@@ -267,24 +297,35 @@ static void construct_storyfile_z(void)
         points its value will be recorded for milestones like
         "dictionary table start".  It begins at 0x40, just after the header  */
 
-    mark = 0x40;
+    for (mark=0; mark<0x40; mark++)
+        p[mark] = 0x0;
 
     /*  ----------------- Low Strings and Abbreviations -------------------- */
 
     p[mark]=0x80; p[mark+1]=0; mark+=2;        /* Start the low strings pool
                                          with a useful default string, "   " */
 
-    for (i=0; i+low_strings<low_strings_top; mark++, i++) /* Low strings pool */
+    for (i=0; i<low_strings_top; mark++, i++)  /* Low strings pool */
         p[0x42+i]=low_strings[i];
 
     abbrevs_at = mark;
-    for (i=0; i<3*32; i++)                       /* Initially all 96 entries */
-    {   p[mark++]=0; p[mark++]=0x20;                     /* are set to "   " */
+    
+    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96)
+        fatalerror("MAX_ABBREVS + MAX_DYNAMIC_STRINGS is not 96");
+    
+    /* Initially all 96 entries are set to "   ". (We store half of 0x40,
+       the address of the "   " we wrote above.) */
+    for (i=0; i<3*32; i++)
+    {   p[mark++]=0; p[mark++]=0x20;
     }
-    for (i=0; i<no_abbreviations; i++)            /* Write any abbreviations */
-    {   j=abbrev_values[i];                            /* into banks 2 and 3 */
-        p[abbrevs_at+64+2*i]=j/256;               /* (bank 1 is reserved for */
-        p[abbrevs_at+65+2*i]=j%256;                   /* "variable strings") */
+    
+    /* Entries from 0 to MAX_DYNAMIC_STRINGS (default 32) are "variable 
+       strings". Write the abbreviations after these. */
+    k = abbrevs_at+2*MAX_DYNAMIC_STRINGS;
+    for (i=0; i<no_abbreviations; i++)
+    {   j=abbreviations[i].value;
+        p[k++]=j/256;
+        p[k++]=j%256;
     }
 
     /*  ------------------- Header extension table ------------------------- */
@@ -334,8 +375,7 @@ static void construct_storyfile_z(void)
     /*  -------------------- Objects and Properties ------------------------ */
 
     /* The object table must be word-aligned. The Z-machine spec does not
-       require this, but the RA__Pr() veneer routine does. See 
-       http://inform7.com/mantis/view.php?id=1712.
+       require this, but the RA__Pr() veneer routine does.
     */
     while ((mark%2) != 0) p[mark++]=0;
 
@@ -344,8 +384,8 @@ static void construct_storyfile_z(void)
     p[mark++]=0; p[mark++]=0;
 
     for (i=2; i< ((version_number==3)?32:64); i++)
-    {   p[mark++]=prop_default_value[i]/256;
-        p[mark++]=prop_default_value[i]%256;
+    {   p[mark++]=commonprops[i].default_value/256;
+        p[mark++]=commonprops[i].default_value%256;
     }
 
     object_tree_at = mark;
@@ -384,14 +424,8 @@ static void construct_storyfile_z(void)
             p[objs+9]=(objectsz[i].next)%256;
             p[objs+10]=(objectsz[i].child)/256;
             p[objs+11]=(objectsz[i].child)%256;
-            if (!module_switch)
-            {   p[objs+12]=mark/256;
-                p[objs+13]=mark%256;
-            }
-            else
-            {   p[objs+12]=objectsz[i].propsize/256;
-                p[objs+13]=objectsz[i].propsize%256;
-            }
+            p[objs+12]=mark/256;
+            p[objs+13]=mark%256;
             objs+=14;
         }
         mark+=objectsz[i].propsize;
@@ -401,12 +435,8 @@ static void construct_storyfile_z(void)
 
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++)
-    {   p[mark++] = class_object_numbers[i]/256;
-        p[mark++] = class_object_numbers[i]%256;
-        if (module_switch)
-        {   p[mark++] = class_begins_at[i]/256;
-            p[mark++] = class_begins_at[i]%256;
-        }
+    {   p[mark++] = class_info[i].object_number/256;
+        p[mark++] = class_info[i].object_number%256;
     }
     p[mark++] = 0;
     p[mark++] = 0;
@@ -415,7 +445,7 @@ static void construct_storyfile_z(void)
 
     identifier_names_offset = mark;
 
-    if (!module_switch)
+    if (!OMIT_SYMBOL_TABLE)
     {   p[mark++] = no_individual_properties/256;
         p[mark++] = no_individual_properties%256;
         for (i=1; i<no_individual_properties; i++)
@@ -449,11 +479,22 @@ static void construct_storyfile_z(void)
 
         id_names_length = (mark - identifier_names_offset)/2;
     }
+    else {
+        attribute_names_offset = mark;
+        action_names_offset = mark;
+        fake_action_names_offset = mark;
+        array_names_offset = mark;
+        global_names_offset = mark;
+        routine_names_offset = mark;
+        constant_names_offset = mark;
+        id_names_length = 0;
+    }
+    
     routine_flags_array_offset = mark;
 
     if (define_INFIX_switch)
     {   for (i=0, k=1, l=0; i<no_named_routines; i++)
-        {   if (sflags[named_routine_symbols[i]] & STAR_SFLAG) l=l+k;
+        {   if (symbols[named_routine_symbols[i]].flags & STAR_SFLAG) l=l+k;
             k=k*2;
             if (k==256) { p[mark++] = l; k=1; l=0; }
         }
@@ -501,6 +542,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++)
     {   p[grammar_table_at + i*2] = (mark/256);
         p[grammar_table_at + i*2 + 1] = (mark%256);
+        if (!Inform_verbs[i].used) {
+            /* This verb was marked unused at locate_dead_grammar_lines()
+               time. Omit the grammar lines. */
+            p[mark++] = 0;
+            continue;
+        }
         p[mark++] = Inform_verbs[i].lines;
         for (j=0; j<Inform_verbs[i].lines; j++)
         {   k = Inform_verbs[i].l[j];
@@ -554,7 +601,7 @@ table format requested (producing number 2 format instead)");
 
         for (i=0; i<no_adjectives; i++)
         {   j = final_dict_order[adjectives[no_adjectives-i-1]]
-                *((version_number==3)?7:9)
+                *DICT_ENTRY_BYTE_LENGTH
                 + dictionary_offset + 7;
             p[mark++]=j/256; p[mark++]=j%256; p[mark++]=0;
             p[mark++]=(256-no_adjectives+i);
@@ -574,27 +621,30 @@ table format requested (producing number 2 format instead)");
                      dictionary[2]=',';                 /* force words apart */
                      dictionary[3]='"';
 
-    dictionary[4]=(version_number==3)?7:9;           /* Length of each entry */
+    dictionary[4]=DICT_ENTRY_BYTE_LENGTH;           /* Length of each entry */
     dictionary[5]=(dict_entries/256);                   /* Number of entries */
     dictionary[6]=(dict_entries%256);
 
     for (i=0; i<7; i++) p[mark++] = dictionary[i];
 
     for (i=0; i<dict_entries; i++)
-    {   k = 7 + i*((version_number==3)?7:9);
-        j = mark + final_dict_order[i]*((version_number==3)?7:9);
-        for (l = 0; l<((version_number==3)?7:9); l++)
+    {   k = 7 + i*DICT_ENTRY_BYTE_LENGTH;
+        j = mark + final_dict_order[i]*DICT_ENTRY_BYTE_LENGTH;
+        for (l = 0; l<DICT_ENTRY_BYTE_LENGTH; l++)
             p[j++] = dictionary[k++];
     }
-    mark += dict_entries * ((version_number==3)?7:9);
+    mark += dict_entries * DICT_ENTRY_BYTE_LENGTH;
 
     /*  ------------------------- Module Map ------------------------------- */
 
-    if (module_switch)
-    {   map_of_module = mark;                             /* Filled in below */
-        mark += 30;
-    }
+    /* (no longer used) */
 
+    /*  ------------------------ Static Arrays ----------------------------- */
+
+    static_arrays_at = mark;
+    for (i=0; i<static_array_area_size; i++)
+        p[mark++] = static_array_area[i];
+    
     /*  ----------------- A gap before the code area ----------------------- */
     /*  (so that it will start at an exact packed address and so that all    */
     /*  routine packed addresses are >= 256, hence long constants)           */
@@ -610,7 +660,7 @@ table format requested (producing number 2 format instead)");
 size of the Z-machine format. See the memory map below: the start \
 of the area marked \"above readable memory\" must be brought down to $FFFE \
 or less.");
-        memory_map_switch = TRUE;
+        memory_map_setting = 1;
         /* Backpatching the grammar tables requires us to trust some of the */
         /* addresses we've written into Z-machine memory, but they may have */
         /* been truncated to 16 bits, so we can't do it.                    */
@@ -618,8 +668,11 @@ or less.");
     }
 
     /*  -------------------------- Code Area ------------------------------- */
-    /*  (From this point on we don't write any more into the "p" buffer.)    */
+    /*  (From this point on we don't write any higher into the "p" buffer.)  */
     /*  -------------------------------------------------------------------- */
+
+    if (mark > rough_size)
+        compiler_error("Paged size exceeds rough estimate.");
 
     Write_Code_At = mark;
     if (!OMIT_UNUSED_ROUTINES) {
@@ -635,10 +688,8 @@ or less.");
     /*  ------------------ Another synchronising gap ----------------------- */
 
     if (oddeven_packing_switch)
-    {   if (module_switch)
-             while ((mark%(scale_factor*2)) != 0) mark++;
-        else
-             while ((mark%(scale_factor*2)) != scale_factor) mark++;
+    {   
+        while ((mark%(scale_factor*2)) != scale_factor) mark++;
     }
     else
         while ((mark%scale_factor) != 0) mark++;
@@ -651,11 +702,7 @@ or less.");
 
     /*  --------------------- Module Linking Data -------------------------- */
 
-    if (module_switch)
-    {   link_table_at = mark; mark += link_data_size;
-        mark += zcode_backpatch_size;
-        mark += zmachine_backpatch_size;
-    }
+    /* (no longer used) */
 
     /*  --------------------- Is the file too big? ------------------------- */
 
@@ -670,16 +717,11 @@ or less.");
         case 8: excess = Out_Size-((int32) 0x80000L); limit = 512; break;
     }
 
-    if (module_switch)
-    {   excess = Out_Size-((int32) 0x10000L); limit=64;
-    }
-
     if (excess > 0)
-    {   char memory_full_error[80];
-        sprintf(memory_full_error,
+    {
+        fatalerror_fmt(
             "The %s exceeds version-%d limit (%dK) by %d bytes",
              output_called, version_number, limit, excess);
-        fatalerror(memory_full_error);
     }
 
     /*  --------------------------- Offsets -------------------------------- */
@@ -692,6 +734,7 @@ or less.");
     prop_values_offset = object_props_at;
     static_memory_offset = grammar_table_at;
     grammar_table_offset = grammar_table_at;
+    static_arrays_offset = static_arrays_at;
 
     if (extend_memory_map)
     {   extend_offset=256;
@@ -712,26 +755,24 @@ or less.");
          */
         excess = code_length + code_offset - (scale_factor*((int32) 0x10000L));
         if (excess > 0)
-        {   char code_full_error[80];
-            sprintf(code_full_error,
+        {
+            fatalerror_fmt(
                 "The code area limit has been exceeded by %d bytes",
                  excess);
-            fatalerror(code_full_error);
         }
 
         excess = strings_length + strings_offset - (scale_factor*((int32) 0x10000L));
         if (excess > 0)
-        {   char strings_full_error[140];
+        {
             if (oddeven_packing_switch)
-                sprintf(strings_full_error,
+                fatalerror_fmt(
                     "The strings area limit has been exceeded by %d bytes",
                      excess);
             else
-                sprintf(strings_full_error,
+                fatalerror_fmt(
                     "The code+strings area limit has been exceeded by %d bytes. \
  Try running Inform again with -B on the command line.",
                      excess);
-            fatalerror(strings_full_error);
         }
     }
     else
@@ -819,66 +860,26 @@ or less.");
 
     /*  ----------------- The Header: Extras for modules ------------------- */
 
-    if (module_switch)
-    {   p[0]=p[0]+64;
-        p[1]=MODULE_VERSION_NUMBER;
-        p[6]=map_of_module/256;
-        p[7]=map_of_module%256;
-
-        mark = map_of_module;                       /*  Module map format:   */
-
-        p[mark++]=object_tree_at/256;               /*  0: Object tree addr  */
-        p[mark++]=object_tree_at%256;
-        p[mark++]=object_props_at/256;              /*  2: Prop values addr  */
-        p[mark++]=object_props_at%256;
-        p[mark++]=(Write_Strings_At/scale_factor)/256;  /*  4: Static strs   */
-        p[mark++]=(Write_Strings_At/scale_factor)%256;
-        p[mark++]=class_numbers_offset/256;         /*  6: Class nos addr    */
-        p[mark++]=class_numbers_offset%256;
-        p[mark++]=individuals_offset/256;           /*  8: Indiv prop values */
-        p[mark++]=individuals_offset%256;
-        p[mark++]=individuals_length/256;           /*  10: Length of table  */
-        p[mark++]=individuals_length%256;
-        p[mark++]=no_symbols/256;                   /*  12: No of symbols    */
-        p[mark++]=no_symbols%256;
-        p[mark++]=no_individual_properties/256;     /*  14: Max property no  */
-        p[mark++]=no_individual_properties%256;
-        p[mark++]=no_objects/256;                   /*  16: No of objects    */
-        p[mark++]=no_objects%256;
-        i = link_table_at;
-        p[mark++]=i/256;                            /*  18: Import/exports   */
-        p[mark++]=i%256;
-        p[mark++]=link_data_size/256;               /*  20: Size of          */
-        p[mark++]=link_data_size%256;
-        i += link_data_size;
-        p[mark++]=i/256;                            /*  22: Code backpatch   */
-        p[mark++]=i%256;
-        p[mark++]=zcode_backpatch_size/256;         /*  24: Size of          */
-        p[mark++]=zcode_backpatch_size%256;
-        i += zcode_backpatch_size;
-        p[mark++]=i/256;                            /*  26: Image backpatch  */
-        p[mark++]=i%256;
-        p[mark++]=zmachine_backpatch_size/256;      /*  28: Size of          */
-        p[mark++]=zmachine_backpatch_size%256;
-
-        /*  Further space in this table is reserved for future use  */
-    }
+    /* (no longer used) */
 
     /*  ---- Backpatch the Z-machine, now that all information is in ------- */
 
-    if (!module_switch && !skip_backpatching)
+    if (!skip_backpatching)
     {   backpatch_zmachine_image_z();
-        for (i=1; i<id_names_length; i++)
-        {   int32 v = 256*p[identifier_names_offset + i*2]
-                      + p[identifier_names_offset + i*2 + 1];
-            if (v!=0) v += strings_offset/scale_factor;
-            p[identifier_names_offset + i*2] = v/256;
-            p[identifier_names_offset + i*2 + 1] = v%256;
+
+        if (!OMIT_SYMBOL_TABLE) {
+            for (i=1; i<id_names_length; i++)
+            {   int32 v = 256*p[identifier_names_offset + i*2]
+                    + p[identifier_names_offset + i*2 + 1];
+                if (v!=0) v += strings_offset/scale_factor;
+                p[identifier_names_offset + i*2] = v/256;
+                p[identifier_names_offset + i*2 + 1] = v%256;
+            }
         }
 
         mark = actions_at;
         for (i=0; i<no_actions; i++)
-        {   j=action_byte_offset[i];
+        {   j=actions[i].byte_offset;
             if (OMIT_UNUSED_ROUTINES)
                 j = df_stripped_address_for_address(j);
             j += code_offset/scale_factor;
@@ -908,7 +909,7 @@ or less.");
                         switch(topbits)
                         {   case 1:
                                 value = final_dict_order[value]
-                                        *((version_number==3)?7:9)
+                                        *DICT_ENTRY_BYTE_LENGTH
                                         + dictionary_offset + 7;
                                 break;
                             case 2:
@@ -927,115 +928,6 @@ or less.");
     }
 
     /*  ---- From here on, it's all reportage: construction is finished ---- */
-
-    if (statistics_switch)
-    {   int32 k_long, rate; char *k_str="";
-        k_long=(Out_Size/1024);
-        if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }
-        else if ((Out_Size-1024*k_long) > 0) { k_str=".5"; }
-        if (total_bytes_trans == 0) rate = 0;
-        else rate=total_bytes_trans*1000/total_chars_trans;
-
-        {   printf("In:\
-%3d source code files            %6d syntactic lines\n\
-%6d textual lines              %8ld characters ",
-            total_input_files, no_syntax_lines,
-            total_source_line_count, (long int) total_chars_read);
-            if (character_set_unicode) printf("(UTF-8)\n");
-            else if (character_set_setting == 0) printf("(plain ASCII)\n");
-            else
-            {   printf("(ISO 8859-%d %s)\n", character_set_setting,
-                    name_of_iso_set(character_set_setting));
-            }
-
-            printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
-Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
-                 (long int) malloced_bytes,
-                 version_number,
-                 version_name(version_number),
-                 output_called,
-                 release_number, p[18], p[19], p[20], p[21], p[22], p[23],
-                 (long int) k_long, k_str);
-
-            printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
-%6d global vars (maximum 233)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
-                 no_objects, ((version_number==3)?255:(MAX_OBJECTS-1)),
-                 no_globals,
-                 dynamic_array_area_size, MAX_STATIC_DATA);
-
-            printf(
-"%6d verbs (maximum %3d)          %6d dictionary entries (maximum %d)\n\
-%6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
-%6d actions (maximum %3d)        %6d attributes (maximum %2d)\n\
-%6d common props (maximum %2d)    %6d individual props (unlimited)\n",
-                 no_Inform_verbs, MAX_VERBS,
-                 dict_entries, MAX_DICT_ENTRIES,
-                 no_grammar_lines, grammar_version_number,
-                 no_grammar_tokens,
-                 no_actions, MAX_ACTIONS,
-                 no_attributes, ((version_number==3)?32:48),
-                 no_properties-2, ((version_number==3)?30:62),
-                 no_individual_properties - 64);
-
-            if (track_unused_routines)
-            {
-                uint32 diff = df_total_size_before_stripping - df_total_size_after_stripping;
-                printf(
-"%6ld bytes of Z-code              %6ld unused bytes %s (%.1f%%)\n",
-                 (long int) df_total_size_before_stripping, (long int) diff,
-                 (OMIT_UNUSED_ROUTINES ? "stripped out" : "detected"),
-                 100 * (float)diff / (float)df_total_size_before_stripping);
-            }
-
-            printf(
-"%6ld characters used in text      %6ld bytes compressed (rate %d.%3ld)\n\
-%6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
-%6ld instructions of Z-code       %6d sequence points\n\
-%6ld bytes readable memory used (maximum 65536)\n\
-%6ld bytes used in Z-machine      %6ld bytes free in Z-machine\n",
-                 (long int) total_chars_trans,
-                 (long int) total_bytes_trans,
-                 (total_chars_trans>total_bytes_trans)?0:1,
-                 (long int) rate,
-                 no_abbreviations, MAX_ABBREVS,
-                 no_routines,
-                 (long int) no_instructions, no_sequence_points,
-                 (long int) Write_Code_At,
-                 (long int) Out_Size,
-                 (long int)
-                      (((long int) (limit*1024L)) - ((long int) Out_Size)));
-
-        }
-    }
-
-    if (offsets_switch)
-    {
-        {   printf(
-"\nOffsets in %s:\n\
-%05lx Synonyms     %05lx Defaults     %05lx Objects    %05lx Properties\n\
-%05lx Variables    %05lx Parse table  %05lx Actions    %05lx Preactions\n\
-%05lx Adjectives   %05lx Dictionary   %05lx Code       %05lx Strings\n",
-            output_called,
-            (long int) abbrevs_at,
-            (long int) prop_defaults_at,
-            (long int) object_tree_at,
-            (long int) object_props_at,
-            (long int) globals_at,
-            (long int) grammar_table_at,
-            (long int) actions_at,
-            (long int) preactions_at,
-            (long int) adjectives_offset,
-            (long int) dictionary_at,
-            (long int) Write_Code_At,
-            (long int) Write_Strings_At);
-            if (module_switch)
-                printf("%05lx Linking data\n",(long int) link_table_at);
-        }
-    }
 
     if (debugfile_switch)
     {   begin_writing_debug_sections();
@@ -1066,125 +958,112 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         end_writing_debug_sections(Out_Size);
     }
 
-    if (memory_map_switch)
+    if (memory_map_setting)
     {
+        int32 addr;
         {
 printf("Dynamic +---------------------+   00000\n");
-printf("memory  |       header        |\n");
+printf("memory  |       header        |   %s\n",
+    show_percentage(0x40, Out_Size));
 printf("        +---------------------+   00040\n");
-printf("        |    abbreviations    |\n");
+printf("        |    abbreviations    |   %s\n",
+    show_percentage(abbrevs_at-0x40, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) abbrevs_at);
-printf("        | abbreviations table |\n");
+printf("        | abbreviations table |   %s\n",
+    show_percentage(headerext_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) headerext_at);
-printf("        |  header extension   |\n");
+addr = (alphabet_modified ? charset_at : (zscii_defn_modified ? unicode_at : prop_defaults_at));
+printf("        |  header extension   |   %s\n",
+    show_percentage(addr-headerext_at, Out_Size));
             if (alphabet_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) charset_at);
-printf("        |   alphabets table   |\n");
+addr = (zscii_defn_modified ? unicode_at : prop_defaults_at);
+printf("        |   alphabets table   |   %s\n",
+    show_percentage(addr-charset_at, Out_Size));
             }
             if (zscii_defn_modified)
             {
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) unicode_at);
-printf("        |    Unicode table    |\n");
+printf("        |    Unicode table    |   %s\n",
+    show_percentage(prop_defaults_at-unicode_at, Out_Size));
             }
 printf("        +---------------------+   %05lx\n",
                                           (long int) prop_defaults_at);
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n",
+    show_percentage(object_tree_at-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) object_tree_at);
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n",
+    show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) object_props_at);
 printf("        | object short names, |\n");
-printf("        | common prop values  |\n");
+printf("        | common prop values  |   %s\n",
+    show_percentage(class_numbers_offset-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) class_numbers_offset);
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n",
+    show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) identifier_names_offset);
-printf("        | symbol names table  |\n");
+printf("        | symbol names table  |   %s\n",
+    show_percentage(individuals_offset-identifier_names_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) individuals_offset);
-printf("        | indiv prop values   |\n");
+printf("        | indiv prop values   |   %s\n",
+    show_percentage(globals_at-individuals_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) globals_at);
-printf("        |  global variables   |\n");
+printf("        |  global variables   |   %s\n",
+    show_percentage(480, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           ((long int) globals_at)+480L);
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n",
+    show_percentage(grammar_table_at-(globals_at+480), Out_Size));
 printf("        +=====================+   %05lx\n",
                                           (long int) grammar_table_at);
-printf("Readable|    grammar table    |\n");
+printf("Readable|    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %05lx\n", (long int) actions_at);
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(preactions_at-actions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n", (long int) preactions_at);
-printf("        |   parsing routines  |\n");
+printf("        |   parsing routines  |   %s\n",
+    show_percentage(adjectives_offset-preactions_at, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
                                           (long int) adjectives_offset);
-printf("        |     adjectives      |\n");
+printf("        |     adjectives      |   %s\n",
+    show_percentage(dictionary_at-adjectives_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) dictionary_at);
-printf("        |     dictionary      |\n");
-if (module_switch)
+addr = (static_array_area_size ? static_arrays_at : Write_Code_At);
+printf("        |     dictionary      |   %s\n",
+    show_percentage(addr-dictionary_at, Out_Size));
+if (static_array_area_size)
 {
-printf("        + - - - - - - - - - - +   %05lx\n",
-                                          (long int) map_of_module);
-printf("        | map of module addrs |\n");
+printf("        +---------------------+   %05lx\n", (long int) static_arrays_at);
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_Code_At-static_arrays_at, Out_Size));
 }
 printf("        +=====================+   %05lx\n", (long int) Write_Code_At);
-printf("Above   |       Z-code        |\n");
+printf("Above   |       Z-code        |   %s\n",
+    show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("readable+---------------------+   %05lx\n",
                                           (long int) Write_Strings_At);
-printf("memory  |       strings       |\n");
-if (module_switch)
-{
-printf("        +=====================+   %05lx\n", (long int) link_table_at);
-printf("        | module linking data |\n");
-}
+addr = (Out_Size);
+printf("memory  |       strings       |   %s\n",
+    show_percentage(addr-Write_Strings_At, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) Out_Size);
-        }
-    }
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Z-code",             code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      total_bytes_trans,Out_Size);
-    }
-    if (frequencies_switch)
-    {
-        {   printf("How frequently abbreviations were used, and roughly\n");
-            printf("how many bytes they saved:  ('_' denotes spaces)\n");
-            for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[MAX_ABBREV_LENGTH];
-                strcpy(abbrev_string,
-                    (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
-                for (j=0; abbrev_string[j]!=0; j++)
-                    if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
-                if ((i%3)==2) printf("\n");
-            }
-            if ((i%3)!=0) printf("\n");
-            if (no_abbreviations==0) printf("None were declared.\n");
         }
     }
 }
 
 static void construct_storyfile_g(void)
 {   uchar *p;
-    int32 i, j, k, l, mark, strings_length, limit;
+    int32 i, j, k, l, mark, strings_length;
     int32 globals_at, dictionary_at, actions_at, preactions_at,
           abbrevs_at, prop_defaults_at, object_tree_at, object_props_at,
-          grammar_table_at, charset_at, headerext_at,
-          unicode_at, arrays_at;
+          grammar_table_at, arrays_at, static_arrays_at;
     int32 threespaces, code_length;
-    char *output_called = (module_switch)?"module":"story file";
+    int32 rough_size;
 
     ASSERT_GLULX();
 
@@ -1203,14 +1082,14 @@ static void construct_storyfile_g(void)
             "array name strings");
 
     write_the_identifier_names();
-    threespaces = compile_string("   ", FALSE, FALSE);
+    threespaces = compile_string("   ", STRCTX_GAME);
 
     compress_game_text();
 
     /*  We now know how large the buffer to hold our construction has to be  */
 
-    zmachine_paged_memory = my_malloc(rough_size_of_paged_memory_g(),
-        "output buffer");
+    rough_size = rough_size_of_paged_memory_g();
+    zmachine_paged_memory = my_malloc(rough_size, "output buffer");
 
     /*  Foolish code to make this routine compile on all ANSI compilers      */
 
@@ -1242,8 +1121,10 @@ static void construct_storyfile_g(void)
     Write_Strings_At = Write_Code_At + code_length;
     strings_length = compression_table_size + compression_string_size;
 
+    static_arrays_at = Write_Strings_At + strings_length;
+
     /* Now figure out where RAM starts. */
-    Write_RAM_At = Write_Strings_At + strings_length;
+    Write_RAM_At = static_arrays_at + static_array_area_size;
     /* The Write_RAM_At boundary must be a multiple of GPAGESIZE. */
     while (Write_RAM_At % GPAGESIZE)
       Write_RAM_At++;
@@ -1261,7 +1142,7 @@ static void construct_storyfile_g(void)
     }
 
     arrays_at = mark;
-    for (i=MAX_GLOBAL_VARIABLES*4; i<dynamic_array_area_size; i++)
+    for (i=0; i<dynamic_array_area_size; i++)
         p[mark++] = dynamic_array_area[i];
 
     /* -------------------------- Dynamic Strings -------------------------- */
@@ -1274,16 +1155,6 @@ static void construct_storyfile_g(void)
       WriteInt32(p+mark, j);
       mark += 4;
     }
-
-    /* ---------------- Various Things I'm Not Sure About ------------------ */
-    /* Actually, none of these are relevant to Glulx. */
-    headerext_at = mark;
-    charset_at = 0;
-    if (alphabet_modified)
-      charset_at = mark;
-    unicode_at = 0;
-    if (zscii_defn_modified)
-      unicode_at = mark;
 
     /*  -------------------- Objects and Properties ------------------------ */
 
@@ -1367,7 +1238,7 @@ static void construct_storyfile_g(void)
 
     prop_defaults_at = mark;
     for (i=0; i<no_properties; i++) {
-      k = prop_default_value[i];
+      k = commonprops[i].default_value;
       WriteInt32(p+mark, k);
       mark += 4;
     }
@@ -1377,7 +1248,7 @@ static void construct_storyfile_g(void)
     class_numbers_offset = mark;
     for (i=0; i<no_classes; i++) {
       j = Write_RAM_At + object_tree_at +
-        (OBJECT_BYTE_LENGTH*(class_object_numbers[i]-1));
+        (OBJECT_BYTE_LENGTH*(class_info[i].object_number-1));
       WriteInt32(p+mark, j);
       mark += 4;
     }
@@ -1397,62 +1268,70 @@ static void construct_storyfile_g(void)
        number of actions
     */
 
-    identifier_names_offset = mark;
-    mark += 32; /* eight pairs of values, to be filled in. */
-
-    WriteInt32(p+identifier_names_offset+0, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+4, no_properties);
-    for (i=0; i<no_properties; i++) {
-      j = individual_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
+    if (!OMIT_SYMBOL_TABLE) {
+      identifier_names_offset = mark;
+      mark += 32; /* eight pairs of values, to be filled in. */
+  
+      WriteInt32(p+identifier_names_offset+0, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+4, no_properties);
+      for (i=0; i<no_properties; i++) {
+        j = individual_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+8, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+12, 
+        no_individual_properties-INDIV_PROP_START);
+      for (i=INDIV_PROP_START; i<no_individual_properties; i++) {
+        j = individual_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+16, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+20, NUM_ATTR_BYTES*8);
+      for (i=0; i<NUM_ATTR_BYTES*8; i++) {
+        j = attribute_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      WriteInt32(p+identifier_names_offset+24, Write_RAM_At + mark);
+      WriteInt32(p+identifier_names_offset+28, no_actions + no_fake_actions);
+      action_names_offset = mark;
+      fake_action_names_offset = mark + 4*no_actions;
+      for (i=0; i<no_actions + no_fake_actions; i++) {
+        j = action_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
+  
+      array_names_offset = mark;
+      WriteInt32(p+mark, no_arrays);
       mark += 4;
+      for (i=0; i<no_arrays; i++) {
+        j = array_name_strings[i];
+        if (j)
+          j = Write_Strings_At + compressed_offsets[j-1];
+        WriteInt32(p+mark, j);
+        mark += 4;
+      }
     }
-
-    WriteInt32(p+identifier_names_offset+8, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+12, 
-      no_individual_properties-INDIV_PROP_START);
-    for (i=INDIV_PROP_START; i<no_individual_properties; i++) {
-      j = individual_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
+    else {
+      identifier_names_offset = mark;
+      action_names_offset = mark;
+      fake_action_names_offset = mark;
+      array_names_offset = mark;
     }
-
-    WriteInt32(p+identifier_names_offset+16, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+20, NUM_ATTR_BYTES*8);
-    for (i=0; i<NUM_ATTR_BYTES*8; i++) {
-      j = attribute_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }
-
-    WriteInt32(p+identifier_names_offset+24, Write_RAM_At + mark);
-    WriteInt32(p+identifier_names_offset+28, no_actions + no_fake_actions);
-    action_names_offset = mark;
-    fake_action_names_offset = mark + 4*no_actions;
-    for (i=0; i<no_actions + no_fake_actions; i++) {
-      j = action_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }
-
-    array_names_offset = mark;
-    WriteInt32(p+mark, no_arrays);
-    mark += 4;
-    for (i=0; i<no_arrays; i++) {
-      j = array_name_strings[i];
-      if (j)
-        j = Write_Strings_At + compressed_offsets[j-1];
-      WriteInt32(p+mark, j);
-      mark += 4;
-    }    
 
     individuals_offset = mark;
 
@@ -1474,6 +1353,12 @@ table format requested (producing number 2 format instead)");
     for (i=0; i<no_Inform_verbs; i++) {
       j = mark + Write_RAM_At;
       WriteInt32(p+(grammar_table_at+4+i*4), j);
+      if (!Inform_verbs[i].used) {
+          /* This verb was marked unused at locate_dead_grammar_lines()
+             time. Omit the grammar lines. */
+          p[mark++] = 0;
+          continue;
+      }
       p[mark++] = Inform_verbs[i].lines;
       for (j=0; j<Inform_verbs[i].lines; j++) {
         int tok;
@@ -1535,8 +1420,10 @@ table format requested (producing number 2 format instead)");
 
     RAM_Size = mark;
 
+    if (RAM_Size > rough_size)
+        compiler_error("RAM size exceeds rough estimate.");
+    
     Out_Size = Write_RAM_At + RAM_Size;
-    limit=1024*1024;
 
     /*  --------------------------- Offsets -------------------------------- */
 
@@ -1554,17 +1441,18 @@ table format requested (producing number 2 format instead)");
 
     code_offset = Write_Code_At;
     strings_offset = Write_Strings_At;
+    static_arrays_offset = static_arrays_at;
 
     /*  --------------------------- The Header ----------------------------- */
 
     /*  ------ Backpatch the machine, now that all information is in ------- */
 
-    if (!module_switch)
+    if (TRUE)
     {   backpatch_zmachine_image_g();
 
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
-          j = action_byte_offset[i];
+          j = actions[i].byte_offset;
           if (OMIT_UNUSED_ROUTINES)
             j = df_stripped_address_for_address(j);
           j += code_offset;
@@ -1606,118 +1494,6 @@ table format requested (producing number 2 format instead)");
 
     /*  ---- From here on, it's all reportage: construction is finished ---- */
 
-    if (statistics_switch)
-    {   int32 k_long, rate; char *k_str="";
-        k_long=(Out_Size/1024);
-        if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }
-        else if ((Out_Size-1024*k_long) > 0) { k_str=".5"; }
-        if (strings_length == 0) rate = 0;
-        else rate=strings_length*1000/total_chars_trans;
-
-        {   printf("In:\
-%3d source code files            %6d syntactic lines\n\
-%6d textual lines              %8ld characters ",
-            total_input_files, no_syntax_lines,
-            total_source_line_count, (long int) total_chars_read);
-            if (character_set_unicode) printf("(UTF-8)\n");
-            else if (character_set_setting == 0) printf("(plain ASCII)\n");
-            else
-            {   printf("(ISO 8859-%d %s)\n", character_set_setting,
-                    name_of_iso_set(character_set_setting));
-            }
-
-            {char serialnum[8];
-            write_serial_number(serialnum);
-            printf("Allocated:\n\
-%6d symbols (maximum %4d)    %8ld bytes of memory\n\
-Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
-                 no_symbols, MAX_SYMBOLS,
-                 (long int) malloced_bytes,
-                 version_name(version_number),
-                 output_called,
-                 release_number,
-                 serialnum[0], serialnum[1], serialnum[2],
-                 serialnum[3], serialnum[4], serialnum[5],
-                 (long int) k_long, k_str);
-            } 
-
-            printf("\
-%6d classes (maximum %3d)        %6d objects (maximum %3d)\n\
-%6d global vars (maximum %3d)    %6d variable/array space (maximum %d)\n",
-                 no_classes, MAX_CLASSES,
-                 no_objects, MAX_OBJECTS,
-                 no_globals, MAX_GLOBAL_VARIABLES,
-                 dynamic_array_area_size, MAX_STATIC_DATA);
-
-            printf(
-"%6d verbs (maximum %3d)          %6d dictionary entries (maximum %d)\n\
-%6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
-%6d actions (maximum %3d)        %6d attributes (maximum %2d)\n\
-%6d common props (maximum %3d)   %6d individual props (unlimited)\n",
-                 no_Inform_verbs, MAX_VERBS,
-                 dict_entries, MAX_DICT_ENTRIES,
-                 no_grammar_lines, grammar_version_number,
-                 no_grammar_tokens,
-                 no_actions, MAX_ACTIONS,
-                 no_attributes, NUM_ATTR_BYTES*8,
-                 no_properties, INDIV_PROP_START,
-                 no_individual_properties - INDIV_PROP_START);
-
-            if (track_unused_routines)
-            {
-                uint32 diff = df_total_size_before_stripping - df_total_size_after_stripping;
-                printf(
-"%6ld bytes of code                %6ld unused bytes %s (%.1f%%)\n",
-                 (long int) df_total_size_before_stripping, (long int) diff,
-                 (OMIT_UNUSED_ROUTINES ? "stripped out" : "detected"),
-                 100 * (float)diff / (float)df_total_size_before_stripping);
-            }
-
-            printf(
-"%6ld characters used in text      %6ld bytes compressed (rate %d.%3ld)\n\
-%6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
-%6ld instructions of code         %6d sequence points\n\
-%6ld bytes writable memory used   %6ld bytes read-only memory used\n\
-%6ld bytes used in machine    %10ld bytes free in machine\n",
-                 (long int) total_chars_trans,
-                 (long int) strings_length,
-                 (total_chars_trans>strings_length)?0:1,
-                 (long int) rate,
-                 no_abbreviations, MAX_ABBREVS,
-                 no_routines,
-                 (long int) no_instructions, no_sequence_points,
-                 (long int) (Out_Size - Write_RAM_At),
-                 (long int) Write_RAM_At,
-                 (long int) Out_Size,
-                 (long int)
-                      (((long int) (limit*1024L)) - ((long int) Out_Size)));
-
-        }
-    }
-
-    if (offsets_switch)
-    {
-        {   printf(
-"\nOffsets in %s:\n\
-%05lx Synonyms     %05lx Defaults     %05lx Objects    %05lx Properties\n\
-%05lx Variables    %05lx Parse table  %05lx Actions    %05lx Preactions\n\
-%05lx Adjectives   %05lx Dictionary   %05lx Code       %05lx Strings\n",
-            output_called,
-            (long int) abbrevs_at,
-            (long int) prop_defaults_at,
-            (long int) object_tree_at,
-            (long int) object_props_at,
-            (long int) globals_at,
-            (long int) grammar_table_at,
-            (long int) actions_at,
-            (long int) preactions_at,
-            (long int) adjectives_offset,
-            (long int) dictionary_at,
-            (long int) Write_Code_At,
-            (long int) Write_Strings_At);
-        }
-    }
-
     if (debugfile_switch)
     {   begin_writing_debug_sections();
         write_debug_section("memory layout id", GLULX_HEADER_SIZE);
@@ -1725,9 +1501,10 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         write_debug_section("string decoding table", Write_Strings_At);
         write_debug_section("strings area",
                             Write_Strings_At + compression_table_size);
-        if (Write_Strings_At + strings_length < Write_RAM_At)
+        write_debug_section("static array space", static_arrays_at);
+        if (static_arrays_at + static_array_area_size < Write_RAM_At)
         {   write_debug_section
-                ("zero padding", Write_Strings_At + strings_length);
+                ("zero padding", static_arrays_at + static_array_area_size);
         }
         if (globals_at)
         {   compiler_error("Failed assumption that globals are at start of "
@@ -1754,67 +1531,79 @@ Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
         end_writing_debug_sections(Out_Size + MEMORY_MAP_EXTENSION);
     }
 
-    if (memory_map_switch)
+    if (memory_map_setting)
     {
-
+        int32 addr;
         {
 printf("        +---------------------+   000000\n");
-printf("Read-   |       header        |\n");
+printf("Read-   |       header        |   %s\n",
+    show_percentage(GLULX_HEADER_SIZE, Out_Size));
 printf(" only   +=====================+   %06lx\n", (long int) GLULX_HEADER_SIZE);
-printf("memory  |  memory layout id   |\n");
+printf("memory  |  memory layout id   |   %s\n",
+    show_percentage(Write_Code_At-GLULX_HEADER_SIZE, Out_Size));
 printf("        +---------------------+   %06lx\n", (long int) Write_Code_At);
-printf("        |        code         |\n");
+printf("        |        code         |   %s\n",
+    show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) Write_Strings_At);
-printf("        | string decode table |\n");
+printf("        | string decode table |   %s\n",
+    show_percentage(compression_table_size, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) Write_Strings_At + compression_table_size);
-printf("        |       strings       |\n");
+addr = (static_array_area_size ? static_arrays_at : Write_RAM_At+globals_at);
+printf("        |       strings       |   %s\n",
+    show_percentage(addr-(Write_Strings_At + compression_table_size), Out_Size));
+            if (static_array_area_size)
+            {
+printf("        +---------------------+   %06lx\n", 
+  (long int) (static_arrays_at));
+printf("        |    static arrays    |   %s\n",
+    show_percentage(Write_RAM_At+globals_at-static_arrays_at, Out_Size));
+            }
 printf("        +=====================+   %06lx\n", 
   (long int) (Write_RAM_At+globals_at));
-printf("Dynamic |  global variables   |\n");
+printf("Dynamic |  global variables   |   %s\n",
+    show_percentage(arrays_at-globals_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+arrays_at));
-printf("        |       arrays        |\n");
+printf("        |       arrays        |   %s\n",
+    show_percentage(abbrevs_at-arrays_at, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+abbrevs_at));
-printf("        | printing variables  |\n");
-            if (alphabet_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+charset_at));
-printf("        |   alphabets table   |\n");
-            }
-            if (zscii_defn_modified)
-            {
-printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+unicode_at));
-printf("        |    Unicode table    |\n");
-            }
+printf("        | printing variables  |   %s\n",
+    show_percentage(object_tree_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) (Write_RAM_At+object_tree_at));
-printf("        |       objects       |\n");
+printf("        |       objects       |   %s\n",
+    show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+object_props_at));
-printf("        |   property values   |\n");
+printf("        |   property values   |   %s\n",
+    show_percentage(prop_defaults_at-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+prop_defaults_at));
-printf("        |  property defaults  |\n");
+printf("        |  property defaults  |   %s\n",
+    show_percentage(class_numbers_offset-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+class_numbers_offset));
-printf("        | class numbers table |\n");
+printf("        | class numbers table |   %s\n",
+    show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
   (long int) (Write_RAM_At+identifier_names_offset));
-printf("        |   id names table    |\n");
+printf("        |   id names table    |   %s\n",
+    show_percentage(grammar_table_at-identifier_names_offset, Out_Size));
 printf("        +---------------------+   %06lx\n",
   (long int) (Write_RAM_At+grammar_table_at));
-printf("        |    grammar table    |\n");
+printf("        |    grammar table    |   %s\n",
+    show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n", 
   (long int) (Write_RAM_At+actions_at));
-printf("        |       actions       |\n");
+printf("        |       actions       |   %s\n",
+    show_percentage(dictionary_offset-(Write_RAM_At+actions_at), Out_Size));
 printf("        +---------------------+   %06lx\n", 
   (long int) dictionary_offset);
-printf("        |     dictionary      |\n");
+printf("        |     dictionary      |   %s\n",
+    show_percentage(Out_Size-dictionary_offset, Out_Size));
             if (MEMORY_MAP_EXTENSION == 0)
             {
 printf("        +---------------------+   %06lx\n", (long int) Out_Size);
@@ -1822,56 +1611,276 @@ printf("        +---------------------+   %06lx\n", (long int) Out_Size);
             else
             {
 printf("        +=====================+   %06lx\n", (long int) Out_Size);
-printf("Runtime |       (empty)       |\n");
+printf("Runtime |       (empty)       |\n");   /* no percentage */
 printf("  extn  +---------------------+   %06lx\n", (long int) Out_Size+MEMORY_MAP_EXTENSION);
             }
 
         }
 
     }
+}
 
-
-    if (percentages_switch)
-    {   printf("Approximate percentage breakdown of %s:\n",
-                output_called);
-        percentage("Code",               code_length,Out_Size);
-        if (module_switch)
-            percentage("Linking data",   link_data_size,Out_Size);
-        percentage("Static strings",     strings_length,Out_Size);
-        percentage("Dictionary",         Write_Code_At-dictionary_at,Out_Size);
-        percentage("Objects",            globals_at-prop_defaults_at,Out_Size);
-        percentage("Globals",            grammar_table_at-globals_at,Out_Size);
-        percentage("Parsing tables",   dictionary_at-grammar_table_at,Out_Size);
-        percentage("Header and synonyms", prop_defaults_at,Out_Size);
-        percentage("Total of save area", grammar_table_at,Out_Size);
-        percentage("Total of text",      strings_length,Out_Size);
+static void display_frequencies()
+{
+    int i, j;
+    
+    printf("How frequently abbreviations were used, and roughly\n");
+    printf("how many bytes they saved:  ('_' denotes spaces)\n");
+    
+    for (i=0; i<no_abbreviations; i++) {
+        int32 saving;
+        char abbrev_string[MAX_ABBREV_LENGTH];
+        if (!glulx_mode)
+            saving = 2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3;
+        else
+            saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
+        
+        strcpy(abbrev_string,
+               (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
+        for (j=0; abbrev_string[j]!=0; j++)
+            if (abbrev_string[j]==' ') abbrev_string[j]='_';
+        
+        printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq, saving);
+        
+        if ((i%3)==2) printf("\n");
     }
-    if (frequencies_switch)
-    {
-        {   printf("How frequently abbreviations were used, and roughly\n");
-            printf("how many bytes they saved:  ('_' denotes spaces)\n");
-            for (i=0; i<no_abbreviations; i++)
-            {   char abbrev_string[MAX_ABBREV_LENGTH];
-                strcpy(abbrev_string,
-                    (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
-                for (j=0; abbrev_string[j]!=0; j++)
-                    if (abbrev_string[j]==' ') abbrev_string[j]='_';
-                printf("%10s %5d/%5d   ",abbrev_string,abbrev_freqs[i],
-                    2*((abbrev_freqs[i]-1)*abbrev_quality[i])/3);
-                if ((i%3)==2) printf("\n");
+    if ((i%3)!=0) printf("\n");
+    
+    if (no_abbreviations==0) printf("None were declared.\n");
+}
+
+static void display_statistics_z()
+{
+    int32 k_long, rate;
+    char *k_str = "";
+    uchar *p = (uchar *) zmachine_paged_memory;
+    char *output_called = "story file";
+    int limit = 0;
+
+    /* Yeah, we're repeating this calculation from construct_storyfile_z() */
+    switch(version_number)
+    {   case 3: limit = 128; break;
+        case 4:
+        case 5: limit = 256; break;
+        case 6:
+        case 7:
+        case 8: limit = 512; break;
+    }
+
+    k_long=(Out_Size/1024);
+    if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }
+    else if ((Out_Size-1024*k_long) > 0) { k_str=".5"; }
+    if (total_bytes_trans == 0) rate = 0;
+    else rate=total_bytes_trans*1000/total_chars_trans;
+    
+    {   printf("In:\
+%3d source code files            %6d syntactic lines\n\
+%6d textual lines              %8ld characters ",
+               total_input_files, no_syntax_lines,
+               total_source_line_count, (long int) total_chars_read);
+        if (character_set_unicode) printf("(UTF-8)\n");
+        else if (character_set_setting == 0) printf("(plain ASCII)\n");
+        else
+            {   printf("(ISO 8859-%d %s)\n", character_set_setting,
+                       name_of_iso_set(character_set_setting));
             }
-            if ((i%3)!=0) printf("\n");
-            if (no_abbreviations==0) printf("None were declared.\n");
-        }
+
+        printf("Allocated:\n\
+%6d symbols                    %8ld bytes of memory\n\
+Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
+               no_symbols,
+               (long int) malloced_bytes,
+               version_number,
+               version_name(version_number),
+               output_called,
+               release_number, p[18], p[19], p[20], p[21], p[22], p[23],
+               (long int) k_long, k_str);
+
+        printf("\
+%6d classes                      %6d objects\n\
+%6d global vars (maximum 233)    %6d variable/array space\n",
+               no_classes,
+               no_objects,
+               no_globals,
+               dynamic_array_area_size);
+
+        printf(
+               "%6d verbs                        %6d dictionary entries\n\
+%6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
+%6d actions                      %6d attributes (maximum %2d)\n\
+%6d common props (maximum %2d)    %6d individual props (unlimited)\n",
+               no_Inform_verbs,
+               dict_entries,
+               no_grammar_lines, grammar_version_number,
+               no_grammar_tokens,
+               no_actions,
+               no_attributes, ((version_number==3)?32:48),
+               no_properties-3, ((version_number==3)?29:61),
+               no_individual_properties - 64);
+
+        if (track_unused_routines)
+            {
+                uint32 diff = df_total_size_before_stripping - df_total_size_after_stripping;
+                printf(
+                       "%6ld bytes of Z-code              %6ld unused bytes %s (%.1f%%)\n",
+                       (long int) df_total_size_before_stripping, (long int) diff,
+                       (OMIT_UNUSED_ROUTINES ? "stripped out" : "detected"),
+                       100 * (float)diff / (float)df_total_size_before_stripping);
+            }
+
+        printf(
+               "%6ld characters used in text      %6ld bytes compressed (rate %d.%3ld)\n\
+%6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
+%6ld instructions of Z-code       %6d sequence points\n\
+%6ld bytes readable memory used (maximum 65536)\n\
+%6ld bytes used in Z-machine      %6ld bytes free in Z-machine\n",
+               (long int) total_chars_trans,
+               (long int) total_bytes_trans,
+               (total_chars_trans>total_bytes_trans)?0:1,
+               (long int) rate,
+               no_abbreviations, MAX_ABBREVS,
+               no_routines,
+               (long int) no_instructions, no_sequence_points,
+               (long int) Write_Code_At,
+               (long int) Out_Size,
+               (long int)
+               (((long int) (limit*1024L)) - ((long int) Out_Size)));
+
     }
 }
 
+static void display_statistics_g()
+{
+    int32 k_long, rate;
+    char *k_str = "";
+    int32 limit = 1024*1024;
+    int32 strings_length = compression_table_size + compression_string_size;
+    char *output_called = "story file";
+    
+    k_long=(Out_Size/1024);
+    if ((Out_Size-1024*k_long) >= 512) { k_long++; k_str=""; }
+    else if ((Out_Size-1024*k_long) > 0) { k_str=".5"; }
+    
+    if (strings_length == 0) rate = 0;
+    else rate=strings_length*1000/total_chars_trans;
+
+    {   printf("In:\
+%3d source code files            %6d syntactic lines\n\
+%6d textual lines              %8ld characters ",
+               total_input_files, no_syntax_lines,
+               total_source_line_count, (long int) total_chars_read);
+        if (character_set_unicode) printf("(UTF-8)\n");
+        else if (character_set_setting == 0) printf("(plain ASCII)\n");
+        else
+            {   printf("(ISO 8859-%d %s)\n", character_set_setting,
+                       name_of_iso_set(character_set_setting));
+            }
+
+        {char serialnum[8];
+            write_serial_number(serialnum);
+            printf("Allocated:\n\
+%6d symbols                    %8ld bytes of memory\n\
+Out:   %s %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
+                   no_symbols,
+                   (long int) malloced_bytes,
+                   version_name(version_number),
+                   output_called,
+                   release_number,
+                   serialnum[0], serialnum[1], serialnum[2],
+                   serialnum[3], serialnum[4], serialnum[5],
+                   (long int) k_long, k_str);
+        } 
+
+        printf("\
+%6d classes                      %6d objects\n\
+%6d global vars                  %6d variable/array space\n",
+               no_classes,
+               no_objects,
+               no_globals,
+               dynamic_array_area_size);
+
+        printf(
+               "%6d verbs                        %6d dictionary entries\n\
+%6d grammar lines (version %d)    %6d grammar tokens (unlimited)\n\
+%6d actions                      %6d attributes (maximum %2d)\n\
+%6d common props (maximum %3d)   %6d individual props (unlimited)\n",
+               no_Inform_verbs,
+               dict_entries,
+               no_grammar_lines, grammar_version_number,
+               no_grammar_tokens,
+               no_actions,
+               no_attributes, NUM_ATTR_BYTES*8,
+               no_properties-3, INDIV_PROP_START-3,
+               no_individual_properties - INDIV_PROP_START);
+
+        if (track_unused_routines)
+            {
+                uint32 diff = df_total_size_before_stripping - df_total_size_after_stripping;
+                printf(
+                       "%6ld bytes of code                %6ld unused bytes %s (%.1f%%)\n",
+                       (long int) df_total_size_before_stripping, (long int) diff,
+                       (OMIT_UNUSED_ROUTINES ? "stripped out" : "detected"),
+                       100 * (float)diff / (float)df_total_size_before_stripping);
+            }
+
+        printf(
+               "%6ld characters used in text      %6ld bytes compressed (rate %d.%3ld)\n\
+%6d abbreviations (maximum %d)   %6d routines (unlimited)\n\
+%6ld instructions of code         %6d sequence points\n\
+%6ld bytes writable memory used   %6ld bytes read-only memory used\n\
+%6ld bytes used in machine    %10ld bytes free in machine\n",
+               (long int) total_chars_trans,
+               (long int) strings_length,
+               (total_chars_trans>strings_length)?0:1,
+               (long int) rate,
+               no_abbreviations, MAX_ABBREVS,
+               no_routines,
+               (long int) no_instructions, no_sequence_points,
+               (long int) (Out_Size - Write_RAM_At),
+               (long int) Write_RAM_At,
+               (long int) Out_Size,
+               (long int)
+               (((long int) (limit*1024L)) - ((long int) Out_Size)));
+
+    }
+}
+
+
 extern void construct_storyfile(void)
 {
-  if (!glulx_mode)
-    construct_storyfile_z();
-  else
-    construct_storyfile_g();
+    if (!glulx_mode)
+        construct_storyfile_z();
+    else
+        construct_storyfile_g();
+
+    /* Display all the trace/stats info that came out of compilation.
+
+       (Except for the memory map, which uses a bunch of local variables
+       from construct_storyfile_z/g(), so it's easier to do that inside
+       that function.)
+    */
+    
+    if (frequencies_setting)
+        display_frequencies();
+
+    if (list_symbols_setting)
+        list_symbols(list_symbols_setting);
+    
+    if (list_dict_setting)
+        show_dictionary(list_dict_setting);
+    
+    if (list_verbs_setting)
+        list_verb_table();
+
+    if (list_objects_setting)
+        list_object_tree();
+    
+    if (statistics_switch) {
+        if (!glulx_mode)
+            display_statistics_z();
+        else
+            display_statistics_g();
+    }
 }
 
 /* ========================================================================= */
@@ -1897,6 +1906,7 @@ extern void init_tables_vars(void)
       identifier_names_offset=0x800;
       class_numbers_offset = 0x800;
       arrays_offset = 0x0800; /* only used in Glulx, but might as well set */
+      static_arrays_offset = 0x0800;
     }
     else {
       code_offset = 0x12345;
@@ -1910,6 +1920,7 @@ extern void init_tables_vars(void)
       individuals_offset=0x12345;
       identifier_names_offset=0x12345;
       class_numbers_offset = 0x12345;
+      static_arrays_offset = 0x12345;
     }
 }
 
