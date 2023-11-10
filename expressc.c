@@ -2645,23 +2645,17 @@ static void generate_code_from(int n, int void_flag)
                          else {
                              //### one operand, check constancy
                            int ln, ln2;
-                           if (ET[ET[below].right].value.type == LOCALVAR_OT && ET[ET[below].right].value.value == 0) {
-                               /* already on stack */
-                           }
-                           else {
-                               assembleg_store(stack_pointer, ET[ET[below].right].value);
-                           }
+                           assembleg_store(temp_var1, ET[ET[below].right].value);
                            ln = next_label++;
                            ln2 = next_label++;
-                           assembleg_2(stkpeek_gc, zero_operand, stack_pointer);
-                           assembleg_2_branch(jle_gc, stack_pointer, zero_operand, ln);
+                           assembleg_2_branch(jle_gc, temp_var1, zero_operand, ln);
                            assembleg_2(random_gc,
-                             stack_pointer, stack_pointer);
+                             temp_var1, stack_pointer);
                            assembleg_3(add_gc, stack_pointer, one_operand,
                              Result);
                            assembleg_0_branch(jump_gc, ln2);
                            assemble_label_no(ln);
-                           assembleg_2(neg_gc, stack_pointer, stack_pointer);
+                           assembleg_2(neg_gc, temp_var1, stack_pointer);
                            assembleg_1(setrandom_gc,
                              stack_pointer);
                            assembleg_store(Result, zero_operand);
