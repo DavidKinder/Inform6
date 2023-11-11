@@ -2642,8 +2642,36 @@ static void generate_code_from(int n, int void_flag)
                             assembleg_2(random_gc, AO, stack_pointer);
                             assembleg_3(aload_gc, AO2, stack_pointer, Result);
                          }
+                         else if (is_constant_ot(ET[ET[below].right].value.type) && ET[ET[below].right].value.marker == 0) {
+                           /* One argument, value known at compile time */
+                           int32 arg = ET[ET[below].right].value.value; /* signed */
+                           if (arg > 0) {
+                             assembly_operand AO;
+                             INITAO(&AO);
+                             AO.value = arg;
+                             set_constant_ot(&AO);
+                             assembleg_2(random_gc,
+                               AO, stack_pointer);
+                             assembleg_3(add_gc, stack_pointer, one_operand,
+                               Result);
+                           }
+                           else if (arg == 0) {
+                             assembleg_1(setrandom_gc,
+                               zero_operand);
+                             assembleg_store(Result, zero_operand);
+                           }
+                           else {
+                             assembly_operand AO;
+                             INITAO(&AO);
+                             AO.value = -arg;
+                             set_constant_ot(&AO);
+                             assembleg_1(setrandom_gc,
+                               AO);
+                             assembleg_store(Result, zero_operand);
+                           }
+                         }
                          else {
-                             //### one operand, check constancy
+                           /* One argument, not known at compile time */
                            int ln, ln2;
                            assembleg_store(temp_var1, ET[ET[below].right].value);
                            ln = next_label++;
