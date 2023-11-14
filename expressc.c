@@ -2655,12 +2655,8 @@ static void generate_code_from(int n, int void_flag)
                              assembleg_3(add_gc, stack_pointer, one_operand,
                                Result);
                            }
-                           else if (arg == 0) {
-                             assembleg_1(setrandom_gc,
-                               zero_operand);
-                             assembleg_store(Result, zero_operand);
-                           }
                            else {
+                             /* This handles zero or negative */
                              assembly_operand AO;
                              INITAO(&AO);
                              AO.value = -arg;
