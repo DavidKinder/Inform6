@@ -1860,7 +1860,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
 
     number_and_case = 0;
 
-    for (i=0, j=0; dword[j]!=0; i++, j++)
+    for (i=0, j=0; dword[j]!=0; j++)
     {   if ((dword[j] == '/') && (dword[j+1] == '/'))
         {   for (j+=2; dword[j] != 0; j++)
             {   switch(dword[j])
@@ -1872,7 +1872,6 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
             }
             break;
         }
-        if (i>=dictsize) break;
 
         k=(int) dword[j];
         if (k==(int) '\'')
@@ -1903,21 +1902,28 @@ apostrophe in", dword);
                 char_error("Character can be printed but not input:", k);
             else
             {   /* Use 4 more Z-chars to encode a ZSCII escape sequence      */
-
-                wd[i++] = 5; wd[i++] = 6;
+                if (i<dictsize)
+                    wd[i++] = 5;
+                if (i<dictsize)
+                    wd[i++] = 6;
                 k2 = -k2;
-                wd[i++] = k2/32; wd[i] = k2%32;
+                if (i<dictsize)
+                    wd[i++] = k2/32;
+                if (i<dictsize)
+                    wd[i++] = k2%32;
             }
         }
         else
         {   alphabet_used[k2] = 'Y';
-            if ((k2/26)!=0)
+            if ((k2/26)!=0 && i<dictsize)
                 wd[i++]=3+(k2/26);            /* Change alphabet for symbols */
-            wd[i]=6+(k2%26);                  /* Write the Z character       */
+            if (i<dictsize)
+                wd[i++]=6+(k2%26);            /* Write the Z character       */
         }
     }
 
-    /* Fill up to the end of the dictionary block with PAD characters        */
+    /* Fill up to the end of the dictionary block with PAD characters
+       (for safety, we right-pad to 9 chars even in V3)                      */
 
     for (; i<9; i++) wd[i]=5;
 
