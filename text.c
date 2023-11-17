@@ -1866,8 +1866,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
             {   switch(dword[j])
                 {   case 'p': number_and_case |= 4;  break;
                     default:
-                        error_named("Expected 'p' after '//' \
-to give number of dictionary word", dword);
+                        error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
                         break;
                 }
             }
@@ -1962,8 +1961,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
           number_and_case |= 4;  
           break;
         default:
-          error_named("Expected 'p' after '//' \
-to give gender or number of dictionary word", dword);
+          error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
           break;
         }
       }
