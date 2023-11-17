@@ -1922,6 +1922,9 @@ apostrophe in", dword);
         }
     }
 
+    if (i > dictsize)
+        compiler_error("dict word buffer overflow");
+
     /* Fill up to the end of the dictionary block with PAD characters
        (for safety, we right-pad to 9 chars even in V3)                      */
 
@@ -2019,6 +2022,9 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
       }
     }
   }
+
+  if (i > DICT_WORD_SIZE)
+    compiler_error("dict word buffer overflow");
 
   /* Right-pad with zeroes */
   if (DICT_CHAR_SIZE == 1) {
