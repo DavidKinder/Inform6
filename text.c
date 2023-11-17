@@ -1959,7 +1959,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
 
   number_and_case = 0;
 
-  for (i=0, j=0; (dword[j]!=0); i++, j++) {
+  for (i=0, j=0; (dword[j]!=0); j++) {
     if ((dword[j] == '/') && (dword[j+1] == '/')) {
       for (j+=2; dword[j] != 0; j++) {
         switch(dword[j]) {
@@ -1973,7 +1973,6 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
       }
       break;
     }
-    if (i>=DICT_WORD_SIZE) break;
 
     k= ((unsigned char *)dword)[j];
     if (k=='\'') 
@@ -2007,13 +2006,17 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
     ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
     
     if (DICT_CHAR_SIZE == 1) {
-      prepared_sort[i] = k;
+      if (i<DICT_WORD_SIZE)
+        prepared_sort[i++] = k;
     }
     else {
-      prepared_sort[4*i]   = (k >> 24) & 0xFF;
-      prepared_sort[4*i+1] = (k >> 16) & 0xFF;
-      prepared_sort[4*i+2] = (k >>  8) & 0xFF;
-      prepared_sort[4*i+3] = (k)       & 0xFF;
+      if (i<DICT_WORD_SIZE) {
+        prepared_sort[4*i]   = (k >> 24) & 0xFF;
+        prepared_sort[4*i+1] = (k >> 16) & 0xFF;
+        prepared_sort[4*i+2] = (k >>  8) & 0xFF;
+        prepared_sort[4*i+3] = (k)       & 0xFF;
+        i++;
+      }
     }
   }
 
