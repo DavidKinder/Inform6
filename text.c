@@ -2017,6 +2017,7 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
     }
   }
 
+  /* Right-pad with zeroes */
   if (DICT_CHAR_SIZE == 1) {
     for (; i<DICT_WORD_SIZE; i++)
       prepared_sort[i] = 0;
