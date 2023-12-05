@@ -117,6 +117,8 @@ handling of Windows and Unix style line breaks on all platforms.
 
 <h3>Bugs fixed</h3>
 <ul>
+<li><p>The Glulx build-in function <b>random(x)</b> built-in function now follows the DM4 specification: if <b>x</b>
+is positive, the function returns the result of <tt>1+(@random x)</tt>; if zero or negative, <tt>@setrandom x</tt> is called.
 <li><p>In several places (local variable declarations, action names and the <tt>Switches</tt> directive) the compiler would
 accept quoted strings and then ignore the quotes. This is now an error.
 <li><p>The case of a property having too many entries is now always an error, and is checked correctly in the case
