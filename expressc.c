@@ -2642,11 +2642,48 @@ static void generate_code_from(int n, int void_flag)
                             assembleg_2(random_gc, AO, stack_pointer);
                             assembleg_3(aload_gc, AO2, stack_pointer, Result);
                          }
+                         else if (is_constant_ot(ET[ET[below].right].value.type) && ET[ET[below].right].value.marker == 0) {
+                           /* One argument, value known at compile time */
+                           int32 arg = ET[ET[below].right].value.value; /* signed */
+                           if (arg > 0) {
+                             assembly_operand AO;
+                             INITAO(&AO);
+                             AO.value = arg;
+                             set_constant_ot(&AO);
+                             assembleg_2(random_gc,
+                               AO, stack_pointer);
+                             assembleg_3(add_gc, stack_pointer, one_operand,
+                               Result);
+                           }
+                           else {
+                             /* This handles zero or negative */
+                             assembly_operand AO;
+                             INITAO(&AO);
+                             AO.value = -arg;
+                             set_constant_ot(&AO);
+                             assembleg_1(setrandom_gc,
+                               AO);
+                             assembleg_store(Result, zero_operand);
+                           }
+                         }
                          else {
+                           /* One argument, not known at compile time */
+                           int ln, ln2;
+                           assembleg_store(temp_var1, ET[ET[below].right].value);
+                           ln = next_label++;
+                           ln2 = next_label++;
+                           assembleg_2_branch(jle_gc, temp_var1, zero_operand, ln);
                            assembleg_2(random_gc,
-                             ET[ET[below].right].value, stack_pointer);
+                             temp_var1, stack_pointer);
                            assembleg_3(add_gc, stack_pointer, one_operand,
                              Result);
+                           assembleg_0_branch(jump_gc, ln2);
+                           assemble_label_no(ln);
+                           assembleg_2(neg_gc, temp_var1, stack_pointer);
+                           assembleg_1(setrandom_gc,
+                             stack_pointer);
+                           assembleg_store(Result, zero_operand);
+                           assemble_label_no(ln2);
                          }
                          break;
 
