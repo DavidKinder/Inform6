@@ -75,7 +75,8 @@ For Glulx, DICT_WORD_SIZE can now be increased without limit.
   @ --> WORD WORD WORD ...;
 </pre>
 The given bytes or words are directly copied out into the function. (Words are two bytes in Z-code, and four bytes in
-Glulx.) The compiler assumes that the data forms valid opcodes, but does nothing to verify this.
+Glulx.) The compiler assumes that the data forms valid opcodes, but does nothing to verify this. Bytes must be numeric
+constants, while words are either numeric constants or symbols, such as the name of a function.
 <li><p>A new setting exists to omit the symbol names table, <tt>$OMIT_SYMBOL_TABLE</tt>. The symbol names table
 contains the names of all properties, attributes, fake actions, and arrays as strings, and is generally only used by
 debug library code and debug veneer error messages. When <tt>$OMIT_SYMBOL_TABLE=1</tt> is set:
@@ -116,6 +117,8 @@ handling of Windows and Unix style line breaks on all platforms.
 
 <h3>Bugs fixed</h3>
 <ul>
+<li><p>The Glulx build-in function <b>random(x)</b> built-in function now follows the DM4 specification: if <b>x</b>
+is positive, the function returns the result of <tt>1+(@random x)</tt>; if zero or negative, <tt>@setrandom x</tt> is called.
 <li><p>In several places (local variable declarations, action names and the <tt>Switches</tt> directive) the compiler would
 accept quoted strings and then ignore the quotes. This is now an error.
 <li><p>The case of a property having too many entries is now always an error, and is checked correctly in the case
