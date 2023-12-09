@@ -1111,6 +1111,8 @@ typedef struct operator_s
 #define picture_table_zc 115
 #define print_unicode_zc 116
 #define check_unicode_zc 117
+#define set_true_colour_zc 118
+#define buffer_screen_zc 119
 
 
 /* ------------------------------------------------------------------------- */

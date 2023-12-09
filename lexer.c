@@ -434,6 +434,7 @@ static char *opcode_list_z[] = {
     "get_wind_prop", "scroll_window", "pop_stack", "read_mouse",
     "mouse_window", "push_stack", "put_wind_prop", "print_form",
     "make_menu", "picture_table", "print_unicode", "check_unicode",
+    "set_true_colour", "buffer_screen",
     ""
 };
 
