@@ -1629,18 +1629,21 @@ static void display_frequencies()
     
     for (i=0; i<no_abbreviations; i++) {
         int32 saving;
-        char abbrev_string[MAX_ABBREV_LENGTH];
+        char *astr;
         if (!glulx_mode)
             saving = 2*((abbreviations[i].freq-1)*abbreviations[i].quality)/3;
         else
             saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
+
+        astr = abbreviation_text(i);
+        for (j=strlen(astr); j<10; j++) {
+            putchar(' ');
+        }
+        for (j=0; astr[j]; j++) {
+            putchar(astr[j] == ' ' ? '_' : astr[j]);
+        }
         
-        strcpy(abbrev_string,
-               abbreviation_text(i));
-        for (j=0; abbrev_string[j]!=0; j++)
-            if (abbrev_string[j]==' ') abbrev_string[j]='_';
-        
-        printf("%10s %5d/%5d   ",abbrev_string,abbreviations[i].freq, saving);
+        printf(" %5d/%5d   ", abbreviations[i].freq, saving);
         
         if ((i%3)==2) printf("\n");
     }
