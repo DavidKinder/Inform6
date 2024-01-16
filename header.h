@@ -764,6 +764,8 @@ typedef struct abbreviation_s {
     int value;
     int quality;
     int freq;
+    int textpos; /* in abbreviations_text */
+    int textlen;
 } abbreviation;
 
 typedef struct maybe_file_position_S
@@ -2754,7 +2756,6 @@ extern int32 low_strings_top;
 
 extern int   no_abbreviations;
 extern int   abbrevs_lookup_table_made, is_abbreviation;
-extern uchar *abbreviations_at;
 extern abbreviation *abbreviations;
 
 extern int32 total_chars_trans, total_bytes_trans,
