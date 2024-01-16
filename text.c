@@ -214,6 +214,7 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
     return(-1);
 }
 
+/* Create an abbreviation. */
 extern void make_abbreviation(char *text)
 {
     /* If -e mode is off, we won't waste space creating an abbreviation entry. */
@@ -239,6 +240,14 @@ extern void make_abbreviation(char *text)
     }
     
     no_abbreviations++;
+}
+
+/* Return a pointer to the (uncompressed) abbreviation text.
+   This should be treated as temporary; it is only valid until the next
+   make_abbreviation() call. */
+extern char *abbreviation_text(int num)
+{
+    return (char *)abbreviations_at + num*MAX_ABBREV_LENGTH;
 }
 
 /* ------------------------------------------------------------------------- */

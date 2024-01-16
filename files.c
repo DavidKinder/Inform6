@@ -344,7 +344,7 @@ static void output_compression(int entnum, int32 *size, int *count)
     (*size) += 1;
     break;
   case 3:
-    cx = (char *)abbreviations_at + ent->u.val*MAX_ABBREV_LENGTH;
+    cx = abbreviation_text(ent->u.val);
     while (*cx) {
       sf_put(*cx);
       cx++;

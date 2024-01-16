@@ -1636,7 +1636,7 @@ static void display_frequencies()
             saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
         
         strcpy(abbrev_string,
-               (char *)abbreviations_at+i*MAX_ABBREV_LENGTH);
+               abbreviation_text(i));
         for (j=0; abbrev_string[j]!=0; j++)
             if (abbrev_string[j]==' ') abbrev_string[j]='_';
         

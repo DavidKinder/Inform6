@@ -2822,6 +2822,7 @@ extern int32 compile_string(char *b, int strctx);
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
+extern char *abbreviation_text(int num);
 extern void  show_dictionary(int level);
 extern void  word_to_ascii(uchar *p, char *result);
 extern void  print_dict_word(int node);
