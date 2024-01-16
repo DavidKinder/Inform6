@@ -197,10 +197,13 @@ static void make_abbrevs_lookup(void)
 static int try_abbreviations_from(unsigned char *text, int i, int from)
 {   int j, k; uchar *p, c;
     c=text[i];
-    for (j=from, p=(uchar *)abbreviations_text+abbreviations[j].textpos;
-         (j<no_abbreviations)&&(c==p[0]);
-         j++, p=(uchar *)abbreviations_text+abbreviations[j].textpos)
-    {   if (text[i+1]==p[1])
+    for (j=from;
+         j<no_abbreviations;
+         j++)
+    {
+        p=(uchar *)abbreviations_text+abbreviations[j].textpos;
+        if (c != p[0]) break;
+        if (text[i+1]==p[1])
         {   for (k=2; p[k]!=0; k++)
                 if (text[i+k]!=p[k]) goto NotMatched;
             if (!glulx_mode) {
@@ -569,10 +572,12 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
             {
                 c = text_in[j];
                 /* Loop on all abbreviations starting with what is in c. */
-                for (k=from, q=(uchar *)abbreviations_text+abbreviations[k].textpos;
-                    (k<no_abbreviations)&&(c==q[0]);
-                     k++, q=(uchar *)abbreviations_text+abbreviations[k].textpos)
-                {   
+                for (k=from;
+                     k<no_abbreviations;
+                     k++)
+                {
+                    q=(uchar *)abbreviations_text+abbreviations[k].textpos;
+                    if (c!=q[0]) break;
                     /* Let's compare; we also keep track of the length of the abbreviation. */
                     for (l=1; q[l]!=0; l++)
                     {    if (text_in[j+l]!=q[l]) {goto NotMatched;}
