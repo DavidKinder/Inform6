@@ -1636,6 +1636,8 @@ static void display_frequencies()
             saving = (abbreviations[i].freq-1)*abbreviations[i].quality;
 
         astr = abbreviation_text(i);
+        /* Print the abbreviation text, left-padded to ten spaces, with
+           spaces replaced by underscores. */
         for (j=strlen(astr); j<10; j++) {
             putchar(' ');
         }
