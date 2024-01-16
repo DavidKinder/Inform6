@@ -153,7 +153,8 @@ static int text_out_overflow;          /* During text translation, becomes
 /* ------------------------------------------------------------------------- */
 
 static void make_abbrevs_lookup(void)
-{   int bubble_sort, j, k, l; char p[MAX_ABBREV_LENGTH]; char *p1, *p2;
+{   int bubble_sort, j, k;
+    char *p1, *p2;
     do
     {   bubble_sort = FALSE;
         for (j=0; j<no_abbreviations; j++)
@@ -161,11 +162,10 @@ static void make_abbrevs_lookup(void)
             {   p1=abbreviation_text(j);
                 p2=abbreviation_text(k);
                 if (strcmp(p1,p2)<0)
-                {   strcpy(p,p1); strcpy(p1,p2); strcpy(p2,p);
-                    l=abbreviations[j].value; abbreviations[j].value=abbreviations[k].value;
-                    abbreviations[k].value=l;
-                    l=abbreviations[j].quality; abbreviations[j].quality=abbreviations[k].quality;
-                    abbreviations[k].quality=l;
+                {
+                    abbreviation temp = abbreviations[j];
+                    abbreviations[j] = abbreviations[k];
+                    abbreviations[k] = temp;
                     bubble_sort = TRUE;
                 }
             }
