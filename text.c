@@ -159,8 +159,8 @@ static void make_abbrevs_lookup(void)
     {   bubble_sort = FALSE;
         for (j=0; j<no_abbreviations; j++)
             for (k=j+1; k<no_abbreviations; k++)
-            {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
-                p2=(char *)abbreviations_at+k*MAX_ABBREV_LENGTH;
+            {   p1=abbreviation_text(j);
+                p2=abbreviation_text(k);
                 if (strcmp(p1,p2)<0)
                 {   strcpy(p,p1); strcpy(p1,p2); strcpy(p2,p);
                     l=abbreviations[j].value; abbreviations[j].value=abbreviations[k].value;
@@ -173,7 +173,7 @@ static void make_abbrevs_lookup(void)
     } while (bubble_sort);
 
     for (j=no_abbreviations-1; j>=0; j--)
-    {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+    {   p1=abbreviation_text(j);
         abbrevs_lookup[(uchar)p1[0]]=j;
         abbreviations[j].freq=0;
     }
@@ -615,7 +615,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
             ((j = abbreviations_optimal_parse_schedule[i]) != -1))
         {
             /* Fill with 1s, which will get ignored by everyone else. */
-            uchar *p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+            uchar *p = (uchar *)abbreviation_text(j);
             for (k=0; p[k]!=0; k++) text_in[i+k]=1;
             /* Actually write the abbreviation in the story file. */
             abbreviations[j].freq++;
@@ -850,7 +850,7 @@ advance as part of 'Zcharacter table':", unicode);
       if ((economy_switch) && (compression_switch) && (!is_abbreviation)
         && ((k=abbrevs_lookup[text_in[i]])!=-1)
         && ((j=try_abbreviations_from(text_in, i, k)) != -1)) {
-        char *cx = (char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+        char *cx = abbreviation_text(j);
         i += (strlen(cx)-1);
         write_z_char_g('@');
         write_z_char_g('A');
@@ -1399,7 +1399,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
     compression_table_size += 2;
     break;
   case 3:
-    cx = (char *)abbreviations_at + ent->u.val*MAX_ABBREV_LENGTH;
+    cx = abbreviation_text(ent->u.val);
     compression_table_size += (1 + 1 + strlen(cx));
     break;
   case 4:
