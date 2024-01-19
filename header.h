@@ -2585,6 +2585,7 @@ extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 extern int STRIP_UNREACHABLE_LABELS;
 extern int OMIT_SYMBOL_TABLE;
+extern int LONG_DICT_FLAG_BUG;
 extern int TRANSCRIPT_FORMAT;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
