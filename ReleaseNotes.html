@@ -99,6 +99,7 @@ constants would be put in a <tt>#Ifndef OMIT_SYMBOL_TABLE;</tt> block.
 be compiled to a <tt>@print</tt> opcode, rather than be added to the string segment and compiled to a <tt>@print_paddr</tt>
 opcode. This setting has a default value of 32, which matches the previous behaviour of the compiler, where this limit
 was hard-coded at 32 characters.
+<li><p>The <tt>Abbreviate</tt> directive now accepts abbreviations of any length.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>The <tt>--trace ASM=2</tt> option now shows backpatch markers as a short descriptive string, rather than as a

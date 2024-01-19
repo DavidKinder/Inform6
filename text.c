@@ -92,11 +92,10 @@ static int unicode_entity_index(int32 unicode);
 abbreviation *abbreviations;             /* Allocated up to no_abbreviations */
 static memory_list abbreviations_memlist;
 
-/* Memory to hold the text of any abbreviation strings declared. This is
-   counted in units of MAX_ABBREV_LENGTH bytes. (An abbreviation must fit
-   in that many bytes, null included.)                                       */
-uchar *abbreviations_at;                 /* Allocated up to no_abbreviations */
-static memory_list abbreviations_at_memlist;
+/* Memory to hold the text of any abbreviation strings declared.             */
+static int32 abbreviations_totaltext;
+static char *abbreviations_text;  /* Allocated up to abbreviations_totaltext */
+static memory_list abbreviations_text_memlist;
 
 static int *abbreviations_optimal_parse_schedule;
 static memory_list abbreviations_optimal_parse_schedule_memlist;
@@ -154,26 +153,26 @@ static int text_out_overflow;          /* During text translation, becomes
 /* ------------------------------------------------------------------------- */
 
 static void make_abbrevs_lookup(void)
-{   int bubble_sort, j, k, l; char p[MAX_ABBREV_LENGTH]; char *p1, *p2;
+{   int bubble_sort, j, k;
+    char *p1, *p2;
     do
     {   bubble_sort = FALSE;
         for (j=0; j<no_abbreviations; j++)
             for (k=j+1; k<no_abbreviations; k++)
-            {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
-                p2=(char *)abbreviations_at+k*MAX_ABBREV_LENGTH;
+            {   p1=abbreviation_text(j);
+                p2=abbreviation_text(k);
                 if (strcmp(p1,p2)<0)
-                {   strcpy(p,p1); strcpy(p1,p2); strcpy(p2,p);
-                    l=abbreviations[j].value; abbreviations[j].value=abbreviations[k].value;
-                    abbreviations[k].value=l;
-                    l=abbreviations[j].quality; abbreviations[j].quality=abbreviations[k].quality;
-                    abbreviations[k].quality=l;
+                {
+                    abbreviation temp = abbreviations[j];
+                    abbreviations[j] = abbreviations[k];
+                    abbreviations[k] = temp;
                     bubble_sort = TRUE;
                 }
             }
     } while (bubble_sort);
 
     for (j=no_abbreviations-1; j>=0; j--)
-    {   p1=(char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+    {   p1=abbreviation_text(j);
         abbrevs_lookup[(uchar)p1[0]]=j;
         abbreviations[j].freq=0;
     }
@@ -198,9 +197,13 @@ static void make_abbrevs_lookup(void)
 static int try_abbreviations_from(unsigned char *text, int i, int from)
 {   int j, k; uchar *p, c;
     c=text[i];
-    for (j=from, p=(uchar *)abbreviations_at+from*MAX_ABBREV_LENGTH;
-         (j<no_abbreviations)&&(c==p[0]); j++, p+=MAX_ABBREV_LENGTH)
-    {   if (text[i+1]==p[1])
+    for (j=from;
+         j<no_abbreviations;
+         j++)
+    {
+        p=(uchar *)abbreviations_text+abbreviations[j].textpos;
+        if (c != p[0]) break;
+        if (text[i+1]==p[1])
         {   for (k=2; p[k]!=0; k++)
                 if (text[i+k]!=p[k]) goto NotMatched;
             if (!glulx_mode) {
@@ -214,18 +217,27 @@ static int try_abbreviations_from(unsigned char *text, int i, int from)
     return(-1);
 }
 
+/* Create an abbreviation. */
 extern void make_abbreviation(char *text)
 {
+    int alen;
+    int32 pos;
+    
     /* If -e mode is off, we won't waste space creating an abbreviation entry. */
     if (!economy_switch)
         return;
+
+    alen = strlen(text);
+    pos = abbreviations_totaltext;
     
     ensure_memory_list_available(&abbreviations_memlist, no_abbreviations+1);
-    ensure_memory_list_available(&abbreviations_at_memlist, no_abbreviations+1);
-    
-    strcpy((char *)abbreviations_at
-            + no_abbreviations*MAX_ABBREV_LENGTH, text);
+    ensure_memory_list_available(&abbreviations_text_memlist, pos+alen+1);
 
+    strcpy(abbreviations_text+pos, text);
+    abbreviations_totaltext += (alen+1);
+
+    abbreviations[no_abbreviations].textpos = pos;
+    abbreviations[no_abbreviations].textlen = alen;
     abbreviations[no_abbreviations].value = compile_string(text, STRCTX_ABBREV);
     abbreviations[no_abbreviations].freq = 0;
 
@@ -239,6 +251,19 @@ extern void make_abbreviation(char *text)
     }
     
     no_abbreviations++;
+}
+
+/* Return a pointer to the (uncompressed) abbreviation text.
+   This should be treated as temporary; it is only valid until the next
+   make_abbreviation() call. */
+extern char *abbreviation_text(int num)
+{
+    if (num < 0 || num >= no_abbreviations) {
+        compiler_error("Invalid abbrev for abbreviation_text()");
+        return "";
+    }
+    
+    return abbreviations_text + abbreviations[num].textpos;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -547,9 +572,12 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
             {
                 c = text_in[j];
                 /* Loop on all abbreviations starting with what is in c. */
-                for (k=from, q=(uchar *)abbreviations_at+from*MAX_ABBREV_LENGTH;
-                    (k<no_abbreviations)&&(c==q[0]); k++, q+=MAX_ABBREV_LENGTH)
-                {   
+                for (k=from;
+                     k<no_abbreviations;
+                     k++)
+                {
+                    q=(uchar *)abbreviations_text+abbreviations[k].textpos;
+                    if (c!=q[0]) break;
                     /* Let's compare; we also keep track of the length of the abbreviation. */
                     for (l=1; q[l]!=0; l++)
                     {    if (text_in[j+l]!=q[l]) {goto NotMatched;}
@@ -606,7 +634,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
             ((j = abbreviations_optimal_parse_schedule[i]) != -1))
         {
             /* Fill with 1s, which will get ignored by everyone else. */
-            uchar *p = (uchar *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+            uchar *p = (uchar *)abbreviation_text(j);
             for (k=0; p[k]!=0; k++) text_in[i+k]=1;
             /* Actually write the abbreviation in the story file. */
             abbreviations[j].freq++;
@@ -841,7 +869,7 @@ advance as part of 'Zcharacter table':", unicode);
       if ((economy_switch) && (compression_switch) && (!is_abbreviation)
         && ((k=abbrevs_lookup[text_in[i]])!=-1)
         && ((j=try_abbreviations_from(text_in, i, k)) != -1)) {
-        char *cx = (char *)abbreviations_at+j*MAX_ABBREV_LENGTH;
+        char *cx = abbreviation_text(j);
         i += (strlen(cx)-1);
         write_z_char_g('@');
         write_z_char_g('A');
@@ -1390,7 +1418,7 @@ static void compress_makebits(int entnum, int depth, int prevbit,
     compression_table_size += 2;
     break;
   case 3:
-    cx = (char *)abbreviations_at + ent->u.val*MAX_ABBREV_LENGTH;
+    cx = abbreviation_text(ent->u.val);
     compression_table_size += (1 + 1 + strlen(cx));
     break;
   case 4:
@@ -2720,6 +2748,7 @@ extern void init_text_vars(void)
 extern void text_begin_pass(void)
 {   abbrevs_lookup_table_made = FALSE;
     no_abbreviations=0;
+    abbreviations_totaltext=0;
     total_chars_trans=0; total_bytes_trans=0;
     all_text_top=0;
     dictionary_begin_pass();
@@ -2753,8 +2782,8 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 128, (void**)&static_strings_area,
         "static strings area");
     
-    initialise_memory_list(&abbreviations_at_memlist,
-        MAX_ABBREV_LENGTH, 64, (void**)&abbreviations_at,
+    initialise_memory_list(&abbreviations_text_memlist,
+        sizeof(char), 64, (void**)&abbreviations_text,
         "abbreviation text");
 
     initialise_memory_list(&abbreviations_memlist,
@@ -2840,7 +2869,7 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&all_text_memlist);
     
     deallocate_memory_list(&low_strings_memlist);
-    deallocate_memory_list(&abbreviations_at_memlist);
+    deallocate_memory_list(&abbreviations_text_memlist);
     deallocate_memory_list(&abbreviations_memlist);
 
     deallocate_memory_list(&abbreviations_optimal_parse_schedule_memlist);
