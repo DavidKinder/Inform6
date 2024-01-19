@@ -1874,7 +1874,7 @@ extern void copy_sorts(uchar *d1, uchar *d2)
 static memory_list prepared_sort_memlist;
 static uchar *prepared_sort;    /* Holds the sort code of current word */
 
-static int number_and_case;
+static int number_and_case;     /* Dict flags set by the current word */
 
 /* Also used by verbs.c */
 static void dictionary_prepare_z(char *dword, uchar *optresult)
@@ -2188,6 +2188,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     int a, b;
     int res=((version_number==3)?4:6);
 
+    /* Fill in prepared_sort and number_and_case. */
     dictionary_prepare(dword, NULL);
 
     if (root == VACANT)
