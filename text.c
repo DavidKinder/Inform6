@@ -2231,8 +2231,9 @@ static int dictionary_find(char *dword)
 }
 
 /* ------------------------------------------------------------------------- */
-/*  Add "dword" to the dictionary with (x,y,z) as its data fields; unless    */
-/*  it already exists, in which case OR the data with (x,y,z)                */
+/*  Add "dword" to the dictionary with (flag1,flag2,flag3) as its data       */
+/*  fields; unless it already exists, in which case OR the data with         */
+/*  those flags.                                                             */
 /*                                                                           */
 /*  These fields are one byte each in Z-code, two bytes each in Glulx.       */
 /*                                                                           */
