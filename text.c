@@ -2239,7 +2239,7 @@ static int dictionary_find(char *dword)
 /*  Returns: the accession number.                                           */
 /* ------------------------------------------------------------------------- */
 
-extern int dictionary_add(char *dword, int x, int y, int z)
+extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 {   int n; uchar *p;
     int ggfr = 0, gfr = 0, fr = 0, r = 0;
     int ggf = VACANT, gf = VACANT, f = VACANT, at = root;
@@ -2259,16 +2259,16 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         {
             if (!glulx_mode) {
                 p = dictionary+7 + at*DICT_ENTRY_BYTE_LENGTH + res;
-                p[0] |= x; p[1] |= y;
+                p[0] |= flag1; p[1] |= flag2;
                 if (!ZCODE_LESS_DICT_DATA)
-                    p[2] |= z;
+                    p[2] |= flag3;
                 p[0] |= prepared_dictflags_pos;
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
-                p[0] |= (x/256); p[1] |= (x%256); 
-                p[2] |= (y/256); p[3] |= (y%256); 
-                p[4] |= (z/256); p[5] |= (z%256);
+                p[0] |= (flag1/256); p[1] |= (flag1%256); 
+                p[2] |= (flag2/256); p[3] |= (flag2%256); 
+                p[4] |= (flag3/256); p[5] |= (flag3%256);
                 p[1] |= prepared_dictflags_pos;
             }
             return at;
@@ -2377,8 +2377,8 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[2]=prepared_sort[2]; p[3]=prepared_sort[3];
         if (version_number > 3)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
-        p[res]=x; p[res+1]=y;
-        if (!ZCODE_LESS_DICT_DATA) p[res+2]=z;
+        p[res]=flag1; p[res+1]=flag2;
+        if (!ZCODE_LESS_DICT_DATA) p[res+2]=flag3;
         p[res] |= prepared_dictflags_pos;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
@@ -2395,9 +2395,9 @@ extern int dictionary_add(char *dword, int x, int y, int z)
           p[i] = prepared_sort[i];
         
         p += DICT_WORD_BYTES;
-        p[0] = 0; p[1] = x;
-        p[2] = y/256; p[3] = y%256;
-        p[4] = 0; p[5] = z;
+        p[0] = (flag1/256); p[1] = (flag1%256);
+        p[2] = (flag2/256); p[3] = (flag2%256);
+        p[4] = (flag3/256); p[5] = (flag3%256);
         p[1] |= prepared_dictflags_pos;
         
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
