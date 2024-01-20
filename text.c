@@ -1874,11 +1874,14 @@ extern void copy_sorts(uchar *d1, uchar *d2)
 static memory_list prepared_sort_memlist;
 static uchar *prepared_sort;    /* Holds the sort code of current word */
 
-static int prepared_dictflags;  /* Dict flags set by the current word */
+static int prepared_dictflags_pos;  /* Dict flags set by the current word */
+static int prepared_dictflags_neg;  /* Dict flags *not* set by the word */
 
 /* Also used by verbs.c */
 static void dictionary_prepare_z(char *dword, uchar *optresult)
-{   int i, j, k, k2, wd[13]; int32 tot;
+{   int i, j, k, k2, wd[13];
+    int32 tot;
+    int negflag;
 
     /* A rapid text translation algorithm using only the simplified rules
        applying to the text of dictionary entries: first produce a sequence
@@ -1886,15 +1889,40 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
 
     int dictsize = (version_number==3) ? 6 : 9;
 
-    prepared_dictflags = 0;
+    prepared_dictflags_pos = 0;
+    prepared_dictflags_neg = 0;
 
     for (i=0, j=0; dword[j]!=0; j++)
-    {   if ((dword[j] == '/') && (dword[j+1] == '/'))
-        {   for (j+=2; dword[j] != 0; j++)
-            {   switch(dword[j])
-                {   case 'p': prepared_dictflags |= 4;  break;
+    {
+        if ((dword[j] == '/') && (dword[j+1] == '/'))
+        {
+            /* The rest of the word is dict flags. Run through them. */
+            negflag = FALSE;
+            for (j+=2; dword[j] != 0; j++)
+            {
+                switch(dword[j])
+                {
+                    case '~':
+                        if (!dword[j+1])
+                            error_named("'//~' with no flag character (pn) in dict word", dword);
+                        negflag = !negflag;
+                        break;
+                    case 'p':
+                        if (!negflag)
+                            prepared_dictflags_pos |= 4;
+                        else
+                            prepared_dictflags_neg |= 4;
+                        negflag = FALSE;
+                        break;
+                    case 'n':
+                        if (!negflag)
+                            prepared_dictflags_pos |= 128;
+                        else
+                            prepared_dictflags_neg |= 128;
+                        negflag = FALSE;
+                        break;
                     default:
-                        error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
+                        error_named("Expected flag character (pn~) after '//' in dict word", dword);
                         break;
                 }
             }
@@ -1992,18 +2020,38 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
 { 
   int i, j, k;
   int32 unicode;
+  int negflag;
 
-  prepared_dictflags = 0;
+  prepared_dictflags_pos = 0;
+  prepared_dictflags_neg = 0;
 
   for (i=0, j=0; (dword[j]!=0); j++) {
     if ((dword[j] == '/') && (dword[j+1] == '/')) {
+      /* The rest of the word is dict flags. Run through them. */
+      negflag = FALSE;
       for (j+=2; dword[j] != 0; j++) {
         switch(dword[j]) {
+        case '~':
+            if (!dword[j+1])
+                error_named("'//~' with no flag character (pn) in dict word", dword);
+            negflag = !negflag;
+            break;
         case 'p':
-          prepared_dictflags |= 4;  
-          break;
+            if (!negflag)
+                prepared_dictflags_pos |= 4;
+            else
+                prepared_dictflags_neg |= 4;
+            negflag = FALSE;
+            break;
+        case 'n':
+            if (!negflag)
+                prepared_dictflags_pos |= 128;
+            else
+                prepared_dictflags_neg |= 128;
+            negflag = FALSE;
+            break;
         default:
-          error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
+          error_named("Expected flag character (pn~) after '//' in dict word", dword);
           break;
         }
       }
@@ -2214,14 +2262,14 @@ extern int dictionary_add(char *dword, int x, int y, int z)
                 p[0] |= x; p[1] |= y;
                 if (!ZCODE_LESS_DICT_DATA)
                     p[2] |= z;
-                p[0] |= prepared_dictflags;
+                p[0] |= prepared_dictflags_pos;
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
                 p[0] |= (x/256); p[1] |= (x%256); 
                 p[2] |= (y/256); p[3] |= (y%256); 
                 p[4] |= (z/256); p[5] |= (z%256);
-                p[1] |= prepared_dictflags;
+                p[1] |= prepared_dictflags_pos;
             }
             return at;
         }
@@ -2331,7 +2379,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
         p[res]=x; p[res+1]=y;
         if (!ZCODE_LESS_DICT_DATA) p[res+2]=z;
-        p[res] |= prepared_dictflags;
+        p[res] |= prepared_dictflags_pos;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
@@ -2350,7 +2398,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[0] = 0; p[1] = x;
         p[2] = y/256; p[3] = y%256;
         p[4] = 0; p[5] = z;
-        p[1] |= prepared_dictflags;
+        p[1] |= prepared_dictflags_pos;
         
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
