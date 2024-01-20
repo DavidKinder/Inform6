@@ -1874,7 +1874,7 @@ extern void copy_sorts(uchar *d1, uchar *d2)
 static memory_list prepared_sort_memlist;
 static uchar *prepared_sort;    /* Holds the sort code of current word */
 
-static int number_and_case;     /* Dict flags set by the current word */
+static int prepared_dictflags;  /* Dict flags set by the current word */
 
 /* Also used by verbs.c */
 static void dictionary_prepare_z(char *dword, uchar *optresult)
@@ -1886,13 +1886,13 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
 
     int dictsize = (version_number==3) ? 6 : 9;
 
-    number_and_case = 0;
+    prepared_dictflags = 0;
 
     for (i=0, j=0; dword[j]!=0; j++)
     {   if ((dword[j] == '/') && (dword[j+1] == '/'))
         {   for (j+=2; dword[j] != 0; j++)
             {   switch(dword[j])
-                {   case 'p': number_and_case |= 4;  break;
+                {   case 'p': prepared_dictflags |= 4;  break;
                     default:
                         error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
                         break;
@@ -1993,14 +1993,14 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
   int i, j, k;
   int32 unicode;
 
-  number_and_case = 0;
+  prepared_dictflags = 0;
 
   for (i=0, j=0; (dword[j]!=0); j++) {
     if ((dword[j] == '/') && (dword[j+1] == '/')) {
       for (j+=2; dword[j] != 0; j++) {
         switch(dword[j]) {
         case 'p':
-          number_and_case |= 4;  
+          prepared_dictflags |= 4;  
           break;
         default:
           error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
@@ -2198,7 +2198,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     int a, b;
     int res=((version_number==3)?4:6);
 
-    /* Fill in prepared_sort and number_and_case. */
+    /* Fill in prepared_sort and prepared_dictflags. */
     dictionary_prepare(dword, NULL);
 
     if (root == VACANT)
@@ -2214,14 +2214,14 @@ extern int dictionary_add(char *dword, int x, int y, int z)
                 p[0]=(p[0])|x; p[1]=(p[1])|y;
                 if (!ZCODE_LESS_DICT_DATA)
                     p[2]=(p[2])|z;
-                if (x & 128) p[0] = (p[0])|number_and_case;
+                if (x & 128) p[0] = (p[0])|prepared_dictflags;
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
                 p[0]=(p[0])|(x/256); p[1]=(p[1])|(x%256); 
                 p[2]=(p[2])|(y/256); p[3]=(p[3])|(y%256); 
                 p[4]=(p[4])|(z/256); p[5]=(p[5])|(z%256);
-                if (x & 128) p[1] = (p[1]) | number_and_case;
+                if (x & 128) p[1] = (p[1]) | prepared_dictflags;
             }
             return at;
         }
@@ -2331,7 +2331,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
         p[res]=x; p[res+1]=y;
         if (!ZCODE_LESS_DICT_DATA) p[res+2]=z;
-        if (x & 128) p[res] = (p[res])|number_and_case;
+        if (x & 128) p[res] = (p[res])|prepared_dictflags;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
@@ -2351,7 +2351,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[2] = y/256; p[3] = y%256;
         p[4] = 0; p[5] = z;
         if (x & 128) 
-          p[1] |= number_and_case;
+          p[1] |= prepared_dictflags;
         
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
