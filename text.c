@@ -2632,11 +2632,13 @@ static void recursively_show_g(int node, int level)
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         }
         if (flags & 128)
-        {   printf("noun ");
-            if (flags & 4)  printf("p"); else printf(" ");
-            printf(" ");
-        }
-        else printf("       ");
+            printf("noun ");
+        else
+            printf("     ");
+        if (flags & 4)
+            printf("p ");
+        else
+            printf("  ");
         if (flags & 8)
         {   printf("preposition    ");
         }
