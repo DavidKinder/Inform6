@@ -1901,6 +1901,11 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
             break;
         }
 
+        /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
+           at dictsize. */
+        if (LONG_DICT_FLAG_BUG && i>=dictsize)
+            break;
+
         k=(int) dword[j];
         if (k==(int) '\'')
             warning_named("Obsolete usage: use the ^ character for the \
@@ -2004,6 +2009,11 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
       }
       break;
     }
+
+    /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
+       at DICT_WORD_SIZE. */
+    if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
+        break;
 
     k= ((unsigned char *)dword)[j];
     if (k=='\'') 
