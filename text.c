@@ -2232,7 +2232,7 @@ static int dictionary_find(char *dword)
 
 /* ------------------------------------------------------------------------- */
 /*  Add "dword" to the dictionary with (flag1,flag2,flag3) as its data       */
-/*  fields; unless it already exists, in which case OR the data with         */
+/*  fields; unless it already exists, in which case OR the data fields with  */
 /*  those flags.                                                             */
 /*                                                                           */
 /*  These fields are one byte each in Z-code, two bytes each in Glulx.       */
@@ -2250,6 +2250,10 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
     /* Fill in prepared_sort and prepared_dictflags. */
     dictionary_prepare(dword, NULL);
 
+    /* Adjust flag1 according to prepared_dictflags. */
+    flag1 &= (~prepared_dictflags_neg);
+    flag1 |= prepared_dictflags_pos;
+
     if (root == VACANT)
     {   root = 0; goto CreateEntry;
     }
@@ -2263,14 +2267,12 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
                 p[0] |= flag1; p[1] |= flag2;
                 if (!ZCODE_LESS_DICT_DATA)
                     p[2] |= flag3;
-                p[0] |= prepared_dictflags_pos;
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
                 p[0] |= (flag1/256); p[1] |= (flag1%256); 
                 p[2] |= (flag2/256); p[3] |= (flag2%256); 
                 p[4] |= (flag3/256); p[5] |= (flag3%256);
-                p[1] |= prepared_dictflags_pos;
             }
             return at;
         }
@@ -2380,7 +2382,6 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
         p[res]=flag1; p[res+1]=flag2;
         if (!ZCODE_LESS_DICT_DATA) p[res+2]=flag3;
-        p[res] |= prepared_dictflags_pos;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
@@ -2399,7 +2400,6 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
         p[0] = (flag1/256); p[1] = (flag1%256);
         p[2] = (flag2/256); p[3] = (flag2%256);
         p[4] = (flag3/256); p[5] = (flag3%256);
-        p[1] |= prepared_dictflags_pos;
         
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
