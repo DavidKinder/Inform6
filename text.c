@@ -2211,17 +2211,17 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         {
             if (!glulx_mode) {
                 p = dictionary+7 + at*DICT_ENTRY_BYTE_LENGTH + res;
-                p[0]=(p[0])|x; p[1]=(p[1])|y;
+                p[0] |= x; p[1] |= y;
                 if (!ZCODE_LESS_DICT_DATA)
-                    p[2]=(p[2])|z;
-                if (x & 128) p[0] = (p[0])|prepared_dictflags;
+                    p[2] |= z;
+                p[0] |= prepared_dictflags;
             }
             else {
                 p = dictionary+4 + at*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS;
-                p[0]=(p[0])|(x/256); p[1]=(p[1])|(x%256); 
-                p[2]=(p[2])|(y/256); p[3]=(p[3])|(y%256); 
-                p[4]=(p[4])|(z/256); p[5]=(p[5])|(z%256);
-                if (x & 128) p[1] = (p[1]) | prepared_dictflags;
+                p[0] |= (x/256); p[1] |= (x%256); 
+                p[2] |= (y/256); p[3] |= (y%256); 
+                p[4] |= (z/256); p[5] |= (z%256);
+                p[1] |= prepared_dictflags;
             }
             return at;
         }
@@ -2331,7 +2331,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
           {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
         p[res]=x; p[res+1]=y;
         if (!ZCODE_LESS_DICT_DATA) p[res+2]=z;
-        if (x & 128) p[res] = (p[res])|prepared_dictflags;
+        p[res] |= prepared_dictflags;
 
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
@@ -2350,8 +2350,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
         p[0] = 0; p[1] = x;
         p[2] = y/256; p[3] = y%256;
         p[4] = 0; p[5] = z;
-        if (x & 128) 
-          p[1] |= prepared_dictflags;
+        p[1] |= prepared_dictflags;
         
         dictionary_top += DICT_ENTRY_BYTE_LENGTH;
 
