@@ -1508,7 +1508,7 @@ static void optimise_pass(void)
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
-                while ((noflags>=2)&&(nl<MAX_ABBREV_LENGTH-1))
+                while (noflags>=2)
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
                         if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
