@@ -1457,7 +1457,8 @@ typedef struct optab_s
     int32  popularity;
     int32  score;
     int32  location;
-    char text[MAX_ABBREV_LENGTH];
+    char  *text; /* allocated to textsize, min 4 */
+    int32  textsize;
 } optab;
 static int32 MAX_BESTYET;
 static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
@@ -1596,7 +1597,24 @@ extern void optimise_abbreviations(void)
     MAX_BESTYET = 4 * MAX_ABBREVS;
     
     bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
+    for (i=0; i<MAX_BESTYET; i++) {
+        bestyet[i].length = 0;
+        bestyet[i].popularity = 0;
+        bestyet[i].score = 0;
+        bestyet[i].location = 0;
+        bestyet[i].textsize = 4;
+        bestyet[i].text = my_malloc(bestyet[i].textsize, "bestyet.text");
+    }
+
     bestyet2=my_calloc(sizeof(optab), MAX_ABBREVS, "bestyet2");
+    for (i=0; i<MAX_ABBREVS; i++) {
+        bestyet2[i].length = 0;
+        bestyet2[i].popularity = 0;
+        bestyet2[i].score = 0;
+        bestyet2[i].location = 0;
+        bestyet2[i].textsize = 4;
+        bestyet2[i].text = my_malloc(bestyet2[i].textsize, "bestyet2.text");
+    }
 
     bestyet2[0].text[0]='.';
     bestyet2[0].text[1]=' ';
@@ -2880,6 +2898,18 @@ extern void text_free_arrays(void)
 extern void ao_free_arrays(void)
 {
     /* Called only after optimise_abbreviations() runs. */
+
+    int32 i;
+    if (bestyet) {
+        for (i=0; i<MAX_BESTYET; i++) {
+            my_free(&bestyet[i].text, "bestyet.text");
+        }
+    }
+    if (bestyet2) {
+        for (i=0; i<MAX_ABBREVS; i++) {
+            my_free(&bestyet2[i].text, "bestyet2.text");
+        }
+    }
     
     my_free (&opttext,"stashed transcript for optimisation");
     my_free (&bestyet,"bestyet");
