@@ -1464,6 +1464,20 @@ static int32 MAX_BESTYET;
 static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
 static optab *bestyet2; /* The selected entries (up to selected used; allocated to MAX_ABBREVS) */
 
+static void optab_copy(optab *dest, const optab *src)
+{
+    dest->length = src->length;
+    dest->popularity = src->popularity;
+    dest->score = src->score;
+    dest->location = src->location;
+    if (src->length+1 > dest->textsize) {
+        int32 oldsize = dest->textsize;
+        dest->textsize = (src->length+1)*2;
+        my_realloc(&dest->text, oldsize, dest->textsize, "bestyet2.text");
+    }
+    strcpy(dest->text, src->text);
+}
+
 static int pass_no;
 
 static void optimise_pass(void)
@@ -1726,6 +1740,11 @@ extern void optimise_abbreviations(void)
             if (bestyet[i].score!=0)
             {   available++;
                 nl=bestyet[i].length;
+                if (nl+1 > bestyet[i].textsize) {
+                    int32 oldsize = bestyet[i].textsize;
+                    bestyet[i].textsize = (nl+1)*2;
+                    my_realloc(&bestyet[i].text, oldsize, bestyet[i].textsize, "bestyet.text");
+                }
                 for (j2=0; j2<nl; j2++) bestyet[i].text[j2]=
                     opttext[bestyet[i].location+j2];
                 bestyet[i].text[nl]=0;
@@ -1750,7 +1769,7 @@ extern void optimise_abbreviations(void)
             if (max>0)
             {
                 char testtext[4];
-                bestyet2[selected++]=bestyet[maxat];
+                optab_copy(&bestyet2[selected++], &bestyet[maxat]);
 
                 if (optabbrevs_trace_setting >= 1) {
                     printf(
