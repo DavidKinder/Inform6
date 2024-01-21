@@ -646,8 +646,8 @@ static opcodez opcodes_table_z[] =
 
     /* Opcodes introduced in Z-Machine Specification Standard 1.1 */
 
-/* 118 */ { (uchar *) "set_true_colour" 5, 0, -1, 0x0d,      0,      0, 0, EXT },
-/* 119 */ { (uchar *) "buffer_screen"   6, 6, -1, 0x1d,     St,      0, 0, EXT }
+/* 118 */ { (uchar *) "set_true_colour", 5, 0, -1, 0x0d,      0,      0, 0, EXT },
+/* 119 */ { (uchar *) "buffer_screen",   6, 6, -1, 0x1d,     St,      0, 0, EXT }
 };
 
     /* Subsequent forms for opcodes whose meaning changes with version */
