@@ -270,6 +270,7 @@ int WARN_UNUSED_ROUTINES; /* 0: no, 1: yes except in system files, 2: yes always
 int OMIT_UNUSED_ROUTINES; /* 0: no, 1: yes */
 int STRIP_UNREACHABLE_LABELS; /* 0: no, 1: yes (default) */
 int OMIT_SYMBOL_TABLE; /* 0: no, 1: yes */
+int LONG_DICT_FLAG_BUG; /* 0: no bug, 1: bug (default for historic reasons) */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
 /* The way memory sizes are set causes great nuisance for those parameters
@@ -318,6 +319,7 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
     printf("|  %25s = %-7d |\n","STRIP_UNREACHABLE_LABELS",STRIP_UNREACHABLE_LABELS);
     printf("|  %25s = %-7d |\n","OMIT_SYMBOL_TABLE",OMIT_SYMBOL_TABLE);
+    printf("|  %25s = %-7d |\n","LONG_DICT_FLAG_BUG",LONG_DICT_FLAG_BUG);
     printf("+--------------------------------------+\n");
 }
 
@@ -351,6 +353,7 @@ extern void set_memory_sizes(void)
     WARN_UNUSED_ROUTINES = 0;
     STRIP_UNREACHABLE_LABELS = 1;
     OMIT_SYMBOL_TABLE = 0;
+    LONG_DICT_FLAG_BUG = 1;
     TRANSCRIPT_FORMAT = 0;
 
     adjust_memory_sizes();
@@ -506,6 +509,14 @@ static void explain_parameter(char *command)
         printf(
 "  OMIT_SYMBOL_TABLE, if set to 1, will skip compiling debug symbol names \n\
   into the game file.\n");
+        return;
+    }
+    if (strcmp(command,"LONG_DICT_FLAG_BUG")==0)
+    {
+        printf(
+"  LONG_DICT_FLAG_BUG, if set to 0, will fix the old bug which ignores \n\
+  the '//p' flag in long dictionary words. If 1, the buggy behavior is \n\
+  retained.\n");
         return;
     }
     if (strcmp(command,"SERIAL")==0)
@@ -921,6 +932,12 @@ extern void memory_command(char *command)
                 OMIT_SYMBOL_TABLE=j, flag=1;
                 if (OMIT_SYMBOL_TABLE > 1 || OMIT_SYMBOL_TABLE < 0)
                     OMIT_SYMBOL_TABLE = 1;
+            }
+            if (strcmp(command,"LONG_DICT_FLAG_BUG")==0)
+            {
+                LONG_DICT_FLAG_BUG=j, flag=1;
+                if (LONG_DICT_FLAG_BUG > 1 || LONG_DICT_FLAG_BUG < 0)
+                    LONG_DICT_FLAG_BUG = 1;
             }
             if (strcmp(command,"SERIAL")==0)
             {

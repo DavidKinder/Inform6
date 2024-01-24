@@ -1874,7 +1874,7 @@ extern void copy_sorts(uchar *d1, uchar *d2)
 static memory_list prepared_sort_memlist;
 static uchar *prepared_sort;    /* Holds the sort code of current word */
 
-static int number_and_case;
+static int number_and_case;     /* Dict flags set by the current word */
 
 /* Also used by verbs.c */
 static void dictionary_prepare_z(char *dword, uchar *optresult)
@@ -1888,20 +1888,23 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
 
     number_and_case = 0;
 
-    for (i=0, j=0; dword[j]!=0; i++, j++)
+    for (i=0, j=0; dword[j]!=0; j++)
     {   if ((dword[j] == '/') && (dword[j+1] == '/'))
         {   for (j+=2; dword[j] != 0; j++)
             {   switch(dword[j])
                 {   case 'p': number_and_case |= 4;  break;
                     default:
-                        error_named("Expected 'p' after '//' \
-to give number of dictionary word", dword);
+                        error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
                         break;
                 }
             }
             break;
         }
-        if (i>=dictsize) break;
+
+        /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
+           at dictsize. */
+        if (LONG_DICT_FLAG_BUG && i>=dictsize)
+            break;
 
         k=(int) dword[j];
         if (k==(int) '\'')
@@ -1932,21 +1935,31 @@ apostrophe in", dword);
                 char_error("Character can be printed but not input:", k);
             else
             {   /* Use 4 more Z-chars to encode a ZSCII escape sequence      */
-
-                wd[i++] = 5; wd[i++] = 6;
+                if (i<dictsize)
+                    wd[i++] = 5;
+                if (i<dictsize)
+                    wd[i++] = 6;
                 k2 = -k2;
-                wd[i++] = k2/32; wd[i] = k2%32;
+                if (i<dictsize)
+                    wd[i++] = k2/32;
+                if (i<dictsize)
+                    wd[i++] = k2%32;
             }
         }
         else
         {   alphabet_used[k2] = 'Y';
-            if ((k2/26)!=0)
+            if ((k2/26)!=0 && i<dictsize)
                 wd[i++]=3+(k2/26);            /* Change alphabet for symbols */
-            wd[i]=6+(k2%26);                  /* Write the Z character       */
+            if (i<dictsize)
+                wd[i++]=6+(k2%26);            /* Write the Z character       */
         }
     }
 
-    /* Fill up to the end of the dictionary block with PAD characters        */
+    if (i > dictsize)
+        compiler_error("dict word buffer overflow");
+
+    /* Fill up to the end of the dictionary block with PAD characters
+       (for safety, we right-pad to 9 chars even in V3)                      */
 
     for (; i<9; i++) wd[i]=5;
 
@@ -1982,7 +1995,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
 
   number_and_case = 0;
 
-  for (i=0, j=0; (dword[j]!=0); i++, j++) {
+  for (i=0, j=0; (dword[j]!=0); j++) {
     if ((dword[j] == '/') && (dword[j+1] == '/')) {
       for (j+=2; dword[j] != 0; j++) {
         switch(dword[j]) {
@@ -1990,14 +2003,17 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
           number_and_case |= 4;  
           break;
         default:
-          error_named("Expected 'p' after '//' \
-to give gender or number of dictionary word", dword);
+          error_named("Expected 'p' after '//' in dict word (plural flag)", dword);
           break;
         }
       }
       break;
     }
-    if (i>=DICT_WORD_SIZE) break;
+
+    /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
+       at DICT_WORD_SIZE. */
+    if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
+        break;
 
     k= ((unsigned char *)dword)[j];
     if (k=='\'') 
@@ -2031,16 +2047,24 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
     ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
     
     if (DICT_CHAR_SIZE == 1) {
-      prepared_sort[i] = k;
+      if (i<DICT_WORD_SIZE)
+        prepared_sort[i++] = k;
     }
     else {
-      prepared_sort[4*i]   = (k >> 24) & 0xFF;
-      prepared_sort[4*i+1] = (k >> 16) & 0xFF;
-      prepared_sort[4*i+2] = (k >>  8) & 0xFF;
-      prepared_sort[4*i+3] = (k)       & 0xFF;
+      if (i<DICT_WORD_SIZE) {
+        prepared_sort[4*i]   = (k >> 24) & 0xFF;
+        prepared_sort[4*i+1] = (k >> 16) & 0xFF;
+        prepared_sort[4*i+2] = (k >>  8) & 0xFF;
+        prepared_sort[4*i+3] = (k)       & 0xFF;
+        i++;
+      }
     }
   }
 
+  if (i > DICT_WORD_SIZE)
+    compiler_error("dict word buffer overflow");
+
+  /* Right-pad with zeroes */
   if (DICT_CHAR_SIZE == 1) {
     for (; i<DICT_WORD_SIZE; i++)
       prepared_sort[i] = 0;
@@ -2174,6 +2198,7 @@ extern int dictionary_add(char *dword, int x, int y, int z)
     int a, b;
     int res=((version_number==3)?4:6);
 
+    /* Fill in prepared_sort and number_and_case. */
     dictionary_prepare(dword, NULL);
 
     if (root == VACANT)
@@ -2546,11 +2571,13 @@ static void recursively_show_z(int node, int level)
 
         flags = (int) p[res];
         if (flags & 128)
-        {   printf("noun ");
-            if (flags & 4)  printf("p"); else printf(" ");
-            printf(" ");
-        }
-        else printf("       ");
+            printf("noun ");
+        else
+            printf("     ");
+        if (flags & 4)
+            printf("p ");
+        else
+            printf("  ");
         if (flags & 8)
         {   if (grammar_version_number == 1)
                 printf("preposition:%d  ", (int) p[res+2]);
@@ -2605,11 +2632,13 @@ static void recursively_show_g(int node, int level)
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         }
         if (flags & 128)
-        {   printf("noun ");
-            if (flags & 4)  printf("p"); else printf(" ");
-            printf(" ");
-        }
-        else printf("       ");
+            printf("noun ");
+        else
+            printf("     ");
+        if (flags & 4)
+            printf("p ");
+        else
+            printf("  ");
         if (flags & 8)
         {   printf("preposition    ");
         }
