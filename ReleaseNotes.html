@@ -100,6 +100,21 @@ be compiled to a <tt>@print</tt> opcode, rather than be added to the string segm
 opcode. This setting has a default value of 32, which matches the previous behaviour of the compiler, where this limit
 was hard-coded at 32 characters.
 <li><p>The <tt>Abbreviate</tt> directive now accepts abbreviations of any length.
+<li><p>The <tt>-u</tt> option, which computes abbreviations, can now generate abbreviations of any length.
+<li><p>Inform is now able to correctly set the plural flag on long dictionary words (e.g. <tt>'directions//p'</tt>).
+However, due to the way Inform 7 has defined plural kind names in the past, fixing this will affect the parsing of
+Inform 7 games if the output Inform 6 code is then compiled with a version of Inform 6 that fixes this issue. As a result,
+there is a new setting <tt>$LONG_DICT_FLAG_BUG</tt>, which defaults to 1. The new behaviour is only enabled if this setting
+is set to 0.
+<li><p>Flags for dictionary words now include setting the NOUN flag, and also provides a way to explicitly not set a
+flag. The possible choices are:
+ <ul>
+  <li><tt>//p</tt> sets the PLURAL flag (bit 2)
+  <li><tt>//n</tt> sets the NOUN flag (bit 7)
+  <li><tt>//~p</tt> means do not set the PLURAL flag at this point
+  <li><tt>//~n</tt> means do not set the NOUN flag at this point
+ </ul>
+<br>Dictionary words used in most contexts default to <tt>//n</tt>.
 <li><p>The <tt>--trace PROPS</tt> and <tt>--trace SYMDEF</tt> options now display the line number that each property
 or symbol is defined at.
 <li><p>The <tt>--trace ASM=2</tt> option now shows backpatch markers as a short descriptive string, rather than as a
