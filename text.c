@@ -1457,11 +1457,26 @@ typedef struct optab_s
     int32  popularity;
     int32  score;
     int32  location;
-    char text[MAX_ABBREV_LENGTH];
+    char  *text; /* allocated to textsize, min 4 */
+    int32  textsize;
 } optab;
 static int32 MAX_BESTYET;
 static optab *bestyet; /* High-score entries (up to MAX_BESTYET used/allocated) */
 static optab *bestyet2; /* The selected entries (up to selected used; allocated to MAX_ABBREVS) */
+
+static void optab_copy(optab *dest, const optab *src)
+{
+    dest->length = src->length;
+    dest->popularity = src->popularity;
+    dest->score = src->score;
+    dest->location = src->location;
+    if (src->length+1 > dest->textsize) {
+        int32 oldsize = dest->textsize;
+        dest->textsize = (src->length+1)*2;
+        my_realloc(&dest->text, oldsize, dest->textsize, "bestyet2.text");
+    }
+    strcpy(dest->text, src->text);
+}
 
 static int pass_no;
 
@@ -1493,7 +1508,7 @@ static void optimise_pass(void)
             for (j=0; j<tlbtab[i].occurrences; j++)
             {   for (j2=0; j2<tlbtab[i].occurrences; j2++) grandflags[j2]=1;
                 nl=2; noflags=tlbtab[i].occurrences;
-                while ((noflags>=2)&&(nl<MAX_ABBREV_LENGTH-1))
+                while (noflags>=2)
                 {   nl++;
                     for (j2=0; j2<nl; j2++)
                         if (opttext[grandtable[tlbtab[i].intab+j]+j2]=='\n')
@@ -1596,7 +1611,24 @@ extern void optimise_abbreviations(void)
     MAX_BESTYET = 4 * MAX_ABBREVS;
     
     bestyet=my_calloc(sizeof(optab), MAX_BESTYET, "bestyet");
+    for (i=0; i<MAX_BESTYET; i++) {
+        bestyet[i].length = 0;
+        bestyet[i].popularity = 0;
+        bestyet[i].score = 0;
+        bestyet[i].location = 0;
+        bestyet[i].textsize = 4;
+        bestyet[i].text = my_malloc(bestyet[i].textsize, "bestyet.text");
+    }
+
     bestyet2=my_calloc(sizeof(optab), MAX_ABBREVS, "bestyet2");
+    for (i=0; i<MAX_ABBREVS; i++) {
+        bestyet2[i].length = 0;
+        bestyet2[i].popularity = 0;
+        bestyet2[i].score = 0;
+        bestyet2[i].location = 0;
+        bestyet2[i].textsize = 4;
+        bestyet2[i].text = my_malloc(bestyet2[i].textsize, "bestyet2.text");
+    }
 
     bestyet2[0].text[0]='.';
     bestyet2[0].text[1]=' ';
@@ -1708,6 +1740,11 @@ extern void optimise_abbreviations(void)
             if (bestyet[i].score!=0)
             {   available++;
                 nl=bestyet[i].length;
+                if (nl+1 > bestyet[i].textsize) {
+                    int32 oldsize = bestyet[i].textsize;
+                    bestyet[i].textsize = (nl+1)*2;
+                    my_realloc(&bestyet[i].text, oldsize, bestyet[i].textsize, "bestyet.text");
+                }
                 for (j2=0; j2<nl; j2++) bestyet[i].text[j2]=
                     opttext[bestyet[i].location+j2];
                 bestyet[i].text[nl]=0;
@@ -1732,7 +1769,7 @@ extern void optimise_abbreviations(void)
             if (max>0)
             {
                 char testtext[4];
-                bestyet2[selected++]=bestyet[maxat];
+                optab_copy(&bestyet2[selected++], &bestyet[maxat]);
 
                 if (optabbrevs_trace_setting >= 1) {
                     printf(
@@ -2909,6 +2946,18 @@ extern void text_free_arrays(void)
 extern void ao_free_arrays(void)
 {
     /* Called only after optimise_abbreviations() runs. */
+
+    int32 i;
+    if (bestyet) {
+        for (i=0; i<MAX_BESTYET; i++) {
+            my_free(&bestyet[i].text, "bestyet.text");
+        }
+    }
+    if (bestyet2) {
+        for (i=0; i<MAX_ABBREVS; i++) {
+            my_free(&bestyet2[i].text, "bestyet2.text");
+        }
+    }
     
     my_free (&opttext,"stashed transcript for optimisation");
     my_free (&bestyet,"bestyet");

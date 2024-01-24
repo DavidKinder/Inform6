@@ -599,7 +599,6 @@
 /* ------------------------------------------------------------------------- */
 
 #define  MAX_ERRORS            100
-#define  MAX_ABBREV_LENGTH      64
 #define  MAX_NUM_ATTR_BYTES     39
 #define  MAX_VERB_WORD_SIZE    120
 
