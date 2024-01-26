@@ -454,7 +454,9 @@ static void write_z_char_g(int i)
 /* Helper routine to compute the weight, in units, of a character handled by the Z-Machine */
 static int zchar_weight(int c)
 {
-    int lookup = iso_to_alphabet_grid[c];
+    int lookup;
+    if (c == ' ') return 1;
+    lookup = iso_to_alphabet_grid[c];
     if (lookup < 0) return 4;
     if (lookup < 26) return 1;
     return 2;
