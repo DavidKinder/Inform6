@@ -3059,7 +3059,9 @@ static assembly_operand parse_operand_z(void)
 }
 
 static void parse_assembly_z(void)
-{   int n, min, max, indirect_addressed, error_flag = FALSE;
+{   int n, min, max;
+    int indirect_addressed, jumplabel_args;
+    int error_flag = FALSE;
     opcodez O;
 
     AI.operand_count = 0;
@@ -3220,6 +3222,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     }
 
     indirect_addressed = (O.op_rules == VARIAB);
+    jumplabel_args = (O.op_rules == LABEL);        /* only @jump */
 
     if (O.op_rules == TEXT)
     {   get_next_token();
@@ -3313,6 +3316,12 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             {   ebf_curtoken_error("']'");
                 put_token_back();
             }
+        }
+        else if (jumplabel_args)
+        {   assembly_operand AO;
+            put_token_back();
+            INITAOTV(&AO, LONG_CONSTANT_OT, parse_label());
+            AI.operand[AI.operand_count++] = AO;
         }
         else
         {   put_token_back();
