@@ -152,6 +152,9 @@ co-ordinates.
 this is now fixed so that only the initial error is printed.
 <li><p>Invalid expressions like <tt>(a++ b)</tt>, <tt>(a ~b)</tt>, <tt>(a++ ~b)</tt>, and <tt>(a++ --b)</tt> previously
 caused an internal compiler error, but now produce a sensible error message.
+<li><p>When computing abbreviations, the space character is now correctly treated as only occupying one byte, not four.
+<li><p>The argument supplied to the Z-machine opcode <tt>@jump</tt> is now interpreted correctly. Previously this was
+only done properly for the <tt>jump</tt> statement, not the opcode.
 </ul>
 
 <h2>Inform 6.41</h2>
