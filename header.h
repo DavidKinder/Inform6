@@ -4,7 +4,7 @@
 /*                              Inform 6.42                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
-/*   copyright (c) Graham Nelson 1993 - 2023                                 */
+/*   copyright (c) Graham Nelson 1993 - 2024                                 */
 /*                                                                           */
 /*   Manuals for this language are available from the IF-Archive at          */
 /*   https://www.ifarchive.org/                                              */
@@ -31,7 +31,7 @@
 /* ------------------------------------------------------------------------- */
 
 /* For releases, set to the release date in the form "1st January 2000" */
-#define RELEASE_DATE "in development"
+#define RELEASE_DATE "10th February 2024"
 #define RELEASE_NUMBER 1642
 #define GLULX_RELEASE_NUMBER 38
 #define VNUMBER RELEASE_NUMBER

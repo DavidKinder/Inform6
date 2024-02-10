@@ -4,7 +4,7 @@
 /*              provide                                                      */
 /*                                                                           */
 /*   Part of Inform 6.42                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2023                                 */
+/*   copyright (c) Graham Nelson 1993 - 2024                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
