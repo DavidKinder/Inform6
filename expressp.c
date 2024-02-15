@@ -967,16 +967,22 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
                      v = DICT_ENTRY_FLAG_POS+1;
+                     o->value = v;
+                     set_constant_ot(o);
                      break;
                  case dict_par2_SC:
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
                      v = DICT_ENTRY_FLAG_POS+3;
+                     o->value = v;
+                     set_constant_ot(o);
                      break;
                  case dict_par3_SC:
                      o->type = BYTECONSTANT_OT;
                      o->marker = 0;
                      v = DICT_ENTRY_FLAG_POS+5;
+                     o->value = v;
+                     set_constant_ot(o);
                      break;
 
                  case lowest_attribute_number_SC:
