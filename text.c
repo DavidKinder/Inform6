@@ -1943,23 +1943,23 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
                         break;
                     case 'p':
                         if (!negflag)
-                            prepared_dictflags_pos |= 4;
+                            prepared_dictflags_pos |= PLURAL_DFLAG;
                         else
-                            prepared_dictflags_neg |= 4;
+                            prepared_dictflags_neg |= PLURAL_DFLAG;
                         negflag = FALSE;
                         break;
                     case 's':
                         if (!negflag)
-                            prepared_dictflags_pos |= 16;
+                            prepared_dictflags_pos |= SING_DFLAG;
                         else
-                            prepared_dictflags_neg |= 16;
+                            prepared_dictflags_neg |= SING_DFLAG;
                         negflag = FALSE;
                         break;
                     case 'n':
                         if (!negflag)
-                            prepared_dictflags_pos |= 128;
+                            prepared_dictflags_pos |= NOUN_DFLAG;
                         else
-                            prepared_dictflags_neg |= 128;
+                            prepared_dictflags_neg |= NOUN_DFLAG;
                         negflag = FALSE;
                         break;
                     default:
@@ -2079,23 +2079,23 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
             break;
         case 'p':
             if (!negflag)
-                prepared_dictflags_pos |= 4;
+                prepared_dictflags_pos |= PLURAL_DFLAG;
             else
-                prepared_dictflags_neg |= 4;
+                prepared_dictflags_neg |= PLURAL_DFLAG;
             negflag = FALSE;
             break;
         case 's':
             if (!negflag)
-                prepared_dictflags_pos |= 16;
+                prepared_dictflags_pos |= SING_DFLAG;
             else
-                prepared_dictflags_neg |= 16;
+                prepared_dictflags_neg |= SING_DFLAG;
             negflag = FALSE;
             break;
         case 'n':
             if (!negflag)
-                prepared_dictflags_pos |= 128;
+                prepared_dictflags_pos |= NOUN_DFLAG;
             else
-                prepared_dictflags_neg |= 128;
+                prepared_dictflags_neg |= NOUN_DFLAG;
             negflag = FALSE;
             break;
         default:
@@ -2305,8 +2305,8 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
     if (DICT_IMPLICIT_SINGULAR) {
         /* If we have //n but not //p, that implies //s. Unless //s is
            explicitly forbidden. */
-        if ((flag1 & 128) && !(flag1 & 4) && !(prepared_dictflags_neg & 16)) {
-            flag1 |= 16;
+        if ((flag1 & NOUN_DFLAG) && !(flag1 & PLURAL_DFLAG) && !(prepared_dictflags_neg & SING_DFLAG)) {
+            flag1 |= SING_DFLAG;
         }
     }
 
