@@ -863,7 +863,7 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                  o->type = LONG_CONSTANT_OT;
              else
                  o->type = CONSTANT_OT;
-             o->value = dictionary_add(t->text, 0x80, 0, 0);
+             o->value = dictionary_add(t->text, NOUN_DFLAG, 0, 0);
              return(TRUE);
         case DQ_TT:
              /*  Create as a static string  */
