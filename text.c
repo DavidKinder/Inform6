@@ -1847,19 +1847,12 @@ extern void optimise_abbreviations(void)
 /* ------------------------------------------------------------------------- */
 /*                                                                           */
 /*   Further notes about the data fields...                                  */
-/*   The flags are currently:                                                */
-/*     bit 0: word is used as a verb (in verb grammar)                       */
-/*     bit 1: word is used as a meta verb                                    */
-/*     bit 2: word is plural (set by '//p')                                  */
-/*     bit 3: word is used as a preposition (in verb grammar)                */
-/*     bit 4: word is singular (set by '//s')                                */
-/*       (DICT_IMPLICIT_SINGULAR sets this for all non-plural nouns)         */
-/*     bit 6: set for all verbs, for historical reasons only -- not used     */
-/*     bit 7: word is used as a noun (set for every word that appears in     */
-/*       code or in an object property)                                      */
+/*                                                                           */
+/*   The flags in the first field are as defined in header.h                 */
+/*   (*_DFLAG values).                                                       */
 /*                                                                           */
 /*   In grammar version 2, the third field (adjectivenumber) is unused (and  */
-/*   zero).                                                                  */
+/*   zero). It may be omitted entirely with the ZCODE_LESS_DICT_DATA option. */
 /*                                                                           */
 /*   The compiler generates special constants #dict_par1, #dict_par2,        */
 /*   #dict_par3 to refer to the byte offsets of the three fields. In         */

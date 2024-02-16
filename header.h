@@ -1293,9 +1293,11 @@ typedef struct operator_s
 #define SING_DFLAG    16   /* singular (set by '//s') */
                            /* (DICT_IMPLICIT_SINGULAR sets this for all
                               non-plural nouns) */
-#define NOUN_DFLAG    128  /* used as a noun */
-                           /* (set for every word that appears in code or
-                              in an object property) */
+/* value 32 is not used */
+/* value 64 is set for verbs, for historical reasons only -- not used */
+#define NOUN_DFLAG    128  /* used as a noun (set by '//n') */
+                           /* (set for every word that appears outside
+                              of verb grammar) */
 
 /* ------------------------------------------------------------------------- */
 /*   Symbol flag definitions (in no significant order)                       */
