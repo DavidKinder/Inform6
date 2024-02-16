@@ -1285,6 +1285,7 @@ typedef struct operator_s
 /*   Dictionary flags (for #dict_par1)                                       */
 /* ------------------------------------------------------------------------- */
 
+#define NONE_DFLAG    0
 #define VERB_DFLAG    1    /* used as a verb (in verb grammar) */
 #define META_DFLAG    2    /* used as a meta verb (always with VERB) */
 #define METAVERB_DFLAG   (VERB_DFLAG|META_DFLAG)
@@ -1293,8 +1294,9 @@ typedef struct operator_s
 #define SING_DFLAG    16   /* singular (set by '//s') */
                            /* (DICT_IMPLICIT_SINGULAR sets this for all
                               non-plural nouns) */
-/* value 32 is not used */
-/* value 64 is set for verbs, for historical reasons only -- not used */
+#define BIT5_DFLAG    32   /* not used */
+#define BIT6_DFLAG    64   /* set for verbs, for historical reasons only --
+                              not used */
 #define NOUN_DFLAG    128  /* used as a noun (set by '//n') */
                            /* (set for every word that appears outside
                               of verb grammar) */
