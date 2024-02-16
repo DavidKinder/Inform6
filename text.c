@@ -2674,26 +2674,28 @@ static void recursively_show_z(int node, int level)
         }
 
         flags = (int) p[res];
-        if (flags & 128)
+        if (flags & NOUN_DFLAG)
             printf("noun ");
         else
             printf("     ");
-        if (flags & 4)
+        if (flags & PLURAL_DFLAG)
             printf("p ");
         else
             printf("  ");
-        if (flags & 16)
+        if (flags & SING_DFLAG)
             printf("s ");
         else
             printf("  ");
-        if (flags & 8)
+        if (flags & PREP_DFLAG)
         {   if (grammar_version_number == 1)
                 printf("preposition:%d  ", (int) p[res+2]);
             else
                 printf("preposition    ");
         }
-        if ((flags & 3) == 3) printf("metaverb:%d  ", (int) p[res+1]);
-        else if ((flags & 3) == 1) printf("verb:%d  ", (int) p[res+1]);
+        if ((flags & METAVERB_DFLAG) == METAVERB_DFLAG)
+            printf("metaverb:%d  ", (int) p[res+1]);
+        else if ((flags & METAVERB_DFLAG) == VERB_DFLAG)
+            printf("verb:%d  ", (int) p[res+1]);
         printf("\n");
     }
 
@@ -2739,23 +2741,24 @@ static void recursively_show_g(int node, int level)
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         }
-        if (flags & 128)
+        if (flags & NOUN_DFLAG)
             printf("noun ");
         else
             printf("     ");
-        if (flags & 4)
+        if (flags & PLURAL_DFLAG)
             printf("p ");
         else
             printf("  ");
-        if (flags & 16)
+        if (flags & SING_DFLAG)
             printf("s ");
         else
             printf("  ");
-        if (flags & 8)
-        {   printf("preposition    ");
-        }
-        if ((flags & 3) == 3) printf("metaverb:%d  ", verbnum);
-        else if ((flags & 3) == 1) printf("verb:%d  ", verbnum);
+        if (flags & PREP_DFLAG)
+            printf("preposition    ");
+        if ((flags & METAVERB_DFLAG) == METAVERB_DFLAG)
+            printf("metaverb:%d  ", verbnum);
+        else if ((flags & METAVERB_DFLAG) == VERB_DFLAG)
+            printf("verb:%d  ", verbnum);
         printf("\n");
     }
 
