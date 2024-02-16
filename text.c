@@ -1852,6 +1852,8 @@ extern void optimise_abbreviations(void)
 /*     bit 1: word is used as a meta verb                                    */
 /*     bit 2: word is plural (set by '//p')                                  */
 /*     bit 3: word is used as a preposition (in verb grammar)                */
+/*     bit 4: word is singular (set by '//s')                                */
+/*       (DICT_IMPLICIT_SINGULAR sets this for all non-plural nouns)         */
 /*     bit 6: set for all verbs, but not used by the parser?                 */
 /*     bit 7: word is used as a noun (set for every word that appears in     */
 /*       code or in an object property)                                      */
