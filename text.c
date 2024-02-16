@@ -1945,7 +1945,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
                 {
                     case '~':
                         if (!dword[j+1])
-                            error_named("'//~' with no flag character (pn) in dict word", dword);
+                            error_named("'//~' with no flag character (psn) in dict word", dword);
                         negflag = !negflag;
                         break;
                     case 'p':
@@ -1953,6 +1953,13 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
                             prepared_dictflags_pos |= 4;
                         else
                             prepared_dictflags_neg |= 4;
+                        negflag = FALSE;
+                        break;
+                    case 's':
+                        if (!negflag)
+                            prepared_dictflags_pos |= 16;
+                        else
+                            prepared_dictflags_neg |= 16;
                         negflag = FALSE;
                         break;
                     case 'n':
@@ -1963,7 +1970,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
                         negflag = FALSE;
                         break;
                     default:
-                        error_named("Expected flag character (pn~) after '//' in dict word", dword);
+                        error_named("Expected flag character (psn~) after '//' in dict word", dword);
                         break;
                 }
             }
@@ -2074,7 +2081,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
         switch(dword[j]) {
         case '~':
             if (!dword[j+1])
-                error_named("'//~' with no flag character (pn) in dict word", dword);
+                error_named("'//~' with no flag character (psn) in dict word", dword);
             negflag = !negflag;
             break;
         case 'p':
@@ -2082,6 +2089,13 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
                 prepared_dictflags_pos |= 4;
             else
                 prepared_dictflags_neg |= 4;
+            negflag = FALSE;
+            break;
+        case 's':
+            if (!negflag)
+                prepared_dictflags_pos |= 16;
+            else
+                prepared_dictflags_neg |= 16;
             negflag = FALSE;
             break;
         case 'n':
@@ -2092,7 +2106,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
             negflag = FALSE;
             break;
         default:
-          error_named("Expected flag character (pn~) after '//' in dict word", dword);
+          error_named("Expected flag character (psn~) after '//' in dict word", dword);
           break;
         }
       }
@@ -2667,6 +2681,10 @@ static void recursively_show_z(int node, int level)
             printf("p ");
         else
             printf("  ");
+        if (flags & 16)
+            printf("s ");
+        else
+            printf("  ");
         if (flags & 8)
         {   if (grammar_version_number == 1)
                 printf("preposition:%d  ", (int) p[res+2]);
@@ -2726,6 +2744,10 @@ static void recursively_show_g(int node, int level)
             printf("     ");
         if (flags & 4)
             printf("p ");
+        else
+            printf("  ");
+        if (flags & 16)
+            printf("s ");
         else
             printf("  ");
         if (flags & 8)
