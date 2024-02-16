@@ -2309,6 +2309,14 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
     flag1 &= (~prepared_dictflags_neg);
     flag1 |= prepared_dictflags_pos;
 
+    if (DICT_IMPLICIT_SINGULAR) {
+        /* If we have //n but not //p, that implies //s. Unless //s is
+           explicitly forbidden. */
+        if ((flag1 & 128) && !(flag1 & 4) && !(prepared_dictflags_neg & 16)) {
+            flag1 |= 16;
+        }
+    }
+
     if (root == VACANT)
     {   root = 0; goto CreateEntry;
     }
