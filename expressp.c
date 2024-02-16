@@ -965,22 +965,19 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                     generates a dictionary with room for two. */
                  case dict_par1_SC:
                      o->marker = 0;
-                     v = DICT_ENTRY_FLAG_POS+1;
-                     o->value = v;
+                     o->value = DICT_ENTRY_FLAG_POS+1;
                      set_constant_ot(o);
-                     break;
+                     return TRUE;
                  case dict_par2_SC:
                      o->marker = 0;
-                     v = DICT_ENTRY_FLAG_POS+3;
-                     o->value = v;
+                     o->value = DICT_ENTRY_FLAG_POS+3;
                      set_constant_ot(o);
-                     break;
+                     return TRUE;
                  case dict_par3_SC:
                      o->marker = 0;
-                     v = DICT_ENTRY_FLAG_POS+5;
-                     o->value = v;
+                     o->value = DICT_ENTRY_FLAG_POS+5;
                      set_constant_ot(o);
-                     break;
+                     return TRUE;
 
                  case lowest_attribute_number_SC:
                  case lowest_action_number_SC:
