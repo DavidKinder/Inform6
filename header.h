@@ -1287,7 +1287,7 @@ typedef struct operator_s
 
 #define VERB_DFLAG    1    /* used as a verb (in verb grammar) */
 #define META_DFLAG    2    /* used as a meta verb (always with VERB) */
-#define METAVERB_DFLAG (VERB_DFLAG|META_DFLAG)
+#define METAVERB_DFLAG   (VERB_DFLAG|META_DFLAG)
 #define PLURAL_DFLAG  4    /* plural (set by '//p') */
 #define PREP_DFLAG    8    /* used as a preposition (in verb grammar) */
 #define SING_DFLAG    16   /* singular (set by '//s') */
