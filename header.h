@@ -1282,6 +1282,26 @@ typedef struct operator_s
                                                change) */
 
 /* ------------------------------------------------------------------------- */
+/*   Dictionary flags (for #dict_par1)                                       */
+/* ------------------------------------------------------------------------- */
+
+#define NONE_DFLAG    0
+#define VERB_DFLAG    1    /* used as a verb (in verb grammar) */
+#define META_DFLAG    2    /* used as a meta verb (always with VERB) */
+#define METAVERB_DFLAG   (VERB_DFLAG|META_DFLAG)
+#define PLURAL_DFLAG  4    /* plural (set by '//p') */
+#define PREP_DFLAG    8    /* used as a preposition (in verb grammar) */
+#define SING_DFLAG    16   /* singular (set by '//s') */
+                           /* (DICT_IMPLICIT_SINGULAR sets this for all
+                              non-plural nouns) */
+#define BIT5_DFLAG    32   /* not used */
+#define BIT6_DFLAG    64   /* set for verbs, for historical reasons only --
+                              not used */
+#define NOUN_DFLAG    128  /* used as a noun (set by '//n') */
+                           /* (set for every word that appears outside
+                              of verb grammar) */
+
+/* ------------------------------------------------------------------------- */
 /*   Symbol flag definitions (in no significant order)                       */
 /* ------------------------------------------------------------------------- */
 
@@ -2586,6 +2606,7 @@ extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 extern int STRIP_UNREACHABLE_LABELS;
 extern int OMIT_SYMBOL_TABLE;
+extern int DICT_IMPLICIT_SINGULAR;
 extern int LONG_DICT_FLAG_BUG;
 extern int TRANSCRIPT_FORMAT;
 
