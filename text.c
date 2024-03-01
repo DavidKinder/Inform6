@@ -2686,6 +2686,12 @@ static void recursively_show_z(int node, int level)
             printf("s ");
         else
             printf("  ");
+        if (DICT_TRUNCATE_FLAG) {
+            if (flags & TRUNC_DFLAG)
+                printf("tr ");
+            else
+                printf("   ");
+        }
         if (flags & PREP_DFLAG)
         {   if (grammar_version_number == 1)
                 printf("preposition:%d  ", (int) p[res+2]);
@@ -2753,6 +2759,12 @@ static void recursively_show_g(int node, int level)
             printf("s ");
         else
             printf("  ");
+        if (DICT_TRUNCATE_FLAG) {
+            if (flags & TRUNC_DFLAG)
+                printf("tr ");
+            else
+                printf("   ");
+        }
         if (flags & PREP_DFLAG)
             printf("preposition    ");
         if (flags & META_DFLAG)
