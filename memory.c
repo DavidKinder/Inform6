@@ -775,7 +775,8 @@ static void set_trace_option(char *command)
    really about memory allocation.
 */
 extern void memory_command(char *command)
-{   int i, k, flag=0; int32 j;
+{   int i, k;
+    int32 j;
 
     for (k=0; command[k]!=0; k++)
         if (islower(command[k])) command[k]=toupper(command[k]);
@@ -796,7 +797,9 @@ extern void memory_command(char *command)
     
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
-        {   command[i]=0;
+        {
+            int flag = 0;
+            command[i]=0;
             if (!parse_memory_setting(command+i+1, command, &j)) {
                 return;
             }
