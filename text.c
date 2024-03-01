@@ -1923,6 +1923,10 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
 
     int dictsize = (version_number==3) ? 6 : 9;
 
+    /* Flag to set if a dict word is truncated. We only do this if
+       DICT_TRUNCATE_FLAG, however. */
+    int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
+
     prepared_dictflags_pos = 0;
     prepared_dictflags_neg = 0;
 
@@ -2003,7 +2007,8 @@ apostrophe in", dword);
         {   if ((k2 == -5) || (k2 <= -0x100))
                 char_error("Character can be printed but not input:", k);
             else
-            {   /* Use 4 more Z-chars to encode a ZSCII escape sequence      */
+            {   /* Use 4 more Z-chars to encode a ZSCII escape sequence.
+                   If the last character can't be written, set TRUNC flag. */
                 if (i<dictsize)
                     wd[i++] = 5;
                 if (i<dictsize)
@@ -2013,6 +2018,8 @@ apostrophe in", dword);
                     wd[i++] = k2/32;
                 if (i<dictsize)
                     wd[i++] = k2%32;
+                else
+                    prepared_dictflags_pos |= truncflag;
             }
         }
         else
@@ -2021,6 +2028,8 @@ apostrophe in", dword);
                 wd[i++]=3+(k2/26);            /* Change alphabet for symbols */
             if (i<dictsize)
                 wd[i++]=6+(k2%26);            /* Write the Z character       */
+            else
+                prepared_dictflags_pos |= truncflag;
         }
     }
 
@@ -2062,6 +2071,10 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
   int i, j, k;
   int32 unicode;
   int negflag;
+
+  /* Flag to set if a dict word is truncated. We only do this if
+     DICT_TRUNCATE_FLAG, however. */
+  int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
 
   prepared_dictflags_pos = 0;
   prepared_dictflags_neg = 0;
@@ -2145,6 +2158,8 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
     if (DICT_CHAR_SIZE == 1) {
       if (i<DICT_WORD_SIZE)
         prepared_sort[i++] = k;
+      else
+        prepared_dictflags_pos |= truncflag;          
     }
     else {
       if (i<DICT_WORD_SIZE) {
@@ -2153,6 +2168,9 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
         prepared_sort[4*i+2] = (k >>  8) & 0xFF;
         prepared_sort[4*i+3] = (k)       & 0xFF;
         i++;
+      }
+      else {
+        prepared_dictflags_pos |= truncflag;          
       }
     }
   }
