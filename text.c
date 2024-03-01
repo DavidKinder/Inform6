@@ -2692,9 +2692,9 @@ static void recursively_show_z(int node, int level)
             else
                 printf("preposition    ");
         }
-        if ((flags & METAVERB_DFLAG) == METAVERB_DFLAG)
-            printf("metaverb:%d  ", (int) p[res+1]);
-        else if ((flags & METAVERB_DFLAG) == VERB_DFLAG)
+        if (flags & META_DFLAG)
+            printf("meta");
+        if (flags & VERB_DFLAG)
             printf("verb:%d  ", (int) p[res+1]);
         printf("\n");
     }
@@ -2755,9 +2755,9 @@ static void recursively_show_g(int node, int level)
             printf("  ");
         if (flags & PREP_DFLAG)
             printf("preposition    ");
-        if ((flags & METAVERB_DFLAG) == METAVERB_DFLAG)
-            printf("metaverb:%d  ", verbnum);
-        else if ((flags & METAVERB_DFLAG) == VERB_DFLAG)
+        if (flags & META_DFLAG)
+            printf("meta");
+        if (flags & VERB_DFLAG)
             printf("verb:%d  ", verbnum);
         printf("\n");
     }
