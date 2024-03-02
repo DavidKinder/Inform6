@@ -1927,6 +1927,10 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
        DICT_TRUNCATE_FLAG, however. */
     int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
 
+    /* Will be set to suppress dict flags if we're past the size limit.
+       But only if LONG_DICT_FLAG_BUG. */
+    int truncbug = FALSE;
+
     prepared_dictflags_pos = 0;
     prepared_dictflags_neg = 0;
 
@@ -1938,6 +1942,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
             negflag = FALSE;
             for (j+=2; dword[j] != 0; j++)
             {
+                if (truncbug) continue; /* do not set flags */
                 switch(dword[j])
                 {
                     case '~':
@@ -1977,7 +1982,7 @@ static void dictionary_prepare_z(char *dword, uchar *optresult)
         /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
            at dictsize. */
         if (LONG_DICT_FLAG_BUG && i>=dictsize)
-            break;
+            truncbug = TRUE;
 
         k=(int) dword[j];
         if (k==(int) '\'')
@@ -2076,6 +2081,10 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
      DICT_TRUNCATE_FLAG, however. */
   int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
 
+  /* Will be set to suppress dict flags if we're past the size limit.
+     But only if LONG_DICT_FLAG_BUG. */
+  int truncbug = FALSE;
+
   prepared_dictflags_pos = 0;
   prepared_dictflags_neg = 0;
 
@@ -2084,6 +2093,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
       /* The rest of the word is dict flags. Run through them. */
       negflag = FALSE;
       for (j+=2; dword[j] != 0; j++) {
+        if (truncbug) continue; /* do not set flags */
         switch(dword[j]) {
         case '~':
             if (!dword[j+1])
@@ -2122,7 +2132,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
     /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
        at DICT_WORD_SIZE. */
     if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
-        break;
+        truncbug = TRUE;
 
     k= ((unsigned char *)dword)[j];
     if (k=='\'') 
