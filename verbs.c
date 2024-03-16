@@ -9,7 +9,19 @@
 
 #include "header.h"
 
-int grammar_version_number;            /* 1 for pre-Inform 6.06 table format */
+/* The grammar version is handled in a somewhat messy way. It can be:
+     1 for pre-Inform 6.06 table format
+     2 for modern Inform format
+     
+   The default is 1 for Z-code (for backwards compatibility), 2 for Glulx.
+   This can be altered by the $GRAMMAR_VERSION compiler setting, and
+   then altered again during compilation by a "Constant Grammar__Version"
+   directive. (Note double underscore.)
+
+   Typically the library has a "Constant Grammar__Version 2;" line to
+   ensure we get the modern version for both VMs.
+ */
+int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"
                                           within symbols table               */
 
