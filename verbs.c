@@ -1230,6 +1230,11 @@ extern void verbs_begin_pass(void)
 
     no_fake_actions=0;
     grammar_lines_top = 0;
+
+    if (!glulx_mode)
+        set_grammar_version(GRAMMAR_VERSION_z);
+    else
+        set_grammar_version(GRAMMAR_VERSION_g);
 }
 
 extern void verbs_allocate_arrays(void)
