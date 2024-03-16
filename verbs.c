@@ -9,6 +9,9 @@
 
 #include "header.h"
 
+/* ------------------------------------------------------------------------- */
+/*   Grammar version.                                                        */
+/* ------------------------------------------------------------------------- */
 /* The grammar version is handled in a somewhat messy way. It can be:
      1 for pre-Inform 6.06 table format
      2 for modern Inform format
