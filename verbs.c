@@ -731,7 +731,7 @@ static int grammar_line(int verbnum, int line)
         if (!last_was_slash) slash_mode = FALSE;
         if ((token_type == SEP_TT) && (token_value == DIVIDE_SEP))
         {   if (grammar_version_number == 1)
-                error("'/' can only be used with Library 6/3 or later");
+                error("'/' can only be used with grammar version 2 or later");
             if (last_was_slash)
                 ebf_curtoken_error("grammar token or '->'");
             else
@@ -809,7 +809,7 @@ static int grammar_line(int verbnum, int line)
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==TOPIC_DK))
              {   if (grammar_version_number==1)
                      error("The 'topic' token is only available if you \
-are using Library 6/3 or later");
+are using grammar version 2 or later");
                  else { bytecode=1; wordcode=9; } }
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==SCOPE_DK))
              {
@@ -872,7 +872,7 @@ are using Library 6/3 or later");
         if ((grammar_version_number == 1) && (grammar_token > 6))
         {   if (grammar_token == 7)
                 warning("Grammar line cut short: you can only have up to 6 \
-tokens in any line (unless you're compiling with library 6/3 or later)");
+tokens in any line (for grammar version 1)");
         }
         else
         {   if (slash_mode)
@@ -922,7 +922,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
     if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
     {   if (grammar_version_number == 1)
             error("'reverse' actions can only be used with \
-Library 6/3 or later");
+grammar version 2 or later");
         reverse_action = TRUE;
     }
     else put_token_back();
