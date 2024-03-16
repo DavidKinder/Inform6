@@ -190,19 +190,22 @@ extern int parse_given_directive(int internal_flag)
             {   assign_marked_symbol(i, AO.marker, AO.value,
                     CONSTANT_T);
                 symbols[i].flags |= CHANGE_SFLAG;
-                if (i == grammar_version_symbol)
-                    error(
-                "Grammar__Version must be given an explicit constant value");
             }
             else
             {   assign_symbol(i, AO.value, CONSTANT_T);
-                if (i == grammar_version_symbol)
-                {   if ((grammar_version_number != AO.value)
-                        && (no_fake_actions > 0))
-                        error(
-                "Once a fake action has been defined it is too late to \
-change the grammar version. (If you are using the library, move any \
-Fake_Action directives to a point after the inclusion of \"Parser\".)");
+            }
+            
+            /* Special case for changing Grammar__Version */
+            if (i == grammar_version_symbol) {
+                if (AO.marker != 0) {
+                    error("Grammar__Version must be given an explicit constant value");
+                }
+                else {
+                    if ((grammar_version_number != AO.value)
+                        && (no_fake_actions > 0)) {
+                        error("Once a fake action has been defined \
+it is too late to change the grammar version.");
+                    }
                     grammar_version_number = AO.value;
                 }
             }
