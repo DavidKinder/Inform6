@@ -103,6 +103,30 @@ static memory_list English_verbs_given_memlist;
   static memory_list action_symname_memlist; /* Used for temporary symbols */
 
 /* ------------------------------------------------------------------------- */
+/*   Grammar version                                                         */
+/* ------------------------------------------------------------------------- */
+
+/* Set grammar_version_number, or report an error if the number is not
+   valid for the current VM. */
+void set_grammar_version(int val)
+{
+    if (!glulx_mode) {
+        if (val != 1 && val != 2) {
+            error("Z-code only supports grammar version 1 or 2.");
+            return;
+        }
+    }
+    else {
+        if (val != 2) {
+            error("Glulx only supports grammar version 2.");
+            return;
+        }
+    }
+    
+    grammar_version_number = val;
+}
+
+/* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
 

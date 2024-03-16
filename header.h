@@ -2888,6 +2888,7 @@ extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
 
+extern void set_grammar_version(int val);
 extern void find_the_actions(void);
 extern void make_fake_action(void);
 extern assembly_operand action_of_name(char *name);

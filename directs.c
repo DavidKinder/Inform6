@@ -213,7 +213,7 @@ it is too late to change the grammar version.");
 it is too late to change the grammar version.");
                 }
                 else {
-                    grammar_version_number = AO.value;
+                    set_grammar_version(AO.value);
                 }
             }
         }

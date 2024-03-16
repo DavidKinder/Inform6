@@ -529,12 +529,6 @@ static void construct_storyfile_z(void)
 
     /*  ------------------------ Grammar Table ----------------------------- */
 
-    if (grammar_version_number > 2)
-    {   warning("This version of Inform is unable to produce the grammar \
-table format requested (producing number 2 format instead)");
-        grammar_version_number = 2;
-    }
-
     grammar_table_at = mark;
 
     mark = mark + no_Inform_verbs*2;
