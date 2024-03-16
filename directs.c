@@ -195,17 +195,24 @@ extern int parse_given_directive(int internal_flag)
             {   assign_symbol(i, AO.value, CONSTANT_T);
             }
             
-            /* Special case for changing Grammar__Version */
             if (i == grammar_version_symbol) {
+                /* Special case for changing Grammar__Version. We check
+                   conditions carefully before applying the change. */
                 if (AO.marker != 0) {
                     error("Grammar__Version must be given an explicit constant value");
                 }
-                else {
-                    if ((grammar_version_number != AO.value)
-                        && (no_fake_actions > 0)) {
-                        error("Once a fake action has been defined \
+                else if (grammar_version_number == AO.value) {
+                    /* no change needed */
+                }
+                else if (no_fake_actions > 0) {
+                    error("Once a fake action has been defined \
 it is too late to change the grammar version.");
-                    }
+                }
+                else if (no_actions > 0) {
+                    error("Once an action has been defined \
+it is too late to change the grammar version.");
+                }
+                else {
                     grammar_version_number = AO.value;
                 }
             }
