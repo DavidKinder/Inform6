@@ -1231,6 +1231,7 @@ extern void init_verbs_vars(void)
     English_verb_list = NULL;
     English_verbs_given = NULL;
 
+    /* Set the default grammar version value (will be adjusted later) */
     if (!glulx_mode)
         grammar_version_number = 1;
     else
@@ -1246,6 +1247,7 @@ extern void verbs_begin_pass(void)
     no_fake_actions=0;
     grammar_lines_top = 0;
 
+    /* Set the version requested by compiler setting (with validity check) */
     if (!glulx_mode)
         set_grammar_version(GRAMMAR_VERSION_z);
     else
