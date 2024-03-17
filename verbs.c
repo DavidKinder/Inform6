@@ -1238,6 +1238,8 @@ extern void init_verbs_vars(void)
         grammar_version_number = 1;
     else
         grammar_version_number = 2;
+    /* This is set at allocate_arrays time */
+    grammar_version_symbol = -1;
 }
 
 extern void verbs_begin_pass(void)
