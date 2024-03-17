@@ -139,6 +139,8 @@ void set_grammar_version(int val)
     }
     
     grammar_version_number = val;
+    /* We also have to adjust the symbol value. */
+    symbols[grammar_version_symbol].value = val;
 }
 
 /* ------------------------------------------------------------------------- */
