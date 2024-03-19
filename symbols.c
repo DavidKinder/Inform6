@@ -846,11 +846,9 @@ static void stockup_symbols(void)
     create_symbol("true",           1, CONSTANT_T);
     create_symbol("false",          0, CONSTANT_T);
 
-    /* Glulx defaults to GV2; Z-code to GV1 */
-    if (!glulx_mode)
-        create_rsymbol("Grammar__Version", 1, CONSTANT_T);
-    else
-        create_rsymbol("Grammar__Version", 2, CONSTANT_T);
+    /* Glulx defaults to GV2; Z-code to GV1. These may be modified by
+       command-line options, but we haven't applied that change yet. */
+    create_rsymbol("Grammar__Version", grammar_version_number, CONSTANT_T);
     grammar_version_symbol = get_symbol_index("Grammar__Version");
 
     if (runtime_error_checking_switch)

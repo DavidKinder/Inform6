@@ -2600,6 +2600,7 @@ extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
 extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
+extern int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int ZCODE_LESS_DICT_DATA;
 extern int ZCODE_MAX_INLINE_STRING;
@@ -2888,6 +2889,7 @@ extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
 
+extern void set_grammar_version(int val);
 extern void find_the_actions(void);
 extern void make_fake_action(void);
 extern assembly_operand action_of_name(char *name);

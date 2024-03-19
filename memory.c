@@ -283,6 +283,10 @@ static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
 
+/* These hold the given parameter. See the grammar_version_number variable
+   for the final validated setting. */
+int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
+
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
@@ -296,6 +300,10 @@ static void list_memory_sizes(void)
     printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
     if (glulx_mode)
       printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
+    if (!glulx_mode)
+      printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_z);
+    else
+      printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_g);
     printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
     if (!glulx_mode)
@@ -333,6 +341,8 @@ extern void set_memory_sizes(void)
     DICT_CHAR_SIZE = 1;
     DICT_WORD_SIZE_z = 6;
     DICT_WORD_SIZE_g = 9;
+    GRAMMAR_VERSION_z = 1;
+    GRAMMAR_VERSION_g = 2;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
     MAX_ABBREVS = 64;
@@ -402,6 +412,13 @@ static void explain_parameter(char *command)
   (This is only meaningful in Glulx, since Z-code has compressed dictionary \n\
   words.) It can be either 1 (the default) or 4 (to enable full Unicode \n\
   input.)\n");
+        return;
+    }
+    if (strcmp(command,"GRAMMAR_VERSION")==0)
+    {   printf(
+"  GRAMMAR_VERSION defines the table format for the verb grammar. 2 is \n\
+  the Inform standard. 1 is an older version based on Infocom's format. \n\
+  The default is 1 in Z-code, 2 in Glulx.\n");
         return;
     }
     if (strcmp(command,"NUM_ATTR_BYTES")==0)
@@ -831,6 +848,8 @@ extern void memory_command(char *command)
             }
             if (strcmp(command,"DICT_CHAR_SIZE")==0)
                 DICT_CHAR_SIZE=j, flag=1;
+            if (strcmp(command,"GRAMMAR_VERSION")==0)
+                GRAMMAR_VERSION_z=GRAMMAR_VERSION_g=j, flag=1;
             if (strcmp(command,"NUM_ATTR_BYTES")==0) 
             {   NUM_ATTR_BYTES=j, flag=1;
                 NUM_ATTR_BYTES_g=NUM_ATTR_BYTES_z=j;

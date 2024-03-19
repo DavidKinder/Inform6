@@ -9,7 +9,22 @@
 
 #include "header.h"
 
-int grammar_version_number;            /* 1 for pre-Inform 6.06 table format */
+/* ------------------------------------------------------------------------- */
+/*   Grammar version.                                                        */
+/* ------------------------------------------------------------------------- */
+/* The grammar version is handled in a somewhat messy way. It can be:
+     1 for pre-Inform 6.06 table format
+     2 for modern Inform format
+     
+   The default is 1 for Z-code (for backwards compatibility), 2 for Glulx.
+   This can be altered by the $GRAMMAR_VERSION compiler setting, and
+   then altered again during compilation by a "Constant Grammar__Version"
+   directive. (Note double underscore.)
+
+   Typically the library has a "Constant Grammar__Version 2;" line to
+   ensure we get the modern version for both VMs.
+ */
+int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"
                                           within symbols table               */
 
@@ -101,6 +116,32 @@ static memory_list English_verbs_given_memlist;
   static memory_list adjective_sort_code_memlist;
 
   static memory_list action_symname_memlist; /* Used for temporary symbols */
+
+/* ------------------------------------------------------------------------- */
+/*   Grammar version                                                         */
+/* ------------------------------------------------------------------------- */
+
+/* Set grammar_version_number, or report an error if the number is not
+   valid for the current VM. */
+void set_grammar_version(int val)
+{
+    if (!glulx_mode) {
+        if (val != 1 && val != 2) {
+            error("Z-code only supports grammar version 1 or 2.");
+            return;
+        }
+    }
+    else {
+        if (val != 2) {
+            error("Glulx only supports grammar version 2.");
+            return;
+        }
+    }
+    
+    grammar_version_number = val;
+    /* We also have to adjust the symbol value. */
+    symbols[grammar_version_symbol].value = val;
+}
 
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
@@ -731,7 +772,7 @@ static int grammar_line(int verbnum, int line)
         if (!last_was_slash) slash_mode = FALSE;
         if ((token_type == SEP_TT) && (token_value == DIVIDE_SEP))
         {   if (grammar_version_number == 1)
-                error("'/' can only be used with Library 6/3 or later");
+                error("'/' can only be used with grammar version 2 or later");
             if (last_was_slash)
                 ebf_curtoken_error("grammar token or '->'");
             else
@@ -809,7 +850,7 @@ static int grammar_line(int verbnum, int line)
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==TOPIC_DK))
              {   if (grammar_version_number==1)
                      error("The 'topic' token is only available if you \
-are using Library 6/3 or later");
+are using grammar version 2 or later");
                  else { bytecode=1; wordcode=9; } }
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==SCOPE_DK))
              {
@@ -872,7 +913,7 @@ are using Library 6/3 or later");
         if ((grammar_version_number == 1) && (grammar_token > 6))
         {   if (grammar_token == 7)
                 warning("Grammar line cut short: you can only have up to 6 \
-tokens in any line (unless you're compiling with library 6/3 or later)");
+tokens in any line (for grammar version 1)");
         }
         else
         {   if (slash_mode)
@@ -922,7 +963,7 @@ tokens in any line (unless you're compiling with library 6/3 or later)");
     if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
     {   if (grammar_version_number == 1)
             error("'reverse' actions can only be used with \
-Library 6/3 or later");
+grammar version 2 or later");
         reverse_action = TRUE;
     }
     else put_token_back();
@@ -1192,10 +1233,13 @@ extern void init_verbs_vars(void)
     English_verb_list = NULL;
     English_verbs_given = NULL;
 
+    /* Set the default grammar version value (will be adjusted later) */
     if (!glulx_mode)
         grammar_version_number = 1;
     else
         grammar_version_number = 2;
+    /* This is set at allocate_arrays time */
+    grammar_version_symbol = -1;
 }
 
 extern void verbs_begin_pass(void)
@@ -1206,6 +1250,12 @@ extern void verbs_begin_pass(void)
 
     no_fake_actions=0;
     grammar_lines_top = 0;
+
+    /* Set the version requested by compiler setting (with validity check) */
+    if (!glulx_mode)
+        set_grammar_version(GRAMMAR_VERSION_z);
+    else
+        set_grammar_version(GRAMMAR_VERSION_g);
 }
 
 extern void verbs_allocate_arrays(void)
