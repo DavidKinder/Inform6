@@ -541,7 +541,7 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 
 static void print_verbs_by_number(int num)
 {
-    /*  print all English verb strings with the given verb number. */
+    /*  Print all English verb strings with the given verb number. */
     char *p = English_verb_list;
     int count = 0;
     while (p < English_verb_list+English_verb_list_size)
