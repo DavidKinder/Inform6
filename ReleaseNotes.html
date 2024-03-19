@@ -40,6 +40,9 @@ listings, this is shown as "tr" when the flag is set.
 Without this option, bit 6 of the dictionary word flag is set for all verbs (which is the old behavior, redundant with bit 1).
 If the compiler truncates only the <tt>//p</tt> flag (as in <tt>$LONG_DICT_FLAG_BUG</tt>), that does not count as truncating
 the dictionary word: the only relevant test is whether or not characters were dropped.
+<li><p>A new setting <tt>$GRAMMAR_VERSION</tt> has been added. Setting this has the same effect as the existing <tt>Grammar__Version</tt>
+constant, but provides a more standard way to set the grammar table version number.
+<li><p>The output of the <tt>--trace-verbs</tt> option now shows all verb synonyms, rather than just the first one.
 </ul>
 
 <h3>Bugs fixed</h3>
