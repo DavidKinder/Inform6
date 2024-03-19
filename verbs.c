@@ -106,7 +106,7 @@ static memory_list English_verbs_given_memlist;
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
 
-static char *find_verb_by_number(int num);
+static void print_verbs_by_number(int num);
 
 static void list_grammar_line_v1(int mark)
 {
@@ -275,8 +275,9 @@ extern void list_verb_table(void)
     int verb, lx;
     printf("Grammar table: %d verbs\n", no_Inform_verbs);
     for (verb=0; verb<no_Inform_verbs; verb++) {
-        char *verbword = find_verb_by_number(verb);
-        printf("Verb '%s'\n", verbword);
+        printf("Verb");
+        print_verbs_by_number(verb);
+        printf("\n");
         for (lx=0; lx<Inform_verbs[verb].lines; lx++) {
             int mark = Inform_verbs[verb].l[lx];
             switch (grammar_version_number) {
@@ -538,20 +539,22 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
     return(-1);
 }
 
-static char *find_verb_by_number(int num)
+static void print_verbs_by_number(int num)
 {
-    /*  Find the English verb string with the given verb number. */
-    char *p;
-    p=English_verb_list;
+    /*  print all English verb strings with the given verb number. */
+    char *p = English_verb_list;
+    int count = 0;
     while (p < English_verb_list+English_verb_list_size)
     {
         int val = ((uchar)p[1] << 8) | (uchar)p[2];
         if (val == num) {
-            return p+3;
+            printf(" '%s'", p+3);
+            count++;
         }
         p=p+(uchar)p[0];
     }
-    return "???";
+    if (!count)
+        printf(" <none>");
 }
 
 static void register_verb(char *English_verb, int number)
