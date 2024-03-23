@@ -260,6 +260,7 @@ int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
 int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
+int ZCODE_FILE_END_PADDING; /* 0: no, 1: yes (default) */
 int ZCODE_LESS_DICT_DATA; /* (zcode) use 2 data bytes per dict word instead of 3 */
 int ZCODE_MAX_INLINE_STRING; /* (zcode) length of string literals that can be inlined */
 int NUM_ATTR_BYTES;
@@ -311,6 +312,8 @@ static void list_memory_sizes(void)
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
     if (!glulx_mode)
+      printf("|  %25s = %-7d |\n","ZCODE_FILE_END_PADDING",ZCODE_FILE_END_PADDING);
+    if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_LESS_DICT_DATA",ZCODE_LESS_DICT_DATA);
     if (!glulx_mode)
       printf("|  %25s = %-7d |\n","ZCODE_MAX_INLINE_STRING",ZCODE_MAX_INLINE_STRING);
@@ -353,6 +356,7 @@ extern void set_memory_sizes(void)
        there's no unicode table. */
     ZCODE_HEADER_EXT_WORDS = 3;
     ZCODE_HEADER_FLAGS_3 = 0;
+    ZCODE_FILE_END_PADDING = 1;
     ZCODE_LESS_DICT_DATA = 0;
     ZCODE_MAX_INLINE_STRING = 32;
     GLULX_OBJECT_EXT_BYTES = 0;
@@ -441,6 +445,12 @@ static void explain_parameter(char *command)
     {   printf(
 "  ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
   header extension table (Z-Spec 1.1).\n");
+        return;
+    }
+    if (strcmp(command,"ZCODE_FILE_END_PADDING")==0)
+    {   printf(
+"  ZCODE_FILE_END_PADDING, if set, pads the game file length to a multiple \n\
+  of 512 bytes. (Z-code only.)\n");
         return;
     }
     if (strcmp(command,"ZCODE_LESS_DICT_DATA")==0)
@@ -858,6 +868,8 @@ extern void memory_command(char *command)
                 ZCODE_HEADER_EXT_WORDS=j, flag=1;
             if (strcmp(command,"ZCODE_HEADER_FLAGS_3")==0)
                 ZCODE_HEADER_FLAGS_3=j, flag=1;
+            if (strcmp(command,"ZCODE_FILE_END_PADDING")==0)
+                ZCODE_FILE_END_PADDING=j, flag=1;
             if (strcmp(command,"ZCODE_LESS_DICT_DATA")==0)
                 ZCODE_LESS_DICT_DATA=j, flag=1;
             if (strcmp(command,"ZCODE_MAX_INLINE_STRING")==0)
