@@ -977,8 +977,8 @@ tokens in any line (for grammar version 1)");
         }
         else if ((token_type == DIR_KEYWORD_TT) && (token_value == META_DK))
         {
-            if (TRUE)
-                error("'meta' actions can only be used XXX###");
+            if (!GRAMMAR_META_FLAG)
+                error("$GRAMMAR_META_FLAG must be set before marking individual actions as 'meta'");
             meta_action = TRUE;
         }
         else
