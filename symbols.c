@@ -865,6 +865,9 @@ static void stockup_symbols(void)
     if (OMIT_SYMBOL_TABLE)
         create_symbol("OMIT_SYMBOL_TABLE", 0, CONSTANT_T);
 
+    if (GRAMMAR_META_FLAG)
+        create_symbol("GRAMMAR_META_FLAG", 0, CONSTANT_T);
+
     create_symbol("WORDSIZE",        WORDSIZE, CONSTANT_T);
     /* DICT_ENTRY_BYTES must be REDEFINABLE_SFLAG because the Version directive can change it. */
     create_rsymbol("DICT_ENTRY_BYTES", DICT_ENTRY_BYTE_LENGTH, CONSTANT_T);
