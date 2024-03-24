@@ -724,7 +724,7 @@ static int grammar_line(int verbnum, int line)
 
     int j, bytecode, mark; int32 wordcode;
     int grammar_token, slash_mode, last_was_slash;
-    int reverse_action, TOKEN_SIZE;
+    int reverse_action, meta_action, TOKEN_SIZE;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -962,14 +962,28 @@ tokens in any line (for grammar version 1)");
     }
 
     reverse_action = FALSE;
-    get_next_token();
-    if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
-    {   if (grammar_version_number == 1)
-            error("'reverse' actions can only be used with \
-grammar version 2 or later");
-        reverse_action = TRUE;
+    meta_action = FALSE;
+
+    while (TRUE) {
+        get_next_token();
+        if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
+        {
+            if (grammar_version_number == 1)
+                error("'reverse' actions can only be used with grammar version 2 or later");
+            reverse_action = TRUE;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == META_DK))
+        {
+            if (TRUE)
+                error("'meta' actions can only be used XXX###");
+            meta_action = TRUE;
+        }
+        else
+        {
+            break;
+        }
     }
-    else put_token_back();
+    put_token_back();
 
     mark = Inform_verbs[verbnum].l[line];
 
