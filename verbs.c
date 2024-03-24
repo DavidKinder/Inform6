@@ -310,6 +310,7 @@ static void list_grammar_line_v2(int mark)
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
     if (flags) printf(" (reversed)");
     printf("\n");
 }
@@ -435,6 +436,7 @@ extern assembly_operand action_of_name(char *name)
         ensure_memory_list_available(&actions_memlist, no_actions+1);
         new_action(name, no_actions);
         actions[no_actions].symbol = j;
+        actions[no_actions].meta = FALSE;
         actions[no_actions].byte_offset = 0; /* fill in later */
         assign_symbol(j, no_actions++, CONSTANT_T);
         symbols[j].flags |= ACTION_SFLAG;
@@ -959,7 +961,7 @@ tokens in any line (for grammar version 1)");
     }
 
     {   assembly_operand AO = action_of_name(token_text);
-        j = AO.value;
+        j = AO.value; /* the action number */
         if (j >= ((grammar_version_number==1)?256:4096))
             error_named("This is a fake action, not a real one:", token_text);
     }
@@ -987,6 +989,12 @@ tokens in any line (for grammar version 1)");
         }
     }
     put_token_back();
+
+    if (meta_action) {
+        if (j >= 0 && j < no_actions) {
+            actions[j].meta = TRUE;
+        }
+    }
 
     mark = Inform_verbs[verbnum].l[line];
 

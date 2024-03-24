@@ -679,6 +679,7 @@ typedef struct actioninfo_s {
     int32 symbol;      /* The symbol table index of the action name */
     int32 byte_offset; /* The (byte) offset in the Z-machine code area of 
                           the ...Sub routine */
+    int meta;          /* Only meaningful if $GRAMMAR_META_FLAG */
 } actioninfo;
 
 /* Information about an object class. */
