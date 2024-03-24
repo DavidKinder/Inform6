@@ -699,7 +699,7 @@ static void ensure_grammar_lines_available(int verbnum, int num)
     }
 }
 
-static int grammar_line(int verbnum, int line)
+static int grammar_line(int verbnum, int allmeta, int line)
 {
     /*  Parse a grammar line, to be written into grammar_lines[] starting
         at grammar_lines_top. grammar_lines_top is left at the end
@@ -967,7 +967,7 @@ tokens in any line (for grammar version 1)");
     }
 
     reverse_action = FALSE;
-    meta_action = FALSE;
+    meta_action = allmeta;
 
     while (TRUE) {
         get_next_token();
@@ -1112,7 +1112,7 @@ extern void make_verb(void)
     if (!verb_equals_form)
     {   int lines = 0;
         put_token_back();
-        while (grammar_line(no_Inform_verbs, lines++)) ;
+        while (grammar_line(no_Inform_verbs, meta_verb_flag, lines++)) ;
         Inform_verbs[no_Inform_verbs++].lines = --lines;
     }
 
@@ -1223,7 +1223,7 @@ extern void extend_verb(void)
                  Inform_verbs[Inform_verb].l[k+lines]
                      = Inform_verbs[Inform_verb].l[k-1+lines];
         }
-    } while (grammar_line(Inform_verb, lines++));
+    } while (grammar_line(Inform_verb, FALSE, lines++));
 
     if (extend_mode == EXTEND_FIRST)
     {
