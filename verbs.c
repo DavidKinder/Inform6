@@ -225,6 +225,7 @@ static void list_grammar_line_v1(int mark)
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
     printf("\n");
 }
 
