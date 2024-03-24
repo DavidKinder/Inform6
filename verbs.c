@@ -23,6 +23,9 @@
 
    Typically the library has a "Constant Grammar__Version 2;" line to
    ensure we get the modern version for both VMs.
+
+   (Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
+   which actions are meta, rather than relying on dict word flags.)
  */
 int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"

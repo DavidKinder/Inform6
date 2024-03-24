@@ -258,6 +258,7 @@ int MAX_LOCAL_VARIABLES;
 int DICT_WORD_SIZE; /* number of characters in a dict word */
 int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
+int GRAMMAR_META_FLAG; /* indicate which actions are meta */
 int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int ZCODE_LESS_DICT_DATA; /* (zcode) use 2 data bytes per dict word instead of 3 */
@@ -304,6 +305,7 @@ static void list_memory_sizes(void)
       printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_z);
     else
       printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_g);
+    printf("|  %25s = %-7d |\n","GRAMMAR_META_FLAG",GRAMMAR_META_FLAG);
     printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
     printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
     if (!glulx_mode)
@@ -343,6 +345,7 @@ extern void set_memory_sizes(void)
     DICT_WORD_SIZE_g = 9;
     GRAMMAR_VERSION_z = 1;
     GRAMMAR_VERSION_g = 2;
+    GRAMMAR_META_FLAG = 0;
     NUM_ATTR_BYTES_z = 6;
     NUM_ATTR_BYTES_g = 7;
     MAX_ABBREVS = 64;
@@ -419,6 +422,14 @@ static void explain_parameter(char *command)
 "  GRAMMAR_VERSION defines the table format for the verb grammar. 2 is \n\
   the Inform standard. 1 is an older version based on Infocom's format. \n\
   The default is 1 in Z-code, 2 in Glulx.\n");
+        return;
+    }
+    if (strcmp(command,"GRAMMAR_META_FLAG")==0)
+    {   printf(
+"  GRAMMAR_META_FLAG indicates actions which have the 'meta' flag by \n\
+  ensure that their values are <= #largest_meta_action. This allows \n\
+  individual actions to be marked 'meta', rather than relying on dict \n\
+  word flags.\n");
         return;
     }
     if (strcmp(command,"NUM_ATTR_BYTES")==0)
@@ -850,6 +861,8 @@ extern void memory_command(char *command)
                 DICT_CHAR_SIZE=j, flag=1;
             if (strcmp(command,"GRAMMAR_VERSION")==0)
                 GRAMMAR_VERSION_z=GRAMMAR_VERSION_g=j, flag=1;
+            if (strcmp(command,"GRAMMAR_META_FLAG")==0)
+                GRAMMAR_META_FLAG=j, flag=1;
             if (strcmp(command,"NUM_ATTR_BYTES")==0) 
             {   NUM_ATTR_BYTES=j, flag=1;
                 NUM_ATTR_BYTES_g=NUM_ATTR_BYTES_z=j;
