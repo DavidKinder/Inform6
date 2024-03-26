@@ -386,6 +386,9 @@ static void output_file_z(void)
 
     length=((int32) Write_Strings_At) + static_strings_extent;
 
+    /*  Pad to a multiple of the scale factor (2, 4, or 8 bytes). This
+        avoids worry about an interpreter doing something strange when
+        accessing the highest possible packed address.                       */
     while ((length%length_scale_factor)!=0) { length++; blanks++; }
     length=length/length_scale_factor;
     zmachine_paged_memory[26]=(length & 0xff00)/0x100;
@@ -395,7 +398,9 @@ static void output_file_z(void)
         writes files which are padded with zeros to the next multiple of
         0.5K.  This calculates the number of bytes of padding needed:        */
 
-    while (((length_scale_factor*length)+blanks-1)%512 != 511) blanks++;
+    if (ZCODE_FILE_END_PADDING) {
+        while (((length_scale_factor*length)+blanks-1)%512 != 511) blanks++;
+    }
 
     translate_out_filename(new_name, Code_Name);
 
@@ -552,7 +557,7 @@ static void output_file_z(void)
 
     /*  (5)  When modules existed, we output link data here.                 */
 
-    /*  (6)  Output null bytes to reach a multiple of 0.5K.                  */
+    /*  (6)  Output null bytes at the end.                                   */
 
     while (blanks>0) { sf_put(0); blanks--; }
 
