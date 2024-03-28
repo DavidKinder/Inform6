@@ -903,9 +903,12 @@ or less.");
         }
         else
         {   for (l = 0; l<no_Inform_verbs; l++)
-            {   k = grammar_table_at + 2*l;
+            {
+                int linecount;
+                k = grammar_table_at + 2*l;
                 i = p[k]*256 + p[k+1];
-                for (j = p[i++]; j>0; j--)
+                linecount = p[i++];
+                for (j=0; j<linecount; j++)
                 {   int topbits; int32 value;
                     i = i + 2;
                     while (p[i] != 15)
