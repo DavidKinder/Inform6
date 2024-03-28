@@ -866,6 +866,8 @@ or less.");
     if (!skip_backpatching)
     {   backpatch_zmachine_image_z();
 
+        /* The symbol name, action, and grammar tables must be backpatched specially. */
+        
         if (!OMIT_SYMBOL_TABLE) {
             for (i=1; i<id_names_length; i++)
             {   int32 v = 256*p[identifier_names_offset + i*2]
@@ -1450,6 +1452,8 @@ static void construct_storyfile_g(void)
     if (TRUE)
     {   backpatch_zmachine_image_g();
 
+        /* The action and grammar tables must be backpatched specially. */
+        
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
           int ax = i;
