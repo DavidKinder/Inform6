@@ -685,7 +685,8 @@ static void set_trace_option(char *command)
     
     if (!command || *command == '\0') {
         printf("The full list of trace options:\n\n");
-        printf("  ACTIONS: show actions defined\n");
+        printf("  ACTIONS: show all actions\n");
+        printf("    ACTIONS=2: also list them as they are defined\n");
         printf("  ASM: trace assembly (same as -a)\n");
         printf("    ASM=2: also show hex dumps\n");
         printf("    ASM=3: also show branch optimization info\n");

@@ -1867,6 +1867,9 @@ extern void construct_storyfile(void)
     if (list_verbs_setting)
         list_verb_table();
 
+    if (printactions_switch)
+        list_action_table();
+
     if (list_objects_setting)
         list_object_tree();
     

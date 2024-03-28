@@ -2906,5 +2906,6 @@ extern void make_verb(void);
 extern void extend_verb(void);
 extern void sort_actions(void);
 extern void list_verb_table(void);
+extern void list_action_table(void);
 
 /* ========================================================================= */

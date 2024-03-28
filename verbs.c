@@ -339,6 +339,23 @@ extern void list_verb_table(void)
     }
 }
 
+extern void list_action_table(void)
+{
+    int ix;
+    printf("Action table: %d actions, %d fake actions\n", no_actions, no_fake_actions);
+    for (ix=0; ix<no_actions; ix++) {
+        int internal = ix;
+        if (sorted_actions)
+            internal = sorted_actions[ix].external_to_int;
+        printf("%d: %s", ix, symbols[actions[internal].symbol].name);
+        if (actions[internal].meta)
+            printf(" (meta)");
+        if (sorted_actions)
+            printf(" (originally numbered %d)", internal);
+        printf("\n");
+    }
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Actions.                                                                */
 /* ------------------------------------------------------------------------- */
@@ -349,7 +366,7 @@ static void new_action(char *b, int c)
         by using make_action above, or the Fake_Action directive).
         At present just a hook for some tracing code.                        */
 
-    if (printactions_switch)
+    if (printactions_switch > 1)
         printf("%s: Action '%s' is numbered %d\n", current_location_text(), b, c);
 }
 
