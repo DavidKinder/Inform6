@@ -1497,12 +1497,21 @@ static void construct_storyfile_g(void)
         }
 
         for (l = 0; l<no_Inform_verbs; l++) {
+          int linecount;
           k = grammar_table_at + 4 + 4*l; 
           i = ((p[k] << 24) | (p[k+1] << 16) | (p[k+2] << 8) | (p[k+3]));
           i -= Write_RAM_At;
-          for (j = p[i++]; j>0; j--) {
+          linecount = p[i++];
+          for (j=0; j<linecount; j++) {
             int topbits; 
             int32 value;
+            if (GRAMMAR_META_FLAG) {
+              /* backpatch the action number */
+              int action = (p[i+0] << 8) | (p[i+1]);
+              action = sorted_actions[action].internal_to_ext;
+              p[i+0] = (action >> 8) & 0xFF;
+              p[i+1] = (action & 0xFF);
+            }
             i = i + 3;
             while (p[i] != 15) {
               topbits = (p[i]/0x40) & 3;

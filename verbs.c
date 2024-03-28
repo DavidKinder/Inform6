@@ -464,11 +464,13 @@ extern assembly_operand action_of_name(char *name)
     {
         if (no_actions >= ((grammar_version_number==1)?256:4096)) {
             if (grammar_version_number == 1) {
-                error_named("Too many actions for grammar version 1:", name);
+                error_named("Cannot create action (grammar version 1 is limited to 256):", name);
             }
             else {
-                error_named("Too many actions:", name);
+                error_named("Cannot create action (Z-machine grammar is limited to 4096):", name);
             }
+            INITAO(&AO);
+            return AO;
         }
         else {
             ensure_memory_list_available(&actions_memlist, no_actions+1);
