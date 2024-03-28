@@ -463,7 +463,10 @@ static void construct_storyfile_z(void)
         fake_action_names_offset = mark + 2*no_actions;
         for (i=0; i<no_actions + no_fake_actions; i++)
         {
-            j = action_name_strings[i]; /*###*/
+            int ax = i;
+            if (i<no_actions && GRAMMAR_META_FLAG)
+                ax = sorted_actions[i].external_to_int;
+            j = action_name_strings[ax];
             p[mark++] = j/256;
             p[mark++] = j%256;
         }
@@ -875,7 +878,11 @@ or less.");
 
         mark = actions_at;
         for (i=0; i<no_actions; i++)
-        {   j=actions[i].byte_offset; /*###*/
+        {
+            int ax = i;
+            if (GRAMMAR_META_FLAG)
+                ax = sorted_actions[i].external_to_int;
+            j=actions[ax].byte_offset;
             if (OMIT_UNUSED_ROUTINES)
                 j = df_stripped_address_for_address(j);
             j += code_offset/scale_factor;
@@ -1304,7 +1311,10 @@ static void construct_storyfile_g(void)
       action_names_offset = mark;
       fake_action_names_offset = mark + 4*no_actions;
       for (i=0; i<no_actions + no_fake_actions; i++) {
-        j = action_name_strings[i]; /*###*/
+        int ax = i;
+        if (i<no_actions && GRAMMAR_META_FLAG)
+          ax = sorted_actions[i].external_to_int;
+        j = action_name_strings[ax];
         if (j)
           j = Write_Strings_At + compressed_offsets[j-1];
         WriteInt32(p+mark, j);
@@ -1442,7 +1452,10 @@ static void construct_storyfile_g(void)
 
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
-          j = actions[i].byte_offset; /*###*/
+          int ax = i;
+          if (GRAMMAR_META_FLAG)
+            ax = sorted_actions[i].external_to_int;
+          j = actions[ax].byte_offset;
           if (OMIT_UNUSED_ROUTINES)
             j = df_stripped_address_for_address(j);
           j += code_offset;

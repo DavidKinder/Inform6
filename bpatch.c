@@ -159,7 +159,8 @@ static int32 backpatch_value_z(int32 value)
                     final_dict_order[value]*(DICT_ENTRY_BYTE_LENGTH);
             break;
         case ACTION_MV:
-            /*###*/
+            if (GRAMMAR_META_FLAG)
+                value = sorted_actions[value].internal_to_ext;
             break;
         case INHERIT_MV:
             value = 256*zmachine_paged_memory[value + prop_values_offset]
@@ -318,7 +319,8 @@ static int32 backpatch_value_g(int32 value)
               + final_dict_order[value]*DICT_ENTRY_BYTE_LENGTH;
             break;
         case ACTION_MV:
-            /*###*/
+            if (GRAMMAR_META_FLAG)
+                value = sorted_actions[value].internal_to_ext;
             break;
         case INHERIT_MV:
             valaddr = (prop_values_offset - Write_RAM_At) + value;
