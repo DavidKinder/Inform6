@@ -111,6 +111,7 @@ static memory_list English_verbs_given_memlist;
   memory_list actions_memlist;
   int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
   static memory_list grammar_token_routine_memlist;
+  actionsort *sorted_actions; /* only used if GRAMMAR_META_FLAG */
 
   int32   *adjectives; /* Allocated to no_adjectives */
   static memory_list adjectives_memlist;
@@ -1243,6 +1244,42 @@ extern void extend_verb(void)
     directives.enabled = TRUE;
 }
 
+/* ------------------------------------------------------------------------- */
+/*   Action table sorter.                                                    */
+/*   This is only invoked if GRAMMAR_META_FLAG is set. It creates a new      */
+/*   ordering for actions in which the meta entries are all first.           */
+/* ------------------------------------------------------------------------- */
+
+extern void sort_actions(void)
+{
+    int ix, pos;
+    
+    sorted_actions = my_malloc(sizeof(actionsort) * no_actions, "sorted action table");
+
+    /* No fancy sorting algorithm. We just go through the actions table
+       twice. */
+
+    pos = 0;
+    for (ix=0; ix<no_actions; ix++) {
+        if (actions[ix].meta) {
+            sorted_actions[ix].internal_to_ext = pos;
+            sorted_actions[pos].external_to_int = ix;
+            pos++;
+        }
+    }
+    for (ix=0; ix<no_actions; ix++) {
+        if (!actions[ix].meta) {
+            sorted_actions[ix].internal_to_ext = pos;
+            sorted_actions[pos].external_to_int = ix;
+            pos++;
+        }
+    }
+
+    if (pos != no_actions) {
+        compiler_error("action sorting length mismatch");
+    }
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -1302,6 +1339,8 @@ extern void verbs_allocate_arrays(void)
     initialise_memory_list(&actions_memlist,
         sizeof(actioninfo), 128, (void**)&actions,
         "actions");
+
+    sorted_actions = NULL;
     
     initialise_memory_list(&grammar_token_routine_memlist,
         sizeof(int32), 50, (void**)&grammar_token_routine,
@@ -1333,6 +1372,10 @@ extern void verbs_free_arrays(void)
     for (ix=0; ix<no_Inform_verbs; ix++)
     {
         my_free(&Inform_verbs[ix].l, "grammar lines for one verb");
+    }
+    if (sorted_actions)
+    {
+        my_free(&sorted_actions, "sorted action table");
     }
     deallocate_memory_list(&Inform_verbs_memlist);
     deallocate_memory_list(&grammar_lines_memlist);

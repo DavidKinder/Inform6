@@ -682,6 +682,11 @@ typedef struct actioninfo_s {
     int meta;          /* Only used if $GRAMMAR_META_FLAG */
 } actioninfo;
 
+typedef struct actionsort_s {
+    int internal_to_ext;
+    int external_to_int;
+} actionsort;
+
 /* Information about an object class. */
 typedef struct classinfo_s {
     /* The number of the prototype-object for this class */
@@ -2887,6 +2892,7 @@ extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
 extern actioninfo *actions;
+extern actionsort *sorted_actions;
 extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
@@ -2898,6 +2904,7 @@ extern assembly_operand action_of_name(char *name);
 extern void locate_dead_grammar_lines(void);
 extern void make_verb(void);
 extern void extend_verb(void);
+extern void sort_actions(void);
 extern void list_verb_table(void);
 
 /* ========================================================================= */
