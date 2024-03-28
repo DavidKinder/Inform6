@@ -1940,10 +1940,9 @@ typedef struct operator_s
 #define MAIN_MV               10     /* "Main" routine */
 #define SYMBOL_MV             11     /* Forward ref to unassigned symbol */
 
-/* Additional marker values used in module backpatch areas (most are
-   obsolete). */
-/* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching, even
-   without modules.) */
+/* Additional marker values (most are obsolete). */
+/* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching.) */
+/* (If GRAMMAR_META_FLAG is set, ACTION_MV is used in backpatching.) */
 
 #define VARIABLE_MV           12     /* Global variable */
 #define IDENT_MV              13     /* Property identifier number */

@@ -2258,9 +2258,12 @@ static void transfer_routine_z(void)
                 case ERROR_MV: break;
                 case VARIABLE_MV:
                 case OBJECT_MV:
-                case ACTION_MV:
                 case IDENT_MV:
                     break;
+                case ACTION_MV:
+                    if (!GRAMMAR_META_FLAG) break;
+                    /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
+                       through and create entry */
                 default:
                     if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV)
                     {   compiler_error("Illegal code backpatch value");
@@ -2483,9 +2486,12 @@ static void transfer_routine_g(void)
             break;
         case ERROR_MV:
             break;
-        case ACTION_MV:
         case IDENT_MV:
             break;
+        case ACTION_MV:
+            if (!GRAMMAR_META_FLAG) break;
+            /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
+               through and create entry */
         case OBJECT_MV:
         case VARIABLE_MV:
         default:
