@@ -119,6 +119,7 @@ static memory_list English_verbs_given_memlist;
   int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
   static memory_list grammar_token_routine_memlist;
   actionsort *sorted_actions; /* only used if GRAMMAR_META_FLAG */
+  int no_meta_actions; /* only used if GRAMMAR_META_FLAG */
 
   int32   *adjectives; /* Allocated to no_adjectives */
   static memory_list adjectives_memlist;
@@ -1286,6 +1287,7 @@ extern void sort_actions(void)
        twice. */
 
     pos = 0;
+    
     for (ix=0; ix<no_actions; ix++) {
         if (actions[ix].meta) {
             sorted_actions[ix].internal_to_ext = pos;
@@ -1293,6 +1295,9 @@ extern void sort_actions(void)
             pos++;
         }
     }
+    
+    no_meta_actions = pos;
+    
     for (ix=0; ix<no_actions; ix++) {
         if (!actions[ix].meta) {
             sorted_actions[ix].internal_to_ext = pos;
@@ -1314,6 +1319,7 @@ extern void init_verbs_vars(void)
 {
     no_fake_actions = 0;
     no_actions = 0;
+    no_meta_actions = -1;
     no_grammar_lines = 0;
     no_grammar_tokens = 0;
     English_verb_list_size = 0;

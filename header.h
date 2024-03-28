@@ -2893,6 +2893,7 @@ extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
 extern actioninfo *actions;
 extern actionsort *sorted_actions;
+extern int no_meta_actions;
 extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
