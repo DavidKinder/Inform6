@@ -900,6 +900,21 @@ or less.");
                 j += code_offset/scale_factor;
                 p[mark++]=j/256; p[mark++]=j%256;
             }
+            if (GRAMMAR_META_FLAG) {
+                /* backpatch the action numbers */
+                for (l = 0; l<no_Inform_verbs; l++)
+                {
+                    int linecount;
+                    k = grammar_table_at + 2*l;
+                    i = p[k]*256 + p[k+1];
+                    linecount = p[i++];
+                    for (j=0; j<linecount; j++) {
+                        int action = p[i+7];
+                        action = sorted_actions[action].internal_to_ext;
+                        p[i+7] = action;
+                    }
+                }
+            }
         }
         else
         {   for (l = 0; l<no_Inform_verbs; l++)
