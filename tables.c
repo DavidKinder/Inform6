@@ -910,6 +910,17 @@ or less.");
                 linecount = p[i++];
                 for (j=0; j<linecount; j++)
                 {   int topbits; int32 value;
+                    if (GRAMMAR_META_FLAG) {
+                        /* backpatch the action number */
+                        int word = p[i]*256 + p[i+1];
+                        int action = word & 0x03FF;
+                        int flags = word & 0xFC00;
+                        if (action >= 0 && action < no_actions) {
+                            action = sorted_actions[action].internal_to_ext;
+                            word = flags | action;
+                            p[i] = word/256; p[i+1] = word%256;
+                        }
+                    }
                     i = i + 2;
                     while (p[i] != 15)
                     {   topbits = (p[i]/0x40) & 3;
