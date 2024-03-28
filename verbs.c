@@ -968,6 +968,8 @@ tokens in any line (for grammar version 1)");
     }
 
     reverse_action = FALSE;
+    /* allmeta is set if this is a "Verb meta" declaration; that is, all
+       actions mentioned are implicitly meta. */
     meta_action = allmeta;
 
     while (TRUE) {
