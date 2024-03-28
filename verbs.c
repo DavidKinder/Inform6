@@ -462,13 +462,23 @@ extern assembly_operand action_of_name(char *name)
 
     if (symbols[j].flags & UNKNOWN_SFLAG)
     {
-        ensure_memory_list_available(&actions_memlist, no_actions+1);
-        new_action(name, no_actions);
-        actions[no_actions].symbol = j;
-        actions[no_actions].meta = FALSE;
-        actions[no_actions].byte_offset = 0; /* fill in later */
-        assign_symbol(j, no_actions++, CONSTANT_T);
-        symbols[j].flags |= ACTION_SFLAG;
+        if (no_actions >= ((grammar_version_number==1)?256:4096)) {
+            if (grammar_version_number == 1) {
+                error_named("Too many actions for grammar version 1:", name);
+            }
+            else {
+                error_named("Too many actions:", name);
+            }
+        }
+        else {
+            ensure_memory_list_available(&actions_memlist, no_actions+1);
+            new_action(name, no_actions);
+            actions[no_actions].symbol = j;
+            actions[no_actions].meta = FALSE;
+            actions[no_actions].byte_offset = 0; /* fill in later */
+            assign_symbol(j, no_actions++, CONSTANT_T);
+            symbols[j].flags |= ACTION_SFLAG;
+        }
     }
     symbols[j].flags |= USED_SFLAG;
 
