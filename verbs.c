@@ -38,6 +38,13 @@ int32 grammar_version_symbol;          /* Index of "Grammar__Version"
 /*                                                                           */
 /*    actioninfo actions[n]               Symbol table index and byte offset */
 /*                                        of the ...Sub routine              */
+/*                                                                           */
+/*   If GRAMMAR_META_FLAG is set, we need to reorder actions[] to put meta   */
+/*   actions at the top. We don't try to sort the table in place, though.    */
+/*   We just create this two-way index remapping table:                      */
+/*                                                                           */
+/*    actionsort sorted_actions[]         Table mapping internal action      */
+/*                                        indexes to final action indexes    */
 /* ------------------------------------------------------------------------- */
 
 int no_actions,                        /* Number of actions made so far      */
