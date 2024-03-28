@@ -354,6 +354,8 @@ extern void list_action_table(void)
             printf(" (originally numbered %d)", internal);
         printf("\n");
     }
+    /* Fake action names don't get recorded anywhere, so we can't list
+       them. */
 }
 
 /* ------------------------------------------------------------------------- */

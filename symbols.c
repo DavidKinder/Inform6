@@ -575,7 +575,7 @@ extern void issue_debug_symbol_warnings(void)
                                           strings of the names of the
                                           properties: this is an array
                                           indexed by the property ID         */
-       int32 *action_name_strings;     /* Ditto for actions                  */
+       int32 *action_name_strings;     /* Ditto for actions and fake actions */
        int32 *attribute_name_strings;  /* Ditto for attributes               */
        int32 *array_name_strings;      /* Ditto for arrays                   */
 
