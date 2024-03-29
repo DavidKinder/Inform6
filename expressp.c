@@ -1015,8 +1015,6 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                      v = 1;
                      break;
  
-                 /* ###fix: need to fill more of these in! */
-
                  default:
                      v = t->value;
                      o->marker = INCON_MV;
