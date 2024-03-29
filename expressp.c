@@ -744,6 +744,10 @@ static int32 value_of_system_constant_z(int t)
             return class_numbers_offset;
         case highest_object_number_SC:
             return no_objects-1;
+        case highest_meta_action_number_SC:
+            if (!GRAMMAR_META_FLAG)
+                error_named("Must set $GRAMMAR_META_FLAG to use option:", system_constants.keywords[t]);
+            return (no_meta_actions-1) & 0xFFFF;
     }
 
     error_named("System constant not implemented in Z-code",
@@ -796,6 +800,10 @@ static int32 value_of_system_constant_g(int t)
     return no_classes-1;
   case highest_object_number_SC:
     return no_objects-1;
+  case highest_meta_action_number_SC:
+    if (!GRAMMAR_META_FLAG)
+      error_named("Must set $GRAMMAR_META_FLAG to use option:", system_constants.keywords[t]);
+    return no_meta_actions-1;
   }
 
   error_named("System constant not implemented in Glulx",

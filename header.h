@@ -1547,7 +1547,7 @@ typedef struct operator_s
 
 /*  Index numbers into the keyword group "system_constants" (see "lexer.c")  */
 
-#define NO_SYSTEM_CONSTANTS   62
+#define NO_SYSTEM_CONSTANTS   63
 
 #define adjectives_table_SC   0
 #define actions_table_SC      1
@@ -1623,6 +1623,7 @@ typedef struct operator_s
 #define grammar_table_SC              59
 #define dictionary_table_SC           60
 #define dynam_string_table_SC         61     /* Glulx-only */
+#define highest_meta_action_number_SC 62
 
 
 /*  Index numbers into the keyword group "system_functions" (see "lexer.c")  */
