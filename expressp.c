@@ -800,6 +800,17 @@ static int32 value_of_system_constant_g(int t)
     return no_classes-1;
   case highest_object_number_SC:
     return no_objects-1;
+  case highest_action_number_SC:
+    return no_actions-1;
+  case action_names_array_SC:
+    return Write_RAM_At + action_names_offset;
+  case lowest_fake_action_number_SC:
+    return ((grammar_version_number==1)?256:4096);
+  case highest_fake_action_number_SC:
+    return ((grammar_version_number==1)?256:4096) + no_fake_actions-1;
+  case fake_action_names_array_SC:
+    return Write_RAM_At + fake_action_names_offset;
+
   case highest_meta_action_number_SC:
     if (!GRAMMAR_META_FLAG)
       error_named("Must set $GRAMMAR_META_FLAG to use option:", system_constants.keywords[t]);
