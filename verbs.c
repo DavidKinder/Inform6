@@ -383,6 +383,14 @@ static void new_action(char *b, int c)
 /* Note that fake actions are numbered from a high base point upwards;
    real actions are numbered from 0 upward in GV2.                           */
 
+extern int lowest_fake_action(void)
+{
+    if (grammar_version_number == 1)
+        return 256;
+    else
+        return 4096;
+}
+
 extern void make_fake_action(void)
 {   char *action_sub;
     int i;
@@ -413,7 +421,7 @@ extern void make_fake_action(void)
         panic_mode_error_recovery(); return;
     }
 
-    assign_symbol(i, ((grammar_version_number==1)?256:4096)+no_fake_actions++,
+    assign_symbol(i, lowest_fake_action()+no_fake_actions++,
         FAKE_ACTION_T);
 
     new_action(token_text, i);
@@ -462,7 +470,7 @@ extern assembly_operand action_of_name(char *name)
 
     if (symbols[j].flags & UNKNOWN_SFLAG)
     {
-        if (no_actions >= ((grammar_version_number==1)?256:4096)) {
+        if (no_actions >= lowest_fake_action()) {
             if (grammar_version_number == 1) {
                 error_named("Cannot create action (grammar version 1 is limited to 256):", name);
             }
@@ -1003,7 +1011,7 @@ tokens in any line (for grammar version 1)");
 
     {   assembly_operand AO = action_of_name(token_text);
         j = AO.value; /* the action number */
-        if (j >= ((grammar_version_number==1)?256:4096))
+        if (j >= lowest_fake_action())
             error_named("This is a fake action, not a real one:", token_text);
     }
 

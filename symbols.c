@@ -684,7 +684,7 @@ extern void write_the_identifier_names(void)
             temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
             action_name_strings[symbols[i].value
-                    - ((grammar_version_number==1)?256:4096) + no_actions]
+                    - lowest_fake_action() + no_actions]
                 = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
         }
     }

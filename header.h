@@ -2901,6 +2901,7 @@ extern int32 *grammar_token_routine,
 
 extern void set_grammar_version(int val);
 extern void find_the_actions(void);
+extern int lowest_fake_action(void);
 extern void make_fake_action(void);
 extern assembly_operand action_of_name(char *name);
 extern void locate_dead_grammar_lines(void);

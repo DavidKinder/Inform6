@@ -708,7 +708,7 @@ static int32 value_of_system_constant_z(int t)
             return action_names_offset;
 
         case highest_fake_action_number_SC:
-            return ((grammar_version_number==1)?256:4096) + no_fake_actions-1;
+            return lowest_fake_action() + no_fake_actions-1;
         case fake_action_names_array_SC:
             return fake_action_names_offset;
 
@@ -805,9 +805,9 @@ static int32 value_of_system_constant_g(int t)
   case action_names_array_SC:
     return Write_RAM_At + action_names_offset;
   case lowest_fake_action_number_SC:
-    return ((grammar_version_number==1)?256:4096);
+    return lowest_fake_action();
   case highest_fake_action_number_SC:
-    return ((grammar_version_number==1)?256:4096) + no_fake_actions-1;
+    return lowest_fake_action() + no_fake_actions-1;
   case fake_action_names_array_SC:
     return Write_RAM_At + fake_action_names_offset;
 
@@ -963,7 +963,7 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                      o->type = SHORT_CONSTANT_OT; o->marker = 0; v = 16; break;
                  case lowest_fake_action_number_SC:
                      o->type = LONG_CONSTANT_OT; o->marker = 0;
-                     v = ((grammar_version_number==1)?256:4096); break;
+                     v = lowest_fake_action(); break;
                  case oddeven_packing_SC:
                      o->type = SHORT_CONSTANT_OT; o->marker = 0;
                      v = oddeven_packing_switch; break;
