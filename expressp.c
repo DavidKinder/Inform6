@@ -708,7 +708,7 @@ static int32 value_of_system_constant_z(int t)
             return action_names_offset;
 
         case highest_fake_action_number_SC:
-            return ((grammar_version_number==1)?256:4096) + no_fake_actions-1;
+            return lowest_fake_action() + no_fake_actions-1;
         case fake_action_names_array_SC:
             return fake_action_names_offset;
 
@@ -744,6 +744,10 @@ static int32 value_of_system_constant_z(int t)
             return class_numbers_offset;
         case highest_object_number_SC:
             return no_objects-1;
+        case highest_meta_action_number_SC:
+            if (!GRAMMAR_META_FLAG)
+                error_named("Must set $GRAMMAR_META_FLAG to use option:", system_constants.keywords[t]);
+            return (no_meta_actions-1) & 0xFFFF;
     }
 
     error_named("System constant not implemented in Z-code",
@@ -796,6 +800,21 @@ static int32 value_of_system_constant_g(int t)
     return no_classes-1;
   case highest_object_number_SC:
     return no_objects-1;
+  case highest_action_number_SC:
+    return no_actions-1;
+  case action_names_array_SC:
+    return Write_RAM_At + action_names_offset;
+  case lowest_fake_action_number_SC:
+    return lowest_fake_action();
+  case highest_fake_action_number_SC:
+    return lowest_fake_action() + no_fake_actions-1;
+  case fake_action_names_array_SC:
+    return Write_RAM_At + fake_action_names_offset;
+
+  case highest_meta_action_number_SC:
+    if (!GRAMMAR_META_FLAG)
+      error_named("Must set $GRAMMAR_META_FLAG to use option:", system_constants.keywords[t]);
+    return no_meta_actions-1;
   }
 
   error_named("System constant not implemented in Glulx",
@@ -944,7 +963,7 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                      o->type = SHORT_CONSTANT_OT; o->marker = 0; v = 16; break;
                  case lowest_fake_action_number_SC:
                      o->type = LONG_CONSTANT_OT; o->marker = 0;
-                     v = ((grammar_version_number==1)?256:4096); break;
+                     v = lowest_fake_action(); break;
                  case oddeven_packing_SC:
                      o->type = SHORT_CONSTANT_OT; o->marker = 0;
                      v = oddeven_packing_switch; break;
@@ -996,8 +1015,6 @@ static int evaluate_term(const token_data *t, assembly_operand *o)
                      v = 1;
                      break;
  
-                 /* ###fix: need to fill more of these in! */
-
                  default:
                      v = t->value;
                      o->marker = INCON_MV;

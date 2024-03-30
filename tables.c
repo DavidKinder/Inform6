@@ -462,8 +462,13 @@ static void construct_storyfile_z(void)
         action_names_offset = mark;
         fake_action_names_offset = mark + 2*no_actions;
         for (i=0; i<no_actions + no_fake_actions; i++)
-        {   p[mark++] = action_name_strings[i]/256;
-            p[mark++] = action_name_strings[i]%256;
+        {
+            int ax = i;
+            if (i<no_actions && GRAMMAR_META_FLAG)
+                ax = sorted_actions[i].external_to_int;
+            j = action_name_strings[ax];
+            p[mark++] = j/256;
+            p[mark++] = j%256;
         }
 
         array_names_offset = mark;
@@ -861,6 +866,8 @@ or less.");
     if (!skip_backpatching)
     {   backpatch_zmachine_image_z();
 
+        /* The symbol name, action, and grammar tables must be backpatched specially. */
+        
         if (!OMIT_SYMBOL_TABLE) {
             for (i=1; i<id_names_length; i++)
             {   int32 v = 256*p[identifier_names_offset + i*2]
@@ -873,7 +880,11 @@ or less.");
 
         mark = actions_at;
         for (i=0; i<no_actions; i++)
-        {   j=actions[i].byte_offset;
+        {
+            int ax = i;
+            if (GRAMMAR_META_FLAG)
+                ax = sorted_actions[i].external_to_int;
+            j=actions[ax].byte_offset;
             if (OMIT_UNUSED_ROUTINES)
                 j = df_stripped_address_for_address(j);
             j += code_offset/scale_factor;
@@ -889,13 +900,42 @@ or less.");
                 j += code_offset/scale_factor;
                 p[mark++]=j/256; p[mark++]=j%256;
             }
+            if (GRAMMAR_META_FLAG) {
+                /* backpatch the action numbers */
+                for (l = 0; l<no_Inform_verbs; l++)
+                {
+                    int linecount;
+                    k = grammar_table_at + 2*l;
+                    i = p[k]*256 + p[k+1];
+                    linecount = p[i++];
+                    for (j=0; j<linecount; j++) {
+                        int action = p[i+7];
+                        action = sorted_actions[action].internal_to_ext;
+                        p[i+7] = action;
+                    }
+                }
+            }
         }
         else
         {   for (l = 0; l<no_Inform_verbs; l++)
-            {   k = grammar_table_at + 2*l;
+            {
+                int linecount;
+                k = grammar_table_at + 2*l;
                 i = p[k]*256 + p[k+1];
-                for (j = p[i++]; j>0; j--)
+                linecount = p[i++];
+                for (j=0; j<linecount; j++)
                 {   int topbits; int32 value;
+                    if (GRAMMAR_META_FLAG) {
+                        /* backpatch the action number */
+                        int word = p[i]*256 + p[i+1];
+                        int action = word & 0x03FF;
+                        int flags = word & 0xFC00;
+                        if (action >= 0 && action < no_actions) {
+                            action = sorted_actions[action].internal_to_ext;
+                            word = flags | action;
+                            p[i] = word/256; p[i+1] = word%256;
+                        }
+                    }
                     i = i + 2;
                     while (p[i] != 15)
                     {   topbits = (p[i]/0x40) & 3;
@@ -1302,7 +1342,10 @@ static void construct_storyfile_g(void)
       action_names_offset = mark;
       fake_action_names_offset = mark + 4*no_actions;
       for (i=0; i<no_actions + no_fake_actions; i++) {
-        j = action_name_strings[i];
+        int ax = i;
+        if (i<no_actions && GRAMMAR_META_FLAG)
+          ax = sorted_actions[i].external_to_int;
+        j = action_name_strings[ax];
         if (j)
           j = Write_Strings_At + compressed_offsets[j-1];
         WriteInt32(p+mark, j);
@@ -1438,9 +1481,14 @@ static void construct_storyfile_g(void)
     if (TRUE)
     {   backpatch_zmachine_image_g();
 
+        /* The action and grammar tables must be backpatched specially. */
+        
         mark = actions_at + 4;
         for (i=0; i<no_actions; i++) {
-          j = actions[i].byte_offset;
+          int ax = i;
+          if (GRAMMAR_META_FLAG)
+            ax = sorted_actions[i].external_to_int;
+          j = actions[ax].byte_offset;
           if (OMIT_UNUSED_ROUTINES)
             j = df_stripped_address_for_address(j);
           j += code_offset;
@@ -1449,12 +1497,21 @@ static void construct_storyfile_g(void)
         }
 
         for (l = 0; l<no_Inform_verbs; l++) {
+          int linecount;
           k = grammar_table_at + 4 + 4*l; 
           i = ((p[k] << 24) | (p[k+1] << 16) | (p[k+2] << 8) | (p[k+3]));
           i -= Write_RAM_At;
-          for (j = p[i++]; j>0; j--) {
+          linecount = p[i++];
+          for (j=0; j<linecount; j++) {
             int topbits; 
             int32 value;
+            if (GRAMMAR_META_FLAG) {
+              /* backpatch the action number */
+              int action = (p[i+0] << 8) | (p[i+1]);
+              action = sorted_actions[action].internal_to_ext;
+              p[i+0] = (action >> 8) & 0xFF;
+              p[i+1] = (action & 0xFF);
+            }
             i = i + 3;
             while (p[i] != 15) {
               topbits = (p[i]/0x40) & 3;
@@ -1864,6 +1921,9 @@ extern void construct_storyfile(void)
     
     if (list_verbs_setting)
         list_verb_table();
+
+    if (printactions_switch)
+        list_action_table();
 
     if (list_objects_setting)
         list_object_tree();

@@ -23,6 +23,9 @@
 
    Typically the library has a "Constant Grammar__Version 2;" line to
    ensure we get the modern version for both VMs.
+
+   (Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
+   which actions are meta, rather than relying on dict word flags.)
  */
 int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"
@@ -35,6 +38,13 @@ int32 grammar_version_symbol;          /* Index of "Grammar__Version"
 /*                                                                           */
 /*    actioninfo actions[n]               Symbol table index and byte offset */
 /*                                        of the ...Sub routine              */
+/*                                                                           */
+/*   If GRAMMAR_META_FLAG is set, we need to reorder actions[] to put meta   */
+/*   actions at the top. We don't try to sort the table in place, though.    */
+/*   We just create this two-way index remapping table:                      */
+/*                                                                           */
+/*    actionsort sorted_actions[]         Table mapping internal action      */
+/*                                        indexes to final action indexes    */
 /* ------------------------------------------------------------------------- */
 
 int no_actions,                        /* Number of actions made so far      */
@@ -108,6 +118,8 @@ static memory_list English_verbs_given_memlist;
   memory_list actions_memlist;
   int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
   static memory_list grammar_token_routine_memlist;
+  actionsort *sorted_actions; /* only used if GRAMMAR_META_FLAG */
+  int no_meta_actions; /* only used if GRAMMAR_META_FLAG */
 
   int32   *adjectives; /* Allocated to no_adjectives */
   static memory_list adjectives_memlist;
@@ -222,6 +234,7 @@ static void list_grammar_line_v1(int mark)
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
     printf("\n");
 }
 
@@ -307,6 +320,7 @@ static void list_grammar_line_v2(int mark)
     str = (symbols[actsym].name);
     len = strlen(str) - 3;   /* remove "__A" */
     for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
     if (flags) printf(" (reversed)");
     printf("\n");
 }
@@ -333,6 +347,25 @@ extern void list_verb_table(void)
     }
 }
 
+extern void list_action_table(void)
+{
+    int ix;
+    printf("Action table: %d actions, %d fake actions\n", no_actions, no_fake_actions);
+    for (ix=0; ix<no_actions; ix++) {
+        int internal = ix;
+        if (sorted_actions)
+            internal = sorted_actions[ix].external_to_int;
+        printf("%d: %s", ix, symbols[actions[internal].symbol].name);
+        if (actions[internal].meta)
+            printf(" (meta)");
+        if (sorted_actions)
+            printf(" (originally numbered %d)", internal);
+        printf("\n");
+    }
+    /* Fake action names don't get recorded anywhere, so we can't list
+       them. */
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Actions.                                                                */
 /* ------------------------------------------------------------------------- */
@@ -343,12 +376,20 @@ static void new_action(char *b, int c)
         by using make_action above, or the Fake_Action directive).
         At present just a hook for some tracing code.                        */
 
-    if (printactions_switch)
+    if (printactions_switch > 1)
         printf("%s: Action '%s' is numbered %d\n", current_location_text(), b, c);
 }
 
 /* Note that fake actions are numbered from a high base point upwards;
    real actions are numbered from 0 upward in GV2.                           */
+
+extern int lowest_fake_action(void)
+{
+    if (grammar_version_number == 1)
+        return 256;
+    else
+        return 4096;
+}
 
 extern void make_fake_action(void)
 {   char *action_sub;
@@ -380,7 +421,7 @@ extern void make_fake_action(void)
         panic_mode_error_recovery(); return;
     }
 
-    assign_symbol(i, ((grammar_version_number==1)?256:4096)+no_fake_actions++,
+    assign_symbol(i, lowest_fake_action()+no_fake_actions++,
         FAKE_ACTION_T);
 
     new_action(token_text, i);
@@ -429,12 +470,25 @@ extern assembly_operand action_of_name(char *name)
 
     if (symbols[j].flags & UNKNOWN_SFLAG)
     {
-        ensure_memory_list_available(&actions_memlist, no_actions+1);
-        new_action(name, no_actions);
-        actions[no_actions].symbol = j;
-        actions[no_actions].byte_offset = 0; /* fill in later */
-        assign_symbol(j, no_actions++, CONSTANT_T);
-        symbols[j].flags |= ACTION_SFLAG;
+        if (no_actions >= lowest_fake_action()) {
+            if (grammar_version_number == 1) {
+                error_named("Cannot create action (grammar version 1 is limited to 256):", name);
+            }
+            else {
+                error_named("Cannot create action (Z-machine grammar is limited to 4096):", name);
+            }
+            INITAO(&AO);
+            return AO;
+        }
+        else {
+            ensure_memory_list_available(&actions_memlist, no_actions+1);
+            new_action(name, no_actions);
+            actions[no_actions].symbol = j;
+            actions[no_actions].meta = FALSE;
+            actions[no_actions].byte_offset = 0; /* fill in later */
+            assign_symbol(j, no_actions++, CONSTANT_T);
+            symbols[j].flags |= ACTION_SFLAG;
+        }
     }
     symbols[j].flags |= USED_SFLAG;
 
@@ -694,7 +748,7 @@ static void ensure_grammar_lines_available(int verbnum, int num)
     }
 }
 
-static int grammar_line(int verbnum, int line)
+static int grammar_line(int verbnum, int allmeta, int line)
 {
     /*  Parse a grammar line, to be written into grammar_lines[] starting
         at grammar_lines_top. grammar_lines_top is left at the end
@@ -724,7 +778,7 @@ static int grammar_line(int verbnum, int line)
 
     int j, bytecode, mark; int32 wordcode;
     int grammar_token, slash_mode, last_was_slash;
-    int reverse_action, TOKEN_SIZE;
+    int reverse_action, meta_action, TOKEN_SIZE;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -956,20 +1010,42 @@ tokens in any line (for grammar version 1)");
     }
 
     {   assembly_operand AO = action_of_name(token_text);
-        j = AO.value;
-        if (j >= ((grammar_version_number==1)?256:4096))
+        j = AO.value; /* the action number */
+        if (j >= lowest_fake_action())
             error_named("This is a fake action, not a real one:", token_text);
     }
 
     reverse_action = FALSE;
-    get_next_token();
-    if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
-    {   if (grammar_version_number == 1)
-            error("'reverse' actions can only be used with \
-grammar version 2 or later");
-        reverse_action = TRUE;
+    /* allmeta is set if this is a "Verb meta" declaration; that is, all
+       actions mentioned are implicitly meta. */
+    meta_action = allmeta;
+
+    while (TRUE) {
+        get_next_token();
+        if ((token_type == DIR_KEYWORD_TT) && (token_value == REVERSE_DK))
+        {
+            if (grammar_version_number == 1)
+                error("'reverse' actions can only be used with grammar version 2 or later");
+            reverse_action = TRUE;
+        }
+        else if ((token_type == DIR_KEYWORD_TT) && (token_value == META_DK))
+        {
+            if (!GRAMMAR_META_FLAG)
+                error("$GRAMMAR_META_FLAG must be set before marking individual actions as 'meta'");
+            meta_action = TRUE;
+        }
+        else
+        {
+            break;
+        }
     }
-    else put_token_back();
+    put_token_back();
+
+    if (meta_action) {
+        if (j >= 0 && j < no_actions) {
+            actions[j].meta = TRUE;
+        }
+    }
 
     mark = Inform_verbs[verbnum].l[line];
 
@@ -1087,7 +1163,7 @@ extern void make_verb(void)
     if (!verb_equals_form)
     {   int lines = 0;
         put_token_back();
-        while (grammar_line(no_Inform_verbs, lines++)) ;
+        while (grammar_line(no_Inform_verbs, meta_verb_flag, lines++)) ;
         Inform_verbs[no_Inform_verbs++].lines = --lines;
     }
 
@@ -1198,7 +1274,7 @@ extern void extend_verb(void)
                  Inform_verbs[Inform_verb].l[k+lines]
                      = Inform_verbs[Inform_verb].l[k-1+lines];
         }
-    } while (grammar_line(Inform_verb, lines++));
+    } while (grammar_line(Inform_verb, FALSE, lines++));
 
     if (extend_mode == EXTEND_FIRST)
     {
@@ -1215,6 +1291,46 @@ extern void extend_verb(void)
     directives.enabled = TRUE;
 }
 
+/* ------------------------------------------------------------------------- */
+/*   Action table sorter.                                                    */
+/*   This is only invoked if GRAMMAR_META_FLAG is set. It creates a new      */
+/*   ordering for actions in which the meta entries are all first.           */
+/* ------------------------------------------------------------------------- */
+
+extern void sort_actions(void)
+{
+    int ix, pos;
+    
+    sorted_actions = my_malloc(sizeof(actionsort) * no_actions, "sorted action table");
+
+    /* No fancy sorting algorithm. We just go through the actions table
+       twice. */
+
+    pos = 0;
+    
+    for (ix=0; ix<no_actions; ix++) {
+        if (actions[ix].meta) {
+            sorted_actions[ix].internal_to_ext = pos;
+            sorted_actions[pos].external_to_int = ix;
+            pos++;
+        }
+    }
+    
+    no_meta_actions = pos;
+    
+    for (ix=0; ix<no_actions; ix++) {
+        if (!actions[ix].meta) {
+            sorted_actions[ix].internal_to_ext = pos;
+            sorted_actions[pos].external_to_int = ix;
+            pos++;
+        }
+    }
+
+    if (pos != no_actions) {
+        compiler_error("action sorting length mismatch");
+    }
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -1223,6 +1339,7 @@ extern void init_verbs_vars(void)
 {
     no_fake_actions = 0;
     no_actions = 0;
+    no_meta_actions = -1;
     no_grammar_lines = 0;
     no_grammar_tokens = 0;
     English_verb_list_size = 0;
@@ -1274,6 +1391,8 @@ extern void verbs_allocate_arrays(void)
     initialise_memory_list(&actions_memlist,
         sizeof(actioninfo), 128, (void**)&actions,
         "actions");
+
+    sorted_actions = NULL;
     
     initialise_memory_list(&grammar_token_routine_memlist,
         sizeof(int32), 50, (void**)&grammar_token_routine,
@@ -1305,6 +1424,10 @@ extern void verbs_free_arrays(void)
     for (ix=0; ix<no_Inform_verbs; ix++)
     {
         my_free(&Inform_verbs[ix].l, "grammar lines for one verb");
+    }
+    if (sorted_actions)
+    {
+        my_free(&sorted_actions, "sorted action table");
     }
     deallocate_memory_list(&Inform_verbs_memlist);
     deallocate_memory_list(&grammar_lines_memlist);

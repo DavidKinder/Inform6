@@ -577,6 +577,7 @@ keyword_group system_constants =
     "lowest_object_number", "highest_object_number",
     "oddeven_packing",
     "grammar_table", "dictionary_table", "dynam_string_table",
+    "highest_meta_action_number",
     "" },
     SYSTEM_CONSTANT_TT, FALSE, TRUE
 };

@@ -679,7 +679,13 @@ typedef struct actioninfo_s {
     int32 symbol;      /* The symbol table index of the action name */
     int32 byte_offset; /* The (byte) offset in the Z-machine code area of 
                           the ...Sub routine */
+    int meta;          /* Only used if $GRAMMAR_META_FLAG */
 } actioninfo;
+
+typedef struct actionsort_s {
+    int internal_to_ext;
+    int external_to_int;
+} actionsort;
 
 /* Information about an object class. */
 typedef struct classinfo_s {
@@ -1541,7 +1547,7 @@ typedef struct operator_s
 
 /*  Index numbers into the keyword group "system_constants" (see "lexer.c")  */
 
-#define NO_SYSTEM_CONSTANTS   62
+#define NO_SYSTEM_CONSTANTS   63
 
 #define adjectives_table_SC   0
 #define actions_table_SC      1
@@ -1617,6 +1623,7 @@ typedef struct operator_s
 #define grammar_table_SC              59
 #define dictionary_table_SC           60
 #define dynam_string_table_SC         61     /* Glulx-only */
+#define highest_meta_action_number_SC 62
 
 
 /*  Index numbers into the keyword group "system_functions" (see "lexer.c")  */
@@ -1939,10 +1946,9 @@ typedef struct operator_s
 #define MAIN_MV               10     /* "Main" routine */
 #define SYMBOL_MV             11     /* Forward ref to unassigned symbol */
 
-/* Additional marker values used in module backpatch areas (most are
-   obsolete). */
-/* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching, even
-   without modules.) */
+/* Additional marker values (most are obsolete). */
+/* (In Glulx, OBJECT_MV and VARIABLE_MV are used in backpatching.) */
+/* (If GRAMMAR_META_FLAG is set, ACTION_MV is used in backpatching.) */
 
 #define VARIABLE_MV           12     /* Global variable */
 #define IDENT_MV              13     /* Property identifier number */
@@ -2601,6 +2607,7 @@ extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
 extern int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
+extern int GRAMMAR_META_FLAG;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int ZCODE_FILE_END_PADDING;
 extern int ZCODE_LESS_DICT_DATA;
@@ -2886,17 +2893,22 @@ extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
 extern actioninfo *actions;
+extern actionsort *sorted_actions;
+extern int no_meta_actions;
 extern memory_list actions_memlist;
 extern int32 *grammar_token_routine,
              *adjectives;
 
 extern void set_grammar_version(int val);
 extern void find_the_actions(void);
+extern int lowest_fake_action(void);
 extern void make_fake_action(void);
 extern assembly_operand action_of_name(char *name);
 extern void locate_dead_grammar_lines(void);
 extern void make_verb(void);
 extern void extend_verb(void);
+extern void sort_actions(void);
 extern void list_verb_table(void);
+extern void list_action_table(void);
 
 /* ========================================================================= */

@@ -575,7 +575,7 @@ extern void issue_debug_symbol_warnings(void)
                                           strings of the names of the
                                           properties: this is an array
                                           indexed by the property ID         */
-       int32 *action_name_strings;     /* Ditto for actions                  */
+       int32 *action_name_strings;     /* Ditto for actions and fake actions */
        int32 *attribute_name_strings;  /* Ditto for attributes               */
        int32 *array_name_strings;      /* Ditto for arrays                   */
 
@@ -684,7 +684,7 @@ extern void write_the_identifier_names(void)
             temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
             action_name_strings[symbols[i].value
-                    - ((grammar_version_number==1)?256:4096) + no_actions]
+                    - lowest_fake_action() + no_actions]
                 = compile_string(temp_symbol_buf, STRCTX_SYMBOL);
         }
     }
@@ -864,6 +864,9 @@ static void stockup_symbols(void)
 
     if (OMIT_SYMBOL_TABLE)
         create_symbol("OMIT_SYMBOL_TABLE", 0, CONSTANT_T);
+
+    if (GRAMMAR_META_FLAG)
+        create_symbol("GRAMMAR_META_FLAG", 0, CONSTANT_T);
 
     create_symbol("WORDSIZE",        WORDSIZE, CONSTANT_T);
     /* DICT_ENTRY_BYTES must be REDEFINABLE_SFLAG because the Version directive can change it. */

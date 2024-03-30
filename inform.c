@@ -1022,6 +1022,8 @@ static void run_pass(void)
     if (hash_switch && hash_printed_since_newline) printf("\n");
 
     sort_dictionary();
+    if (GRAMMAR_META_FLAG)
+        sort_actions();
     if (track_unused_routines)
         locate_dead_functions();
     locate_dead_grammar_lines();
