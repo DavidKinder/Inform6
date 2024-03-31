@@ -381,14 +381,18 @@ static void new_action(char *b, int c)
 }
 
 /* Note that fake actions are numbered from a high base point upwards;
-   real actions are numbered from 0 upward in GV2.                           */
+   real actions are numbered from 0 upward in GV2/3.                         */
 
 extern int lowest_fake_action(void)
 {
     if (grammar_version_number == 1)
         return 256;
-    else
+    else if (grammar_version_number == 2)
         return 4096;
+    else if (grammar_version_number == 3)
+        return 1024;
+    compiler_error("invalid grammar version");
+    return 0;
 }
 
 extern void make_fake_action(void)
