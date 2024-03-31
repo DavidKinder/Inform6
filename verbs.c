@@ -325,6 +325,80 @@ static void list_grammar_line_v2(int mark)
     printf("\n");
 }
 
+static void list_grammar_line_v3(int mark)
+{
+    int action, flags, actsym, tokcount;
+    int ix, len, tx;
+    char *str;
+    
+    /* There is no GV3 for Glulx. */
+    if (glulx_mode)
+        return;
+    
+    action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+    flags = (action & 0x400);
+    tokcount = (action >> 11) & 0x1F;
+    action &= 0x3FF;
+    mark += 2;
+    
+    printf("  *");
+    for (tx=0; tx<tokcount; tx++) {
+        int toktype, tokdat, tokalt;
+        toktype = grammar_lines[mark] & 0x0F;
+        tokalt = (grammar_lines[mark] >> 4) & 0x03;
+        mark += 1;
+        tokdat = grammar_lines[mark];
+        mark += 1;
+
+        if (tokalt == 3 || tokalt == 1)
+            printf(" /");
+                
+        switch (toktype) {
+        case 1:
+            switch (tokdat) {
+            case 0: printf(" noun"); break;
+            case 1: printf(" held"); break;
+            case 2: printf(" multi"); break;
+            case 3: printf(" multiheld"); break;
+            case 4: printf(" multiexcept"); break;
+            case 5: printf(" multiinside"); break;
+            case 6: printf(" creature"); break;
+            case 7: printf(" special"); break;
+            case 8: printf(" number"); break;
+            case 9: printf(" topic"); break;
+            default: printf(" ???"); break;
+            }
+            break;
+        case 2:
+            printf(" prep=%d", tokdat);
+            break;
+        case 3:
+            printf(" noun=%d", tokdat);
+            break;
+        case 4:
+            printf(" attr=%d", tokdat);
+            break;
+        case 5:
+            printf(" scope=%d", tokdat);
+            break;
+        case 6:
+            printf(" routine=%d", tokdat);
+            break;
+        default:
+            printf(" ???%d:%d", toktype, tokdat);
+            break;
+        }
+    }
+    printf(" -> ");
+    actsym = actions[action].symbol;
+    str = (symbols[actsym].name);
+    len = strlen(str) - 3;   /* remove "__A" */
+    for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
+    if (flags) printf(" (reversed)");
+    printf("\n");
+}
+
 extern void list_verb_table(void)
 {
     int verb, lx;
@@ -341,6 +415,9 @@ extern void list_verb_table(void)
                 break;
             case 2:
                 list_grammar_line_v2(mark);
+                break;
+            case 3:
+                list_grammar_line_v3(mark);
                 break;
             }
         }
