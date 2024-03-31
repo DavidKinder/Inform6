@@ -556,20 +556,26 @@ extern assembly_operand action_of_name(char *name)
                 error_named("Cannot create action (grammar version 1 is limited to 256):", name);
             }
             else {
-                error_named("Cannot create action (Z-machine grammar is limited to 4096):", name);
+                /* Note that we'll never reach this limit in Z-code (see below), but it still applies in Glulx because we run into the fake action values. */
+                error_named("Cannot create action (grammar is limited to 4096):", name);
             }
             INITAO(&AO);
             return AO;
         }
-        else {
-            ensure_memory_list_available(&actions_memlist, no_actions+1);
-            new_action(name, no_actions);
-            actions[no_actions].symbol = j;
-            actions[no_actions].meta = FALSE;
-            actions[no_actions].byte_offset = 0; /* fill in later */
-            assign_symbol(j, no_actions++, CONSTANT_T);
-            symbols[j].flags |= ACTION_SFLAG;
+        if (!glulx_mode && no_actions >= 1024) {
+            /* Z grammar tokens store the action number in a 10-bit field, so we have this additional limit. */
+            error_named("Cannot create action (Z-machine grammar is limited to 1024):", name);
+            INITAO(&AO);
+            return AO;
         }
+
+        ensure_memory_list_available(&actions_memlist, no_actions+1);
+        new_action(name, no_actions);
+        actions[no_actions].symbol = j;
+        actions[no_actions].meta = FALSE;
+        actions[no_actions].byte_offset = 0; /* fill in later */
+        assign_symbol(j, no_actions++, CONSTANT_T);
+        symbols[j].flags |= ACTION_SFLAG;
     }
     symbols[j].flags |= USED_SFLAG;
 
