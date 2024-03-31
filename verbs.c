@@ -138,8 +138,8 @@ static memory_list English_verbs_given_memlist;
 void set_grammar_version(int val)
 {
     if (!glulx_mode) {
-        if (val != 1 && val != 2) {
-            error("Z-code only supports grammar version 1 or 2.");
+        if (val != 1 && val != 2 && val != 3) {
+            error("Z-code only supports grammar version 1, 2, or 3.");
             return;
         }
     }
@@ -542,7 +542,7 @@ extern void find_the_actions(void)
 /*   Adjectives.                                                             */
 /* ------------------------------------------------------------------------- */
 
-static int make_adjective(char *English_word)
+static int make_adjective_v1(char *English_word)
 {
     /*  Returns adjective number of the English word supplied, creating
         a new adjective number if need be.
@@ -582,14 +582,44 @@ static int make_adjective(char *English_word)
     return(0xff-no_adjectives++);
 }
 
+static int make_adjective_v3(char* English_word)
+{
+    /*  Returns adjective number of the English word supplied, creating
+        a new adjective number if need be.
+
+        Adjectives are numbered from 0 upwards.
+ 
+        This routine is used only in grammar version 3.
+    */
+
+    int l;
+    int32 dict_address;
+
+    if (no_adjectives >= 255) {
+        error("Grammar version 3 cannot support more than 255 prepositions");
+        return 0;
+    }
+
+    dict_address = dictionary_add(English_word, PREP_DFLAG, 0, 0);
+    for (l = 0; l < no_adjectives; l++)
+        if (adjectives[l] == dict_address)
+            return l;
+
+    ensure_memory_list_available(&adjectives_memlist, no_adjectives + 1);
+
+    adjectives[no_adjectives] = dict_address;
+    return(no_adjectives++);
+}
+
+
 /* ------------------------------------------------------------------------- */
 /*   Parsing routines.                                                       */
 /* ------------------------------------------------------------------------- */
 
 static int make_parsing_routine(int32 routine_address)
 {
-    /*  This routine is used only in grammar version 1: the corresponding
-        table is left empty in GV2.                                          */
+    /*  This routine is used only in grammar version 1 and 3: the
+        corresponding table is left empty in GV2.                            */
 
     int l;
     for (l=0; l<no_grammar_token_routines; l++)
@@ -801,7 +831,7 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
     if (!glulx_mode) {
         mark = mark + 2;
-        TOKEN_SIZE = 3;
+        TOKEN_SIZE = (grammar_version_number == 3) ? 2 : 3;
     }
     else {
         mark = mark + 3;
@@ -845,10 +875,15 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
         if ((token_type == DQ_TT) || (token_type == SQ_TT))
         {    if (grammar_version_number == 1)
-                 bytecode = make_adjective(token_text);
-             else
+             {   bytecode = make_adjective_v1(token_text);
+             }
+             else if (grammar_version_number == 2)
              {   bytecode = 0x42;
                  wordcode = dictionary_add(token_text, PREP_DFLAG, 0, 0);
+             }
+             else if (grammar_version_number == 3)
+             {   bytecode = 0x42;
+                 wordcode = make_adjective_v3(token_text);
              }
         }
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==NOUN_DK))
@@ -866,11 +901,16 @@ static int grammar_line(int verbnum, int allmeta, int line)
                          return FALSE;
                      }
                      if (grammar_version_number == 1)
-                         bytecode
-                             = 16 + make_parsing_routine(symbols[token_value].value);
-                     else
+                     {   bytecode = 16 +
+                             make_parsing_routine(symbols[token_value].value);
+                     }
+                     else if (grammar_version_number == 2)
                      {   bytecode = 0x83;
                          wordcode = symbols[token_value].value;
+                     }
+                     else if (grammar_version_number == 3)
+                     {   bytecode = 0x83;
+                         wordcode = make_parsing_routine(symbols[token_value].value);
                      }
                      symbols[token_value].flags |= USED_SFLAG;
                  }
@@ -931,9 +971,17 @@ are using grammar version 2 or later");
                  }
 
                  if (grammar_version_number == 1)
-                     bytecode = 80 +
+                 {   bytecode = 80 +
                          make_parsing_routine(symbols[token_value].value);
-                 else { bytecode = 0x85; wordcode = symbols[token_value].value; }
+                 }
+                 else if (grammar_version_number == 2)
+                 {   bytecode = 0x85;
+                     wordcode = symbols[token_value].value;
+                 }
+                 else if (grammar_version_number == 3)
+                 {   bytecode = 0x85;
+                     wordcode = make_parsing_routine(symbols[token_value].value);
+                 }
                  symbols[token_value].flags |= USED_SFLAG;
              }
         else if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
@@ -959,9 +1007,17 @@ are using grammar version 2 or later");
                  }
                  else
                  {   if (grammar_version_number == 1)
-                         bytecode = 48 +
+                     {   bytecode = 48 +
                              make_parsing_routine(symbols[token_value].value);
-                     else { bytecode = 0x86; wordcode = symbols[token_value].value; }
+                     }
+                     else if (grammar_version_number == 2)
+                     {   bytecode = 0x86;
+                         wordcode = symbols[token_value].value;
+                     }
+                     else if (grammar_version_number == 3)
+                     {   bytecode = 0x86;
+                         wordcode = make_parsing_routine(symbols[token_value].value);
+                     }
                  }
                  symbols[token_value].flags |= USED_SFLAG;
              }
@@ -972,6 +1028,12 @@ are using grammar version 2 or later");
                 warning("Grammar line cut short: you can only have up to 6 \
 tokens in any line (for grammar version 1)");
         }
+        else if ((grammar_version_number == 3) && (grammar_token > 31))
+        {
+            if (grammar_token == 32)
+                warning("Grammar line cut short: you can only have up to 31 \
+tokens in any line (for grammar version 3)");
+        }        
         else
         {   if (slash_mode)
             {   if (bytecode != 0x42)
@@ -981,8 +1043,13 @@ tokens in any line (for grammar version 1)");
             ensure_memory_list_available(&grammar_lines_memlist, mark+5);
             grammar_lines[mark++] = bytecode;
             if (!glulx_mode) {
-                grammar_lines[mark++] = wordcode/256;
-                grammar_lines[mark++] = wordcode%256;
+                if (grammar_version_number == 3) {
+                    grammar_lines[mark++] = (wordcode & 0xFF);
+                }
+                else {
+                    grammar_lines[mark++] = wordcode/256;
+                    grammar_lines[mark++] = wordcode%256;
+                }
             }
             else {
                 grammar_lines[mark++] = ((wordcode >> 24) & 0xFF);
@@ -995,7 +1062,9 @@ tokens in any line (for grammar version 1)");
     } while (TRUE);
 
     ensure_memory_list_available(&grammar_lines_memlist, mark+1);
-    grammar_lines[mark++] = 15;
+    if (grammar_version_number != 3) {
+        grammar_lines[mark++] = 15; /* ENDIT */
+    }
     grammar_lines_top = mark;
 
     dont_enter_into_symbol_table = TRUE;
@@ -1065,6 +1134,8 @@ tokens in any line (for grammar version 1)");
 
     ensure_memory_list_available(&grammar_lines_memlist, mark+3);
     if (!glulx_mode) {
+        if (grammar_version_number == 3)
+            j = j + (grammar_token << 11);
         if (reverse_action)
             j = j + 0x400;
         grammar_lines[mark++] = j/256;
