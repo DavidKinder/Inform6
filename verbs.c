@@ -792,16 +792,21 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
         is compiled to a table in the form:
 
-                <action number : word>
+                <action : word>
                 <token 1> ... <token n> <ENDIT>
 
         where <ENDIT> is the byte 15, and each <token> is 3 bytes long.
+        The action word contains the action number (bottom 10 bits)
+        and the "reverse" flag (bit 10).
 
         If grammar_version_number is 1, the token holds
 
                 <bytecode> 00 00
 
         and otherwise a GV2 token.
+
+        If grammar_version_number is 3, we omit the <ENDIT> and instead
+        encode the token count in the top 5 bits of the action word.
 
         Return TRUE if grammar continues after the line, FALSE if the
         directive comes to an end.                                           */
