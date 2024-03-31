@@ -467,7 +467,7 @@ extern int lowest_fake_action(void)
     else if (grammar_version_number == 2)
         return 4096;
     else if (grammar_version_number == 3)
-        return 1024;
+        return 4096;
     compiler_error("invalid grammar version");
     return 0;
 }
