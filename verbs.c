@@ -638,7 +638,7 @@ static int make_adjective_v1(char *English_word)
         from 0xff downwards.  (And partly to make them stand out as tokens.)
 
         This routine is used only in grammar version 1: the corresponding
-        table is left empty in GV2.                                          */
+        table is left empty in GV2. For GV3, see below.                      */
 
     uchar *new_sort_code;
     int i; 
