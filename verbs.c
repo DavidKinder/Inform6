@@ -888,7 +888,7 @@ static int grammar_line(int verbnum, int allmeta, int line)
         long. The action word contains the action number (bottom 10 bits)
         and the "reverse" flag (bit 10).
 
-        If grammar_version_number is 1, the token holds
+        The token format is:
 
                 <bytecode> 00    00     [GV1]
                 <bytecode> <dat> <dat>  [GV2]
