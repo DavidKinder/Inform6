@@ -370,7 +370,9 @@ static void list_grammar_line_v3(int mark)
             }
             break;
         case 2:
-            printf(" prep=%d", tokdat);
+            printf(" '");
+            print_dict_word(adjectives[tokdat]);
+            printf("'");
             break;
         case 3:
             printf(" noun=%d", tokdat);
