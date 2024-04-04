@@ -616,13 +616,13 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 {
     /*  If new_number is null, returns the Inform-verb number which the
      *  given English verb causes, or -1 if the given verb is not in the
-     *  dictionary                     */
+     *  dictionary. */
 
     /*  If new_number is non-null, renumbers the Inform-verb number which
      *  English_verb matches in English_verb_list to account for the case
      *  when we are extending a verb.  Returns 0 if successful, or -1 if
      *  the given verb is not in the dictionary (which shouldn't happen as
-     *  get_verb has already run) */
+     *  get_verb has already run). */
 
     char *p;
     p=English_verb_list;
