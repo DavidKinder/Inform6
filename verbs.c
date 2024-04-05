@@ -670,37 +670,26 @@ static void print_verbs_by_number(int num)
 }
 
 /*### just pass in a verbs_given entry to clone! */
-static void register_verb(char *English_verb, int number)
+static void register_verb(int textpos, int number)
 {
     /*  Registers a new English verb as referring to the given Inform-verb
         number.  (See comments above for format of the list.)                */
-    int wordlen;
-    int textpos;
     int vx;
+
+    char *str = textpos + English_verbs_text;
     
-    if (find_verb(English_verb) != -1)
-    {   error_named("Two different verb definitions refer to", English_verb);
+    if (find_verb(str) != -1)
+    {   error_named("Two different verb definitions refer to", str);
         return;
     }
 
     vx = English_verbs_count;
     ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
 
-    textpos = English_verbs_text_size;
-    
     English_verbs[vx].textpos = textpos;
     English_verbs[vx].verbnum = number;
     English_verbs[vx].dictword = -1;
     
-    /* We set a hard limit of MAX_VERB_WORD_SIZE=120 for historical
-       reasons that no longer apply. */
-    wordlen = strlen(English_verb);
-    if (wordlen > MAX_VERB_WORD_SIZE)
-        error_fmt("Verb word is too long -- max length is %d", MAX_VERB_WORD_SIZE);
-    ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
-    strcpy(English_verbs_text+textpos, English_verb);
-    
-    English_verbs_text_size += (wordlen+1);
     English_verbs_count++;
 }
 
@@ -1186,7 +1175,7 @@ extern void make_verb(void)
         dictionary_add(wd,
             flags,
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
-        register_verb(wd, Inform_verb);
+        register_verb(English_verbs_given[ix].textpos, Inform_verb);
     }
 
     if (!verb_equals_form)
