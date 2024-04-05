@@ -87,13 +87,11 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*   We keep a list of English verb-words known (e.g. "take" or "eat") and   */
 /*   which Inform-verbs they correspond to.  (This list is needed for some   */
 /*   of the grammar extension operations.)                                   */
-/*   The format of this list is a sequence of variable-length records:       */
-/*                                                                           */
-/*     Byte offset to start of next record  (1 byte)                         */
-/*     Inform verb number this word corresponds to  (2 bytes)                */
-/*     The English verb-word (reduced to lower case), null-terminated        */
 /* ------------------------------------------------------------------------- */
 
+/* This struct is used in two lists. In make_verb() we create entries in
+   English_verbs_given[]; then we transfer those entries to English_verbs[].
+   (### The two-step process is probably no longer necessary.) */
 typedef struct English_verb_s {
     int textpos;  /* in English_verbs_text */
     int dictword; /* dict word accession num */
@@ -673,7 +671,7 @@ static void print_verbs_by_number(int num)
 static void register_verb(int textpos, int number)
 {
     /*  Registers a new English verb as referring to the given Inform-verb
-        number.  (See comments above for format of the list.)                */
+        number.  (See comments above for format of the list.) ###            */
     int vx;
 
     char *str = textpos + English_verbs_text;
