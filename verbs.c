@@ -89,9 +89,6 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*   of the grammar extension operations.)                                   */
 /* ------------------------------------------------------------------------- */
 
-/* This struct is used in two lists. In make_verb() we create entries in
-   English_verbs_given[]; then we transfer those entries to English_verbs[].
-   (### The two-step process is probably no longer necessary.) */
 typedef struct English_verb_s {
     int textpos;  /* in English_verbs_text */
     int dictword; /* dict word accession num */
@@ -105,10 +102,6 @@ static int English_verbs_count;
 static char *English_verbs_text;     /* Allocated to English_verbs_text_size */
 static memory_list English_verbs_text_memlist;
 static int English_verbs_text_size;
-
-static English_verb_t *English_verbs_given;   /* Allocated to no_given
-                                              (Used only within make_verb()) */
-static memory_list English_verbs_given_memlist;
 
 /* ------------------------------------------------------------------------- */
 /*   Arrays used by this file                                                */
@@ -667,23 +660,6 @@ static void print_verbs_by_number(int num)
         printf(" <none>");
 }
 
-/*### just pass in a verbs_given entry to clone! */
-static void register_verb(int textpos, int number)
-{
-    /*  Registers a new English verb as referring to the given Inform-verb
-        number.  (See comments above for format of the list.) ###            */
-    int vx;
-
-    vx = English_verbs_count;
-    ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
-
-    English_verbs[vx].textpos = textpos;
-    English_verbs[vx].verbnum = number;
-    English_verbs[vx].dictword = -1;
-    
-    English_verbs_count++;
-}
-
 static int get_verb(void)
 {
     /*  Look at the last-read token: if it's the name of an English verb
@@ -1094,8 +1070,7 @@ extern void make_verb(void)
     /*  Parse an entire Verb ... directive.                                  */
 
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
-
-    int no_given = 0;
+    int first_given_verb = English_verbs_count;
     int ix;
 
     directive_keywords.enabled = TRUE;
@@ -1121,19 +1096,19 @@ extern void make_verb(void)
         textpos = English_verbs_text_size;
         ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
         strcpy(English_verbs_text+textpos, token_text);
-        
-        ensure_memory_list_available(&English_verbs_given_memlist, no_given+1);
         English_verbs_text_size += (wordlen+1);
         
-        English_verbs_given[no_given].textpos = textpos;
-        English_verbs_given[no_given].verbnum = -1;
-        English_verbs_given[no_given].dictword = -1;
-        no_given++;
+        ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
+        
+        English_verbs[English_verbs_count].textpos = textpos;
+        English_verbs[English_verbs_count].verbnum = -1;
+        English_verbs[English_verbs_count].dictword = -1;
+        English_verbs_count++;
         
         get_next_token();
     }
 
-    if (no_given == 0)
+    if (first_given_verb == English_verbs_count)
     {   ebf_curtoken_error("English verb in quotes");
         panic_mode_error_recovery(); return;
     }
@@ -1167,15 +1142,15 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].used = FALSE;
     }
 
-    for (ix=0; ix<no_given; ix++) {
-        char *wd = English_verbs_given[ix].textpos + English_verbs_text;
+    for (ix=first_given_verb; ix<English_verbs_count; ix++) {
+        char *wd = English_verbs[ix].textpos + English_verbs_text;
         int flags = VERB_DFLAG
             + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
             + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
         dictionary_add(wd,
             flags,
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
-        register_verb(English_verbs_given[ix].textpos, Inform_verb);
+        English_verbs[ix].verbnum = Inform_verb;
     }
 
     if (!verb_equals_form)
@@ -1371,7 +1346,6 @@ extern void init_verbs_vars(void)
     adjective_sort_code = NULL;
     English_verbs = NULL;
     English_verbs_text = NULL;
-    English_verbs_given = NULL;
 
     /* Set the default grammar version value (will be adjusted later) */
     if (!glulx_mode)
@@ -1436,10 +1410,6 @@ extern void verbs_allocate_arrays(void)
     initialise_memory_list(&English_verbs_text_memlist,
         sizeof(char), 2048, (void**)&English_verbs_text,
         "text of registered verbs");
-
-    initialise_memory_list(&English_verbs_given_memlist,
-        sizeof(English_verb_t), 20, (void**)&English_verbs_given,
-        "verb words within a single definition");
     
 }
 
@@ -1463,7 +1433,6 @@ extern void verbs_free_arrays(void)
     deallocate_memory_list(&action_symname_memlist);
     deallocate_memory_list(&English_verbs_memlist);
     deallocate_memory_list(&English_verbs_text_memlist);
-    deallocate_memory_list(&English_verbs_given_memlist);
 }
 
 /* ========================================================================= */
