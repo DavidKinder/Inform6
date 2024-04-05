@@ -612,28 +612,37 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_or_renumber_verb(char *English_verb, int *new_number)
+static int find_verb(char *English_verb)
 {
-    /*  If new_number is null, returns the Inform-verb number which the
-     *  given English verb causes, or -1 if the given verb is not in the
-     *  dictionary. */
+    /*  Returns the Inform-verb number which the given English verb
+     *  causes, or -1 if the given verb is not in the dictionary. */
 
-    /*  If new_number is non-null, renumbers the Inform-verb number which
-     *  English_verb matches in English_verb_list to account for the case
-     *  when we are extending a verb.  Returns 0 if successful, or -1 if
-     *  the given verb is not in the dictionary (which shouldn't happen as
+    char *p;
+    p=English_verb_list;
+    while (p < English_verb_list+English_verb_list_size)
+    {   if (strcmp(English_verb, p+3) == 0)
+        {   return(256*((uchar)p[1]))+((uchar)p[2]);
+        }
+        p=p+(uchar)p[0];
+    }
+    return(-1);
+}
+
+static int renumber_verb(char *English_verb, int new_number)
+{
+    /*  Renumbers the Inform-verb number which English_verb matches in
+     *  English_verb_list to account for the case when we are
+     *  extending a verb. Returns 0 if successful, or -1 if the given
+     *  verb is not in the dictionary (which shouldn't happen as
      *  get_verb has already run). */
 
     char *p;
     p=English_verb_list;
     while (p < English_verb_list+English_verb_list_size)
     {   if (strcmp(English_verb, p+3) == 0)
-        {   if (new_number)
-            {   p[1] = (*new_number)/256;
-                p[2] = (*new_number)%256;
-                return 0;
-            }
-            return(256*((uchar)p[1]))+((uchar)p[2]);
+        {   p[1] = new_number/256;
+            p[2] = new_number%256;
+            return 0;
         }
         p=p+(uchar)p[0];
     }
@@ -665,7 +674,7 @@ static void register_verb(char *English_verb, int number)
     char *top;
     int entrysize;
 
-    if (find_or_renumber_verb(English_verb, NULL) != -1)
+    if (find_verb(English_verb) != -1)
     {   error_named("Two different verb definitions refer to", English_verb);
         return;
     }
@@ -695,7 +704,7 @@ static int get_verb(void)
     int j;
 
     if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   j = find_or_renumber_verb(token_text, NULL);
+    {   j = find_verb(token_text);
         if (j==-1)
             error_named("There is no previous grammar for the verb",
                 token_text);
@@ -1222,7 +1231,7 @@ extern void extend_verb(void)
             dictionary_set_verb_number(token_text,
               (glulx_mode)?(0xffff-no_Inform_verbs):(0xff-no_Inform_verbs));
             /* make call to renumber verb in English_verb_list too */
-            if (find_or_renumber_verb(token_text, &no_Inform_verbs) == -1)
+            if (renumber_verb(token_text, no_Inform_verbs) == -1)
               warning_named("Verb to extend not found in English_verb_list:",
                  token_text);
         }
