@@ -674,13 +674,6 @@ static void register_verb(int textpos, int number)
         number.  (See comments above for format of the list.) ###            */
     int vx;
 
-    char *str = textpos + English_verbs_text;
-    
-    if (find_verb(str) != -1)
-    {   error_named("Two different verb definitions refer to", str);
-        return;
-    }
-
     vx = English_verbs_count;
     ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
 
@@ -1116,8 +1109,16 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int wordlen = strlen(token_text);
-        int textpos = English_verbs_text_size;
+        int wordlen, textpos;
+        
+        if (find_verb(token_text) != -1)
+        {   error_named("Two different verb definitions refer to", token_text);
+            get_next_token();
+            continue;
+        }
+
+        wordlen = strlen(token_text);
+        textpos = English_verbs_text_size;
         ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
         strcpy(English_verbs_text+textpos, token_text);
         
