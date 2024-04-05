@@ -1141,7 +1141,8 @@ extern void make_verb(void)
     {   verb_equals_form = TRUE;
         get_next_token();
         Inform_verb = get_verb();
-        if (Inform_verb == -1) return;
+        if (Inform_verb == -1)
+            return; /* error already printed */
         get_next_token();
         if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
             ebf_curtoken_error("';' after English verb");
