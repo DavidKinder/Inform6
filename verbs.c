@@ -1170,9 +1170,9 @@ extern void make_verb(void)
     /* Inform_verb is now the I-verb which those E-verbs should invoke. */
 
     for (ix=first_given_verb; ix<English_verbs_count; ix++) {
+        English_verbs[ix].verbnum = Inform_verb;
         dictionary_set_verb_number_NEW(English_verbs[ix].dictword,
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb));
-        English_verbs[ix].verbnum = Inform_verb;
     }
 
     if (!verb_equals_form)

@@ -2524,11 +2524,11 @@ extern void dictionary_set_verb_number_NEW(int dictword, int to)
     if (i >= 0 && i < dict_entries)
     {   
         if (!glulx_mode) {
-            p=dictionary+7+(i-1)*DICT_ENTRY_BYTE_LENGTH+res; 
+            p=dictionary+7+i*DICT_ENTRY_BYTE_LENGTH+res; 
             p[1]=to;
         }
         else {
-            p=dictionary+4 + (i-1)*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
+            p=dictionary+4 + i*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
             p[2]=to/256; p[3]=to%256;
         }
     }
