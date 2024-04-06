@@ -69,7 +69,7 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*           correspond in a game's dictionary to the same Inform verb.  An  */
 /*           Inform verb is essentially a list of grammar lines.             */
 /*           (Calling them "English verbs" is of course out of date. Read    */
-/*           this as jargon for "dict words which are verbs".                */
+/*           this as jargon for "dict words which are verbs".)               */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
@@ -1108,7 +1108,7 @@ extern void make_verb(void)
         get_next_token();
     }
     
-    /* The verbs defined in this directive run from first_given_verb
+    /* The E-verbs defined in this directive run from first_given_verb
        to English_verbs_count. */
 
     if (first_given_verb == English_verbs_count)
@@ -1117,7 +1117,7 @@ extern void make_verb(void)
     }
 
     if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
-    {   /* Define those verbs to match an existing verb. */
+    {   /* Define those E-verbs to match an existing I-verb. */
         verb_equals_form = TRUE;
         get_next_token();
         Inform_verb = get_verb();
@@ -1128,7 +1128,7 @@ extern void make_verb(void)
             ebf_curtoken_error("';' after English verb");
     }
     else
-    {   /* Define those verbs to be a brand-new verb. */
+    {   /* Define those E-verbs to be a brand-new I-verb. */
         verb_equals_form = FALSE;
         if (!glulx_mode && no_Inform_verbs >= 255) {
             error("Z-code is limited to 255 verbs.");
@@ -1146,6 +1146,8 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].line = get_brief_location(&ErrorReport);
         Inform_verbs[no_Inform_verbs].used = FALSE;
     }
+
+    /* Inform_verb is now the I-verb which those E-verbs should invoke. */
 
     for (ix=first_given_verb; ix<English_verbs_count; ix++) {
         char *wd = English_verbs[ix].textpos + English_verbs_text;
