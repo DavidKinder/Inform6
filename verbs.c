@@ -70,6 +70,8 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*           Inform verb (I-verb) is essentially a list of grammar lines.    */
 /*           An English verb (E-verb, although of course it might not be     */
 /*           English!) is a dict word which is known to be a verb.           */
+/*           Each E-verb's #dict_par2 field contains the I-verb index that   */
+/*           it corresponds to.                                              */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
