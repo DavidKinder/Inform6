@@ -1136,7 +1136,7 @@ extern void make_verb(void)
     {   /* Define those E-verbs to match an existing I-verb. */
         verb_equals_form = TRUE;
         get_next_token();
-        Inform_verb = get_existing_verb(); //### by dict word
+        Inform_verb = get_existing_verb();
         if (Inform_verb == -1)
             return; /* error already printed */
         get_next_token();
