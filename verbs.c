@@ -627,21 +627,6 @@ static int find_verb(int dictword)
     return(-1);
 }
 
-//###
-static int find_verb_by_text(char *English_verb)
-{
-    /*  Returns the Inform-verb number which the given English verb
-     *  causes, or -1 if the given verb is not in the dictionary. */
-    int ix;
-    for (ix=0; ix<English_verbs_count; ix++) {
-        char *str = English_verbs[ix].textpos + English_verbs_text;
-        if (!strcmp(English_verb, str)) {
-            return English_verbs[ix].verbnum;
-        }
-    }
-    return(-1);
-}
-
 static int renumber_verb(char *English_verb, int new_number)
 {
     /*  Renumbers the Inform-verb number which English_verb matches in
