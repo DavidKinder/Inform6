@@ -2289,21 +2289,21 @@ extern void sort_dictionary(void)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   If "dword" is in the dictionary, return its accession number plus 1;    */
-/*   If not, return 0.                                                       */
+/*   If "dword" is in the dictionary, return its accession number;           */
+/*   If not, return -1.                                                      */
 /* ------------------------------------------------------------------------- */
 
-static int dictionary_find(char *dword)
+extern int dictionary_find(char *dword)
 {   int at = root, n;
 
     dictionary_prepare(dword, NULL);
 
     while (at != VACANT)
     {   n = compare_sorts(prepared_sort, dict_sort_codes+at*DICT_WORD_BYTES);
-        if (n==0) return at + 1;
+        if (n==0) return at;
         if (n>0) at = dtree[at].branch[1]; else at = dtree[at].branch[0];
     }
-    return 0;
+    return -1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2504,14 +2504,14 @@ extern void dictionary_set_verb_number(char *dword, int to)
 {   int i; uchar *p;
     int res=((version_number==3)?4:6);
     i=dictionary_find(dword);
-    if (i!=0)
+    if (i >= 0)
     {   
         if (!glulx_mode) {
-            p=dictionary+7+(i-1)*DICT_ENTRY_BYTE_LENGTH+res; 
+            p=dictionary+7+i*DICT_ENTRY_BYTE_LENGTH+res; 
             p[1]=to;
         }
         else {
-            p=dictionary+4 + (i-1)*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
+            p=dictionary+4 + i*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
             p[2]=to/256; p[3]=to%256;
         }
     }

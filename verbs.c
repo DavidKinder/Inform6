@@ -627,6 +627,7 @@ static int find_verb(int dictword)
     return(-1);
 }
 
+//###
 static int find_verb_by_text(char *English_verb)
 {
     /*  Returns the Inform-verb number which the given English verb
@@ -675,19 +676,29 @@ static void print_verbs_by_number(int num)
         printf(" <none>");
 }
 
-static int get_verb(void)
+static int get_existing_verb(void)
 {
     /*  Look at the last-read token: if it's the name of an English verb
         understood by Inform, in double-quotes, then return the Inform-verb
-        that word refers to: otherwise give an error and return -1.          */
+        that word refers to: otherwise give an error and return -1.
+    */
 
-    int j;
+    int j, dictword;
 
     if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   j = find_verb_by_text(token_text);
-        if (j==-1)
+    {
+        dictword = dictionary_find(token_text);
+        if (dictword < 0) {
             error_named("There is no previous grammar for the verb",
                 token_text);
+            return -1;
+        }
+        j = find_verb(dictword);
+        if (j < 0) {
+            error_named("There is no previous grammar for the verb",
+                token_text);
+            return -1;
+        }
         return j;
     }
 
@@ -1140,7 +1151,7 @@ extern void make_verb(void)
     {   /* Define those E-verbs to match an existing I-verb. */
         verb_equals_form = TRUE;
         get_next_token();
-        Inform_verb = get_verb();
+        Inform_verb = get_existing_verb(); //### by dict word
         if (Inform_verb == -1)
             return; /* error already printed */
         get_next_token();
@@ -1223,7 +1234,7 @@ extern void extend_verb(void)
         l = -1;
         while (get_next_token(),
                ((token_type == DQ_TT) || (token_type == SQ_TT)))
-        {   Inform_verb = get_verb();
+        {   Inform_verb = get_existing_verb();
             if (Inform_verb == -1) return;
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
@@ -1253,7 +1264,7 @@ extern void extend_verb(void)
         Inform_verb = no_Inform_verbs++;
     }
     else
-    {   Inform_verb = get_verb();
+    {   Inform_verb = get_existing_verb();
         if (Inform_verb == -1) return;
         get_next_token();
     }

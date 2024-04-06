@@ -2864,6 +2864,7 @@ extern void  write_dictionary_to_transcript(void);
 extern void  sort_dictionary(void);
 extern void  dictionary_prepare(char *dword, uchar *optresult);
 extern int   dictionary_add(char *dword, int x, int y, int z);
+extern int   dictionary_find(char *dword);
 extern void  dictionary_set_verb_number(char *dword, int to);
 extern void  dictionary_set_verb_number_NEW(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
