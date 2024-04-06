@@ -2502,19 +2502,19 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 /* ------------------------------------------------------------------------- */
 
 extern void dictionary_set_verb_number(int dictword, int infverb)
-{   uchar *p;
-    int i = dictword;
-    int to = ((glulx_mode)?(0xffff-infverb):(0xff-infverb));
+{
+    int flag2 = ((glulx_mode)?(0xffff-infverb):(0xff-infverb));
     int res = ((version_number==3)?4:6);
-    if (i >= 0 && i < dict_entries)
-    {   
+    if (dictword >= 0 && dictword < dict_entries)
+    {
+        uchar *p;
         if (!glulx_mode) {
-            p=dictionary+7+i*DICT_ENTRY_BYTE_LENGTH+res; 
-            p[1]=to;
+            p=dictionary+7+dictword*DICT_ENTRY_BYTE_LENGTH+res; 
+            p[1]=flag2;
         }
         else {
-            p=dictionary+4 + i*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
-            p[2]=to/256; p[3]=to%256;
+            p=dictionary+4 + dictword*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
+            p[2]=flag2/256; p[3]=flag2%256;
         }
     }
 }
