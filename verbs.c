@@ -67,9 +67,9 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*   Verbs.  Note that Inform-verbs are not quite the same as English verbs: */
 /*           for example the English verbs "take" and "drop" both normally   */
 /*           correspond in a game's dictionary to the same Inform verb.  An  */
-/*           Inform verb is essentially a list of grammar lines.             */
-/*           (Calling them "English verbs" is of course out of date. Read    */
-/*           this as jargon for "dict words which are verbs".)               */
+/*           Inform verb (I-verb) is essentially a list of grammar lines.    */
+/*           An English verb (E-verb, although of course it might not be     */
+/*           English!) is a dict word which is known to be a verb.           */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
