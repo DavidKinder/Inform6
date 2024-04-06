@@ -2500,23 +2500,6 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 /*   change their verb-numbers.)                                             */
 /* ------------------------------------------------------------------------- */
 
-extern void dictionary_set_verb_number(char *dword, int to)
-{   int i; uchar *p;
-    int res=((version_number==3)?4:6);
-    i=dictionary_find(dword);
-    if (i >= 0)
-    {   
-        if (!glulx_mode) {
-            p=dictionary+7+i*DICT_ENTRY_BYTE_LENGTH+res; 
-            p[1]=to;
-        }
-        else {
-            p=dictionary+4 + i*DICT_ENTRY_BYTE_LENGTH + DICT_ENTRY_FLAG_POS; 
-            p[2]=to/256; p[3]=to%256;
-        }
-    }
-}
-
 extern void dictionary_set_verb_number_NEW(int dictword, int to)
 {   uchar *p;
     int i = dictword;
