@@ -2504,11 +2504,11 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 extern void dictionary_set_verb_number(int dictword, int infverb)
 {
     int flag2 = ((glulx_mode)?(0xffff-infverb):(0xff-infverb));
-    int res = ((version_number==3)?4:6);
     if (dictword >= 0 && dictword < dict_entries)
     {
         uchar *p;
         if (!glulx_mode) {
+            int res = ((version_number==3)?4:6);
             p=dictionary+7+dictword*DICT_ENTRY_BYTE_LENGTH+res; 
             p[1]=flag2;
         }
