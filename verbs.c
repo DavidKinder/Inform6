@@ -1107,6 +1107,9 @@ extern void make_verb(void)
         
         get_next_token();
     }
+    
+    /* The verbs defined in this directive run from first_given_verb
+       to English_verbs_count. */
 
     if (first_given_verb == English_verbs_count)
     {   ebf_curtoken_error("English verb in quotes");
@@ -1114,7 +1117,8 @@ extern void make_verb(void)
     }
 
     if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
-    {   verb_equals_form = TRUE;
+    {   /* Define those verbs to match an existing verb. */
+        verb_equals_form = TRUE;
         get_next_token();
         Inform_verb = get_verb();
         if (Inform_verb == -1)
@@ -1124,7 +1128,8 @@ extern void make_verb(void)
             ebf_curtoken_error("';' after English verb");
     }
     else
-    {   verb_equals_form = FALSE;
+    {   /* Define those verbs to be a brand-new verb. */
+        verb_equals_form = FALSE;
         if (!glulx_mode && no_Inform_verbs >= 255) {
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
