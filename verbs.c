@@ -1101,7 +1101,6 @@ extern void make_verb(void)
         English_verbs_text_size += (wordlen+1);
         
         ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
-        
         English_verbs[English_verbs_count].textpos = textpos;
         English_verbs[English_verbs_count].verbnum = -1;
         English_verbs[English_verbs_count].dictword = -1;
