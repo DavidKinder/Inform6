@@ -673,29 +673,28 @@ static int get_existing_verb(int *dictref)
     if (dictref)
         *dictref = -1;
 
-    //###
-    if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {
-        dictword = dictionary_find(token_text);
-        if (dictword < 0) {
-            error_named("There is no previous grammar for the verb",
-                token_text);
-            return -1;
-        }
-        j = find_verb(dictword);
-        if (j < 0) {
-            error_named("There is no previous grammar for the verb",
-                token_text);
-            return -1;
-        }
-        if (dictref)
-            *dictref = dictword;
-        return j;
+    if ((token_type != DQ_TT) && (token_type != SQ_TT)) {
+        ebf_curtoken_error("an English verb in quotes");
+        return -1;
     }
 
-    ebf_curtoken_error("an English verb in quotes");
-
-    return -1;
+    dictword = dictionary_find(token_text);
+    if (dictword < 0) {
+        error_named("There is no previous grammar for the verb",
+            token_text);
+        return -1;
+    }
+    
+    j = find_verb(dictword);
+    if (j < 0) {
+        error_named("There is no previous grammar for the verb",
+            token_text);
+        return -1;
+    }
+    
+    if (dictref)
+        *dictref = dictword;
+    return j;
 }
 
 void locate_dead_grammar_lines()
