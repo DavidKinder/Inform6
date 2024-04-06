@@ -614,7 +614,20 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_verb(char *English_verb)
+static int find_verb(int dictword)
+{
+    /*  Returns the Inform-verb number which the given dict word
+     *  causes, or -1 if the given verb is not in the dictionary. */
+    int ix;
+    for (ix=0; ix<English_verbs_count; ix++) {
+        if (English_verbs[ix].dictword == dictword) {
+            return English_verbs[ix].verbnum;
+        }
+    }
+    return(-1);
+}
+
+static int find_verb_by_text(char *English_verb)
 {
     /*  Returns the Inform-verb number which the given English verb
      *  causes, or -1 if the given verb is not in the dictionary. */
@@ -671,7 +684,7 @@ static int get_verb(void)
     int j;
 
     if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   j = find_verb(token_text);
+    {   j = find_verb_by_text(token_text);
         if (j==-1)
             error_named("There is no previous grammar for the verb",
                 token_text);
@@ -1086,9 +1099,14 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int wordlen, textpos;
+        int wordlen, textpos, dictword;
+
+        int flags = VERB_DFLAG
+            + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
+            + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
+        dictword = dictionary_add(token_text, flags, 0, 0);
         
-        if (find_verb(token_text) != -1)
+        if (find_verb(dictword) != -1)
         {   error_named("Two different verb definitions refer to", token_text);
             get_next_token();
             continue;
@@ -1103,7 +1121,7 @@ extern void make_verb(void)
         ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
         English_verbs[English_verbs_count].textpos = textpos;
         English_verbs[English_verbs_count].verbnum = -1;
-        English_verbs[English_verbs_count].dictword = -1;
+        English_verbs[English_verbs_count].dictword = dictword;
         English_verbs_count++;
         
         get_next_token();
@@ -1152,13 +1170,8 @@ extern void make_verb(void)
     /* Inform_verb is now the I-verb which those E-verbs should invoke. */
 
     for (ix=first_given_verb; ix<English_verbs_count; ix++) {
-        char *wd = English_verbs[ix].textpos + English_verbs_text;
-        int flags = VERB_DFLAG
-            + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
-            + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
-        dictionary_add(wd,
-            flags,
-            (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
+        dictionary_set_verb_number_NEW(English_verbs[ix].dictword,
+            (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb));
         English_verbs[ix].verbnum = Inform_verb;
     }
 
