@@ -1113,7 +1113,8 @@ extern void make_verb(void)
        to English_verbs_count. */
 
     if (first_given_verb == English_verbs_count)
-    {   ebf_curtoken_error("English verb in quotes");
+    {   /* No E-verbs given at all! */
+        ebf_curtoken_error("English verb in quotes");
         panic_mode_error_recovery(); return;
     }
 
