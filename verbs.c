@@ -1174,7 +1174,7 @@ extern void make_verb(void)
 
     for (ix=first_given_verb; ix<English_verbs_count; ix++) {
         English_verbs[ix].verbnum = Inform_verb;
-        dictionary_set_verb_number_NEW(English_verbs[ix].dictword,
+        dictionary_set_verb_number(English_verbs[ix].dictword,
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb));
     }
 
@@ -1233,7 +1233,7 @@ extern void extend_verb(void)
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
             l = Inform_verb;
-            dictionary_set_verb_number_NEW(dictword,
+            dictionary_set_verb_number(dictword,
               (glulx_mode)?(0xffff-no_Inform_verbs):(0xff-no_Inform_verbs));
             /* make call to renumber verb in English_verb_list too */
             if (renumber_verb(token_text, no_Inform_verbs) == -1)

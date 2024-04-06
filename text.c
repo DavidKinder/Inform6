@@ -2495,12 +2495,12 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Used in "verbs.c" for "Extend ... only", to renumber a verb-word to a   */
-/*   new verb syntax of its own.  (Otherwise existing verb-words never       */
-/*   change their verb-numbers.)                                             */
+/*   Used for "Verb" and "Extend ... only", to initially set or renumber a   */
+/*   verb-word to a new Inform verb index. The verb number is stored in      */
+/*   #dict_par2.                                                             */
 /* ------------------------------------------------------------------------- */
 
-extern void dictionary_set_verb_number_NEW(int dictword, int to)
+extern void dictionary_set_verb_number(int dictword, int to)
 {   uchar *p;
     int i = dictword;
     int res=((version_number==3)?4:6);
