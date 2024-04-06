@@ -627,17 +627,16 @@ static int find_verb(int dictword)
     return(-1);
 }
 
-static int renumber_verb(char *English_verb, int new_number)
+static int renumber_verb(int dictword, int new_number)
 {
     /*  Renumbers the Inform-verb number which English_verb matches in
-     *  English_verb_list to account for the case when we are
+     *  English_verbs to account for the case when we are
      *  extending a verb. Returns 0 if successful, or -1 if the given
      *  verb is not in the dictionary (which shouldn't happen as
-     *  get_verb has already run). */
+     *  get_existing_verb() has already run). */
     int ix;
     for (ix=0; ix<English_verbs_count; ix++) {
-        char *str = English_verbs[ix].textpos + English_verbs_text;
-        if (!strcmp(English_verb, str)) {
+        if (English_verbs[ix].dictword == dictword) {
             English_verbs[ix].verbnum = new_number;
             return 0;
         }
@@ -1230,14 +1229,15 @@ extern void extend_verb(void)
             int dictword;
             Inform_verb = get_existing_verb(&dictword);
             if (Inform_verb == -1) return;
+            /* dictword is the dict index number of token_text */
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
             l = Inform_verb;
             dictionary_set_verb_number(dictword,
               (glulx_mode)?(0xffff-no_Inform_verbs):(0xff-no_Inform_verbs));
-            /* make call to renumber verb in English_verb_list too */
-            if (renumber_verb(token_text, no_Inform_verbs) == -1)
-              warning_named("Verb to extend not found in English_verb_list:",
+            /* make call to renumber verb in English_verbs too */
+            if (renumber_verb(dictword, no_Inform_verbs) == -1)
+              warning_named("Verb to extend not found in English_verbs:",
                  token_text);
         }
 
