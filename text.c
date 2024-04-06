@@ -2496,14 +2496,16 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 
 /* ------------------------------------------------------------------------- */
 /*   Used for "Verb" and "Extend ... only", to initially set or renumber a   */
-/*   verb-word to a new Inform verb index. The verb number is stored in      */
-/*   #dict_par2.                                                             */
+/*   verb-word to a new Inform verb index.                                   */
+/*   The verb number is inverted (we count down from $FF/$FFFF) and stored   */
+/*   in #dict_par2.                                                          */
 /* ------------------------------------------------------------------------- */
 
-extern void dictionary_set_verb_number(int dictword, int to)
+extern void dictionary_set_verb_number(int dictword, int infverb)
 {   uchar *p;
     int i = dictword;
-    int res=((version_number==3)?4:6);
+    int to = ((glulx_mode)?(0xffff-infverb):(0xff-infverb));
+    int res = ((version_number==3)?4:6);
     if (i >= 0 && i < dict_entries)
     {   
         if (!glulx_mode) {
