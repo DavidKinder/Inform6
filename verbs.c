@@ -614,31 +614,29 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_verb(char *English_verb)
+static int find_verb(int dictword)
 {
-    /*  Returns the Inform-verb number which the given English verb
+    /*  Returns the Inform-verb number which the given dict word
      *  causes, or -1 if the given verb is not in the dictionary. */
     int ix;
     for (ix=0; ix<English_verbs_count; ix++) {
-        char *str = English_verbs[ix].textpos + English_verbs_text;
-        if (!strcmp(English_verb, str)) {
+        if (English_verbs[ix].dictword == dictword) {
             return English_verbs[ix].verbnum;
         }
     }
     return(-1);
 }
 
-static int renumber_verb(char *English_verb, int new_number)
+static int renumber_verb(int dictword, int new_number)
 {
     /*  Renumbers the Inform-verb number which English_verb matches in
-     *  English_verb_list to account for the case when we are
+     *  English_verbs to account for the case when we are
      *  extending a verb. Returns 0 if successful, or -1 if the given
      *  verb is not in the dictionary (which shouldn't happen as
-     *  get_verb has already run). */
+     *  get_existing_verb() has already run). */
     int ix;
     for (ix=0; ix<English_verbs_count; ix++) {
-        char *str = English_verbs[ix].textpos + English_verbs_text;
-        if (!strcmp(English_verb, str)) {
+        if (English_verbs[ix].dictword == dictword) {
             English_verbs[ix].verbnum = new_number;
             return 0;
         }
@@ -662,25 +660,41 @@ static void print_verbs_by_number(int num)
         printf(" <none>");
 }
 
-static int get_verb(void)
+static int get_existing_verb(int *dictref)
 {
     /*  Look at the last-read token: if it's the name of an English verb
         understood by Inform, in double-quotes, then return the Inform-verb
-        that word refers to: otherwise give an error and return -1.          */
+        that word refers to: otherwise give an error and return -1.
+        Optionally also return the dictionary word index in dictref.
+    */
 
-    int j;
+    int j, dictword;
 
-    if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   j = find_verb(token_text);
-        if (j==-1)
-            error_named("There is no previous grammar for the verb",
-                token_text);
-        return j;
+    if (dictref)
+        *dictref = -1;
+
+    if ((token_type != DQ_TT) && (token_type != SQ_TT)) {
+        ebf_curtoken_error("an English verb in quotes");
+        return -1;
     }
 
-    ebf_curtoken_error("an English verb in quotes");
-
-    return -1;
+    dictword = dictionary_find(token_text);
+    if (dictword < 0) {
+        error_named("There is no previous grammar for the verb",
+            token_text);
+        return -1;
+    }
+    
+    j = find_verb(dictword);
+    if (j < 0) {
+        error_named("There is no previous grammar for the verb",
+            token_text);
+        return -1;
+    }
+    
+    if (dictref)
+        *dictref = dictword;
+    return j;
 }
 
 void locate_dead_grammar_lines()
@@ -1086,9 +1100,14 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int wordlen, textpos;
+        int wordlen, textpos, dictword;
+
+        int flags = VERB_DFLAG
+            + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
+            + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
+        dictword = dictionary_add(token_text, flags, 0, 0);
         
-        if (find_verb(token_text) != -1)
+        if (find_verb(dictword) != -1)
         {   error_named("Two different verb definitions refer to", token_text);
             get_next_token();
             continue;
@@ -1103,7 +1122,7 @@ extern void make_verb(void)
         ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
         English_verbs[English_verbs_count].textpos = textpos;
         English_verbs[English_verbs_count].verbnum = -1;
-        English_verbs[English_verbs_count].dictword = -1;
+        English_verbs[English_verbs_count].dictword = dictword;
         English_verbs_count++;
         
         get_next_token();
@@ -1122,7 +1141,7 @@ extern void make_verb(void)
     {   /* Define those E-verbs to match an existing I-verb. */
         verb_equals_form = TRUE;
         get_next_token();
-        Inform_verb = get_verb();
+        Inform_verb = get_existing_verb(NULL);
         if (Inform_verb == -1)
             return; /* error already printed */
         get_next_token();
@@ -1152,14 +1171,8 @@ extern void make_verb(void)
     /* Inform_verb is now the I-verb which those E-verbs should invoke. */
 
     for (ix=first_given_verb; ix<English_verbs_count; ix++) {
-        char *wd = English_verbs[ix].textpos + English_verbs_text;
-        int flags = VERB_DFLAG
-            + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
-            + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
-        dictionary_add(wd,
-            flags,
-            (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
         English_verbs[ix].verbnum = Inform_verb;
+        dictionary_set_verb_number(English_verbs[ix].dictword, Inform_verb);
     }
 
     if (!verb_equals_form)
@@ -1210,16 +1223,18 @@ extern void extend_verb(void)
         l = -1;
         while (get_next_token(),
                ((token_type == DQ_TT) || (token_type == SQ_TT)))
-        {   Inform_verb = get_verb();
+        {
+            int dictword;
+            Inform_verb = get_existing_verb(&dictword);
             if (Inform_verb == -1) return;
+            /* dictword is the dict index number of token_text */
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
             l = Inform_verb;
-            dictionary_set_verb_number(token_text,
-              (glulx_mode)?(0xffff-no_Inform_verbs):(0xff-no_Inform_verbs));
-            /* make call to renumber verb in English_verb_list too */
-            if (renumber_verb(token_text, no_Inform_verbs) == -1)
-              warning_named("Verb to extend not found in English_verb_list:",
+            dictionary_set_verb_number(dictword, no_Inform_verbs);
+            /* make call to renumber verb in English_verbs too */
+            if (renumber_verb(dictword, no_Inform_verbs) == -1)
+              warning_named("Verb to extend not found in English_verbs:",
                  token_text);
         }
 
@@ -1240,7 +1255,7 @@ extern void extend_verb(void)
         Inform_verb = no_Inform_verbs++;
     }
     else
-    {   Inform_verb = get_verb();
+    {   Inform_verb = get_existing_verb(NULL);
         if (Inform_verb == -1) return;
         get_next_token();
     }
