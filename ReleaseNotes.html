@@ -59,6 +59,8 @@ In this new approach, actions are sorted, with meta actions coming first. Game o
 comparing the action number with the new system constant <tt>#highest_meta_action_number</tt>, which is the highest meta action
 number after sorting all the actions.
 <li><p>The output of the <tt>--trace-verbs</tt> option now shows all verb synonyms, rather than just the first one.
+<li><p>It is now an error to declare two verbs that refer to the same dictionary word. Previously this was accepted, but generated
+an incorrect story file.
 <li><p>A new setting <tt>$ZCODE_FILE_END_PADDING</tt> has been added. By default it is set to 1, but if it is set to 0, then
 when outputting a Z-code game file Inform 6 will no longer pad the file to be a multiple of 512 bytes.
 </ul>
