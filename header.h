@@ -600,7 +600,6 @@
 
 #define  MAX_ERRORS            100
 #define  MAX_NUM_ATTR_BYTES     39
-#define  MAX_VERB_WORD_SIZE    120
 
 #define  VENEER_CONSTRAINT_ON_CLASSES_Z       256
 #define  VENEER_CONSTRAINT_ON_IP_TABLE_SIZE_Z 128

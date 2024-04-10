@@ -67,9 +67,11 @@ int no_adjectives;                     /* Number of adjectives made so far   */
 /*   Verbs.  Note that Inform-verbs are not quite the same as English verbs: */
 /*           for example the English verbs "take" and "drop" both normally   */
 /*           correspond in a game's dictionary to the same Inform verb.  An  */
-/*           Inform verb is essentially a list of grammar lines.             */
-/*           (Calling them "English verbs" is of course out of date. Read    */
-/*           this as jargon for "dict words which are verbs".                */
+/*           Inform verb (I-verb) is essentially a list of grammar lines.    */
+/*           An English verb (E-verb, although of course it might not be     */
+/*           English!) is a dict word which is known to be a verb.           */
+/*           Each E-verb's #dict_par2 field contains the I-verb index that   */
+/*           it corresponds to.                                              */
 /* ------------------------------------------------------------------------- */
 /*   Arrays defined below:                                                   */
 /*                                                                           */
@@ -87,21 +89,21 @@ int no_Inform_verbs,                   /* Number of Inform-verbs made so far */
 /*   We keep a list of English verb-words known (e.g. "take" or "eat") and   */
 /*   which Inform-verbs they correspond to.  (This list is needed for some   */
 /*   of the grammar extension operations.)                                   */
-/*   The format of this list is a sequence of variable-length records:       */
-/*                                                                           */
-/*     Byte offset to start of next record  (1 byte)                         */
-/*     Inform verb number this word corresponds to  (2 bytes)                */
-/*     The English verb-word (reduced to lower case), null-terminated        */
 /* ------------------------------------------------------------------------- */
 
-static char *English_verb_list;       /* Allocated to English_verb_list_size */
-static memory_list English_verb_list_memlist;
+typedef struct English_verb_s {
+    int textpos;  /* in English_verbs_text */
+    int dictword; /* dict word accession num */
+    int verbnum;  /* in Inform_verbs */
+} English_verb_t;
 
-static int English_verb_list_size;     /* Size of the list in bytes          */
+static English_verb_t *English_verbs;
+static memory_list English_verbs_memlist;
+static int English_verbs_count;
 
-static char *English_verbs_given;      /* Allocated to verbs_given_pos
-                                          (Used only within make_verb())     */
-static memory_list English_verbs_given_memlist;
+static char *English_verbs_text;     /* Allocated to English_verbs_text_size */
+static memory_list English_verbs_text_memlist;
+static int English_verbs_text_size;
 
 /* ------------------------------------------------------------------------- */
 /*   Arrays used by this file                                                */
@@ -612,30 +614,34 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_or_renumber_verb(char *English_verb, int *new_number)
+static int find_verb(char *English_verb)
 {
-    /*  If new_number is null, returns the Inform-verb number which the
-     *  given English verb causes, or -1 if the given verb is not in the
-     *  dictionary                     */
-
-    /*  If new_number is non-null, renumbers the Inform-verb number which
-     *  English_verb matches in English_verb_list to account for the case
-     *  when we are extending a verb.  Returns 0 if successful, or -1 if
-     *  the given verb is not in the dictionary (which shouldn't happen as
-     *  get_verb has already run) */
-
-    char *p;
-    p=English_verb_list;
-    while (p < English_verb_list+English_verb_list_size)
-    {   if (strcmp(English_verb, p+3) == 0)
-        {   if (new_number)
-            {   p[1] = (*new_number)/256;
-                p[2] = (*new_number)%256;
-                return 0;
-            }
-            return(256*((uchar)p[1]))+((uchar)p[2]);
+    /*  Returns the Inform-verb number which the given English verb
+     *  causes, or -1 if the given verb is not in the dictionary. */
+    int ix;
+    for (ix=0; ix<English_verbs_count; ix++) {
+        char *str = English_verbs[ix].textpos + English_verbs_text;
+        if (!strcmp(English_verb, str)) {
+            return English_verbs[ix].verbnum;
         }
-        p=p+(uchar)p[0];
+    }
+    return(-1);
+}
+
+static int renumber_verb(char *English_verb, int new_number)
+{
+    /*  Renumbers the Inform-verb number which English_verb matches in
+     *  English_verb_list to account for the case when we are
+     *  extending a verb. Returns 0 if successful, or -1 if the given
+     *  verb is not in the dictionary (which shouldn't happen as
+     *  get_verb has already run). */
+    int ix;
+    for (ix=0; ix<English_verbs_count; ix++) {
+        char *str = English_verbs[ix].textpos + English_verbs_text;
+        if (!strcmp(English_verb, str)) {
+            English_verbs[ix].verbnum = new_number;
+            return 0;
+        }
     }
     return(-1);
 }
@@ -643,47 +649,17 @@ static int find_or_renumber_verb(char *English_verb, int *new_number)
 static void print_verbs_by_number(int num)
 {
     /*  Print all English verb strings with the given verb number. */
-    char *p = English_verb_list;
+    int ix;
     int count = 0;
-    while (p < English_verb_list+English_verb_list_size)
-    {
-        int val = ((uchar)p[1] << 8) | (uchar)p[2];
-        if (val == num) {
-            printf(" '%s'", p+3);
+    for (ix=0; ix<English_verbs_count; ix++) {
+        if (English_verbs[ix].verbnum == num) {
+            char *str = English_verbs[ix].textpos + English_verbs_text;
+            printf(" '%s'", str);
             count++;
         }
-        p=p+(uchar)p[0];
     }
     if (!count)
         printf(" <none>");
-}
-
-static void register_verb(char *English_verb, int number)
-{
-    /*  Registers a new English verb as referring to the given Inform-verb
-        number.  (See comments above for format of the list.)                */
-    char *top;
-    int entrysize;
-
-    if (find_or_renumber_verb(English_verb, NULL) != -1)
-    {   error_named("Two different verb definitions refer to", English_verb);
-        return;
-    }
-
-    /* We set a hard limit of MAX_VERB_WORD_SIZE=120 because the
-       English_verb_list table stores length in a leading byte. (We could
-       raise that to 250, really.) */
-    entrysize = strlen(English_verb)+4;
-    if (entrysize > MAX_VERB_WORD_SIZE+4)
-        error_fmt("Verb word is too long -- max length is %d", MAX_VERB_WORD_SIZE);
-    ensure_memory_list_available(&English_verb_list_memlist, English_verb_list_size + entrysize);
-    top = English_verb_list + English_verb_list_size;
-    English_verb_list_size += entrysize;
-
-    top[0] = entrysize;
-    top[1] = number/256;
-    top[2] = number%256;
-    strcpy(top+3, English_verb);
 }
 
 static int get_verb(void)
@@ -695,7 +671,7 @@ static int get_verb(void)
     int j;
 
     if ((token_type == DQ_TT) || (token_type == SQ_TT))
-    {   j = find_or_renumber_verb(token_text, NULL);
+    {   j = find_verb(token_text);
         if (j==-1)
             error_named("There is no previous grammar for the verb",
                 token_text);
@@ -714,23 +690,21 @@ void locate_dead_grammar_lines()
        "Extend only".)
     */
     int verb;
-    char *p;
+    int ix;
 
     for (verb=0; verb<no_Inform_verbs; verb++) {
         Inform_verbs[verb].used = FALSE;
     }
     
-    p=English_verb_list;
-    while (p < English_verb_list+English_verb_list_size)
-    {
-        verb = ((uchar)p[1] << 8) | (uchar)p[2];
+    for (ix=0; ix<English_verbs_count; ix++) {
+        verb = English_verbs[ix].verbnum;
         if (verb < 0 || verb >= no_Inform_verbs) {
-            error_named("An entry in the English verb list had an invalid verb number", p+3);
+            char *str = English_verbs[ix].textpos + English_verbs_text;
+            error_named("An entry in the English verb list had an invalid verb number", str);
         }
         else {
             Inform_verbs[verb].used = TRUE;
         }
-        p=p+(uchar)p[0];
     }
 
     for (verb=0; verb<no_Inform_verbs; verb++) {
@@ -1098,9 +1072,8 @@ extern void make_verb(void)
     /*  Parse an entire Verb ... directive.                                  */
 
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
-
-    int no_given = 0, verbs_given_pos = 0;
-    int i, pos;
+    int first_given_verb = English_verbs_count;
+    int ix;
 
     directive_keywords.enabled = TRUE;
 
@@ -1113,30 +1086,52 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int len = strlen(token_text) + 1;
-        ensure_memory_list_available(&English_verbs_given_memlist, verbs_given_pos + len);
-        strcpy(English_verbs_given+verbs_given_pos, token_text);
-        verbs_given_pos += len;
-        no_given++;
+        int wordlen, textpos;
+        
+        if (find_verb(token_text) != -1)
+        {   error_named("Two different verb definitions refer to", token_text);
+            get_next_token();
+            continue;
+        }
+
+        wordlen = strlen(token_text);
+        textpos = English_verbs_text_size;
+        ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
+        strcpy(English_verbs_text+textpos, token_text);
+        English_verbs_text_size += (wordlen+1);
+        
+        ensure_memory_list_available(&English_verbs_memlist, English_verbs_count+1);
+        English_verbs[English_verbs_count].textpos = textpos;
+        English_verbs[English_verbs_count].verbnum = -1;
+        English_verbs[English_verbs_count].dictword = -1;
+        English_verbs_count++;
+        
         get_next_token();
     }
+    
+    /* The E-verbs defined in this directive run from first_given_verb
+       to English_verbs_count. */
 
-    if (no_given == 0)
-    {   ebf_curtoken_error("English verb in quotes");
+    if (first_given_verb == English_verbs_count)
+    {   /* No E-verbs given at all! */
+        ebf_curtoken_error("English verb in quotes");
         panic_mode_error_recovery(); return;
     }
 
     if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
-    {   verb_equals_form = TRUE;
+    {   /* Define those E-verbs to match an existing I-verb. */
+        verb_equals_form = TRUE;
         get_next_token();
         Inform_verb = get_verb();
-        if (Inform_verb == -1) return;
+        if (Inform_verb == -1)
+            return; /* error already printed */
         get_next_token();
         if (!((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)))
             ebf_curtoken_error("';' after English verb");
     }
     else
-    {   verb_equals_form = FALSE;
+    {   /* Define those E-verbs to be a brand-new I-verb. */
+        verb_equals_form = FALSE;
         if (!glulx_mode && no_Inform_verbs >= 255) {
             error("Z-code is limited to 255 verbs.");
             panic_mode_error_recovery(); return;
@@ -1154,16 +1149,17 @@ extern void make_verb(void)
         Inform_verbs[no_Inform_verbs].used = FALSE;
     }
 
-    for (i=0, pos=0; i<no_given; i++) {
-        char *wd = English_verbs_given+pos;
+    /* Inform_verb is now the I-verb which those E-verbs should invoke. */
+
+    for (ix=first_given_verb; ix<English_verbs_count; ix++) {
+        char *wd = English_verbs[ix].textpos + English_verbs_text;
         int flags = VERB_DFLAG
             + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
             + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
         dictionary_add(wd,
             flags,
             (glulx_mode)?(0xffff-Inform_verb):(0xff-Inform_verb), 0);
-        register_verb(wd, Inform_verb);
-        pos += (strlen(wd) + 1);
+        English_verbs[ix].verbnum = Inform_verb;
     }
 
     if (!verb_equals_form)
@@ -1222,7 +1218,7 @@ extern void extend_verb(void)
             dictionary_set_verb_number(token_text,
               (glulx_mode)?(0xffff-no_Inform_verbs):(0xff-no_Inform_verbs));
             /* make call to renumber verb in English_verb_list too */
-            if (find_or_renumber_verb(token_text, &no_Inform_verbs) == -1)
+            if (renumber_verb(token_text, no_Inform_verbs) == -1)
               warning_named("Verb to extend not found in English_verb_list:",
                  token_text);
         }
@@ -1348,7 +1344,8 @@ extern void init_verbs_vars(void)
     no_meta_actions = -1;
     no_grammar_lines = 0;
     no_grammar_tokens = 0;
-    English_verb_list_size = 0;
+    English_verbs_count = 0;
+    English_verbs_text_size = 0;
 
     Inform_verbs = NULL;
     actions = NULL;
@@ -1356,8 +1353,8 @@ extern void init_verbs_vars(void)
     grammar_token_routine = NULL;
     adjectives = NULL;
     adjective_sort_code = NULL;
-    English_verb_list = NULL;
-    English_verbs_given = NULL;
+    English_verbs = NULL;
+    English_verbs_text = NULL;
 
     /* Set the default grammar version value (will be adjusted later) */
     if (!glulx_mode)
@@ -1415,13 +1412,14 @@ extern void verbs_allocate_arrays(void)
         sizeof(uchar), 32, NULL,
         "action temporary symbols");
     
-    initialise_memory_list(&English_verb_list_memlist,
-        sizeof(char), 2048, (void**)&English_verb_list,
+    initialise_memory_list(&English_verbs_memlist,
+        sizeof(English_verb_t), 256, (void**)&English_verbs,
         "register of verbs");
 
-    initialise_memory_list(&English_verbs_given_memlist,
-        sizeof(char), 80, (void**)&English_verbs_given,
-        "verb words within a single definition");
+    initialise_memory_list(&English_verbs_text_memlist,
+        sizeof(char), 2048, (void**)&English_verbs_text,
+        "text of registered verbs");
+    
 }
 
 extern void verbs_free_arrays(void)
@@ -1442,8 +1440,8 @@ extern void verbs_free_arrays(void)
     deallocate_memory_list(&adjectives_memlist);
     deallocate_memory_list(&adjective_sort_code_memlist);
     deallocate_memory_list(&action_symname_memlist);
-    deallocate_memory_list(&English_verb_list_memlist);
-    deallocate_memory_list(&English_verbs_given_memlist);
+    deallocate_memory_list(&English_verbs_memlist);
+    deallocate_memory_list(&English_verbs_text_memlist);
 }
 
 /* ========================================================================= */

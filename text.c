@@ -2495,7 +2495,7 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Used in "tables.c" for "Extend ... only", to renumber a verb-word to a  */
+/*   Used in "verbs.c" for "Extend ... only", to renumber a verb-word to a   */
 /*   new verb syntax of its own.  (Otherwise existing verb-words never       */
 /*   change their verb-numbers.)                                             */
 /* ------------------------------------------------------------------------- */
