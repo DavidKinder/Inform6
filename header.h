@@ -600,7 +600,6 @@
 
 #define  MAX_ERRORS            100
 #define  MAX_NUM_ATTR_BYTES     39
-#define  MAX_VERB_WORD_SIZE    120
 
 #define  VENEER_CONSTRAINT_ON_CLASSES_Z       256
 #define  VENEER_CONSTRAINT_ON_IP_TABLE_SIZE_Z 128
@@ -2865,7 +2864,8 @@ extern void  write_dictionary_to_transcript(void);
 extern void  sort_dictionary(void);
 extern void  dictionary_prepare(char *dword, uchar *optresult);
 extern int   dictionary_add(char *dword, int x, int y, int z);
-extern void  dictionary_set_verb_number(char *dword, int to);
+extern int   dictionary_find(char *dword);
+extern void  dictionary_set_verb_number(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
 extern void  copy_sorts(uchar *d1, uchar *d2);
 
