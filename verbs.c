@@ -1082,6 +1082,10 @@ tokens in any line (for grammar version 1)");
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
+#define EXTEND_REPLACE 1
+#define EXTEND_FIRST   2
+#define EXTEND_LAST    3
+
 static void do_extend_verb(int Inform_verb, int extend_mode);
 
 extern void make_verb(void)
@@ -1137,8 +1141,20 @@ extern void make_verb(void)
                 }
                 if (foundverb >= 0
                     && ((token_type == SEP_TT) && (token_value == TIMES_SEP))) {
-                    printf("###YES\n");
-                    panic_mode_error_recovery(); return; //###
+                    tmpstr = English_verbs[evnum].textpos + English_verbs_text;
+                    warning_fmt("This verb definition refers to \"%s\", which has already been defined. Use \"Extend last\" instead.", tmpstr);
+
+                    put_token_back();
+                    
+                    /* Keyword settings used in extend_verb() */
+                    directive_keywords.enabled = TRUE;
+                    directives.enabled = FALSE;
+
+                    do_extend_verb(foundverb, EXTEND_LAST);
+
+                    directive_keywords.enabled = FALSE;
+                    directives.enabled = TRUE;
+                    return;
                 }
                 put_token_back();
             }
@@ -1236,10 +1252,6 @@ extern void make_verb(void)
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define EXTEND_REPLACE 1
-#define EXTEND_FIRST   2
-#define EXTEND_LAST    3
-
 extern void extend_verb(void)
 {
     /*  Parse an entire Extend ... directive.                                */
@@ -1331,6 +1343,9 @@ extern void extend_verb(void)
 
 static void do_extend_verb(int Inform_verb, int extend_mode)
 {
+    /* The execution of Extend. This is called both from extend_verb()
+       and from the implicit-extend case of make_verb(). */
+    
     int k, l, lines;
     
     l = Inform_verbs[Inform_verb].lines;
