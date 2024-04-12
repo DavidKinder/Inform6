@@ -1082,6 +1082,8 @@ tokens in any line (for grammar version 1)");
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
+static void do_extend_verb(int Inform_verb, int extend_mode);
+
 extern void make_verb(void)
 {
     /*  Parse an entire Verb ... directive.                                  */
@@ -1242,7 +1244,7 @@ extern void extend_verb(void)
 {
     /*  Parse an entire Extend ... directive.                                */
 
-    int Inform_verb = -1, k, l, lines, extend_mode;
+    int Inform_verb = -1, k, l, extend_mode;
 
     directive_keywords.enabled = TRUE;
     directives.enabled = FALSE;
@@ -1321,6 +1323,16 @@ extern void extend_verb(void)
         }
     }
 
+    do_extend_verb(Inform_verb, extend_mode);
+
+    directive_keywords.enabled = FALSE;
+    directives.enabled = TRUE;
+}
+
+static void do_extend_verb(int Inform_verb, int extend_mode)
+{
+    int k, l, lines;
+    
     l = Inform_verbs[Inform_verb].lines;
     lines = 0;
     if (extend_mode == EXTEND_LAST) lines=l;
@@ -1344,10 +1356,8 @@ extern void extend_verb(void)
         }
     }
     else Inform_verbs[Inform_verb].lines = --lines;
-
-    directive_keywords.enabled = FALSE;
-    directives.enabled = TRUE;
 }
+
 
 /* ------------------------------------------------------------------------- */
 /*   Action table sorter.                                                    */
