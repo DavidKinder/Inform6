@@ -1294,7 +1294,8 @@ extern void extend_verb(void)
     }
     else
     {   Inform_verb = get_existing_verb(NULL);
-        if (Inform_verb == -1) return;
+        if (Inform_verb == -1)
+            return; /* error already printed */
         get_next_token();
     }
 
