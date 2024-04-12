@@ -1263,7 +1263,8 @@ extern void extend_verb(void)
         {
             int dictword;
             Inform_verb = get_existing_verb(&dictword);
-            if (Inform_verb == -1) return;
+            if (Inform_verb == -1)
+                return; /* error already printed */
             /* dictword is the dict index number of token_text */
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
