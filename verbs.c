@@ -1092,6 +1092,8 @@ extern void make_verb(void)
     int ix;
 
     directive_keywords.enabled = TRUE;
+    /* TODO: We should really turn off directive_keywords for all exit paths.
+       Currently we don't bother after an error. */
 
     get_next_token();
 
