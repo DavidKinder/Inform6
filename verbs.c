@@ -727,17 +727,17 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_verb(int dictword)
+static int find_verb_entry(int dictword)
 {
-    /*  Returns the Inform-verb number which the given dict word
-     *  causes, or -1 if the given verb is not in the dictionary. */
+    /*  Returns the English-verb index which matches the given dict word,
+     *  or -1 if not found. */
     int ix;
     for (ix=0; ix<English_verbs_count; ix++) {
         if (English_verbs[ix].dictword == dictword) {
-            return English_verbs[ix].verbnum;
+            return ix;
         }
     }
-    return(-1);
+    return -1;
 }
 
 static int renumber_verb(int dictword, int new_number)
@@ -781,7 +781,7 @@ static int get_existing_verb(int *dictref)
         Optionally also return the dictionary word index in dictref.
     */
 
-    int j, dictword;
+    int j, evnum, dictword;
 
     if (dictref)
         *dictref = -1;
@@ -798,7 +798,8 @@ static int get_existing_verb(int *dictref)
         return -1;
     }
     
-    j = find_verb(dictword);
+    evnum = find_verb_entry(dictword);
+    j = (evnum < 0) ? -1 : English_verbs[evnum].verbnum;
     if (j < 0) {
         error_named("There is no previous grammar for the verb",
             token_text);
@@ -1242,15 +1243,24 @@ tokens in any line (for grammar version 3)");
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
+#define EXTEND_REPLACE 1
+#define EXTEND_FIRST   2
+#define EXTEND_LAST    3
+
+static void do_extend_verb(int Inform_verb, int extend_mode);
+
 extern void make_verb(void)
 {
     /*  Parse an entire Verb ... directive.                                  */
-
+    
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
     int first_given_verb = English_verbs_count;
+    int firsttime = TRUE;
     int ix;
 
     directive_keywords.enabled = TRUE;
+    /* TODO: We should really turn off directive_keywords for all exit paths.
+       Currently we don't bother after an error. */
 
     get_next_token();
 
@@ -1261,19 +1271,65 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int wordlen, textpos, dictword;
+        int wordlen, textpos, dictword, evnum;
+        char *tmpstr;
 
         int flags = VERB_DFLAG
             + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
             + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
         dictword = dictionary_add(token_text, flags, 0, 0);
-        
-        if (find_verb(dictword) != -1)
-        {   error_named("Two different verb definitions refer to", token_text);
+
+        evnum = find_verb_entry(dictword);
+        if (evnum >= 0)
+        {
+            /* The word already has a verb definition.
+               
+               We can accept this as an "Extend last" if this is the
+               first given word, and all following words (through the *)
+               have the same definition. */
+            int foundverb = English_verbs[evnum].verbnum;
+            if (firsttime) {
+                get_next_token();
+                while ((token_type == DQ_TT) || (token_type == SQ_TT)) {
+                    int dictword2 = dictionary_add(token_text, flags, 0, 0);
+                    int evnum2 = find_verb_entry(dictword2);
+                    int foundverb2 = (evnum2 < 0) ? -1 : English_verbs[evnum2].verbnum;
+                    if (foundverb2 != foundverb) {
+                        foundverb = -1; /* mismatch or not found */
+                        break;
+                    }
+                    get_next_token();
+                }
+                if (foundverb >= 0
+                    && ((token_type == SEP_TT) && (token_value == TIMES_SEP))) {
+                    tmpstr = English_verbs[evnum].textpos + English_verbs_text;
+                    warning_fmt("This verb definition refers to \"%s\", which has already been defined. Use \"Extend last\" instead.", tmpstr);
+
+                    put_token_back();
+                    
+                    /* Keyword settings used in extend_verb() */
+                    directive_keywords.enabled = TRUE;
+                    directives.enabled = FALSE;
+
+                    do_extend_verb(foundverb, EXTEND_LAST);
+
+                    directive_keywords.enabled = FALSE;
+                    directives.enabled = TRUE;
+                    return;
+                }
+                put_token_back();
+            }
+
+            /* Not a valid "Extend last". Complain and continue. */
+            tmpstr = English_verbs[evnum].textpos + English_verbs_text;
+            error_named("Two different verb definitions refer to", tmpstr);
+            
+            firsttime = FALSE;
             get_next_token();
             continue;
         }
 
+        /* Brand-new verb word. */
         wordlen = strlen(token_text);
         textpos = English_verbs_text_size;
         ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
@@ -1286,6 +1342,7 @@ extern void make_verb(void)
         English_verbs[English_verbs_count].dictword = dictword;
         English_verbs_count++;
         
+        firsttime = FALSE;
         get_next_token();
     }
     
@@ -1356,15 +1413,11 @@ extern void make_verb(void)
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define EXTEND_REPLACE 1
-#define EXTEND_FIRST   2
-#define EXTEND_LAST    3
-
 extern void extend_verb(void)
 {
     /*  Parse an entire Extend ... directive.                                */
 
-    int Inform_verb = -1, k, l, lines, extend_mode;
+    int Inform_verb = -1, k, l, extend_mode;
 
     directive_keywords.enabled = TRUE;
     directives.enabled = FALSE;
@@ -1387,7 +1440,8 @@ extern void extend_verb(void)
         {
             int dictword;
             Inform_verb = get_existing_verb(&dictword);
-            if (Inform_verb == -1) return;
+            if (Inform_verb == -1)
+                return; /* error already printed */
             /* dictword is the dict index number of token_text */
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
@@ -1417,7 +1471,8 @@ extern void extend_verb(void)
     }
     else
     {   Inform_verb = get_existing_verb(NULL);
-        if (Inform_verb == -1) return;
+        if (Inform_verb == -1)
+            return; /* error already printed */
         get_next_token();
     }
 
@@ -1441,6 +1496,19 @@ extern void extend_verb(void)
         }
     }
 
+    do_extend_verb(Inform_verb, extend_mode);
+
+    directive_keywords.enabled = FALSE;
+    directives.enabled = TRUE;
+}
+
+static void do_extend_verb(int Inform_verb, int extend_mode)
+{
+    /* The execution of Extend. This is called both from extend_verb()
+       and from the implicit-extend case of make_verb(). */
+    
+    int k, l, lines;
+    
     l = Inform_verbs[Inform_verb].lines;
     lines = 0;
     if (extend_mode == EXTEND_LAST) lines=l;
@@ -1464,10 +1532,8 @@ extern void extend_verb(void)
         }
     }
     else Inform_verbs[Inform_verb].lines = --lines;
-
-    directive_keywords.enabled = FALSE;
-    directives.enabled = TRUE;
 }
+
 
 /* ------------------------------------------------------------------------- */
 /*   Action table sorter.                                                    */
