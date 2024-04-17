@@ -42,6 +42,9 @@ If the compiler truncates only the <tt>//p</tt> flag (as in <tt>$LONG_DICT_FLAG_
 the dictionary word: the only relevant test is whether or not characters were dropped.
 <li><p>A new setting <tt>$GRAMMAR_VERSION</tt> has been added. Setting this has the same effect as the existing <tt>Grammar__Version</tt>
 constant, but provides a more standard way to set the grammar table version number.
+<li><p>An experimental new grammar version 3 can be enabled with the <tt>$GRAMMAR_VERSION</tt> setting (or the <tt>Grammar__Version</tt>
+constant). This is a variation on grammar version 2 with a more compact data structure, and is only available for Z-code.
+Note that using this grammar version will require library changes that are not currently in the Inform 6 library.
 <li><p>A new setting <tt>$GRAMMAR_META_FLAG</tt> has been added. If set to 1, there is a new way to declare meta actions.
 Previously, meta actions were defined by writing lines like
 <pre>
@@ -58,6 +61,8 @@ also a new syntax:
 In this new approach, actions are sorted, with meta actions coming first. Game or library code can detect a meta action by
 comparing the action number with the new system constant <tt>#highest_meta_action_number</tt>, which is the highest meta action
 number after sorting all the actions.
+<li><p>It is now legal to have multiple <tt>Verb</tt> declarations for the same verb. This is now treated as if the subsequent
+declarations had been made with <tt>Extend</tt>, and a warning is produced to this effect.
 <li><p>The output of the <tt>--trace-verbs</tt> option now shows all verb synonyms, rather than just the first one.
 <li><p>It is now an error to declare two verbs that refer to the same dictionary word. Previously this was accepted, but generated
 an incorrect story file.
