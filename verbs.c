@@ -140,8 +140,8 @@ static int English_verbs_text_size;
 void set_grammar_version(int val)
 {
     if (!glulx_mode) {
-        if (val != 1 && val != 2) {
-            error("Z-code only supports grammar version 1 or 2.");
+        if (val != 1 && val != 2 && val != 3) {
+            error("Z-code only supports grammar version 1, 2, or 3.");
             return;
         }
     }
@@ -327,6 +327,82 @@ static void list_grammar_line_v2(int mark)
     printf("\n");
 }
 
+static void list_grammar_line_v3(int mark)
+{
+    int action, flags, actsym, tokcount;
+    int ix, len, tx;
+    char *str;
+    
+    /* There is no GV3 for Glulx. */
+    if (glulx_mode)
+        return;
+    
+    action = (grammar_lines[mark] << 8) | (grammar_lines[mark+1]);
+    flags = (action & 0x400);
+    tokcount = (action >> 11) & 0x1F;
+    action &= 0x3FF;
+    mark += 2;
+    
+    printf("  *");
+    for (tx=0; tx<tokcount; tx++) {
+        int toktype, tokdat, tokalt;
+        toktype = grammar_lines[mark] & 0x0F;
+        tokalt = (grammar_lines[mark] >> 4) & 0x03;
+        mark += 1;
+        tokdat = grammar_lines[mark];
+        mark += 1;
+
+        if (tokalt == 3 || tokalt == 1)
+            printf(" /");
+                
+        switch (toktype) {
+        case 1:
+            switch (tokdat) {
+            case 0: printf(" noun"); break;
+            case 1: printf(" held"); break;
+            case 2: printf(" multi"); break;
+            case 3: printf(" multiheld"); break;
+            case 4: printf(" multiexcept"); break;
+            case 5: printf(" multiinside"); break;
+            case 6: printf(" creature"); break;
+            case 7: printf(" special"); break;
+            case 8: printf(" number"); break;
+            case 9: printf(" topic"); break;
+            default: printf(" ???"); break;
+            }
+            break;
+        case 2:
+            printf(" '");
+            print_dict_word(adjectives[tokdat]);
+            printf("'");
+            break;
+        case 3:
+            printf(" noun=%d", tokdat);
+            break;
+        case 4:
+            printf(" attr=%d", tokdat);
+            break;
+        case 5:
+            printf(" scope=%d", tokdat);
+            break;
+        case 6:
+            printf(" routine=%d", tokdat);
+            break;
+        default:
+            printf(" ???%d:%d", toktype, tokdat);
+            break;
+        }
+    }
+    printf(" -> ");
+    actsym = actions[action].symbol;
+    str = (symbols[actsym].name);
+    len = strlen(str) - 3;   /* remove "__A" */
+    for (ix=0; ix<len; ix++) putchar(str[ix]);
+    if (actions[action].meta) printf(" (meta)");
+    if (flags) printf(" (reversed)");
+    printf("\n");
+}
+
 extern void list_verb_table(void)
 {
     int verb, lx;
@@ -343,6 +419,9 @@ extern void list_verb_table(void)
                 break;
             case 2:
                 list_grammar_line_v2(mark);
+                break;
+            case 3:
+                list_grammar_line_v3(mark);
                 break;
             }
         }
@@ -383,14 +462,18 @@ static void new_action(char *b, int c)
 }
 
 /* Note that fake actions are numbered from a high base point upwards;
-   real actions are numbered from 0 upward in GV2.                           */
+   real actions are numbered from 0 upward in GV2/3.                         */
 
 extern int lowest_fake_action(void)
 {
     if (grammar_version_number == 1)
         return 256;
-    else
+    else if (grammar_version_number == 2)
         return 4096;
+    else if (grammar_version_number == 3)
+        return 4096;
+    compiler_error("invalid grammar version");
+    return 0;
 }
 
 extern void make_fake_action(void)
@@ -550,7 +633,7 @@ extern void find_the_actions(void)
 /*   Adjectives.                                                             */
 /* ------------------------------------------------------------------------- */
 
-static int make_adjective(char *English_word)
+static int make_adjective_v1(char *English_word)
 {
     /*  Returns adjective number of the English word supplied, creating
         a new adjective number if need be.
@@ -559,7 +642,7 @@ static int make_adjective(char *English_word)
         from 0xff downwards.  (And partly to make them stand out as tokens.)
 
         This routine is used only in grammar version 1: the corresponding
-        table is left empty in GV2.                                          */
+        table is left empty in GV2. For GV3, see below.                      */
 
     uchar *new_sort_code;
     int i; 
@@ -590,14 +673,44 @@ static int make_adjective(char *English_word)
     return(0xff-no_adjectives++);
 }
 
+static int make_adjective_v3(char* English_word)
+{
+    /*  Returns adjective number of the English word supplied, creating
+        a new adjective number if need be.
+
+        Adjectives are numbered from 0 upwards.
+ 
+        This routine is used only in grammar version 3.
+    */
+
+    int l;
+    int32 dict_address;
+
+    if (no_adjectives >= 255) {
+        error("Grammar version 3 cannot support more than 255 prepositions");
+        return 0;
+    }
+
+    dict_address = dictionary_add(English_word, PREP_DFLAG, 0, 0);
+    for (l = 0; l < no_adjectives; l++)
+        if (adjectives[l] == dict_address)
+            return l;
+
+    ensure_memory_list_available(&adjectives_memlist, no_adjectives + 1);
+
+    adjectives[no_adjectives] = dict_address;
+    return(no_adjectives++);
+}
+
+
 /* ------------------------------------------------------------------------- */
 /*   Parsing routines.                                                       */
 /* ------------------------------------------------------------------------- */
 
 static int make_parsing_routine(int32 routine_address)
 {
-    /*  This routine is used only in grammar version 1: the corresponding
-        table is left empty in GV2.                                          */
+    /*  This routine is used only in grammar version 1 and 3: the
+        corresponding table is left empty in GV2.                            */
 
     int l;
     for (l=0; l<no_grammar_token_routines; l++)
@@ -614,17 +727,17 @@ static int make_parsing_routine(int32 routine_address)
 /*   The English-verb list.                                                  */
 /* ------------------------------------------------------------------------- */
 
-static int find_verb(int dictword)
+static int find_verb_entry(int dictword)
 {
-    /*  Returns the Inform-verb number which the given dict word
-     *  causes, or -1 if the given verb is not in the dictionary. */
+    /*  Returns the English-verb index which matches the given dict word,
+     *  or -1 if not found. */
     int ix;
     for (ix=0; ix<English_verbs_count; ix++) {
         if (English_verbs[ix].dictword == dictword) {
-            return English_verbs[ix].verbnum;
+            return ix;
         }
     }
-    return(-1);
+    return -1;
 }
 
 static int renumber_verb(int dictword, int new_number)
@@ -668,7 +781,7 @@ static int get_existing_verb(int *dictref)
         Optionally also return the dictionary word index in dictref.
     */
 
-    int j, dictword;
+    int j, evnum, dictword;
 
     if (dictref)
         *dictref = -1;
@@ -685,7 +798,8 @@ static int get_existing_verb(int *dictref)
         return -1;
     }
     
-    j = find_verb(dictword);
+    evnum = find_verb_entry(dictword);
+    j = (evnum < 0) ? -1 : English_verbs[evnum].verbnum;
     if (j < 0) {
         error_named("There is no previous grammar for the verb",
             token_text);
@@ -756,16 +870,23 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
         is compiled to a table in the form:
 
-                <action number : word>
+                <action : word>
                 <token 1> ... <token n> <ENDIT>
 
-        where <ENDIT> is the byte 15, and each <token> is 3 bytes long.
+        where <ENDIT> is the byte 15, and each <token> is 2 or 3 bytes
+        long. The action word contains the action number (bottom 10 bits)
+        and the "reverse" flag (bit 10).
 
-        If grammar_version_number is 1, the token holds
+        The token format is:
 
-                <bytecode> 00 00
+                <bytecode> 00    00     [GV1]
+                <bytecode> <dat> <dat>  [GV2]
+                <bytecode> <dat>        [GV3]
 
-        and otherwise a GV2 token.
+        If grammar_version_number is 3, we omit the <ENDIT> and instead
+        encode the token count in the top 5 bits of the action word.
+        Also, tokens only have one byte of data; we store adjective
+        and parsing routine index numbers instead of addresses.
 
         Return TRUE if grammar continues after the line, FALSE if the
         directive comes to an end.                                           */
@@ -795,7 +916,7 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
     if (!glulx_mode) {
         mark = mark + 2;
-        TOKEN_SIZE = 3;
+        TOKEN_SIZE = (grammar_version_number == 3) ? 2 : 3;
     }
     else {
         mark = mark + 3;
@@ -839,10 +960,15 @@ static int grammar_line(int verbnum, int allmeta, int line)
 
         if ((token_type == DQ_TT) || (token_type == SQ_TT))
         {    if (grammar_version_number == 1)
-                 bytecode = make_adjective(token_text);
-             else
+             {   bytecode = make_adjective_v1(token_text);
+             }
+             else if (grammar_version_number == 2)
              {   bytecode = 0x42;
                  wordcode = dictionary_add(token_text, PREP_DFLAG, 0, 0);
+             }
+             else if (grammar_version_number == 3)
+             {   bytecode = 0x42;
+                 wordcode = make_adjective_v3(token_text);
              }
         }
         else if ((token_type==DIR_KEYWORD_TT)&&(token_value==NOUN_DK))
@@ -860,11 +986,16 @@ static int grammar_line(int verbnum, int allmeta, int line)
                          return FALSE;
                      }
                      if (grammar_version_number == 1)
-                         bytecode
-                             = 16 + make_parsing_routine(symbols[token_value].value);
-                     else
+                     {   bytecode = 16 +
+                             make_parsing_routine(symbols[token_value].value);
+                     }
+                     else if (grammar_version_number == 2)
                      {   bytecode = 0x83;
                          wordcode = symbols[token_value].value;
+                     }
+                     else if (grammar_version_number == 3)
+                     {   bytecode = 0x83;
+                         wordcode = make_parsing_routine(symbols[token_value].value);
                      }
                      symbols[token_value].flags |= USED_SFLAG;
                  }
@@ -925,9 +1056,17 @@ are using grammar version 2 or later");
                  }
 
                  if (grammar_version_number == 1)
-                     bytecode = 80 +
+                 {   bytecode = 80 +
                          make_parsing_routine(symbols[token_value].value);
-                 else { bytecode = 0x85; wordcode = symbols[token_value].value; }
+                 }
+                 else if (grammar_version_number == 2)
+                 {   bytecode = 0x85;
+                     wordcode = symbols[token_value].value;
+                 }
+                 else if (grammar_version_number == 3)
+                 {   bytecode = 0x85;
+                     wordcode = make_parsing_routine(symbols[token_value].value);
+                 }
                  symbols[token_value].flags |= USED_SFLAG;
              }
         else if ((token_type == SEP_TT) && (token_value == SETEQUALS_SEP))
@@ -953,9 +1092,17 @@ are using grammar version 2 or later");
                  }
                  else
                  {   if (grammar_version_number == 1)
-                         bytecode = 48 +
+                     {   bytecode = 48 +
                              make_parsing_routine(symbols[token_value].value);
-                     else { bytecode = 0x86; wordcode = symbols[token_value].value; }
+                     }
+                     else if (grammar_version_number == 2)
+                     {   bytecode = 0x86;
+                         wordcode = symbols[token_value].value;
+                     }
+                     else if (grammar_version_number == 3)
+                     {   bytecode = 0x86;
+                         wordcode = make_parsing_routine(symbols[token_value].value);
+                     }
                  }
                  symbols[token_value].flags |= USED_SFLAG;
              }
@@ -966,6 +1113,12 @@ are using grammar version 2 or later");
                 warning("Grammar line cut short: you can only have up to 6 \
 tokens in any line (for grammar version 1)");
         }
+        else if ((grammar_version_number == 3) && (grammar_token > 31))
+        {
+            if (grammar_token == 32)
+                warning("Grammar line cut short: you can only have up to 31 \
+tokens in any line (for grammar version 3)");
+        }        
         else
         {   if (slash_mode)
             {   if (bytecode != 0x42)
@@ -975,8 +1128,13 @@ tokens in any line (for grammar version 1)");
             ensure_memory_list_available(&grammar_lines_memlist, mark+5);
             grammar_lines[mark++] = bytecode;
             if (!glulx_mode) {
-                grammar_lines[mark++] = wordcode/256;
-                grammar_lines[mark++] = wordcode%256;
+                if (grammar_version_number == 3) {
+                    grammar_lines[mark++] = (wordcode & 0xFF);
+                }
+                else {
+                    grammar_lines[mark++] = wordcode/256;
+                    grammar_lines[mark++] = wordcode%256;
+                }
             }
             else {
                 grammar_lines[mark++] = ((wordcode >> 24) & 0xFF);
@@ -989,7 +1147,9 @@ tokens in any line (for grammar version 1)");
     } while (TRUE);
 
     ensure_memory_list_available(&grammar_lines_memlist, mark+1);
-    grammar_lines[mark++] = 15;
+    if (grammar_version_number != 3) {
+        grammar_lines[mark++] = 15; /* ENDIT */
+    }
     grammar_lines_top = mark;
 
     dont_enter_into_symbol_table = TRUE;
@@ -1059,6 +1219,8 @@ tokens in any line (for grammar version 1)");
 
     ensure_memory_list_available(&grammar_lines_memlist, mark+3);
     if (!glulx_mode) {
+        if (grammar_version_number == 3)
+            j = j + (grammar_token << 11);
         if (reverse_action)
             j = j + 0x400;
         grammar_lines[mark++] = j/256;
@@ -1081,15 +1243,24 @@ tokens in any line (for grammar version 1)");
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
+#define EXTEND_REPLACE 1
+#define EXTEND_FIRST   2
+#define EXTEND_LAST    3
+
+static void do_extend_verb(int Inform_verb, int extend_mode);
+
 extern void make_verb(void)
 {
     /*  Parse an entire Verb ... directive.                                  */
-
+    
     int Inform_verb, meta_verb_flag=FALSE, verb_equals_form=FALSE;
     int first_given_verb = English_verbs_count;
+    int firsttime = TRUE;
     int ix;
 
     directive_keywords.enabled = TRUE;
+    /* TODO: We should really turn off directive_keywords for all exit paths.
+       Currently we don't bother after an error. */
 
     get_next_token();
 
@@ -1100,19 +1271,65 @@ extern void make_verb(void)
 
     while ((token_type == DQ_TT) || (token_type == SQ_TT))
     {
-        int wordlen, textpos, dictword;
+        int wordlen, textpos, dictword, evnum;
+        char *tmpstr;
 
         int flags = VERB_DFLAG
             + (DICT_TRUNCATE_FLAG ? NONE_DFLAG : TRUNC_DFLAG)
             + (meta_verb_flag ? META_DFLAG : NONE_DFLAG);
         dictword = dictionary_add(token_text, flags, 0, 0);
-        
-        if (find_verb(dictword) != -1)
-        {   error_named("Two different verb definitions refer to", token_text);
+
+        evnum = find_verb_entry(dictword);
+        if (evnum >= 0)
+        {
+            /* The word already has a verb definition.
+               
+               We can accept this as an "Extend last" if this is the
+               first given word, and all following words (through the *)
+               have the same definition. */
+            int foundverb = English_verbs[evnum].verbnum;
+            if (firsttime) {
+                get_next_token();
+                while ((token_type == DQ_TT) || (token_type == SQ_TT)) {
+                    int dictword2 = dictionary_add(token_text, flags, 0, 0);
+                    int evnum2 = find_verb_entry(dictword2);
+                    int foundverb2 = (evnum2 < 0) ? -1 : English_verbs[evnum2].verbnum;
+                    if (foundverb2 != foundverb) {
+                        foundverb = -1; /* mismatch or not found */
+                        break;
+                    }
+                    get_next_token();
+                }
+                if (foundverb >= 0
+                    && ((token_type == SEP_TT) && (token_value == TIMES_SEP))) {
+                    tmpstr = English_verbs[evnum].textpos + English_verbs_text;
+                    warning_fmt("This verb definition refers to \"%s\", which has already been defined. Use \"Extend last\" instead.", tmpstr);
+
+                    put_token_back();
+                    
+                    /* Keyword settings used in extend_verb() */
+                    directive_keywords.enabled = TRUE;
+                    directives.enabled = FALSE;
+
+                    do_extend_verb(foundverb, EXTEND_LAST);
+
+                    directive_keywords.enabled = FALSE;
+                    directives.enabled = TRUE;
+                    return;
+                }
+                put_token_back();
+            }
+
+            /* Not a valid "Extend last". Complain and continue. */
+            tmpstr = English_verbs[evnum].textpos + English_verbs_text;
+            error_named("Two different verb definitions refer to", tmpstr);
+            
+            firsttime = FALSE;
             get_next_token();
             continue;
         }
 
+        /* Brand-new verb word. */
         wordlen = strlen(token_text);
         textpos = English_verbs_text_size;
         ensure_memory_list_available(&English_verbs_text_memlist, English_verbs_text_size + (wordlen+1));
@@ -1125,6 +1342,7 @@ extern void make_verb(void)
         English_verbs[English_verbs_count].dictword = dictword;
         English_verbs_count++;
         
+        firsttime = FALSE;
         get_next_token();
     }
     
@@ -1195,15 +1413,11 @@ extern void make_verb(void)
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
-#define EXTEND_REPLACE 1
-#define EXTEND_FIRST   2
-#define EXTEND_LAST    3
-
 extern void extend_verb(void)
 {
     /*  Parse an entire Extend ... directive.                                */
 
-    int Inform_verb = -1, k, l, lines, extend_mode;
+    int Inform_verb = -1, k, l, extend_mode;
 
     directive_keywords.enabled = TRUE;
     directives.enabled = FALSE;
@@ -1226,7 +1440,8 @@ extern void extend_verb(void)
         {
             int dictword;
             Inform_verb = get_existing_verb(&dictword);
-            if (Inform_verb == -1) return;
+            if (Inform_verb == -1)
+                return; /* error already printed */
             /* dictword is the dict index number of token_text */
             if ((l!=-1) && (Inform_verb!=l))
               warning_named("Verb disagrees with previous verbs:", token_text);
@@ -1256,7 +1471,8 @@ extern void extend_verb(void)
     }
     else
     {   Inform_verb = get_existing_verb(NULL);
-        if (Inform_verb == -1) return;
+        if (Inform_verb == -1)
+            return; /* error already printed */
         get_next_token();
     }
 
@@ -1280,6 +1496,19 @@ extern void extend_verb(void)
         }
     }
 
+    do_extend_verb(Inform_verb, extend_mode);
+
+    directive_keywords.enabled = FALSE;
+    directives.enabled = TRUE;
+}
+
+static void do_extend_verb(int Inform_verb, int extend_mode)
+{
+    /* The execution of Extend. This is called both from extend_verb()
+       and from the implicit-extend case of make_verb(). */
+    
+    int k, l, lines;
+    
     l = Inform_verbs[Inform_verb].lines;
     lines = 0;
     if (extend_mode == EXTEND_LAST) lines=l;
@@ -1303,10 +1532,8 @@ extern void extend_verb(void)
         }
     }
     else Inform_verbs[Inform_verb].lines = --lines;
-
-    directive_keywords.enabled = FALSE;
-    directives.enabled = TRUE;
 }
+
 
 /* ------------------------------------------------------------------------- */
 /*   Action table sorter.                                                    */

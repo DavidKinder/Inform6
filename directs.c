@@ -208,7 +208,7 @@ extern int parse_given_directive(int internal_flag)
                     error("Once a fake action has been defined \
 it is too late to change the grammar version.");
                 }
-                else if (no_actions > 0) {
+                else if (no_grammar_lines > 0) {
                     error("Once an action has been defined \
 it is too late to change the grammar version.");
                 }

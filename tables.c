@@ -563,7 +563,7 @@ static void construct_storyfile_z(void)
                 p[mark] = n;
                 mark = mark + 8;
             }
-            else
+            else if (grammar_version_number == 2)
             {   int tok;
                 p[mark++] = grammar_lines[k++];
                 p[mark++] = grammar_lines[k++];
@@ -574,6 +574,22 @@ static void construct_storyfile_z(void)
                     p[mark++] = grammar_lines[k++];
                     p[mark++] = grammar_lines[k++];
                 }
+            }
+            else if (grammar_version_number == 3)
+            {
+                int no_tok, l;
+                p[mark++] = grammar_lines[k++];
+                p[mark++] = grammar_lines[k++];
+                no_tok = ((p[mark - 2] & 0xF8) >> 3);
+                for (l = 0; l < no_tok; l++)
+                {
+                    p[mark++] = grammar_lines[k++];
+                    p[mark++] = grammar_lines[k++];
+                }
+            }
+            else
+            {
+                error("invalid grammar version for Z-code");
             }
         }
     }
@@ -588,7 +604,7 @@ static void construct_storyfile_z(void)
     mark += no_actions*2;
 
     preactions_at = mark;
-    if (grammar_version_number == 1)
+    if (grammar_version_number == 1 || grammar_version_number == 3)
         mark += no_grammar_token_routines*2;
 
     /*  ----------------------- Adjectives Table --------------------------- */
@@ -606,10 +622,24 @@ static void construct_storyfile_z(void)
             p[mark++]=(256-no_adjectives+i);
         }
     }
-    else
+    else if (grammar_version_number == 2)
     {   p[mark]=0; p[mark+1]=0; mark+=2;
         adjectives_offset = mark;
         dictionary_offset = mark;
+    }
+    else if (grammar_version_number == 3)
+    {
+        p[mark] = 0; p[mark + 1] = no_adjectives; mark += 2;
+        adjectives_offset = mark;       /* adjectives_offset points at start of
+                                           data, not at length of table word */
+        dictionary_offset = mark + 2 * no_adjectives;
+        for (i = 0; i < no_adjectives; i++)
+        {
+            j = final_dict_order[adjectives[i]]
+                * DICT_ENTRY_BYTE_LENGTH
+                + dictionary_offset + 7;
+            p[mark++] = j / 256; p[mark++] = j % 256;
+        }
     }
 
     /*  ------------------------- Dictionary ------------------------------- */
@@ -891,7 +921,7 @@ or less.");
             p[mark++]=j/256; p[mark++]=j%256;
         }
 
-        if (grammar_version_number == 1)
+        if (grammar_version_number == 1 || grammar_version_number == 3)
         {   mark = preactions_at;
             for (i=0; i<no_grammar_token_routines; i++)
             {   j=grammar_token_routine[i];
