@@ -1730,9 +1730,19 @@ static void generate_code_from(int n, int void_flag)
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
-                 assemblez_2_to(get_prop_addr_zc, AO,
-                     ET[ET[below].right].value, temp_var1);
-                 if (!void_flag) write_result_z(Result, temp_var1);
+                 //assemblez_2_to(get_prop_addr_zc, AO,
+                 //    ET[ET[below].right].value, temp_var1);
+                 //if (!void_flag) write_result_z(Result, temp_var1);
+                 if ((!void_flag) && (Result.value == 0)) {  // can be optimized and written directly to stack_pointer
+                     assemblez_2_to(get_prop_addr_zc, AO,
+                         ET[ET[below].right].value, Result);
+                 }
+                 else {
+                     assemblez_2_to(get_prop_addr_zc, AO,
+                         ET[ET[below].right].value, temp_var1);
+                     if (!void_flag) write_result_z(Result, temp_var1);
+                 }
+
              }
              break;
 
@@ -1755,13 +1765,29 @@ static void generate_code_from(int n, int void_flag)
              {
                  check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
-                 if (runtime_error_checking_switch && (!veneer_mode))
-                       assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
+                 //if (runtime_error_checking_switch && (!veneer_mode))
+                 //      assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
+                 //        ET[below].value, ET[ET[below].right].value, temp_var1);
+                 //else
+                 //assemblez_2_to(get_prop_zc, ET[below].value,
+                 //    ET[ET[below].right].value, temp_var1);
+                 //if (!void_flag) write_result_z(Result, temp_var1);
+                 if (runtime_error_checking_switch && (!veneer_mode)) {
+                     assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
                          ET[below].value, ET[ET[below].right].value, temp_var1);
-                 else
-                 assemblez_2_to(get_prop_zc, ET[below].value,
-                     ET[ET[below].right].value, temp_var1);
-                 if (!void_flag) write_result_z(Result, temp_var1);
+                     if (!void_flag) write_result_z(Result, temp_var1);
+                 }
+                 else {
+                     if ((!void_flag) && (Result.value == 0)) {  // can be optimized and written directly to stack_pointer
+                         assemblez_2_to(get_prop_zc, ET[below].value,
+                             ET[ET[below].right].value, Result);
+                     }
+                     else {
+                         assemblez_2_to(get_prop_zc, ET[below].value,
+                             ET[ET[below].right].value, temp_var1);
+                         if (!void_flag) write_result_z(Result, temp_var1);
+                     }
+                 }
              }
              break;
 
