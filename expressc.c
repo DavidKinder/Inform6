@@ -1699,8 +1699,9 @@ static void generate_code_from(int n, int void_flag)
                 }
             }
             else {
-            assemblez_2_to(o_n, ET[below].value,
-                ET[ET[below].right].value, Result);
+                if (!try_to_simplify_operand_z(o_n,ET[below].value,ET[ET[below].right].value,Result))
+                    assemblez_2_to(o_n, ET[below].value,
+                        ET[ET[below].right].value, Result);
             }
         }
         else
@@ -1730,7 +1731,7 @@ static void generate_code_from(int n, int void_flag)
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
-                 if ((!void_flag) && (Result.value == 0)) {
+                 if ((!void_flag) && (Result.value == 0) && Result.type == VARIABLE_OT) {
                      /* store directly to stack_pointer */
                      assemblez_2_to(get_prop_addr_zc, AO,
                          ET[ET[below].right].value, Result);
@@ -1768,7 +1769,7 @@ static void generate_code_from(int n, int void_flag)
                      if (!void_flag) write_result_z(Result, temp_var1);
                  }
                  else {
-                     if ((!void_flag) && (Result.value == 0)) {
+                     if ((!void_flag) && (Result.value == 0) && Result.type == VARIABLE_OT) {
                          /* store directly to stack_pointer */
                          assemblez_2_to(get_prop_zc, ET[below].value,
                              ET[ET[below].right].value, Result);
@@ -3102,3 +3103,48 @@ extern void expressc_free_arrays(void)
 }
 
 /* ========================================================================= */
+
+int try_to_simplify_operand_z(int o_n,
+    assembly_operand o1, assembly_operand o2, assembly_operand st) 
+{
+    // x = x + 1 ==> x++
+    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        assemblez_inc(st);
+        return TRUE;
+    }
+    // x = 1 + x ==> x++
+    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
+        assemblez_inc(st);
+        return TRUE;
+    }
+    // x = x + 0 ==> skip
+    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
+        return TRUE;
+    }
+    // x = 0 + x ==> skip
+    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 0) {
+        return TRUE;
+    }
+    // x = x - 1 ==> x--
+    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        assemblez_dec(st);
+        return TRUE;
+    }
+    // x = x - 0 ==> skip
+    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
+        return TRUE;
+    }
+    // x = x * 1 ==> skip
+    if (o_n == mul_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
+    // x = 1 * x ==> skip
+    if (o_n == mul_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
+        return TRUE;
+    }
+    // x = x / 1 ==> skip
+    if (o_n == div_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
+    return FALSE;
+}
