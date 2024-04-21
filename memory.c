@@ -600,40 +600,43 @@ static void explain_parameter(char *command)
    overflow) but this is better than trying to detect genuine
    overflows in a long.
 
-   (Some Glulx settings might conceivably want to go up to $7FFFFFFF,
-   which is a ten-digit number, but we're not going to allow that
-   today.)
+   (The max value is a bit under $3BFFFFFF. Some Glulx settings might
+   conceivably want to go up to $7FFFFFFF, but we currently fall short
+   of that.)
 
-   This used to rely on atoi(), and we retain the atoi() behavior of
-   ignoring garbage characters after a valid decimal number.
+   Whitespace is allowed (and ignored) before and after the numeric
+   value. This used to rely on atoi(), which allowed any garbage after
+   the number, but we've gotten stricter.
  */
 static int parse_memory_setting(char *str, char *label, int32 *result)
 {
     char *cx = str;
     char *ex;
+    int gotlen;
     long val;
 
     *result = 0;
 
-    while (*cx == ' ') cx++;
+    while (*cx && isspace(*cx)) cx++;
+    val = strtol(cx, &ex, 10);
+    gotlen = (ex - cx);
+    while (*ex && isspace(*ex)) ex++;
 
-    val = strtol(cx, &ex, 10);    
-
-    if (ex == cx) {
+    if (*ex) {
         printf("Bad numerical setting in $ command \"%s=%s\"\n",
             label, str);
         return 0;
     }
 
     if (*cx == '-') {
-        if (ex > cx+10) {
+        if (gotlen > 10) {
             val = -999999999;
             printf("Numerical setting underflowed in $ command \"%s=%s\" (limiting to %ld)\n",
                 label, str, val);
         }
     }
     else {
-        if (ex > cx+9) {
+        if (gotlen > 9) {
             val = 999999999;
             printf("Numerical setting overflowed in $ command \"%s=%s\" (limiting to %ld)\n",
                 label, str, val);
