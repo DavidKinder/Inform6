@@ -89,6 +89,7 @@ static optiont alloptions[] = {
   Z-code this is always 6 (only 4 are used in v3 games). In Glulx it \n\
   can be any number.\n",
         OPTUSE_GLULX,
+        { OPTLIM_ANY },
     },
     {
         "DICT_CHAR_SIZE",
@@ -98,6 +99,7 @@ static optiont alloptions[] = {
   words.) It can be either 1 (the default) or 4 (to enable full Unicode \n\
   input.)\n",
         OPTUSE_GLULX,
+        { OPTLIM_TOMAX, 4 }, //### 1 or 4
     },
     {
         "GRAMMAR_VERSION",
@@ -106,6 +108,7 @@ static optiont alloptions[] = {
   the Inform standard. 1 is an older version based on Infocom's format. \n\
   The default is 1 in Z-code, 2 in Glulx.\n",
         OPTUSE_ALL,
+        { OPTLIM_ANY }, /* limited in set_grammar_version() */
     },
     {
         "GRAMMAR_META_FLAG",
@@ -115,6 +118,7 @@ static optiont alloptions[] = {
   individual actions to be marked 'meta', rather than relying on dict \n\
   word flags.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "NUM_ATTR_BYTES",
@@ -124,6 +128,7 @@ static optiont alloptions[] = {
   v3 games). In Glulx it can be any number which is a multiple of four, \n\
   plus three.\n",
         OPTUSE_GLULX,
+        { OPTLIM_3MOD4 },
     },
     {
         "ZCODE_HEADER_EXT_WORDS",
@@ -133,6 +138,7 @@ static optiont alloptions[] = {
   to 3, but can be set higher. (It can be set lower if no Unicode \n\
   translation table is created.)\n",
         OPTUSE_ZCODE,
+        { OPTLIM_ANY },
     },
     {
         "ZCODE_HEADER_FLAGS_3",
@@ -140,6 +146,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
   header extension table (Z-Spec 1.1).\n",
         OPTUSE_ZCODE,
+        { OPTLIM_ANY },
     },
     {
         "ZCODE_FILE_END_PADDING",
@@ -147,6 +154,7 @@ static optiont alloptions[] = {
   ZCODE_FILE_END_PADDING, if set, pads the game file length to a multiple \n\
   of 512 bytes. (Z-code only.)\n",
         OPTUSE_ZCODE,
+        { OPTLIM_ANY },
     },
     {
         "ZCODE_LESS_DICT_DATA",
@@ -154,6 +162,7 @@ static optiont alloptions[] = {
   ZCODE_LESS_DICT_DATA, if set, provides each dict word with two data bytes\n\
   rather than three. (Z-code only.)\n",
         OPTUSE_ZCODE,
+        { OPTLIM_ANY },
     },
     {
         "ZCODE_MAX_INLINE_STRING",
@@ -161,6 +170,7 @@ static optiont alloptions[] = {
   ZCODE_MAX_INLINE_STRING is the length beyond which string literals cannot\n\
   be inlined in assembly opcodes. (Z-code only.)\n",
         OPTUSE_ZCODE,
+        { OPTLIM_ANY },
     },
     {
         "GLULX_OBJECT_EXT_BYTES",
@@ -170,6 +180,7 @@ static optiont alloptions[] = {
   use it as desired. (This is only meaningful in Glulx, since Z-code \n\
   specifies the object structure.)\n",
         OPTUSE_GLULX,
+        { OPTLIM_ANY },
     },
     {
         "MAX_ABBREVS",
@@ -178,6 +189,7 @@ static optiont alloptions[] = {
   allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
   there is no limit on abbreviations.)\n",
         OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 96 }, //### Z-max?
     },
     {
         "MAX_DYNAMIC_STRINGS",
@@ -185,6 +197,7 @@ static optiont alloptions[] = {
   MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
   (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 96 }, //### Z-max?
     },
     {
         "INDIV_PROP_START",
@@ -192,6 +205,7 @@ static optiont alloptions[] = {
   Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
   properties are numbered INDIV_PROP_START and up.\n",
         OPTUSE_ALL,
+        { OPTLIM_ANY },
     },
     {
         "MAX_STACK_SIZE",
@@ -199,6 +213,7 @@ static optiont alloptions[] = {
   MAX_STACK_SIZE is the maximum size (in bytes) of the interpreter stack \n\
   during gameplay. (Glulx only)\n",
         OPTUSE_GLULX,
+        { OPTLIM_MUL256 },
     },
     {
         "MEMORY_MAP_EXTENSION",
@@ -206,6 +221,7 @@ static optiont alloptions[] = {
   MEMORY_MAP_EXTENSION is the number of bytes (all zeroes) to map into \n\
   memory after the game file. (Glulx only)\n",
         OPTUSE_GLULX,
+        { OPTLIM_MUL256 },
     },
     {
         "TRANSCRIPT_FORMAT",
@@ -213,6 +229,7 @@ static optiont alloptions[] = {
   TRANSCRIPT_FORMAT, if set to 1, adjusts the gametext.txt transcript for \n\
   easier machine processing; each line will be prefixed by its context.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "WARN_UNUSED_ROUTINES",
@@ -222,6 +239,7 @@ static optiont alloptions[] = {
   routines called only from uncalled routines, etc.) If set to 1, will warn \n\
   only about functions in game code, not in the system library.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "OMIT_UNUSED_ROUTINES",
@@ -229,6 +247,7 @@ static optiont alloptions[] = {
   OMIT_UNUSED_ROUTINES, if set to 1, will avoid compiling unused routines \n\
   into the game file.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "STRIP_UNREACHABLE_LABELS",
@@ -237,6 +256,7 @@ static optiont alloptions[] = {
   statements. Jumping to a skipped label is an error. If 0, all labels \n\
   will be compiled, at the cost of less optimized code. The default is 1.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "OMIT_SYMBOL_TABLE",
@@ -244,13 +264,15 @@ static optiont alloptions[] = {
   OMIT_SYMBOL_TABLE, if set to 1, will skip compiling debug symbol names \n\
   into the game file.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "DICT_IMPLICIT_SINGULAR",
         "\
   DICT_IMPLICIT_SINGULAR, if set to 1, will cause dict words in noun \n\
-  context to have the '//s' flag if the '//p' flag is not set. \n",
+  context to have the '//s' flag if the '//p' flag is not set.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "DICT_TRUNCATE_FLAG",
@@ -259,6 +281,7 @@ static optiont alloptions[] = {
   word is truncated (extends beyond DICT_WORD_SIZE). If 0, bit 6 will be \n\
   set for verbs (legacy behavior). \n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "LONG_DICT_FLAG_BUG",
@@ -267,6 +290,7 @@ static optiont alloptions[] = {
   the '//p' flag in long dictionary words. If 1, the buggy behavior is \n\
   retained.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
     },
     {
         "SERIAL",
@@ -274,6 +298,7 @@ static optiont alloptions[] = {
   SERIAL, if set, will be used as the six digit serial number written into \n\
   the header of the output file.\n",
         OPTUSE_ALL,
+        { OPTLIM_TOMAX, 999999 },
     },
 };
 
