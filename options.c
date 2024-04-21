@@ -46,6 +46,12 @@ typedef struct optiont_s {
     int precedence;
 } optiont;
 
+/* Must match the order of alloptions[] */
+enum optionindex {
+    OPT_HASH_TAB_SIZE   = 0,
+    OPT_OPTIONS_COUNT   = 1,
+};
+
 static optiont alloptions[] = {
     {
         "HASH_TAB_SIZE",
@@ -56,13 +62,38 @@ static optiont alloptions[] = {
         0, -1,
         DEFAULTVAL(512),
     },
-    { NULL },
 };
 
 extern void prepare_options(void)
 {
     int ix;
-    for (ix=0; alloptions[ix].name; ix++) {
+    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
     }
+}
+
+/* Set an option to a given value. The option value is a string; most
+   options are numeric but not all.
+
+   We will enforce option limits (minima, maxima, multiple-of-N) before
+   setting the value.
+   
+   The precedence value indicates where the option came from. Higher
+   precedence sources (command line) override lower precedence (header
+   comments).
+
+   Note that we do not necessarily know whether the target is Z-code
+   or Glulx when this is called. The option structure has two values,
+   perhaps differing; we will set both.
+ */
+extern void set_option(char *name, char *str, int prec)
+{
+}
+
+/* Apply the options to our compiler variables. At this point we *do*
+   know the target platform (glulx_mode is TRUE or FALSE) and all
+   options have valid values.
+*/
+extern void apply_options(void)
+{
 }
