@@ -68,7 +68,8 @@ typedef struct optiont_s {
     int precedence;
 } optiont;
 
-/* Must match the order of alloptions[] */
+/* Must match the order of alloptions[], which is the order of the $LIST
+   in the old options system, which was not very systematic. */
 enum optionindex {
     OPT_HASH_TAB_SIZE   = 0,
     OPT_OPTIONS_COUNT   = 1,
@@ -86,9 +87,14 @@ static optiont alloptions[] = {
     },
 };
 
+/* The default options are set above. All we really need to do here is
+   set the precedence field of each entry.
+*/
 extern void prepare_options(void)
 {
     int ix;
+    if (OPT_OPTIONS_COUNT != sizeof(alloptions) / sizeof(optiont))
+        compiler_error("alloptions array size mismatch");
     for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
     }
