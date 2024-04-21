@@ -1907,6 +1907,7 @@ static int sub_main(int argc, char **argv)
 
     banner();
 
+    prepare_options();
     set_memory_sizes(); set_default_paths();
     reset_switch_settings(); select_version(5);
 

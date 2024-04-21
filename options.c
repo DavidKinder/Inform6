@@ -59,11 +59,10 @@ static optiont alloptions[] = {
     { NULL },
 };
 
-extern void init_options(void)
+extern void prepare_options(void)
 {
     int ix;
     for (ix=0; alloptions[ix].name; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
-        puts(alloptions[ix].desc);
     }
 }
