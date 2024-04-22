@@ -42,6 +42,8 @@ enum optionlimit {
 #define DEFAULTVAL(v) { (v), (v) }
 #define DEFAULTVALS(z, g) { (z), (g) }
 
+#define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
+
 #define DEFAULT_OPTPREC (0)
 #define HEADCOM_OPTPREC (1)
 #define CMDLINE_OPTPREC (2)
@@ -388,6 +390,36 @@ extern void prepare_options(void)
  */
 extern void set_option(char *name, int32 val, int prec)
 {
+}
+
+/* Display all the options (for $LIST), assuming the current target platform
+   (glulx_mode).
+*/
+extern void list_compiler_options(void)
+{
+    int ix;
+    
+    printf("+--------------------------------------+\n");
+    printf("|  %25s = %-7s |\n", "Compiler option", "Value");
+    printf("+--------------------------------------+\n");
+
+    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
+        int32 val = SELECTVAL(ix);
+        enum optionuse use = alloptions[ix].use;
+        if (use == OPTUSE_OBSOLETE_I5 || use == OPTUSE_OBSOLETE_I6)
+            continue;
+        if (!glulx_mode) {
+            if (use == OPTUSE_GLULX)
+                continue;
+        }
+        else {
+            if (use == OPTUSE_ZCODE)
+                continue;
+        }
+        printf("|  %25s = %-7d |\n", alloptions[ix].name, val);
+    }
+
+    printf("+--------------------------------------+\n");
 }
 
 /* Apply the options to our compiler variables. At this point we *do*

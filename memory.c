@@ -294,6 +294,7 @@ int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
 
+//###
 static void list_memory_sizes(void)
 {   printf("+--------------------------------------+\n");
     printf("|  %25s = %-7s |\n","Memory setting","Value");
@@ -835,7 +836,10 @@ extern void memory_command(char *command)
         return;
     }
     
-    if (strcmp(command, "LIST")==0)  { list_memory_sizes(); return; }
+    if (strcmp(command, "LIST")==0) {
+        list_compiler_options();
+        return;
+    }
     
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
