@@ -90,6 +90,7 @@ static optiont alloptions[] = {
   can be any number.\n",
         OPTUSE_GLULX,
         { OPTLIM_ANY },
+        DEFAULTVALS(6, 9),
     },
     {
         "DICT_CHAR_SIZE",
@@ -100,6 +101,7 @@ static optiont alloptions[] = {
   input.)\n",
         OPTUSE_GLULX,
         { OPTLIM_TOMAX, 4 }, //### 1 or 4
+        DEFAULTVAL(1),
     },
     {
         "GRAMMAR_VERSION",
@@ -109,6 +111,7 @@ static optiont alloptions[] = {
   The default is 1 in Z-code, 2 in Glulx.\n",
         OPTUSE_ALL,
         { OPTLIM_ANY }, /* limited in set_grammar_version() */
+        DEFAULTVALS(1, 2),
     },
     {
         "GRAMMAR_META_FLAG",
@@ -119,6 +122,7 @@ static optiont alloptions[] = {
   word flags.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "NUM_ATTR_BYTES",
@@ -129,6 +133,7 @@ static optiont alloptions[] = {
   plus three.\n",
         OPTUSE_GLULX,
         { OPTLIM_3MOD4 },
+        DEFAULTVALS(6, 7),
     },
     {
         "ZCODE_HEADER_EXT_WORDS",
@@ -139,6 +144,7 @@ static optiont alloptions[] = {
   translation table is created.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        DEFAULTVAL(3),
     },
     {
         "ZCODE_HEADER_FLAGS_3",
@@ -147,6 +153,7 @@ static optiont alloptions[] = {
   header extension table (Z-Spec 1.1).\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        DEFAULTVAL(0),
     },
     {
         "ZCODE_FILE_END_PADDING",
@@ -155,6 +162,7 @@ static optiont alloptions[] = {
   of 512 bytes. (Z-code only.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        DEFAULTVAL(1),
     },
     {
         "ZCODE_LESS_DICT_DATA",
@@ -163,6 +171,7 @@ static optiont alloptions[] = {
   rather than three. (Z-code only.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        DEFAULTVAL(0),
     },
     {
         "ZCODE_MAX_INLINE_STRING",
@@ -171,6 +180,7 @@ static optiont alloptions[] = {
   be inlined in assembly opcodes. (Z-code only.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        DEFAULTVAL(32),
     },
     {
         "GLULX_OBJECT_EXT_BYTES",
@@ -181,6 +191,7 @@ static optiont alloptions[] = {
   specifies the object structure.)\n",
         OPTUSE_GLULX,
         { OPTLIM_ANY },
+        DEFAULTVAL(0),
     },
     {
         "MAX_ABBREVS",
@@ -190,6 +201,7 @@ static optiont alloptions[] = {
   there is no limit on abbreviations.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_TOMAX, 96 }, //### Z-max?
+        DEFAULTVAL(64),
     },
     {
         "MAX_DYNAMIC_STRINGS",
@@ -198,6 +210,7 @@ static optiont alloptions[] = {
   (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 96 }, //### Z-max?
+        DEFAULTVALS(32, 100),
     },
     {
         "INDIV_PROP_START",
@@ -206,6 +219,7 @@ static optiont alloptions[] = {
   properties are numbered INDIV_PROP_START and up.\n",
         OPTUSE_ALL,
         { OPTLIM_ANY },
+        DEFAULTVALS(64, 256),
     },
     {
         "MAX_STACK_SIZE",
@@ -214,6 +228,7 @@ static optiont alloptions[] = {
   during gameplay. (Glulx only)\n",
         OPTUSE_GLULX,
         { OPTLIM_MUL256 },
+        DEFAULTVAL(4096),
     },
     {
         "MEMORY_MAP_EXTENSION",
@@ -222,6 +237,7 @@ static optiont alloptions[] = {
   memory after the game file. (Glulx only)\n",
         OPTUSE_GLULX,
         { OPTLIM_MUL256 },
+        DEFAULTVAL(0),
     },
     {
         "TRANSCRIPT_FORMAT",
@@ -230,6 +246,7 @@ static optiont alloptions[] = {
   easier machine processing; each line will be prefixed by its context.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "WARN_UNUSED_ROUTINES",
@@ -240,6 +257,7 @@ static optiont alloptions[] = {
   only about functions in game code, not in the system library.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "OMIT_UNUSED_ROUTINES",
@@ -248,6 +266,7 @@ static optiont alloptions[] = {
   into the game file.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "STRIP_UNREACHABLE_LABELS",
@@ -257,6 +276,7 @@ static optiont alloptions[] = {
   will be compiled, at the cost of less optimized code. The default is 1.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(1),
     },
     {
         "OMIT_SYMBOL_TABLE",
@@ -265,6 +285,7 @@ static optiont alloptions[] = {
   into the game file.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "DICT_IMPLICIT_SINGULAR",
@@ -273,6 +294,7 @@ static optiont alloptions[] = {
   context to have the '//s' flag if the '//p' flag is not set.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "DICT_TRUNCATE_FLAG",
@@ -282,6 +304,7 @@ static optiont alloptions[] = {
   set for verbs (legacy behavior). \n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
     },
     {
         "LONG_DICT_FLAG_BUG",
@@ -291,6 +314,7 @@ static optiont alloptions[] = {
   retained.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(1),
     },
     {
         "SERIAL",
@@ -299,6 +323,7 @@ static optiont alloptions[] = {
   the header of the output file.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 999999 },
+        DEFAULTVAL(0),
     },
 };
 
