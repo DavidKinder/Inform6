@@ -294,54 +294,6 @@ int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
 
-//###
-static void list_memory_sizes(void)
-{   printf("+--------------------------------------+\n");
-    printf("|  %25s = %-7s |\n","Memory setting","Value");
-    printf("+--------------------------------------+\n");
-    printf("|  %25s = %-7d |\n","MAX_ABBREVS",MAX_ABBREVS);
-    printf("|  %25s = %-7d |\n","NUM_ATTR_BYTES",NUM_ATTR_BYTES);
-    printf("|  %25s = %-7d |\n","DICT_WORD_SIZE",DICT_WORD_SIZE);
-    if (glulx_mode)
-      printf("|  %25s = %-7d |\n","DICT_CHAR_SIZE",DICT_CHAR_SIZE);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_z);
-    else
-      printf("|  %25s = %-7d |\n","GRAMMAR_VERSION",GRAMMAR_VERSION_g);
-    printf("|  %25s = %-7d |\n","GRAMMAR_META_FLAG",GRAMMAR_META_FLAG);
-    printf("|  %25s = %-7d |\n","MAX_DYNAMIC_STRINGS",MAX_DYNAMIC_STRINGS);
-    printf("|  %25s = %-7d |\n","HASH_TAB_SIZE",HASH_TAB_SIZE);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","ZCODE_HEADER_EXT_WORDS",ZCODE_HEADER_EXT_WORDS);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","ZCODE_HEADER_FLAGS_3",ZCODE_HEADER_FLAGS_3);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","ZCODE_FILE_END_PADDING",ZCODE_FILE_END_PADDING);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","ZCODE_LESS_DICT_DATA",ZCODE_LESS_DICT_DATA);
-    if (!glulx_mode)
-      printf("|  %25s = %-7d |\n","ZCODE_MAX_INLINE_STRING",ZCODE_MAX_INLINE_STRING);
-    printf("|  %25s = %-7d |\n","INDIV_PROP_START", INDIV_PROP_START);
-    if (glulx_mode)
-      printf("|  %25s = %-7d |\n","MEMORY_MAP_EXTENSION",
-        MEMORY_MAP_EXTENSION);
-    if (glulx_mode)
-      printf("|  %25s = %-7d |\n","GLULX_OBJECT_EXT_BYTES",
-        GLULX_OBJECT_EXT_BYTES);
-    if (glulx_mode)
-      printf("|  %25s = %-7ld |\n","MAX_STACK_SIZE",
-           (long int) MAX_STACK_SIZE);
-    printf("|  %25s = %-7d |\n","TRANSCRIPT_FORMAT",TRANSCRIPT_FORMAT);
-    printf("|  %25s = %-7d |\n","WARN_UNUSED_ROUTINES",WARN_UNUSED_ROUTINES);
-    printf("|  %25s = %-7d |\n","OMIT_UNUSED_ROUTINES",OMIT_UNUSED_ROUTINES);
-    printf("|  %25s = %-7d |\n","STRIP_UNREACHABLE_LABELS",STRIP_UNREACHABLE_LABELS);
-    printf("|  %25s = %-7d |\n","OMIT_SYMBOL_TABLE",OMIT_SYMBOL_TABLE);
-    printf("|  %25s = %-7d |\n","DICT_IMPLICIT_SINGULAR",DICT_IMPLICIT_SINGULAR);
-    printf("|  %25s = %-7d |\n","DICT_TRUNCATE_FLAG",DICT_TRUNCATE_FLAG);
-    printf("|  %25s = %-7d |\n","LONG_DICT_FLAG_BUG",LONG_DICT_FLAG_BUG);
-    printf("+--------------------------------------+\n");
-}
-
 extern void set_memory_sizes(void)
 {
     HASH_TAB_SIZE      = 512;
