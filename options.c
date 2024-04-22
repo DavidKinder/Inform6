@@ -101,13 +101,25 @@ enum optionindex {
 
 static optiont alloptions[] = {
     {
-        "HASH_TAB_SIZE",
+        "MAX_ABBREVS",
         "\
-  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
-  symbols banks.\n",
-        OPTUSE_ALL,
-        { OPTLIM_ANY },
-        DEFAULTVAL(512),
+  MAX_ABBREVS is the maximum number of declared abbreviations.  It is not \n\
+  allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
+  there is no limit on abbreviations.)\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 96 }, //### Z-max?
+        DEFAULTVAL(64),
+    },
+    {
+        "NUM_ATTR_BYTES",
+        "\
+  NUM_ATTR_BYTES is the space used to store attribute flags. Each byte \n\
+  stores eight attributes. In Z-code this is always 6 (only 4 are used in \n\
+  v3 games). In Glulx it can be any number which is a multiple of four, \n\
+  plus three.\n",
+        OPTUSE_GLULX,
+        { OPTLIM_3MOD4 },
+        DEFAULTVALS(6, 7),
     },
     {
         "DICT_WORD_SIZE",
@@ -152,15 +164,22 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
-        "NUM_ATTR_BYTES",
+        "MAX_DYNAMIC_STRINGS",
         "\
-  NUM_ATTR_BYTES is the space used to store attribute flags. Each byte \n\
-  stores eight attributes. In Z-code this is always 6 (only 4 are used in \n\
-  v3 games). In Glulx it can be any number which is a multiple of four, \n\
-  plus three.\n",
-        OPTUSE_GLULX,
-        { OPTLIM_3MOD4 },
-        DEFAULTVALS(6, 7),
+  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables \n\
+  (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
+        OPTUSE_ALL,
+        { OPTLIM_TOMAX, 96 }, //### Z-max?
+        DEFAULTVALS(32, 100),
+    },
+    {
+        "HASH_TAB_SIZE",
+        "\
+  HASH_TAB_SIZE is the size of the hash tables used for the heaviest \n\
+  symbols banks.\n",
+        OPTUSE_ALL,
+        { OPTLIM_ANY },
+        DEFAULTVAL(512),
     },
     {
         "ZCODE_HEADER_EXT_WORDS",
@@ -213,6 +232,24 @@ static optiont alloptions[] = {
         DEFAULTVAL(32),
     },
     {
+        "INDIV_PROP_START",
+        "\
+  Properties 1 to INDIV_PROP_START-1 are common properties; individual \n\
+  properties are numbered INDIV_PROP_START and up.\n",
+        OPTUSE_ALL,
+        { OPTLIM_ANY },
+        DEFAULTVALS(64, 256),
+    },
+    {
+        "MEMORY_MAP_EXTENSION",
+        "\
+  MEMORY_MAP_EXTENSION is the number of bytes (all zeroes) to map into \n\
+  memory after the game file. (Glulx only)\n",
+        OPTUSE_GLULX,
+        { OPTLIM_MUL256 },
+        DEFAULTVAL(0),
+    },
+    {
         "GLULX_OBJECT_EXT_BYTES",
         "\
   GLULX_OBJECT_EXT_BYTES is an amount of additional space to add to each \n\
@@ -222,34 +259,6 @@ static optiont alloptions[] = {
         OPTUSE_GLULX,
         { OPTLIM_ANY },
         DEFAULTVAL(0),
-    },
-    {
-        "MAX_ABBREVS",
-        "\
-  MAX_ABBREVS is the maximum number of declared abbreviations.  It is not \n\
-  allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
-  there is no limit on abbreviations.)\n",
-        OPTUSE_ZCODE,
-        { OPTLIM_TOMAX, 96 }, //### Z-max?
-        DEFAULTVAL(64),
-    },
-    {
-        "MAX_DYNAMIC_STRINGS",
-        "\
-  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables \n\
-  (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
-        OPTUSE_ALL,
-        { OPTLIM_TOMAX, 96 }, //### Z-max?
-        DEFAULTVALS(32, 100),
-    },
-    {
-        "INDIV_PROP_START",
-        "\
-  Properties 1 to INDIV_PROP_START-1 are common properties; individual \n\
-  properties are numbered INDIV_PROP_START and up.\n",
-        OPTUSE_ALL,
-        { OPTLIM_ANY },
-        DEFAULTVALS(64, 256),
     },
     {
         "MAX_STACK_SIZE",
@@ -264,15 +273,6 @@ static optiont alloptions[] = {
            size. Note that Inform 7 wants more stack; I7-generated code
            sets MAX_STACK_SIZE to 65536 by default. */
         DEFAULTVAL(4096),
-    },
-    {
-        "MEMORY_MAP_EXTENSION",
-        "\
-  MEMORY_MAP_EXTENSION is the number of bytes (all zeroes) to map into \n\
-  memory after the game file. (Glulx only)\n",
-        OPTUSE_GLULX,
-        { OPTLIM_MUL256 },
-        DEFAULTVAL(0),
     },
     {
         "TRANSCRIPT_FORMAT",
