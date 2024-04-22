@@ -439,6 +439,7 @@ extern void list_compiler_options(void)
 
 extern void explain_compiler_option(char *str)
 {
+    int32 val;
     optiont *opt = find_option(str);
     if (!opt) {
         printf("No such memory setting as \"%s\"\n", str);
@@ -457,6 +458,8 @@ extern void explain_compiler_option(char *str)
         return;
     }
     printf("\n%s", opt->desc);
+    val = (glulx_mode ? opt->val.g : opt->val.z);
+    printf("\n  (currently: %d)\n", val);
 }
 
 /* Apply the options to our compiler variables. At this point we *do*
