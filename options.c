@@ -406,8 +406,10 @@ extern void list_compiler_options(void)
     for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
         int32 val = SELECTVAL(ix);
         enum optionuse use = alloptions[ix].use;
+        /* Skip all the obsolete options. */
         if (use == OPTUSE_OBSOLETE_I5 || use == OPTUSE_OBSOLETE_I6)
             continue;
+        /* Also skip wrong-platform options. */
         if (!glulx_mode) {
             if (use == OPTUSE_GLULX)
                 continue;
@@ -416,6 +418,9 @@ extern void list_compiler_options(void)
             if (use == OPTUSE_ZCODE)
                 continue;
         }
+        /* Don't display the serial number; it's not really a setting. */
+        if (ix == OPT_SERIAL)
+            continue;
         printf("|  %25s = %-7d |\n", alloptions[ix].name, val);
     }
 
