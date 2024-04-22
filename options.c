@@ -360,12 +360,56 @@ static optiont alloptions[] = {
         { OPTLIM_TOMAX, 999999 },
         DEFAULTVAL(0),
     },
+    /* obsolete options run past OPT_OPTIONS_COUNT */
+    {
+        "BUFFER_LENGTH",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "MAX_BANK_SIZE",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "BANK_CHUNK_SIZE",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "MAX_OLDEPTH",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "MAX_ROUTINES",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "MAX_GCONSTANTS",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "MAX_FORWARD_REFS",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "STACK_SIZE",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "STACK_LONG_SLOTS",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        "STACK_SHORT_LENGTH",
+        NULL, OPTUSE_OBSOLETE_I5,
+    },
+    {
+        NULL, /* terminator */
+    },
 };
 
 static optiont *find_option(char *str)
 {
     int ix;
-    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
+    for (ix=0; alloptions[ix].name; ix++) {
         if (strcmp(str, alloptions[ix].name) == 0)
             return &alloptions[ix];
     }
@@ -378,9 +422,7 @@ static optiont *find_option(char *str)
 extern void prepare_options(void)
 {
     int ix;
-    if (OPT_OPTIONS_COUNT != sizeof(alloptions) / sizeof(optiont))
-        compiler_error("alloptions array size mismatch");
-    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
+    for (ix=0; alloptions[ix].name; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
     }
 }
@@ -413,7 +455,7 @@ extern void list_compiler_options(void)
     printf("|  %25s = %-7s |\n", "Compiler option", "Value");
     printf("+--------------------------------------+\n");
 
-    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
+    for (ix=0; alloptions[ix].name; ix++) {
         int32 val = SELECTVAL(ix);
         enum optionuse use = alloptions[ix].use;
         /* Skip all the obsolete options. */
