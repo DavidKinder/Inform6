@@ -144,6 +144,9 @@ static optiont alloptions[] = {
   translation table is created.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
+        /* Backwards-compatible behavior: allow for a unicode table
+           whether we need one or not. The user can set this to zero if
+           there's no unicode table. */
         DEFAULTVAL(3),
     },
     {
@@ -228,6 +231,11 @@ static optiont alloptions[] = {
   during gameplay. (Glulx only)\n",
         OPTUSE_GLULX,
         { OPTLIM_MUL256 },
+        /* We estimate the default Glulx stack size at 4096. That's about
+           enough for 90 nested function calls with 8 locals each -- the
+           same capacity as the Z-Spec's suggestion for Z-machine stack
+           size. Note that Inform 7 wants more stack; I7-generated code
+           sets MAX_STACK_SIZE to 65536 by default. */
         DEFAULTVAL(4096),
     },
     {

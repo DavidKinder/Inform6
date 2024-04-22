@@ -281,6 +281,7 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    which have different defaults under Z-code and Glulx. We have to get
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
+//###
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
