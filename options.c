@@ -665,6 +665,7 @@ extern void apply_compiler_options(void)
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
     /* Grammar version: Set both values to be passed to set_grammar_version(). */
+    //###
     GRAMMAR_VERSION_z = alloptions[OPT_GRAMMAR_VERSION].val.z;
     GRAMMAR_VERSION_g = alloptions[OPT_GRAMMAR_VERSION].val.g;
 
