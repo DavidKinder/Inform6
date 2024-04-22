@@ -334,7 +334,7 @@ extern void set_memory_sizes(void)
     LONG_DICT_FLAG_BUG = 1;
     TRANSCRIPT_FORMAT = 0;
 
-    adjust_memory_sizes();
+    //###adjust_memory_sizes();
 }
 
 //### delete

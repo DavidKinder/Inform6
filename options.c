@@ -543,12 +543,16 @@ static optiont *find_option(char *str)
 /* The default options are set above. All we really need to do here is
    set the precedence field of each entry.
 */
-extern void prepare_options(void)
+extern void prepare_compiler_options(void)
 {
     int ix;
     for (ix=0; alloptions[ix].name; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
     }
+
+    /* Apply all the Z-machine default values, just so that the compiler
+       variables have consistent starting values. */
+    apply_compiler_options();
 }
 
 /* Set an option to a given value.
@@ -564,8 +568,9 @@ extern void prepare_options(void)
    or Glulx when this is called. The option structure has two values,
    perhaps differing; we will set both.
  */
-extern void set_option(char *name, int32 val, int prec)
+extern void set_compiler_option(char *name, int32 val, int prec)
 {
+    //###
 }
 
 /* Display all the options (for $LIST), assuming the current target platform
@@ -632,7 +637,7 @@ extern void explain_compiler_option(char *str)
    know the target platform (glulx_mode is TRUE or FALSE) and all
    options have valid values.
 */
-extern void apply_options(void)
+extern void apply_compiler_options(void)
 {
     MAX_ABBREVS = SELECTVAL(OPT_MAX_ABBREVS);
     NUM_ATTR_BYTES = SELECTVAL(OPT_NUM_ATTR_BYTES);

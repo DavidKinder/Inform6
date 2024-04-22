@@ -113,7 +113,24 @@ static void select_target(int targ)
     MAXINTWORD = 0x7FFF;
 
     MAX_LOCAL_VARIABLES = 16; /* including "sp" */
+  }
+  else {
+    /* Glulx */
+    WORDSIZE = 4;
+    MAXINTWORD = 0x7FFFFFFF;
+    scale_factor = 0; /* It should never even get used in Glulx */
 
+    /* This could really be 120, since the practical limit is the size
+       of local_variables.keywords. But historically it's been 119. */
+    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
+  }
+
+  /* Set all those option variables. */
+  apply_compiler_options();
+
+  /* Now we do final safety checks on them. */
+  
+  if (!targ) {
     if (INDIV_PROP_START != 64) {
         INDIV_PROP_START = 64;
         fatalerror("You cannot change INDIV_PROP_START in Z-code");
@@ -132,15 +149,6 @@ static void select_target(int targ)
     }
   }
   else {
-    /* Glulx */
-    WORDSIZE = 4;
-    MAXINTWORD = 0x7FFFFFFF;
-    scale_factor = 0; /* It should never even get used in Glulx */
-
-    /* This could really be 120, since the practical limit is the size
-       of local_variables.keywords. But historically it's been 119. */
-    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
-
     if (INDIV_PROP_START < 256) {
         INDIV_PROP_START = 256;
         warning_fmt("INDIV_PROP_START should be at least 256 in Glulx; setting to %d", INDIV_PROP_START);
@@ -1905,8 +1913,8 @@ static int sub_main(int argc, char **argv)
 
     banner();
 
-    prepare_options();
-    set_memory_sizes(); set_default_paths();
+    prepare_compiler_options();
+    set_default_paths();
     reset_switch_settings(); select_version(5);
 
     cli_files_specified = 0; no_compilations = 0;
