@@ -294,6 +294,7 @@ int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
 
+//### delete
 extern void set_memory_sizes(void)
 {
     HASH_TAB_SIZE      = 512;
@@ -336,6 +337,7 @@ extern void set_memory_sizes(void)
     adjust_memory_sizes();
 }
 
+//### delete
 extern void adjust_memory_sizes()
 {
   if (!glulx_mode) {
@@ -776,7 +778,7 @@ extern void memory_command(char *command)
     for (k=0; command[k]!=0; k++)
         if (islower(command[k])) command[k]=toupper(command[k]);
 
-    if (command[0]=='?') { explain_parameter(command+1); return; }
+    if (command[0]=='?') { explain_compiler_option(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
     if (command[0]=='!') { set_trace_option(command+1); return; }
 

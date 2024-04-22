@@ -2685,6 +2685,7 @@ extern void write_the_identifier_names(void);
 
 extern void prepare_options(void);
 extern void list_compiler_options(void);
+extern void explain_compiler_option(char *str);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */

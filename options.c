@@ -362,6 +362,16 @@ static optiont alloptions[] = {
     },
 };
 
+static optiont *find_option(char *str)
+{
+    int ix;
+    for (ix=0; ix < OPT_OPTIONS_COUNT; ix++) {
+        if (strcmp(str, alloptions[ix].name) == 0)
+            return &alloptions[ix];
+    }
+    return NULL;
+}
+
 /* The default options are set above. All we really need to do here is
    set the precedence field of each entry.
 */
@@ -425,6 +435,28 @@ extern void list_compiler_options(void)
     }
 
     printf("+--------------------------------------+\n");
+}
+
+extern void explain_compiler_option(char *str)
+{
+    optiont *opt = find_option(str);
+    if (!opt) {
+        printf("No such memory setting as \"%s\"\n", str);
+        return;
+    }
+    if (opt->use == OPTUSE_OBSOLETE_I5) {
+        printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n", str);
+        return;
+    }
+    if (opt->use == OPTUSE_OBSOLETE_I6) {
+        printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", str);
+        return;
+    }
+    if (!opt->desc) {
+        printf("(no documentation)");
+        return;
+    }
+    printf("\n%s", opt->desc);
 }
 
 /* Apply the options to our compiler variables. At this point we *do*
