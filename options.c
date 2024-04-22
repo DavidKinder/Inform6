@@ -402,6 +402,130 @@ static optiont alloptions[] = {
         NULL, OPTUSE_OBSOLETE_I5,
     },
     {
+        "MAX_QTEXT_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_SYMBOLS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "SYMBOLS_CHUNK_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_OBJECTS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_ACTIONS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_ADJECTIVES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_DICT_ENTRIES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_STATIC_DATA",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_PROP_TABLE_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_ARRAYS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_EXPRESSION_NODES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_VERBS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_VERBSPACE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_LABELS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_LINESPACE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_NUM_STATIC_STRINGS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_STATIC_STRINGS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_ZCODE_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_LINK_DATA_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_LOW_STRINGS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_TRANSCRIPT_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_CLASSES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_INCLUSION_DEPTH",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_SOURCE_FILES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_INDIV_PROP_TABLE_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_OBJ_PROP_TABLE_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_OBJ_PROP_COUNT",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_LOCAL_VARIABLES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_GLOBAL_VARIABLES",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "ALLOC_CHUNK_SIZE",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
+        "MAX_UNICODE_CHARS",
+        NULL, OPTUSE_OBSOLETE_I6,
+    },
+    {
         NULL, /* terminator */
     },
 };
