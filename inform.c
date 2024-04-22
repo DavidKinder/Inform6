@@ -1429,9 +1429,7 @@ extern void switches(char *p, int cmode)
                   else if (version_set_switch)
                       error("The '-G' switch cannot follow the '-v' switch");
                   else
-                  {   glulx_mode = state;
-                      adjust_memory_sizes();
-                  }
+                      glulx_mode = state;
                   break;
         case 'H': compression_switch = state; break;
         case 'V': exit(0); break;
