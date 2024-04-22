@@ -195,7 +195,7 @@ static optiont alloptions[] = {
     {
         "ZCODE_LESS_DICT_DATA",
         "\
-  ZCODE_LESS_DICT_DATA, if set, provides each dict word with two data bytes\n\
+  ZCODE_LESS_DICT_DATA, if set, provides each dict word with two data bytes \n\
   rather than three. (Z-code only.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
@@ -204,7 +204,7 @@ static optiont alloptions[] = {
     {
         "ZCODE_MAX_INLINE_STRING",
         "\
-  ZCODE_MAX_INLINE_STRING is the length beyond which string literals cannot\n\
+  ZCODE_MAX_INLINE_STRING is the length beyond which string literals cannot \n\
   be inlined in assembly opcodes. (Z-code only.)\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
@@ -234,7 +234,7 @@ static optiont alloptions[] = {
     {
         "MAX_DYNAMIC_STRINGS",
         "\
-  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables\n\
+  MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables \n\
   (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
         OPTUSE_ALL,
         { OPTLIM_TOMAX, 96 }, //### Z-max?
@@ -243,7 +243,7 @@ static optiont alloptions[] = {
     {
         "INDIV_PROP_START",
         "\
-  Properties 1 to INDIV_PROP_START-1 are common properties; individual\n\
+  Properties 1 to INDIV_PROP_START-1 are common properties; individual \n\
   properties are numbered INDIV_PROP_START and up.\n",
         OPTUSE_ALL,
         { OPTLIM_ANY },
