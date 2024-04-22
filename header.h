@@ -2638,8 +2638,6 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     size_t howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
-extern void set_memory_sizes(void);
-extern void adjust_memory_sizes(void);
 extern void memory_command(char *command);
 extern void print_memory_usage(void);
 

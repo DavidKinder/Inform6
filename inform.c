@@ -105,6 +105,7 @@ int DICT_ENTRY_BYTE_LENGTH;
 */
 int DICT_ENTRY_FLAG_POS;
 
+//### rename
 static void select_target(int targ)
 {
   if (!targ) {
