@@ -586,6 +586,11 @@
   ((ptr)[0] = (uchar)(((int32)(val)) >> 8),          \
    (ptr)[1] = (uchar)(((int32)(val))     ) )
 
+/* Precedence for compiler options (see set_compiler_option()) */
+#define DEFAULT_OPTPREC (0)   /* original default value */
+#define HEADCOM_OPTPREC (1)   /* header comment line */
+#define CMDLINE_OPTPREC (2)   /* command-line option */
+
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
 /*   define T_C as (char) 9; failing that, it _must_ be defined as ' '       */
@@ -2682,6 +2687,7 @@ extern void write_the_identifier_names(void);
 /* ------------------------------------------------------------------------- */
 
 extern void prepare_compiler_options(void);
+extern void set_compiler_option(char *str, int32 val, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);

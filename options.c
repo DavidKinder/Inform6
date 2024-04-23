@@ -44,10 +44,6 @@ enum optionlimit {
 
 #define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
 
-#define DEFAULT_OPTPREC (0)
-#define HEADCOM_OPTPREC (1)
-#define CMDLINE_OPTPREC (2)
-
 typedef struct optionlimit_s {
     enum optionlimit limittype;
     int32 maxval;
@@ -568,9 +564,29 @@ extern void prepare_compiler_options(void)
    or Glulx when this is called. The option structure has two values,
    perhaps differing; we will set both.
  */
-extern void set_compiler_option(char *name, int32 val, int prec)
+extern void set_compiler_option(char *str, int32 val, int prec)
 {
-    //###
+    optiont *opt = find_option(str);
+    if (!opt) {
+        printf("No such memory setting as \"%s\"\n", str);
+        return;
+    }
+    if (opt->use == OPTUSE_OBSOLETE_I5) {
+        if (!nowarnings_switch)
+            printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n", str);
+        return;
+    }
+    if (opt->use == OPTUSE_OBSOLETE_I6) {
+        if (!nowarnings_switch)
+            printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", str);
+        return;
+    }
+
+    //### prec check
+    //### limit
+
+    opt->val.z = val;
+    opt->val.g = val;
 }
 
 /* Display all the options (for $LIST), assuming the current target platform

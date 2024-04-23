@@ -281,7 +281,7 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    which have different defaults under Z-code and Glulx. We have to get
    the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
    And an explicit value set by the user should override both defaults. */
-//###
+//### del
 static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
@@ -551,6 +551,8 @@ extern void memory_command(char *command)
             if (!parse_memory_setting(command+i+1, command, &j)) {
                 return;
             }
+            set_compiler_option(command, j, CMDLINE_OPTPREC); //### or...
+#if 0 //###
             if (strcmp(command,"BUFFER_LENGTH")==0)
                 flag=2;
             if (strcmp(command,"MAX_QTEXT_SIZE")==0)
@@ -745,6 +747,7 @@ extern void memory_command(char *command)
                 printf("The Inform 5 memory setting \"%s\" has been withdrawn.\n", command);
             if (flag==3 && !nowarnings_switch)
                 printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", command);
+#endif //###
             return;
         }
     }
