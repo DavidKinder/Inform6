@@ -583,7 +583,28 @@ extern void set_compiler_option(char *str, int32 val, int prec)
     }
 
     //### prec check
-    //### limit
+
+    switch (opt->limit.limittype) {
+    case OPTLIM_TOMAX:
+        if (val < 0)
+            val = 0;
+        if (val > opt->limit.maxval)
+            val = opt->limit.maxval;
+        break;
+    case OPTLIM_MUL256:
+        if (val < 0)
+            val = 0;
+        val = (val + 0xFF) & (~0xFF);
+        break;
+    case OPTLIM_3MOD4:
+        if (val < 0)
+            val = 0;
+        //### here?
+        break;
+    case OPTLIM_ANY:
+    default:
+        break;
+    }
 
     opt->val.z = val;
     opt->val.g = val;
