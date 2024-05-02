@@ -143,7 +143,10 @@ static optiont alloptions[] = {
   words.) It can be either 1 (the default) or 4 (to enable full Unicode \n\
   input.)\n",
         OPTUSE_GLULX,
-        { OPTLIM_TOMAX, 4 }, //### 1 or 4
+        /* We could have a special OPTLIM_1OR4 here, but we don't. If the
+           user selects 0/2/3, we'll fix it at set_compile_variables()
+           time. */
+        { OPTLIM_TOMAX, 4 },
         DEFAULTVAL(1),
     },
     {
