@@ -286,10 +286,6 @@ static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
 static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
 static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
 
-/* These hold the given parameter. See the grammar_version_number variable
-   for the final validated setting. */
-int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
-
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
