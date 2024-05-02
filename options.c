@@ -301,7 +301,7 @@ static optiont alloptions[] = {
   routines called only from uncalled routines, etc.) If set to 1, will warn \n\
   only about functions in game code, not in the system library.\n",
         OPTUSE_ALL,
-        { OPTLIM_TOMAX, 1 },
+        { OPTLIM_TOMAX, 2 },
         DEFAULTVAL(0),
     },
     {
