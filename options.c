@@ -173,6 +173,8 @@ static optiont alloptions[] = {
   MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables \n\
   (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
         OPTUSE_ALL,
+        /* This is a special case because it's meaningful on both platforms,
+           but only limited in Z-code. */
         { OPTLIM_TOMAXZONLY, 96 },
         DEFAULTVALS(32, 100),
     },
