@@ -38,7 +38,6 @@ enum optionlimit {
     OPTLIM_TOMAX       = 1,  /* zero to N inclusive */
     OPTLIM_TOMAXZONLY  = 2,  /* zero to N inclusive in Z-code; unlimited in Glulx */
     OPTLIM_MUL256      = 3,  /* any, round up to a multiple of 256 */
-    OPTLIM_3MOD4       = 4,  /* any, round up to a multiple of 3 mod 4 */
 };
 
 typedef struct optionlimit_s {
@@ -122,7 +121,9 @@ static optiont alloptions[] = {
   v3 games). In Glulx it can be any number which is a multiple of four, \n\
   plus three.\n",
         OPTUSE_GLULX,
-        { OPTLIM_3MOD4 },
+        /* We could have a special OPTLIM_3MOD4 here, but we don't.
+           We'll fix up the value at set_compile_variables() time. */
+        { OPTLIM_ANY },
         DEFAULTVALS(6, 7),
     },
     {
@@ -625,11 +626,6 @@ extern void set_compiler_option(char *str, int32 val, int prec)
         if (val < 0)
             val = 0;
         val = (val + 0xFF) & (~0xFF);
-        break;
-    case OPTLIM_3MOD4:
-        if (val < 0)
-            val = 0;
-        //### here?
         break;
     case OPTLIM_ANY:
     default:
