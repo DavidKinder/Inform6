@@ -108,10 +108,14 @@ int DICT_ENTRY_FLAG_POS;
 static void set_compile_variables()
 {
   /* Set all the compiler's globals, such as WORDSIZE.
+     
      Most of these are taken from the options module; see
      apply_compiler_options().
-     A few globals must already be set when this is called: glulx_mode is
-     the most important. */
+     
+     Some globals must already be set when this is called: glulx_mode,
+     scale_factor, requested_glulx_version, and a few others. These
+     exceptional cases are handled directly by the switches() routine
+     during option parsing. */
 
   /* Set a few values that depend only on glulx_mode. */
     
