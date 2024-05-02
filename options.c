@@ -603,7 +603,11 @@ extern void set_compiler_option(char *str, int32 val, int prec)
         return;
     }
 
-    //### prec check
+    if (prec < opt->precedence) {
+        /* Already set at a higher level. */
+        return;
+    }
+    opt->precedence = prec;
 
     switch (opt->limit.limittype) {
     case OPTLIM_TOMAXZONLY:
