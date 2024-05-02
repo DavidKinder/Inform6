@@ -21,6 +21,7 @@
    MAX_ABBREVS, MAX_DYNAMIC_STRINGS fight in Z-code.
  ### */
 
+/* What platform does this option apply to? */
 enum optionuse {
     OPTUSE_ALL         = 0,  /* all targets */
     OPTUSE_ZCODE       = 1,  /* Z-code only */
@@ -29,20 +30,15 @@ enum optionuse {
     OPTUSE_OBSOLETE_I6 = 6,  /* obsolete Inform 6 option */
 };
 
+/* What are the requirements for this option's value?
+   (Note that, at present, no option can have a negative value.)
+*/
 enum optionlimit {
     OPTLIM_ANY         = 0,  /* any non-negative value */
     OPTLIM_TOMAX       = 1,  /* zero to N inclusive */
     OPTLIM_MUL256      = 2,  /* any, round up to a multiple of 256 */
     OPTLIM_3MOD4       = 3,  /* any, round up to a multiple of 3 mod 4 */
 };
-
-#define MAX_OPT(v) { 0, (v) }  /* zero to N inclusive */
-#define MUL256_OPT() { } /* round up to a multiple of 256 */
-
-#define DEFAULTVAL(v) { (v), (v) }
-#define DEFAULTVALS(z, g) { (z), (g) }
-
-#define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
 
 typedef struct optionlimit_s {
     enum optionlimit limittype;
@@ -54,6 +50,14 @@ typedef struct platformval_s {
     int32 g;
 } platformval;
 
+/* Macros for initializing a platformval compactly. */
+#define DEFAULTVAL(v) { (v), (v) }
+#define DEFAULTVALS(z, g) { (z), (g) }
+
+/* Grab the appropriate part of a platformval. */
+#define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
+
+/* The main option structure. */
 typedef struct optiont_s {
     char *name;
     char *desc;
@@ -645,6 +649,8 @@ extern void list_compiler_options(void)
     printf("+--------------------------------------+\n");
 }
 
+/* Display help for a compiler option.
+*/
 extern void explain_compiler_option(char *str)
 {
     optiont *opt = find_option(str);
@@ -664,6 +670,7 @@ extern void explain_compiler_option(char *str)
         printf("(no documentation)");
         return;
     }
+    
     printf("\n%s", opt->desc);
     if (opt->val.z == opt->val.g) {
         printf("\n  (currently: %d)\n", opt->val.z);
@@ -705,7 +712,7 @@ extern void apply_compiler_options(void)
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
     /* Grammar version: Set both values to be passed to set_grammar_version(). */
-    //###
+    //### we can get rid of GRAMMAR_VERSION_z/g.
     GRAMMAR_VERSION_z = alloptions[OPT_GRAMMAR_VERSION].val.z;
     GRAMMAR_VERSION_g = alloptions[OPT_GRAMMAR_VERSION].val.g;
 
