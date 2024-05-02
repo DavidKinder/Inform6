@@ -737,10 +737,7 @@ extern void apply_compiler_options(void)
     DICT_TRUNCATE_FLAG = SELECTVAL(OPT_DICT_TRUNCATE_FLAG);
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
-    /* Grammar version: Set both values to be passed to set_grammar_version(). */
-    //### we can get rid of GRAMMAR_VERSION_z/g.
-    GRAMMAR_VERSION_z = alloptions[OPT_GRAMMAR_VERSION].val.z;
-    GRAMMAR_VERSION_g = alloptions[OPT_GRAMMAR_VERSION].val.g;
+    /* Grammar version: this will be handled later, in verbs_begin_pass(). */
 
     /* Serial number: only set it if a non-default value has been given. */
     if (alloptions[OPT_SERIAL].precedence > DEFAULT_OPTPREC) {
@@ -748,4 +745,11 @@ extern void apply_compiler_options(void)
         sprintf(serial_code_buffer,"%06d", val);
         serial_code_given_in_program = TRUE;
     }
+}
+
+/* This option is handled a bit differently, so we have an accessor
+   for it. */
+extern int32 get_grammar_version_option(void)
+{
+    return SELECTVAL(OPT_GRAMMAR_VERSION);
 }

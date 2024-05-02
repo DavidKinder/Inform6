@@ -2691,6 +2691,7 @@ extern void set_compiler_option(char *str, int32 val, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);
+extern int32 get_grammar_version_option(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */
