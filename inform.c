@@ -16,7 +16,8 @@
 /*   Compiler progress                                                       */
 /* ------------------------------------------------------------------------- */
 
-static int no_compilations;
+static int in_compilation;    /* set when inside compile() */
+static int no_compilations;   /* number of times we've entered compile() */
 
 int endofpass_flag;      /* set to TRUE when an "end" directive is reached
                             (the inputs routines insert one into the stream
@@ -1104,8 +1105,12 @@ static int compile(int number_of_files_specified, char *file1, char *file2)
     TIMEVALUE time_start, time_end;
     float duration;
 
-    if (execute_icl_header(file1))
+    in_compilation = TRUE;
+    
+    if (execute_icl_header(file1)) {
+      in_compilation = FALSE;
       return 1;
+    }
 
     set_compile_variables();
 
@@ -1164,6 +1169,7 @@ disabling -X switch\n");
         ao_free_arrays();
     }
 
+    in_compilation = FALSE;
     return (no_errors==0)?0:1;
 }
 
@@ -1930,7 +1936,9 @@ static int sub_main(int argc, char **argv)
     set_default_paths();
     reset_switch_settings(); select_version(5);
 
-    cli_files_specified = 0; no_compilations = 0;
+    in_compilation = FALSE;
+    no_compilations = 0;
+    cli_files_specified = 0;
     cli_file1 = "source"; cli_file2 = "output";
 
     read_command_line(argc, argv);
