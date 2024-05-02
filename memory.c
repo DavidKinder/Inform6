@@ -277,15 +277,6 @@ int DICT_TRUNCATE_FLAG; /* 0: no, 1: yes */
 int LONG_DICT_FLAG_BUG; /* 0: no bug, 1: bug (default for historic reasons) */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 
-/* The way memory sizes are set causes great nuisance for those parameters
-   which have different defaults under Z-code and Glulx. We have to get
-   the defaults right whether the user sets "-G $HUGE" or "$HUGE -G". 
-   And an explicit value set by the user should override both defaults. */
-//### del
-static int DICT_WORD_SIZE_z, DICT_WORD_SIZE_g;
-static int NUM_ATTR_BYTES_z, NUM_ATTR_BYTES_g;
-static int MAX_DYNAMIC_STRINGS_z, MAX_DYNAMIC_STRINGS_g;
-
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
@@ -541,7 +532,6 @@ extern void memory_command(char *command)
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
         {
-            int flag = 0;
             int32 j = 0;
             command[i]=0;
             if (!parse_memory_setting(command+i+1, command, &j)) {
