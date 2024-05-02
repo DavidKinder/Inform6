@@ -117,7 +117,7 @@ static void set_compile_variables()
      exceptional cases are handled directly by the switches() routine
      during option parsing. */
 
-  /* Set a few values that depend only on glulx_mode. */
+  /* First we set a few values that depend only on glulx_mode. */
     
   if (!glulx_mode) {
     /* Z-machine */
