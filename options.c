@@ -36,8 +36,9 @@ enum optionuse {
 enum optionlimit {
     OPTLIM_ANY         = 0,  /* any non-negative value */
     OPTLIM_TOMAX       = 1,  /* zero to N inclusive */
-    OPTLIM_MUL256      = 2,  /* any, round up to a multiple of 256 */
-    OPTLIM_3MOD4       = 3,  /* any, round up to a multiple of 3 mod 4 */
+    OPTLIM_TOMAXZONLY  = 2,  /* zero to N inclusive in Z-code; unlimited in Glulx */
+    OPTLIM_MUL256      = 3,  /* any, round up to a multiple of 256 */
+    OPTLIM_3MOD4       = 4,  /* any, round up to a multiple of 3 mod 4 */
 };
 
 typedef struct optionlimit_s {
@@ -110,7 +111,7 @@ static optiont alloptions[] = {
   allowed to exceed 96 in Z-code. (This is not meaningful in Glulx, where \n\
   there is no limit on abbreviations.)\n",
         OPTUSE_ZCODE,
-        { OPTLIM_TOMAX, 96 }, //### Z-max?
+        { OPTLIM_TOMAX, 96 },
         DEFAULTVAL(64),
     },
     {
@@ -172,7 +173,7 @@ static optiont alloptions[] = {
   MAX_DYNAMIC_STRINGS is the maximum number of string substitution variables \n\
   (\"@00\" or \"@(0)\").  It is not allowed to exceed 96 in Z-code.\n",
         OPTUSE_ALL,
-        { OPTLIM_TOMAX, 96 }, //### Z-max?
+        { OPTLIM_TOMAXZONLY, 96 },
         DEFAULTVALS(32, 100),
     },
     {
@@ -599,6 +600,16 @@ extern void set_compiler_option(char *str, int32 val, int prec)
     //### prec check
 
     switch (opt->limit.limittype) {
+    case OPTLIM_TOMAXZONLY:
+        /* This is a special case; we apply the max only on one platform
+           and return immediately. */
+        if (val < 0)
+            val = 0;
+        opt->val.g = val;
+        if (val > opt->limit.maxval)
+            val = opt->limit.maxval;
+        opt->val.z = val;
+        return;
     case OPTLIM_TOMAX:
         if (val < 0)
             val = 0;
