@@ -67,7 +67,10 @@ typedef struct optiont_s {
     int precedence;
 } optiont;
 
-/* Must match the order of alloptions[], which is the order of the $LIST
+/* Enum for referring to individual options. This doesn't include obsolete
+   options, because we never have to refer to those.
+   
+   Must match the order of alloptions[], which is the order of the $LIST
    in the old options system, which was not very systematic. */
 enum optionindex {
     OPT_MAX_ABBREVS               = 0,
@@ -360,6 +363,7 @@ static optiont alloptions[] = {
         { OPTLIM_TOMAX, 999999 },
         DEFAULTVAL(0),
     },
+    
     /* obsolete options run past OPT_OPTIONS_COUNT */
     {
         "BUFFER_LENGTH",
@@ -530,6 +534,8 @@ static optiont alloptions[] = {
     },
 };
 
+/* Find an option entry by name (including obsolete options).
+*/
 static optiont *find_option(char *str)
 {
     int ix;
@@ -540,18 +546,22 @@ static optiont *find_option(char *str)
     return NULL;
 }
 
-/* The default options are set above. All we really need to do here is
-   set the precedence field of each entry.
+/* Prepare the options module for use.
 */
 extern void prepare_compiler_options(void)
 {
     int ix;
+
+    /* Set fields in the alloptions[] table that weren't statically
+       initialized above. */
     for (ix=0; alloptions[ix].name; ix++) {
         alloptions[ix].precedence = DEFAULT_OPTPREC;
     }
 
-    /* Apply all the Z-machine default values, just so that the compiler
-       variables have consistent starting values. */
+    /* Apply all the Z-machine default values. We're not using them yet;
+       compilation won't begin for a while. We just want to set consistent
+       starting values in case some stray bit of code refers to a compiler
+       variable early. */
     apply_compiler_options();
 }
 
