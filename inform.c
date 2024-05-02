@@ -105,10 +105,17 @@ int DICT_ENTRY_BYTE_LENGTH;
 */
 int DICT_ENTRY_FLAG_POS;
 
-//### rename
-static void select_target(int targ)
+static void set_compile_variables()
 {
-  if (!targ) {
+  /* Set all the compiler's globals, such as WORDSIZE.
+     Most of these are taken from the options module; see
+     apply_compiler_options().
+     A few globals must already be set when this is called: glulx_mode is
+     the most important. */
+
+  /* Set a few values that depend only on glulx_mode. */
+    
+  if (!glulx_mode) {
     /* Z-machine */
     WORDSIZE = 2;
     MAXINTWORD = 0x7FFF;
@@ -127,11 +134,12 @@ static void select_target(int targ)
   }
 
   /* Set all those option variables. */
+  
   apply_compiler_options();
 
   /* Now we do final safety checks on them. */
   
-  if (!targ) {
+  if (!glulx_mode) {
     if (INDIV_PROP_START != 64) {
         INDIV_PROP_START = 64;
         fatalerror("You cannot change INDIV_PROP_START in Z-code");
@@ -181,7 +189,7 @@ static void select_target(int targ)
 
   /* Set up a few more variables that depend on the above values */
 
-  if (!targ) {
+  if (!glulx_mode) {
     /* Z-machine */
     DICT_WORD_BYTES = DICT_WORD_SIZE;
     OBJECT_BYTE_LENGTH = 0;
@@ -202,7 +210,7 @@ static void select_target(int targ)
     }
   }
 
-  if (!targ) {
+  if (!glulx_mode) {
     /* Z-machine */
     /* The Z-machine's 96 abbreviations are used for these two purposes.
        Make sure they are set consistently. If exactly one has been
@@ -1095,7 +1103,7 @@ static int compile(int number_of_files_specified, char *file1, char *file2)
     if (execute_icl_header(file1))
       return 1;
 
-    select_target(glulx_mode);
+    set_compile_variables();
 
     if (define_INFIX_switch && glulx_mode) {
         printf("Infix (-X) facilities are not available in Glulx: \
