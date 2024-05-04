@@ -2642,7 +2642,7 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     size_t howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
-extern void memory_command(char *command);
+extern void memory_command(char *command, int optref);
 extern void print_memory_usage(void);
 
 extern void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor);

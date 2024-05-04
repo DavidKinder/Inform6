@@ -498,7 +498,8 @@ static void set_trace_option(char *command)
 
 /* Handle a dollar-sign command option: $LIST, $FOO=VAL, and so on.
    The option may come from the command line, an ICL file, or a header
-   comment.
+   comment. The optprec argument distinguishes header comments
+   (HEADCOM_OPTPREC) from the command line (CMDLINE_OPTPREC).
 
    (Unix-style command-line options are converted to dollar-sign format
    before being sent here.)
@@ -506,7 +507,7 @@ static void set_trace_option(char *command)
    The name of this function is outdated. Many of these settings are not
    really about memory allocation.
 */
-extern void memory_command(char *command)
+extern void memory_command(char *command, int optprec)
 {   int i, k;
 
     for (k=0; command[k]!=0; k++)
@@ -537,7 +538,7 @@ extern void memory_command(char *command)
             if (!parse_memory_setting(command+i+1, command, &j)) {
                 return;
             }
-            set_compiler_option(command, j, CMDLINE_OPTPREC); //### or HEADEROPT!
+            set_compiler_option(command, j, optprec);
             return;
         }
     }

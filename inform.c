@@ -1673,12 +1673,15 @@ static void run_icl_file(char *filename, FILE *command_file)
 static void execute_icl_command(char *p)
 {   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
     FILE *command_file;
+    int optprec;
     int len;
     
     switch(p[0])
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
-        case '$': memory_command(p+1); break;
+        case '$': optprec = (in_compilation ? HEADCOM_OPTPREC : CMDLINE_OPTPREC);
+                  memory_command(p+1, optprec);
+                  break;
         case '(': len = strlen(p);
                   if (p[len-1] != ')') {
                       printf("Error in ICL: (command) missing closing paren\n");
