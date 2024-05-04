@@ -8,19 +8,6 @@
 
 #include "header.h"
 
-/* ### Notes: 
-   set_memory_sizes() is default-setting, so that will move to options table.
-   Eliminate adjust_memory_sizes(). If we make $LIST smarter, we don't need it.
-   select_target() handles a lot of bounds and mod checking. This is called after all option setting (including !%). Rework this to call the master option-grabber (table to vars).
-
-   INDIV_PROP_START is handled inconsistently.
-   SERIAL is a six-character string. (And not in $LIST?)
-   A couple of Glulx options are rounded up mod 256.
-   Same Glulx options are defined as int32.
-   NUM_ATTR_BYTES is rounded up 3 mod 4.
-   MAX_ABBREVS, MAX_DYNAMIC_STRINGS fight in Z-code.
- ### */
-
 /* What platform does this option apply to? */
 enum optionuse {
     OPTUSE_ALL         = 0,  /* all targets */
