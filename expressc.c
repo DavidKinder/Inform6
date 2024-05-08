@@ -1744,9 +1744,10 @@ static void generate_code_from(int n, int void_flag)
                 }
             }
             else {
-                if (!try_to_simplify_operand_z(o_n,ET[below].value,ET[ET[below].right].value,Result))
+                if (!try_to_simplify_operand_z(o_n, ET[below].value, ET[ET[below].right].value, Result)) {
                     assemblez_2_to(o_n, ET[below].value,
                         ET[ET[below].right].value, Result);
+                }
             }
         }
         else
