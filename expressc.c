@@ -1730,10 +1730,8 @@ static void generate_code_from(int n, int void_flag)
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
-                 //assemblez_2_to(get_prop_addr_zc, AO,
-                 //    ET[ET[below].right].value, temp_var1);
-                 //if (!void_flag) write_result_z(Result, temp_var1);
-                 if ((!void_flag) && (Result.value == 0)) {  // can be optimized and written directly to stack_pointer
+                 if ((!void_flag) && (Result.value == 0)) {
+                     /* store directly to stack_pointer */
                      assemblez_2_to(get_prop_addr_zc, AO,
                          ET[ET[below].right].value, Result);
                  }
@@ -1742,7 +1740,6 @@ static void generate_code_from(int n, int void_flag)
                          ET[ET[below].right].value, temp_var1);
                      if (!void_flag) write_result_z(Result, temp_var1);
                  }
-
              }
              break;
 
@@ -1778,7 +1775,8 @@ static void generate_code_from(int n, int void_flag)
                      if (!void_flag) write_result_z(Result, temp_var1);
                  }
                  else {
-                     if ((!void_flag) && (Result.value == 0)) {  // can be optimized and written directly to stack_pointer
+                     if ((!void_flag) && (Result.value == 0)) {
+                         /* store directly to stack_pointer */
                          assemblez_2_to(get_prop_zc, ET[below].value,
                              ET[ET[below].right].value, Result);
                      }
