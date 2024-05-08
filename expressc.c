@@ -781,6 +781,51 @@ static void compile_conditional_z(int oc,
     assemblez_1_branch(jz_zc, AO3, label, !flag);
 }
 
+static int try_to_simplify_operand_z(int o_n,
+    assembly_operand o1, assembly_operand o2, assembly_operand st) 
+{
+    // x = x + 1 ==> x++
+    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        assemblez_inc(st);
+        return TRUE;
+    }
+    // x = 1 + x ==> x++
+    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
+        assemblez_inc(st);
+        return TRUE;
+    }
+    // x = x + 0 ==> skip
+    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
+        return TRUE;
+    }
+    // x = 0 + x ==> skip
+    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 0) {
+        return TRUE;
+    }
+    // x = x - 1 ==> x--
+    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        assemblez_dec(st);
+        return TRUE;
+    }
+    // x = x - 0 ==> skip
+    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
+        return TRUE;
+    }
+    // x = x * 1 ==> skip
+    if (o_n == mul_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
+    // x = 1 * x ==> skip
+    if (o_n == mul_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
+        return TRUE;
+    }
+    // x = x / 1 ==> skip
+    if (o_n == div_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void value_in_void_context_g(assembly_operand AO)
 {   char *t;
 
@@ -3103,48 +3148,3 @@ extern void expressc_free_arrays(void)
 }
 
 /* ========================================================================= */
-
-int try_to_simplify_operand_z(int o_n,
-    assembly_operand o1, assembly_operand o2, assembly_operand st) 
-{
-    // x = x + 1 ==> x++
-    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
-        assemblez_inc(st);
-        return TRUE;
-    }
-    // x = 1 + x ==> x++
-    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
-        assemblez_inc(st);
-        return TRUE;
-    }
-    // x = x + 0 ==> skip
-    if (o_n == add_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
-        return TRUE;
-    }
-    // x = 0 + x ==> skip
-    if (o_n == add_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 0) {
-        return TRUE;
-    }
-    // x = x - 1 ==> x--
-    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
-        assemblez_dec(st);
-        return TRUE;
-    }
-    // x = x - 0 ==> skip
-    if (o_n == sub_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 0) {
-        return TRUE;
-    }
-    // x = x * 1 ==> skip
-    if (o_n == mul_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
-        return TRUE;
-    }
-    // x = 1 * x ==> skip
-    if (o_n == mul_zc && o2.type == st.type && o2.value == st.value && o1.type == SHORT_CONSTANT_OT && o1.value == 1) {
-        return TRUE;
-    }
-    // x = x / 1 ==> skip
-    if (o_n == div_zc && o1.type == st.type && o1.value == st.value && o2.type == SHORT_CONSTANT_OT && o2.value == 1) {
-        return TRUE;
-    }
-    return FALSE;
-}
