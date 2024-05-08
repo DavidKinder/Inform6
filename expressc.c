@@ -1743,16 +1743,18 @@ static void generate_code_from(int n, int void_flag)
                     assemblez_2_to(o_n, temp_var1, temp_var2, Result);
                 }
             }
+            else if (try_to_simplify_operand_z(o_n, ET[below].value, ET[ET[below].right].value, Result)) {
+                /* generated simplified code */
+            }
             else {
-                if (!try_to_simplify_operand_z(o_n, ET[below].value, ET[ET[below].right].value, Result)) {
-                    assemblez_2_to(o_n, ET[below].value,
-                        ET[ET[below].right].value, Result);
-                }
+                assemblez_2_to(o_n, ET[below].value,
+                    ET[ET[below].right].value, Result);
             }
         }
-        else
+        else {
             assemblez_1_to(operators[opnum].opcode_number_z, ET[below].value,
                 Result);
+        }
     }
     else
     switch(opnum)
