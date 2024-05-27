@@ -841,6 +841,18 @@ static int try_to_simplify_operand_g(int o_n,
     if (o_n == sub_gc && o1.type == st.type && o1.value == st.value && o2.type == ZEROCONSTANT_OT && o2.value == 0) {
         return TRUE;
     }
+    /* x = x * 1 ==> skip */
+    if (o_n == mul_gc && o1.type == st.type && o1.value == st.value && o2.type == BYTECONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
+    /* x = 1 * x ==> skip */
+    if (o_n == mul_gc && o2.type == st.type && o2.value == st.value && o1.type == BYTECONSTANT_OT && o1.value == 1) {
+        return TRUE;
+    }
+    /* x = x / 1 ==> skip */
+    if (o_n == div_gc && o1.type == st.type && o1.value == st.value && o2.type == BYTECONSTANT_OT && o2.value == 1) {
+        return TRUE;
+    }
     return FALSE;
 }
 
