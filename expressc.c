@@ -781,7 +781,9 @@ static void compile_conditional_z(int oc,
     assemblez_1_branch(jz_zc, AO3, label, !flag);
 }
 
-static int try_to_simplify_operand_z(int o_n,
+/* Pinhole optimizer for simple expression trees. */
+
+static int try_optimize_expr_z(int o_n,
     assembly_operand o1, assembly_operand o2, assembly_operand st) 
 {
     /* x = x + 1 ==> x++ */
@@ -836,7 +838,7 @@ static int try_to_simplify_operand_z(int o_n,
     return FALSE;
 }
 
-static int try_to_simplify_operand_g(int o_n,
+static int try_optimize_expr_g(int o_n,
     assembly_operand o1, assembly_operand o2, assembly_operand st) 
 {
     /* x = x + 0 ==> skip */
@@ -1793,7 +1795,7 @@ static void generate_code_from(int n, int void_flag)
                     assemblez_2_to(o_n, temp_var1, temp_var2, Result);
                 }
             }
-            else if (try_to_simplify_operand_z(o_n, ET[below].value,
+            else if (try_optimize_expr_z(o_n, ET[below].value,
                 ET[ET[below].right].value, Result)) {
                 /* generated simplified code */
             }
@@ -2408,7 +2410,7 @@ static void generate_code_from(int n, int void_flag)
                     assembleg_3(o_n, temp_var1, temp_var2, Result);
                 }
             }
-            else if (try_to_simplify_operand_g(o_n, ET[below].value,
+            else if (try_optimize_expr_g(o_n, ET[below].value,
                 ET[ET[below].right].value, Result)) {
                 /* generated simplified code */
             }
