@@ -300,6 +300,13 @@ extern int is_variable_ot(int otval)
   }
 }
 
+extern int operands_equal(const assembly_operand *AO1, const assembly_operand *AO2)
+{
+    return (AO1->value == AO2->value
+        && AO1->type == AO2->type
+        && AO1->marker == AO2->marker);
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Used in printing assembly traces                                        */
 /* ------------------------------------------------------------------------- */
