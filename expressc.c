@@ -826,6 +826,20 @@ static int try_to_simplify_operand_z(int o_n,
     return FALSE;
 }
 
+static int try_to_simplify_operand_g(int o_n,
+    assembly_operand o1, assembly_operand o2, assembly_operand st) 
+{
+    /* x = x + 0 ==> skip */
+    if (o_n == add_gc && o1.type == st.type && o1.value == st.value && o2.type == ZEROCONSTANT_OT && o2.value == 0) {
+        return TRUE;
+    }
+    /* x = 0 + x ==> skip */
+    if (o_n == add_gc && o2.type == st.type && o2.value == st.value && o1.type == ZEROCONSTANT_OT && o1.value == 0) {
+        return TRUE;
+    }
+    return FALSE;
+}
+
 static void value_in_void_context_g(assembly_operand AO)
 {   char *t;
 
@@ -1743,7 +1757,8 @@ static void generate_code_from(int n, int void_flag)
                     assemblez_2_to(o_n, temp_var1, temp_var2, Result);
                 }
             }
-            else if (try_to_simplify_operand_z(o_n, ET[below].value, ET[ET[below].right].value, Result)) {
+            else if (try_to_simplify_operand_z(o_n, ET[below].value,
+                ET[ET[below].right].value, Result)) {
                 /* generated simplified code */
             }
             else {
@@ -2357,9 +2372,14 @@ static void generate_code_from(int n, int void_flag)
                     assembleg_3(o_n, temp_var1, temp_var2, Result);
                 }
             }
-            else
-            assembleg_3(o_n, ET[below].value,
-                ET[ET[below].right].value, Result);
+            else if (try_to_simplify_operand_g(o_n, ET[below].value,
+                ET[ET[below].right].value, Result)) {
+                /* generated simplified code */
+            }
+            else {
+                assembleg_3(o_n, ET[below].value,
+                    ET[ET[below].right].value, Result);
+            }
         }
         else
             assembleg_2(operators[opnum].opcode_number_g, ET[below].value,
