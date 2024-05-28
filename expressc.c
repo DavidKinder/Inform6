@@ -799,23 +799,27 @@ static int try_optimize_expr_z(int o_n,
             assemblez_inc(st);
             return TRUE;
         }
-        /* x = x + 0 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
-            return TRUE;
-        }
-        /* y = x + 0 ==> store */
         if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
-            assemblez_store(st, o1);
-            return TRUE;
+            if (operands_equal(&o1, &st)) {
+                /* x = x + 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x + 0 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
         }
-        /* x = 0 + x ==> skip */
-        if (operands_equal(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 0 && !o1.marker) {
-            return TRUE;
-        }
-        /* y = 0 + x ==> store */
         if (o1.type == SHORT_CONSTANT_OT && o1.value == 0 && !o1.marker) {
-            assemblez_store(st, o2);
-            return TRUE;
+            if (operands_equal(&o2, &st)) {
+                /* x = 0 + x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 0 + x ==> store */
+                assemblez_store(st, o2);
+                return TRUE;
+            }
         }
         break;
 
@@ -859,23 +863,27 @@ static int try_optimize_expr_g(int o_n,
     switch (o_n) {
 
     case add_gc:
-        /* x = x + 0 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
-            return TRUE;
-        }
-        /* y = x + 0 ==> store */
         if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
-            assembleg_store(st, o1);
-            return TRUE;
+            if (operands_equal(&o1, &st)) {
+                /* x = x + 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x + 0 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
         }
-        /* x = 0 + x ==> skip */
-        if (operands_equal(&o2, &st) && o1.type == ZEROCONSTANT_OT && o1.value == 0 && !o1.marker) {
-            return TRUE;
-        }
-        /* y = 0 + x ==> store */
         if (o1.type == ZEROCONSTANT_OT && o1.value == 0 && !o1.marker) {
-            assembleg_store(st, o2);
-            return TRUE;
+            if (operands_equal(&o2, &st)) {
+                /* x = 0 + x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 0 + x ==> store */
+                assembleg_store(st, o2);
+                return TRUE;
+            }
         }
         break;
 
