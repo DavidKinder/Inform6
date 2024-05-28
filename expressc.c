@@ -789,13 +789,13 @@ static int try_optimize_expr_z(int o_n,
     switch (o_n) {
         
     case add_zc:
-        /* x = x + 1 ==> x++ */
         if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            /* x = x + 1 ==> x++ */
             assemblez_inc(st);
             return TRUE;
         }
-        /* x = 1 + x ==> x++ */
         if (operands_equal(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
+            /* x = 1 + x ==> x++ */
             assemblez_inc(st);
             return TRUE;
         }
@@ -824,8 +824,8 @@ static int try_optimize_expr_z(int o_n,
         break;
 
     case sub_zc:
-        /* x = x - 1 ==> x-- */
         if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            /* x = x - 1 ==> x-- */
             assemblez_dec(st);
             return TRUE;
         }
