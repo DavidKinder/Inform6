@@ -829,20 +829,41 @@ static int try_optimize_expr_z(int o_n,
             assemblez_dec(st);
             return TRUE;
         }
-        /* x = x - 0 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
-            return TRUE;
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x - 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x - 0 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
         }
         break;
 
     case mul_zc:
-        /* x = x * 1 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
-            return TRUE;
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x * 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x * 1 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
         }
-        /* x = 1 * x ==> skip */
-        if (operands_equal(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
-            return TRUE;
+        if (o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
+            if (operands_equal(&o2, &st)) {
+                /* x = 1 * x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 1 * x ==> store */
+                assemblez_store(st, o2);
+                return TRUE;
+            }
         }
         break;
 
@@ -888,20 +909,41 @@ static int try_optimize_expr_g(int o_n,
         break;
 
     case sub_gc:
-        /* x = x - 0 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
-            return TRUE;
+        if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x - 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x - 0 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
         }
         break;
 
     case mul_gc:
-        /* x = x * 1 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
-            return TRUE;
+        if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x * 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x * 1 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
         }
-        /* x = 1 * x ==> skip */
-        if (operands_equal(&o2, &st) && o1.type == BYTECONSTANT_OT && o1.value == 1 && !o1.marker) {
-            return TRUE;
+        if (o1.type == BYTECONSTANT_OT && o1.value == 1 && !o1.marker) {
+            if (operands_equal(&o2, &st)) {
+                /* x = 1 * x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 1 * x ==> store */
+                assembleg_store(st, o2);
+                return TRUE;
+            }
         }
         break;
 
