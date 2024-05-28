@@ -868,9 +868,16 @@ static int try_optimize_expr_z(int o_n,
         break;
 
     case div_zc:
-        /* x = x / 1 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
-            return TRUE;
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x / 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x / 1 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
         }
         break;
     }
@@ -948,9 +955,16 @@ static int try_optimize_expr_g(int o_n,
         break;
 
     case div_gc:
-        /* x = x / 1 ==> skip */
-        if (operands_equal(&o1, &st) && o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
-            return TRUE;
+        if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_equal(&o1, &st)) {
+                /* x = x / 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x / 1 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
         }
         break;
     }
