@@ -2116,7 +2116,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
-    int32 adjusted_pc;
+    int32 adjusted_pc, opcode_at_label;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2150,6 +2150,7 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
             if (asm_trace_level >= 4)
                 printf("...To label %d, which is %d from here\n",
                     j, labels[j].offset-pc);
@@ -2158,6 +2159,24 @@ static void transfer_routine_z(void)
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
+            }
+            if (opcode_at_label == 176) { //opcodes_table_z[rtrue_zc].code)
+                if (asm_trace_level >= 4) printf("...Opcode at label is %s, replacing jump\n", opcodes_table_z[rtrue_zc].name);
+                zcode_holding_area[i - 1] = 176;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i + 1] = DELETED_MV;
+            }
+            if (opcode_at_label == 177) { //opcodes_table_z[rfalse_zc].code)
+                if (asm_trace_level >= 4) printf("...Opcode at label is %s, replacing jump\n", opcodes_table_z[rfalse_zc].name);
+                zcode_holding_area[i - 1] = 177;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i + 1] = DELETED_MV;
+            }
+            if (opcode_at_label == 184) { //opcodes_table_z[ret_popped_zc].code)
+                if (asm_trace_level >= 4) printf("...Opcode at label is %s, replacing jump\n", opcodes_table_z[ret_popped_zc].name);
+                zcode_holding_area[i - 1] = 184;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i + 1] = DELETED_MV;
             }
         }
     }
