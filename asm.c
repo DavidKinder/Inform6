@@ -2133,8 +2133,9 @@ static void transfer_routine_z(void)
             both label bytes get DELETED_MV.
             We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
-            replaced by a copy of the return opcode; the label bytes get
-            DELETED_MV. */
+            replaced by a copy of the destination opcode; the label bytes
+            get DELETED_MV. (However, we don't do the extra work to detect
+            whether this orphans the destination opcode.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] == BRANCH_MV)
