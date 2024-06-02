@@ -2131,7 +2131,7 @@ static void transfer_routine_z(void)
             We also look for jumps that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
             both label bytes get DELETED_MV.
-            And also for jumps that can be eliminated because they
+            We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
             replaced by a copy of the return opcode; the label bytes get
             DELETED_MV. */
