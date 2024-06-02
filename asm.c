@@ -2356,7 +2356,8 @@ static void transfer_routine_g(void)
             they are jumping to the very next instruction). The opcode and
             all label bytes get DELETED_MV.
             (This doesn't bother with the "replace jump with return"
-            optimization that Z-code does.) */
+            optimization that Z-code does. Figuring out the operand
+            lengths is too much work.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
