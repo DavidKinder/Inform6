@@ -2354,7 +2354,9 @@ static void transfer_routine_g(void)
             short form) with DELETED_MV.
             We also look for branches that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            all label bytes get DELETED_MV. */
+            all label bytes get DELETED_MV.
+            (This doesn't bother with the "replace jump with return"
+            optimization that Z-code does.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
