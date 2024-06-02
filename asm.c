@@ -2132,8 +2132,9 @@ static void transfer_routine_z(void)
             they are jumping to the very next instruction). The opcode and
             both label bytes get DELETED_MV.
             And also for jumps that can be eliminated because they
-            are jumping to a return opcode. These are replaced by a copy
-            of the return opcode. */
+            are jumping to a (one-byte) return opcode. The jump opcode is
+            replaced by a copy of the return opcode; the label bytes get
+            DELETED_MV. */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] == BRANCH_MV)
@@ -2163,9 +2164,14 @@ static void transfer_routine_z(void)
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
-            else if (opcode_at_label == opcodes_table_z[rtrue_zc].code
-                || opcode_at_label == opcodes_table_z[rfalse_zc].code
-                || opcode_at_label == opcodes_table_z[ret_popped_zc].code) {
+            else if (opcode_at_label == 176
+                || opcode_at_label == 177
+                || opcode_at_label == 184) {
+                /* 176, 177, and 184 are the encoded forms of rtrue_zc,
+                   rfalse_zc, and ret_popped_zc. It would be cleaner
+                   to pull these from opcodes_table_z[] (adding 0xB0 for
+                   the opcode form) but it's not like they're going to
+                   ever change. */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
