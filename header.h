@@ -562,8 +562,8 @@
 
 /* These checked the glulx_mode global during development, but are no
    longer needed. */
-#define ASSERT_ZCODE() (0)
-#define ASSERT_GLULX() (0)
+#define ASSERT_ZCODE()
+#define ASSERT_GLULX()
 
 
 #define ReadInt32(ptr)                               \
