@@ -405,7 +405,7 @@ but not used as a value:", unicode);
     {   v = separators_to_operators[current_token.value];
         if (v != NOT_AN_OPERATOR)
         {   if ((veneer_mode)
-                || ((v!=MESSAGE_OP) && (v!=MPROP_NUM_OP) && (v!=MPROP_NUM_OP)))
+                || ((v!=MESSAGE_OP) && (v!=MPROP_NUM_OP)))
             {   current_token.type = OP_TT; current_token.value = v;
                 if (array_init_ambiguity &&
                     ((v==MINUS_OP) || (v==UNARY_MINUS_OP)) &&
