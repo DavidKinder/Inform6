@@ -988,6 +988,8 @@ static void write_operand(assembly_operand op)
     }
 }
 
+#define MAX_TRACE_STRING_LEN (35)
+
 extern void assemblez_instruction(const assembly_instruction *AI)
 {
     int32 operands_pc;
@@ -1200,8 +1202,20 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         if ((AI->internal_number == print_zc)
             || (AI->internal_number == print_ret_zc))
         {   printf("\"");
-            for (i=0;(AI->text)[i]!=0 && i<35; i++) printf("%c",(AI->text)[i]);
-            if (i == 35) printf("...");
+            for (i=0;(AI->text)[i]!=0 && i<MAX_TRACE_STRING_LEN; i++) {
+                if ((AI->text)[i] == 1) {
+                    /* This text has been overwritten with an abbreviation
+                       marker. Print "<ABBR>" for the first null character
+                       only.
+                       (Unimportant bug: two adjacent abbreviations only
+                       print one "<ABBR>" flag.) */
+                    if (!(i>0 && (AI->text)[i-1] == 1))
+                        printf("<ABBR>");
+                    continue;
+                }
+                printf("%c",(AI->text)[i]);
+            }
+            if (i == MAX_TRACE_STRING_LEN) printf("...");
             printf("\"");
         }
 
