@@ -861,7 +861,7 @@ static void parse_statement_z(int break_label, int continue_label)
                              if (token_text[i] == '@')
                              {   if (token_text[i+1] == '@')
                                  {   i = i + 2;
-                                     while (isdigit(token_text[i])) i++;
+                                     while (isdigit((uchar)token_text[i])) i++;
                                  }
                                  else
                                  {   i++;
@@ -1830,7 +1830,7 @@ static void parse_statement_g(int break_label, int continue_label)
                              if (token_text[i] == '@')
                              {   if (token_text[i+1] == '@')
                                  {   i = i + 2;
-                                     while (isdigit(token_text[i])) i++;
+                                     while (isdigit((uchar)token_text[i])) i++;
                                  }
                                  else
                                  {   i++;
