@@ -1250,8 +1250,10 @@ extern void df_note_function_symbol(int symbol)
        we're in global scope, in which case it might be slower.
        (I suppose we could cache the df_function_t pointer of the
        current function, to speed things up.) */
-    if (!df_current_function || df_current_function_addr != df_current_function->address)
+    if (!df_current_function || df_current_function_addr != df_current_function->address) {
         compiler_error("DF: df_current_function does not match current address.");
+        return;
+    }
     ent->refsnext = df_current_function->refs;
     df_current_function->refs = ent;
 }
@@ -1547,10 +1549,14 @@ uint32 df_stripped_offset_for_code_offset(uint32 offset, int *stripped)
 extern void df_prepare_function_iterate(void)
 {
     df_iterator = df_functions_head;
-    if (!df_iterator || df_iterator->address != DF_NOT_IN_FUNCTION)
+    if (!df_iterator || df_iterator->address != DF_NOT_IN_FUNCTION) {
         compiler_error("DF: Global namespace entry is not at the head of the chain.");
-    if (!df_iterator->funcnext || df_iterator->funcnext->address != 0)
+        return;
+    }
+    if (!df_iterator->funcnext || df_iterator->funcnext->address != 0) {
         compiler_error("DF: First function entry is not second in the chain.");
+        return;
+    }
 }
 
 /* This returns the end of the next function, and whether the next function
