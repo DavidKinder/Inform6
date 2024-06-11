@@ -309,7 +309,7 @@ static void sf_put(int c)
 
 /* Recursive procedure to generate the Glulx compression table. */
 
-static void output_compression(int entnum, int32 *size, int *count)
+static void output_compression(int entnum, uint32 *size, int *count)
 {
   huffentity_t *ent = &(huff_entities[entnum]);
   int32 val;
@@ -374,8 +374,8 @@ static void output_compression(int entnum, int32 *size, int *count)
 
 static void output_file_z(void)
 {   char new_name[PATHLEN];
-    int32 length, blanks=0, size, i, j, offset;
-    uint32 code_length, size_before_code, next_cons_check;
+    int32 length, blanks=0, i, j, offset;
+    uint32 size, code_length, size_before_code, next_cons_check;
     int use_function;
 
     ASSERT_ZCODE();
@@ -546,7 +546,7 @@ static void output_file_z(void)
     /*  (3)  Output any null bytes (required to reach a packed address)
              before the strings area.                                        */
 
-    while (size<Write_Strings_At) { sf_put(0); size++; }
+    while (size<(uint32)Write_Strings_At) { sf_put(0); size++; }
 
     /*  (4)  Output the static strings area.                                 */
 
@@ -610,8 +610,8 @@ static void output_file_z(void)
 
 static void output_file_g(void)
 {   char new_name[PATHLEN];
-    int32 size, i, j, offset;
-    uint32 code_length, size_before_code, next_cons_check;
+    int32 i, j, offset;
+    uint32 size, code_length, size_before_code, next_cons_check;
     int use_function;
     int first_byte_of_triple, second_byte_of_triple, third_byte_of_triple;
 
@@ -767,7 +767,7 @@ static void output_file_g(void)
            we're in a live function or a dead one.
            (This logic is simplified by the assumption that a backpatch
            marker will never straddle a function break.) */
-        if (zmachine_pc != df_total_size_before_stripping)
+        if ((uint32)zmachine_pc != df_total_size_before_stripping)
             compiler_error("Code size does not match (zmachine_pc and df_total_size).");
         code_length = df_total_size_after_stripping;
         use_function = TRUE;
@@ -936,7 +936,7 @@ static void output_file_g(void)
           compiler_error("Compression table count mismatch.");
       }
 
-      if (size - origsize != compression_table_size)
+      if ((int32)size - origsize != compression_table_size)
         compiler_error("Compression table size mismatch.");
 
       origsize = size;
@@ -1043,7 +1043,7 @@ static void output_file_g(void)
         }
       }
       
-      if (size - origsize != compression_string_size)
+      if ((int32)size - origsize != compression_string_size)
         compiler_error("Compression string size mismatch.");
 
     }
@@ -1089,7 +1089,7 @@ static void output_file_g(void)
             jx++;
         }
 
-        if (size_before_arrays + static_array_area_size != size)
+        if (size_before_arrays + static_array_area_size != (int32)size)
             compiler_error("Static array output length did not match");
     }
 
