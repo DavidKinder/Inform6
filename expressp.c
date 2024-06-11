@@ -272,21 +272,24 @@ but not used as a value:", unicode);
                     if ((previous_token.type == OP_TT)
                         || (previous_token.type == SUBOPEN_TT)
                         || (previous_token.type == ENDEXP_TT))
-                    current_token.value = UNARY_MINUS_SEP; break;
+                        current_token.value = UNARY_MINUS_SEP;
+                    break;
 
                 case INC_SEP:
                     if ((previous_token.type == VARIABLE_TT)
                         || (previous_token.type == SUBCLOSE_TT)
                         || (previous_token.type == LARGE_NUMBER_TT)
                         || (previous_token.type == SMALL_NUMBER_TT))
-                    current_token.value = POST_INC_SEP; break;
+                        current_token.value = POST_INC_SEP;
+                    break;
 
                 case DEC_SEP:
                     if ((previous_token.type == VARIABLE_TT)
                         || (previous_token.type == SUBCLOSE_TT)
                         || (previous_token.type == LARGE_NUMBER_TT)
                         || (previous_token.type == SMALL_NUMBER_TT))
-                    current_token.value = POST_DEC_SEP; break;
+                        current_token.value = POST_DEC_SEP;
+                    break;
 
                 case HASHHASH_SEP:
                     token_text = current_token.text + 2;
