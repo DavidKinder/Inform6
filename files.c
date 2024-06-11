@@ -374,7 +374,8 @@ static void output_compression(int entnum, uint32 *size, int *count)
 
 static void output_file_z(void)
 {   char new_name[PATHLEN];
-    int32 length, blanks=0, i, j, offset;
+    int32 length, blanks=0, i;
+    uint32 j, offset;
     uint32 size, code_length, size_before_code, next_cons_check;
     int use_function;
 
@@ -610,7 +611,8 @@ static void output_file_z(void)
 
 static void output_file_g(void)
 {   char new_name[PATHLEN];
-    int32 i, j, offset;
+    int32 i;
+    uint32 j, offset;
     uint32 size, code_length, size_before_code, next_cons_check;
     int use_function;
     int first_byte_of_triple, second_byte_of_triple, third_byte_of_triple;
@@ -1052,7 +1054,8 @@ static void output_file_g(void)
     {
         /* We have to backpatch entries mentioned in staticarray_backpatch_table. */
         int32 size_before_arrays = size;
-        int32 val, ix, jx;
+        int32 val, ix;
+        uint32 jx;
         for (ix=0, jx=0; ix<staticarray_backpatch_size; ix += 5) {
             backpatch_error_flag = FALSE;
             backpatch_marker = staticarray_backpatch_table[ix];
