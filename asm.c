@@ -1825,9 +1825,9 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
 
           if (define_INFIX_switch)
           {
-                if (embedded_flag)
+            if (embedded_flag)
             {   SLF.value = 251; SLF.type = VARIABLE_OT; SLF.marker = 0;
-                  CON.value = 0; CON.type = SHORT_CONSTANT_OT; CON.marker = 0;
+                CON.value = 0; CON.type = SHORT_CONSTANT_OT; CON.marker = 0;
                 assemblez_2_branch(test_attr_zc, SLF, CON, ln2, FALSE);
             }
             else
