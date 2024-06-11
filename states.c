@@ -473,6 +473,7 @@ static void parse_print_z(int finally_return)
                           QUANTITY_CONTEXT, -1));
                   break;
               }
+              /* Fall through */
 
             default:
               put_token_back(); misc_keywords.enabled = FALSE;
@@ -704,6 +705,7 @@ static void parse_print_g(int finally_return)
                           QUANTITY_CONTEXT, -1));
                   break;
               }
+              /* Fall through */
 
             default:
               put_token_back(); misc_keywords.enabled = FALSE;
