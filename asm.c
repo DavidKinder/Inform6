@@ -860,6 +860,13 @@ static opcodez internal_number_to_opcode_z(int32 i)
     return extension_table_z[x.extension];
 }
 
+static char *opcode_name_z(int32 i)
+{
+    if (i >= 0 && i < MAX_KEYWORD_GROUP_SIZE && opcode_names.keywords[i])
+        return opcode_names.keywords[i];
+    return "(unnamed)";
+}
+
 static void make_opcode_syntax_z(opcodez opco)
 {   char *p = "", *q = opcode_syntax_string;
     /* TODO: opcode_syntax_string[128] is unsafe */
@@ -1031,7 +1038,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     opco = internal_number_to_opcode_z(AI->internal_number);
     if (opco.version1==0)
     {   error_named("Opcode unavailable in this Z-machine version",
-            opcode_names.keywords[AI->internal_number]);
+            opcode_name_z(AI->internal_number));
         return;
     }
 
