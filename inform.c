@@ -1343,7 +1343,7 @@ extern void switches(char *p, int cmode)
         case 'h': switch(p[i+1])
                   {   case '1': cli_print_help(1); s=2; break;
                       case '2': cli_print_help(2); s=2; break;
-                      case '0': s=2;
+                      case '0': s=2; /* Fall through */
                       default:  cli_print_help(0); break;
                   }
                   break;
@@ -1357,7 +1357,8 @@ extern void switches(char *p, int cmode)
         case 'r': if (cmode == 0)
                       error("The switch '-r' can't be set with 'Switches'");
                   else
-                      transcript_switch = state; break;
+                      transcript_switch = state;
+                  break;
         case 's': statistics_switch = state; break;
         case 'u': if (cmode == 0) {
                       error("The switch '-u' can't be set with 'Switches'");
