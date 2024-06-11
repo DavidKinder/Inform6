@@ -1269,12 +1269,14 @@ static void emit_token(const token_data *t)
                 case MPROP_ADD_OP: case MESSAGE_OP:
                 case PROPERTY_OP:
                     if (i < arity) break;
+                    /* Fall through */
                 case GE_OP: case LE_OP:
                     /* Direction properties "n_to", etc *are* compared
                        in some libraries. They have STAR_SFLAG to tell us
                        to skip the warning. */
                     if ((i < arity)
                         && (symbols[o1.symindex].flags & STAR_SFLAG)) break;
+                    /* Fall through */
                 default:
                     warning("Property name in expression is not qualified by object");
             }
@@ -1794,6 +1796,7 @@ static void insert_exp_to_cond(int n, int context)
         case 1:                                 /* Forms of '=' have level 1 */
             if (context == CONDITION_CONTEXT)
                 warning("'=' used as condition: '==' intended?");
+            /* Fall through */
         default:
             if (context != CONDITION_CONTEXT) break;
 
@@ -2068,6 +2071,7 @@ extern assembly_operand parse_expression(int context)
             case ASSOC_E:            /* Associativity error                  */
                 error_named("Brackets mandatory to clarify order of:",
                     a.text);
+                /* Fall through */
 
             case LOWER_P:
             case EQUAL_P:
@@ -2107,6 +2111,7 @@ extern assembly_operand parse_expression(int context)
                                     }
                                     /* Non-argument-separating commas get treated like any other operator; we fall through to the default case. */
                                 }
+                                /* Fall through */
                             default:
                                 {
                                     /* Add a marker for the brackets implied by operator precedence */
