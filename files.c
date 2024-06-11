@@ -445,7 +445,7 @@ static void output_file_z(void)
            we're in a live function or a dead one.
            (This logic is simplified by the assumption that a backpatch
            marker will never straddle a function break.) */
-        if (zmachine_pc != df_total_size_before_stripping)
+        if ((uint32)zmachine_pc != df_total_size_before_stripping)
             compiler_error("Code size does not match (zmachine_pc and df_total_size).");
         code_length = df_total_size_after_stripping;
         use_function = TRUE;
