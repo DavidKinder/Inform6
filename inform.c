@@ -60,15 +60,15 @@ static int select_glulx_version(char *str)
   char *cx = str;
   int major=0, minor=0, patch=0;
 
-  while (isdigit(*cx))
+  while (isdigit((uchar)*cx))
     major = major*10 + ((*cx++)-'0');
   if (*cx == '.') {
     cx++;
-    while (isdigit(*cx))
+    while (isdigit((uchar)*cx))
       minor = minor*10 + ((*cx++)-'0');
     if (*cx == '.') {
       cx++;
-      while (isdigit(*cx))
+      while (isdigit((uchar)*cx))
         patch = patch*10 + ((*cx++)-'0');
     }
   }
@@ -519,7 +519,7 @@ or ICL_Path variables. Other paths are for output only.\n", FN_ALT);
             }
             if ((path != Debugging_Name) && (path != Transcript_Name)
                  && (path != Language_Name) && (path != Charset_Map)
-                 && (i>0) && (isalnum(path[i-1]))) path[i++] = FN_SEP;
+                 && (i>0) && (isalnum((uchar)path[i-1]))) path[i++] = FN_SEP;
             path[i++] = value[j++];
             if (value[j-1] == 0) return;
         }
@@ -561,7 +561,7 @@ or ICL_Path variables. Other paths are for output only.\n");
         if ((value[j] == FN_ALT) || (value[j] == 0))
         {   if ((path != Debugging_Name) && (path != Transcript_Name)
                  && (path != Language_Name) && (path != Charset_Map)
-                 && (i>0) && (isalnum(new_path[i-1]))) new_path[i++] = FN_SEP;
+                 && (i>0) && (isalnum((uchar)new_path[i-1]))) new_path[i++] = FN_SEP;
             new_path[i++] = value[j++];
             if (value[j-1] == 0) {
                 newlen = i-1;
