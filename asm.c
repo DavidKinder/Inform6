@@ -3367,7 +3367,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
 
     if (O.version1 == 0)
     {   error_named("Opcode unavailable in this Z-machine version:",
-            opcode_names.keywords[AI.internal_number]);
+            opcode_name_z(AI.internal_number));
         return;
     }
 
