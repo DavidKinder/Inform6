@@ -692,7 +692,8 @@ advance as part of 'Zcharacter table':", unicode);
 
                     default:   write_zscii(j); break;
                 }
-                while (isdigit(text_in[i])) i++; i--;
+                while (isdigit(text_in[i])) i++;
+                i--;
             }
             else if (text_in[i+1]=='(')
             {
@@ -894,7 +895,8 @@ string.");
             }
           }
           write_z_char_g(j);
-          while (isdigit(text_in[i])) i++; i--;
+          while (isdigit(text_in[i])) i++;
+          i--;
         }
         else if (text_in[i+1]=='(') {
             int len = 0, digits = 0;
