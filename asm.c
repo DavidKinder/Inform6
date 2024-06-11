@@ -3148,7 +3148,7 @@ static void parse_assembly_z(void)
         custom_opcode_z.no = n;
 
         custom_opcode_z.code = atoi(token_text+i);
-        while (isdigit(token_text[i])) i++;
+        while (isdigit((uchar)token_text[i])) i++;
 
         {   max = 0; min = 0;
             switch(n)
@@ -3172,7 +3172,7 @@ static void parse_assembly_z(void)
                 case 'T': custom_opcode_z.op_rules = TEXT; break;
                 case 'I': custom_opcode_z.op_rules = VARIAB; break;
                 case 'F': custom_opcode_z.flags2_set = atoi(token_text+i);
-                          while (isdigit(token_text[i])) i++;
+                          while (isdigit((uchar)token_text[i])) i++;
                           break;
                 default:
                     error("Unknown flag: options are B (branch), S (store), \
@@ -3510,7 +3510,7 @@ static void parse_assembly_g(void)
                 custom_opcode_g.flags |= Rf;
                 break;
             default:
-                if (isdigit(*cx)) {
+                if (isdigit((uchar)*cx)) {
                     custom_opcode_g.no = (*cx) - '0';
                     break;
                 }
