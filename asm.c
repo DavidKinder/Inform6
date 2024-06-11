@@ -883,6 +883,7 @@ static void make_opcode_syntax_z(opcodez opco)
         case LABEL: sprintf(q+strlen(q), " <label>"); return;
         case VARIAB:
             sprintf(q+strlen(q), " <variable>");
+            /* Fall through */
         case CALL:
             if (opco.op_rules==CALL) sprintf(q+strlen(q), " <routine>");
             switch(opco.no)
@@ -978,8 +979,10 @@ static void write_operand(assembly_operand op)
             byteout(j/256, op.marker); byteout(j%256, 0); return;
         case SHORT_CONSTANT_OT:
             if (op.marker == 0)
-            byteout(j, 0);
-            else byteout(j, 0x80 + op.marker); return;
+                byteout(j, 0);
+            else
+                byteout(j, 0x80 + op.marker);
+            return;
         case VARIABLE_OT:
             byteout(j, 0); return;
         case CONSTANT_OT:
@@ -2285,6 +2288,7 @@ static void transfer_routine_z(void)
                     if (!GRAMMAR_META_FLAG) break;
                     /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
                        through and create entry */
+                    /* Fall through */
                 default:
                     if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV)
                     {   compiler_error("Illegal code backpatch value");
@@ -2513,6 +2517,7 @@ static void transfer_routine_g(void)
             if (!GRAMMAR_META_FLAG) break;
             /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
                through and create entry */
+            /* Fall through */
         case OBJECT_MV:
         case VARIABLE_MV:
         default:
@@ -3164,7 +3169,8 @@ static void parse_assembly_z(void)
                 case 'T': custom_opcode_z.op_rules = TEXT; break;
                 case 'I': custom_opcode_z.op_rules = VARIAB; break;
                 case 'F': custom_opcode_z.flags2_set = atoi(token_text+i);
-                          while (isdigit(token_text[i])) i++; break;
+                          while (isdigit(token_text[i])) i++;
+                          break;
                 default:
                     error("Unknown flag: options are B (branch), S (store), \
 T (text), I (indirect addressing), F** (set this Flags 2 bit)");
