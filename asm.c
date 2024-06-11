@@ -2908,7 +2908,7 @@ void assemblez_jump(int n)
     if (n==-4) assemblez_0(rtrue_zc);
     else if (n==-3) assemblez_0(rfalse_zc);
     else
-    {   AO.type = LONG_CONSTANT_OT; AO.value = n; AO.marker = 0;
+    {   INITAOTV(&AO, LONG_CONSTANT_OT, n);
         assemblez_1(jump_zc, AO);
     }
 }
