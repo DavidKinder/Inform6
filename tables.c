@@ -708,7 +708,7 @@ or less.");
         code_length = zmachine_pc;
     }
     else {
-        if (zmachine_pc != df_total_size_before_stripping)
+        if ((uint32)zmachine_pc != df_total_size_before_stripping)
             compiler_error("Code size does not match (zmachine_pc and df_total_size).");
         code_length = df_total_size_after_stripping;
     }
@@ -1178,7 +1178,7 @@ static void construct_storyfile_g(void)
         code_length = zmachine_pc;
     }
     else {
-        if (zmachine_pc != df_total_size_before_stripping)
+        if ((uint32)zmachine_pc != df_total_size_before_stripping)
             compiler_error("Code size does not match (zmachine_pc and df_total_size).");
         code_length = df_total_size_after_stripping;
     }

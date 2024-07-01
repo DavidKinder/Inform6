@@ -692,7 +692,8 @@ advance as part of 'Zcharacter table':", unicode);
 
                     default:   write_zscii(j); break;
                 }
-                while (isdigit(text_in[i])) i++; i--;
+                while (isdigit(text_in[i])) i++;
+                i--;
             }
             else if (text_in[i+1]=='(')
             {
@@ -894,7 +895,8 @@ string.");
             }
           }
           write_z_char_g(j);
-          while (isdigit(text_in[i])) i++; i--;
+          while (isdigit(text_in[i])) i++;
+          i--;
         }
         else if (text_in[i+1]=='(') {
             int len = 0, digits = 0;
@@ -2160,7 +2162,7 @@ Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
       k = '?';
     }
     
-    if (k >= (unsigned)'A' && k <= (unsigned)'Z')
+    if (k >= 'A' && k <= 'Z')
       k += ('a' - 'A');
 
     ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);

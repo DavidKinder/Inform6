@@ -830,7 +830,7 @@ it is too late to change the grammar version.");
         {   error("The serial number must be a 6-digit date in double-quotes");
             panic_mode_error_recovery(); return FALSE;
         }
-        for (i=0; i<6; i++) if (isdigit(token_text[i])==0)
+        for (i=0; i<6; i++) if (isdigit((uchar)token_text[i])==0)
         {   error("The serial number must be a 6-digit date in double-quotes");
             panic_mode_error_recovery(); return FALSE;
         }
