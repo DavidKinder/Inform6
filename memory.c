@@ -660,8 +660,8 @@ static void add_predefined_symbol(char *command)
     }
     
     for (ix=0; command[ix]; ix++) {
-        if ((ix == 0 && isdigit(command[ix]))
-            || !(isalnum(command[ix]) || command[ix] == '_')) {
+        if ((ix == 0 && isdigit((uchar)command[ix]))
+            || !(isalnum((uchar)command[ix]) || command[ix] == '_')) {
             printf("Attempt to define invalid symbol: %s\n", command);
             return;
         }
@@ -817,7 +817,7 @@ extern void memory_command(char *command)
 {   int i, k;
 
     for (k=0; command[k]!=0; k++)
-        if (islower(command[k])) command[k]=toupper(command[k]);
+        if (islower((uchar)command[k])) command[k]=toupper((uchar)command[k]);
 
     if (command[0]=='?') { explain_parameter(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
