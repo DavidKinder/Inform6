@@ -494,8 +494,16 @@
 #define NORETURN __attribute__((__noreturn__))
 #endif /* defined(__GNUC__) || defined(__clang__) */
 
+#if defined(_MSC_VER)
+#define NORETURN_PRE __declspec(noreturn)
+#endif
+ 
 #ifndef NORETURN
 #define NORETURN
+#endif
+
+#ifndef NORETURN_PRE
+#define NORETURN_PRE
 #endif
 
 /* ------------------------------------------------------------------------- */
@@ -562,8 +570,8 @@
 
 /* These checked the glulx_mode global during development, but are no
    longer needed. */
-#define ASSERT_ZCODE() (0)
-#define ASSERT_GLULX() (0)
+#define ASSERT_ZCODE()
+#define ASSERT_GLULX()
 
 
 #define ReadInt32(ptr)                               \
@@ -2350,10 +2358,10 @@ extern int  no_errors, no_warnings, no_suppressed_warnings, no_compiler_errors;
 
 extern ErrorPosition ErrorReport;
 
-extern void fatalerror(char *s) NORETURN;
-extern void fatalerror_fmt(const char *format, ...) NORETURN;
-extern void fatalerror_named(char *s1, char *s2) NORETURN;
-extern void fatalerror_memory_out(int32 size, int32 howmany, char *name) NORETURN;
+NORETURN_PRE extern void fatalerror(char *s) NORETURN;
+NORETURN_PRE extern void fatalerror_fmt(const char *format, ...) NORETURN;
+NORETURN_PRE extern void fatalerror_named(char *s1, char *s2) NORETURN;
+NORETURN_PRE extern void fatalerror_memory_out(int32 size, int32 howmany, char *name) NORETURN;
 
 extern void error(char *s);
 extern void error_fmt(const char *format, ...);
