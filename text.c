@@ -194,7 +194,7 @@ static void make_abbrevs_lookup(void)
 /*   In Glulx, we *do not* do this overwriting with 1's.                     */
 /* ------------------------------------------------------------------------- */
 
-static int try_abbreviations_from(unsigned char *text, int i, int from)
+static int try_abbreviations_from(uchar *text, int i, int from)
 {   int j, k; uchar *p, c;
     c=text[i];
     for (j=from;
@@ -481,7 +481,7 @@ static int zchar_weight(int c)
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
 {   int i, j, k, in_alphabet, lookup_value, is_abbreviation;
     int32 unicode; int zscii;
-    unsigned char *text_in;
+    uchar *text_in;
 
     if (p_limit >= 0) {
         ensure_memory_list_available(&translated_text_memlist, p_limit);
@@ -499,7 +499,7 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
     /*  Cast the input and output streams to unsigned char: text_out_pos will
         advance as bytes of Z-coded text are written, but text_in doesn't    */
 
-    text_in     = (unsigned char *) s_text;
+    text_in     = (uchar *) s_text;
     text_out_pos = 0;
     text_out_limit = p_limit;
     text_out_overflow = FALSE;
@@ -2136,7 +2136,7 @@ static void dictionary_prepare_g(char *dword, uchar *optresult)
     if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
         truncbug = TRUE;
 
-    k= ((unsigned char *)dword)[j];
+    k= ((uchar *)dword)[j];
     if (k=='\'') 
       warning_named("Obsolete usage: use the ^ character for the \
 apostrophe in", dword);
@@ -2537,7 +2537,7 @@ static int d_show_len;  /* current length */
 
 /* Print a byte to the screen or d_show_buf (see above). The caller
    is responsible for character encoding. */
-static void show_char(unsigned char c)
+static void show_char(uchar c)
 {
     if (d_show_buf == NULL) {
         printf("%c", c);
