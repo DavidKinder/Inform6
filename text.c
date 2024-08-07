@@ -2529,13 +2529,15 @@ extern void dictionary_set_verb_number(int dictword, int infverb)
 /* In the dictionary-showing code, if d_show_buf is NULL, the text is
    printed directly. (The "Trace dictionary" directive does this.)
    If d_show_buf is not NULL, we add words to it (reallocing if necessary)
-   until it's a page-width. 
+   until it's a page-width. (The -r "gametext.txt" option does this.)
 */
 static char *d_show_buf = NULL;
 static int d_show_size; /* allocated size */
 static int d_show_len;  /* current length */
 
-static void show_char(char c)
+/* Print a byte to the screen or d_show_buf (see above). The caller
+   is responsible for character encoding. */
+static void show_char(unsigned char c)
 {
     if (d_show_buf == NULL) {
         printf("%c", c);
@@ -2552,7 +2554,7 @@ static void show_char(char c)
 }
 
 /* Display a Unicode character in user-readable form. This uses the same
-   character encoding as the source code. */
+   character encoding as the source code (determined by the -C option). */
 static void show_uchar(uint32 c)
 {
     char buf[16];
