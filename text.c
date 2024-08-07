@@ -2664,7 +2664,7 @@ void print_dict_word(int node)
         word_to_ascii(p, textual_form);
         
         for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
-            show_char(textual_form[cprinted]);
+            show_uchar((uchar)textual_form[cprinted]);
     }
     else {
         p = (uchar *)dictionary + 4 + DICT_ENTRY_BYTE_LENGTH*node;
@@ -2696,7 +2696,7 @@ static void recursively_show_z(int node, int level)
     word_to_ascii(p, textual_form);
 
     for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
-        show_char(textual_form[cprinted]);
+        show_uchar((uchar)textual_form[cprinted]);
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
