@@ -27,7 +27,7 @@ specific ones to Graham Nelson for permitting it in the first place, and to Andr
 for most of the actual changes to the compiler code.
 
 <h2>Inform 6.43</h2>
-These are the changes delivered in version 6.42 of the Inform compiler.
+These are the changes delivered in version 6.43 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
@@ -48,7 +48,7 @@ Note that using this grammar version will require library changes that are not c
 <li><p>A new setting <tt>$GRAMMAR_META_FLAG</tt> has been added. If set to 1, there is a new way to declare meta actions.
 Previously, meta actions were defined by writing lines like
 <pre>
-  Verb 'score' * -> Score meta;
+  Verb meta 'score' * -> Score;
 </pre>
 This associates the <tt>meta</tt> flag with the dictionary word "score". This is not ideal as we could have verbs which are
 meta in some phrasings but not others. If <tt>$GRAMMAR_META_FLAG</tt> is set the old syntax is still supported, but there is
