@@ -73,7 +73,10 @@ when outputting a Z-code game file Inform 6 will no longer pad the file to be a 
 <h3>Bugs fixed</h3>
 <ul>
 <li><p>Dictionary flags were being set incorrectly when <tt>$DICT_WORD_SIZE</tt> was set sufficiently large.
-<li><p>In <tt>--trace asm</tt> output, when a Z-string has abbreviation marks, <tt>&lt;ABBR&gt;</tt> is printed, rather than Ctrl-A characters.
+<li><p>In <tt>--trace asm</tt> output, when a Z-string has abbreviation marks, <tt>&lt;ABBR&gt;</tt> is printed, rather
+than Ctrl-A characters.
+<li><p>Dictionary words in UTF-8 encoded source files are now printed correctly in <tt>--trace dict</tt> and <tt>-r</tt>
+(gametext.txt) output.
 </ul>
 
 <h2>Inform 6.42</h2>
