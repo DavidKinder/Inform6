@@ -1024,10 +1024,10 @@ it is too late to change the grammar version.");
             /* show a table rather than changing any trace level */
             trace_level = NULL; break;
         case LINES_TK:
-            /* never implememented */
+            /* never implemented */
             trace_level = NULL; break;
         case LINKER_TK:
-            /* no longer implememented */
+            /* no longer implemented */
             trace_level = NULL; break;
         default:
             /* default to "Trace assembly" */
