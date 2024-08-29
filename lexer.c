@@ -1730,9 +1730,7 @@ extern void release_token_texts(void)
 }
 
 extern void put_token_back(void)
-{   tokens_put_back++;
-
-    int pos = circle_position - tokens_put_back + 1;
+{   int pos = circle_position - ++tokens_put_back + 1;
     if (pos<0) pos += CIRCLE_SIZE;
 
     if (tokens_trace_level > 0)
