@@ -1781,7 +1781,7 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
 %6d global vars (maximum 233)    %6d variable/array space\n",
                no_classes,
                no_objects,
-               no_globals,
+               no_globals - zcode_user_global_start_no,
                dynamic_array_area_size);
 
         printf(
