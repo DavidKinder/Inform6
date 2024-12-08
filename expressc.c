@@ -26,10 +26,10 @@ static void make_operands(void)
 {
   if (!glulx_mode) {
     INITAOTV(&stack_pointer, VARIABLE_OT, 0);
-    INITAOTV(&temp_var1, VARIABLE_OT, 255);
-    INITAOTV(&temp_var2, VARIABLE_OT, 254);
-    INITAOTV(&temp_var3, VARIABLE_OT, 253);
-    INITAOTV(&temp_var4, VARIABLE_OT, 252);
+    INITAOTV(&temp_var1, VARIABLE_OT, zcode_temp_var1);
+    INITAOTV(&temp_var2, VARIABLE_OT, zcode_temp_var2);
+    INITAOTV(&temp_var3, VARIABLE_OT, zcode_temp_var3);
+    INITAOTV(&temp_var4, VARIABLE_OT, zcode_temp_var4);
     INITAOTV(&zero_operand, SHORT_CONSTANT_OT, 0);
     INITAOTV(&one_operand, SHORT_CONSTANT_OT, 1);
     INITAOTV(&two_operand, SHORT_CONSTANT_OT, 2);
@@ -1447,7 +1447,7 @@ static void generate_code_from(int n, int void_flag)
                 if (((ET[below].value.type == VARIABLE_OT)
                      && (ET[below].value.value == 0))
                     && ((oc != je_zc) || (arity>4)) )
-                {   INITAOTV(&left_operand, VARIABLE_OT, 255);
+                {   INITAOTV(&left_operand, VARIABLE_OT, zcode_temp_var1);
                     assemblez_store(left_operand, ET[below].value);
                 }
                 else left_operand = ET[below].value;

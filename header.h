@@ -2155,6 +2155,15 @@ extern int32 begin_table_array(void);
 extern int32 begin_word_array(void);
 extern void array_entry(int32 i, int is_static, assembly_operand VAL);
 extern void finish_array(int32 i, int is_static);
+extern int zcode_temp_var1;
+extern int zcode_temp_var2;
+extern int zcode_temp_var3;
+extern int zcode_temp_var4;
+extern int zcode_sw__var;
+extern int zcode_sender;
+extern int zcode_self;
+extern int zcode_user_global_start_no;
+extern int zcode_highest_allowed_global;
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "asm"                                            */

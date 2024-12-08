@@ -67,6 +67,15 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
 
 static memory_list current_array_name; /* The name of the global or array
                                           currently being compiled.          */
+int zcode_temp_var1;
+int zcode_temp_var2;
+int zcode_temp_var3;
+int zcode_temp_var4;
+int zcode_sw__var;
+int zcode_self;
+int zcode_sender;
+int zcode_user_global_start_no;
+int zcode_highest_allowed_global;
 
 /* Complete the array. Fill in the size field (if it has one) and 
    advance foo_array_area_size.
@@ -295,7 +304,7 @@ extern void make_global()
 
     if (!glulx_mode) {
         if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
-            && (symbols[i].value >= LOWEST_SYSTEM_VAR_NUMBER)) {
+            && (symbols[i].value >= zcode_highest_allowed_global)) {
             globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
             goto RedefinitionOfSystemVar;
         }
@@ -332,7 +341,14 @@ extern void make_global()
         put_token_back();
     }
     
-    if (!glulx_mode && no_globals==233)
+    if (!glulx_mode && ZCODE_COMPACT_GLOBALS == 1 && version_number < 4 && no_globals == 3) {
+        /* Special handling of z3. Because z3 requires that globals 1-3 contain location, 
+           turns and score, we let them be defined and skip ahead 7 for the scratch globals. */
+        no_globals += 7;
+        zcode_user_global_start_no = 7;
+    }
+
+    if (!glulx_mode && no_globals == (233 + zcode_user_global_start_no))
     {   discard_token_location(beginning_debug_location);
         error("All 233 global variables already declared");
         panic_mode_error_recovery();
@@ -791,6 +807,44 @@ extern void init_arrays_vars(void)
     arrays = NULL;
     global_initial_value = NULL;
     variables = NULL;
+    if (ZCODE_COMPACT_GLOBALS == 1) {
+        zcode_highest_allowed_global = 256;
+        if (version_number > 3) {
+          zcode_temp_var1 = 16;
+          zcode_temp_var2 = 17;
+          zcode_temp_var3 = 18;
+          zcode_temp_var4 = 19;
+          zcode_self = 20;
+          zcode_sender = 21;
+          zcode_sw__var = 22;
+          zcode_user_global_start_no = 7;
+      }
+      else {
+        /* In version 1-3 globals 1-3 (16-18) are hard-coded for interaction 
+           with the statusline (location, moves and score) */
+        zcode_temp_var1 = 19;
+        zcode_temp_var2 = 20;
+        zcode_temp_var3 = 21;
+        zcode_temp_var4 = 22;
+        zcode_self = 23;
+        zcode_sender = 24;
+        zcode_sw__var = 25;
+        zcode_user_global_start_no = 0;
+      }
+    }
+    else {
+      zcode_temp_var1 = 255;
+      zcode_temp_var2 = 254;
+      zcode_temp_var3 = 253;
+      zcode_temp_var4 = 252;
+      zcode_self = 251;
+      zcode_sender = 250;
+      zcode_sw__var = 249;
+      zcode_user_global_start_no = 0;
+      zcode_highest_allowed_global = LOWEST_SYSTEM_VAR_NUMBER; /* traditionally globals 249 to 255 are
+                                                                  used in compiled code (Z-code only;
+                                                                  in Glulx, the range can change) */
+    }
 }
 
 extern void arrays_begin_pass(void)
@@ -799,7 +853,7 @@ extern void arrays_begin_pass(void)
     
     no_arrays = 0; 
     if (!glulx_mode) {
-        no_globals = 0;
+        no_globals = zcode_user_global_start_no;
         /* The compiler-defined globals start at 239 and go down, so
            we need to initialize the entire list from the start. */
         totalvar = MAX_ZCODE_GLOBAL_VARS;
