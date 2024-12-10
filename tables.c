@@ -68,6 +68,8 @@ int32 arrays_offset,
 int32 Out_Size, Write_Code_At, Write_Strings_At;
 int32 RAM_Size, Write_RAM_At; /* Glulx */
 
+int zcode_compact_globals_adjustment; 
+
 /* ------------------------------------------------------------------------- */
 /*   Story file header settings.   (Written to in "directs.c" and "asm.c".)  */
 /* ------------------------------------------------------------------------- */
@@ -259,7 +261,7 @@ static void construct_storyfile_z(void)
           abbrevs_at=0, prop_defaults_at=0, object_tree_at=0, object_props_at=0,
           grammar_table_at=0, charset_at=0, headerext_at=0,
           terminating_chars_at=0, unicode_at=0, id_names_length=0,
-          static_arrays_at=0;
+          arrays_at, static_arrays_at=0;
     int32 rough_size;
     int skip_backpatching = FALSE;
     char *output_called = "story file";
@@ -516,12 +518,31 @@ static void construct_storyfile_z(void)
 
     globals_at = mark;
 
-    for (i=0; i<dynamic_array_area_size; i++)
-        p[mark++] = dynamic_array_area[i];
+    if (ZCODE_COMPACT_GLOBALS == 1) {
+        for (i = 0; i < no_globals; i++) {
+            j = global_initial_value[i];
+            p[mark++] = j / 256; p[mark++] = j % 256;
+        }
 
-    for (i=0; i<240; i++)
-    {   j=global_initial_value[i];
-        p[globals_at+i*2]   = j/256; p[globals_at+i*2+1] = j%256;
+        arrays_at = mark;
+        for (i = (MAX_ZCODE_GLOBAL_VARS * WORDSIZE); i < dynamic_array_area_size; i++)
+            p[mark++] = dynamic_array_area[i];
+
+        /* When arrays move up we need a adjustment value to use when backkpatching */
+        zcode_compact_globals_adjustment = ((MAX_ZCODE_GLOBAL_VARS - no_globals) * WORDSIZE);
+    }
+    else
+    {
+        for (i = 0; i < dynamic_array_area_size; i++)
+            p[mark++] = dynamic_array_area[i];
+
+        for (i = 0; i < 240; i++)
+        {
+            j = global_initial_value[i];
+            p[globals_at + i * 2] = j / 256; p[globals_at + i * 2 + 1] = j % 256;
+        }
+        arrays_at = globals_at + (MAX_ZCODE_GLOBAL_VARS * WORDSIZE);
+        zcode_compact_globals_adjustment = 0;
     }
 
     /*  ------------------ Terminating Characters Table -------------------- */
@@ -757,6 +778,7 @@ or less.");
 
     dictionary_offset = dictionary_at;
     variables_offset = globals_at;
+    arrays_offset = arrays_at;
     actions_offset = actions_at;
     preactions_offset = preactions_at;
     prop_defaults_offset = prop_defaults_at;

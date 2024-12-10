@@ -2792,6 +2792,7 @@ extern int release_number, statusline_flag;
 extern int flags2_requirements[];
 extern int serial_code_given_in_program;
 extern char serial_code_buffer[];
+extern int zcode_compact_globals_adjustment;
 
 extern void construct_storyfile(void);
 extern void write_serial_number(char *buffer);
