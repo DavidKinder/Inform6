@@ -68,6 +68,8 @@ declarations had been made with <tt>Extend</tt>, and a warning is produced to th
 an incorrect story file.
 <li><p>A new setting <tt>$ZCODE_FILE_END_PADDING</tt> has been added. By default it is set to 1, but if it is set to 0, then
 when outputting a Z-code game file Inform 6 will no longer pad the file to be a multiple of 512 bytes.
+<li><p>When compiling to Z-code version 3, the compiler now checks that the number of objects does not exceed the maximum
+possible, which is 255.
 </ul>
 
 <h3>Bugs fixed</h3>
