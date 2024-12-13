@@ -756,6 +756,8 @@ advance as part of 'Zcharacter table':", unicode);
                     error("'@..' must have two decimal digits");
                 else
                 {
+                    if (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING)
+                        warning("The Z-machine standard does not allow dynamic strings inside an abbreviation or dynamic string.");
                     j = d1*10 + d2;
                     if (!glulx_mode && j >= 96) {
                         error_max_dynamic_strings(j);
