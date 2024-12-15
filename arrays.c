@@ -812,43 +812,63 @@ extern void init_arrays_vars(void)
     arrays = NULL;
     global_initial_value = NULL;
     variables = NULL;
-    if (ZCODE_COMPACT_GLOBALS == 1) {
-        zcode_highest_allowed_global = 256;
-        if (version_number > 3) {
-          globalv_z_temp_var1 = 16;
-          globalv_z_temp_var2 = 17;
-          globalv_z_temp_var3 = 18;
-          globalv_z_temp_var4 = 19;
-          globalv_z_self = 20;
-          globalv_z_sender = 21;
-          globalv_z_sw__var = 22;
-          zcode_user_global_start_no = 7;
-      }
-      else {
-        /* In version 1-3 globals 1-3 (16-18) are hard-coded for interaction 
-           with the statusline (location, moves and score) */
-        globalv_z_temp_var1 = 19;
-        globalv_z_temp_var2 = 20;
-        globalv_z_temp_var3 = 21;
-        globalv_z_temp_var4 = 22;
-        globalv_z_self = 23;
-        globalv_z_sender = 24;
-        globalv_z_sw__var = 25;
-        zcode_user_global_start_no = 0;
-      }
+
+    if (!glulx_mode) {
+        if (ZCODE_COMPACT_GLOBALS == 0) {
+            /* The traditional layout for Z-code globals is that the
+               built-ins are numbered from 255 down to 249. User
+               globals run from 16 to 248. */
+            globalv_z_temp_var1 = 255;
+            globalv_z_temp_var2 = 254;
+            globalv_z_temp_var3 = 253;
+            globalv_z_temp_var4 = 252;
+            globalv_z_self = 251;
+            globalv_z_sender = 250;
+            globalv_z_sw__var = 249;
+            zcode_user_global_start_no = 0;
+            zcode_highest_allowed_global = LOWEST_SYSTEM_VAR_NUMBER;
+        }
+        else {
+            /* In the compact arrangement, the built-ins are numbered
+               16-22... */
+            zcode_highest_allowed_global = 256;
+            if (version_number > 3) {
+                globalv_z_temp_var1 = 16;
+                globalv_z_temp_var2 = 17;
+                globalv_z_temp_var3 = 18;
+                globalv_z_temp_var4 = 19;
+                globalv_z_self = 20;
+                globalv_z_sender = 21;
+                globalv_z_sw__var = 22;
+                zcode_user_global_start_no = 7;
+            }
+            else {
+                /* ...Except that in version 3, the first three globals are
+                   hard-wired to the status line (displaying the location,
+                   moves, and score). So the built-ins are 19-25;
+                   user globals are 16-18 and then 26+. Yes, it's messy. */
+                globalv_z_temp_var1 = 19;
+                globalv_z_temp_var2 = 20;
+                globalv_z_temp_var3 = 21;
+                globalv_z_temp_var4 = 22;
+                globalv_z_self = 23;
+                globalv_z_sender = 24;
+                globalv_z_sw__var = 25;
+                zcode_user_global_start_no = 0;
+            }
+        }
     }
     else {
-      globalv_z_temp_var1 = 255;
-      globalv_z_temp_var2 = 254;
-      globalv_z_temp_var3 = 253;
-      globalv_z_temp_var4 = 252;
-      globalv_z_self = 251;
-      globalv_z_sender = 250;
-      globalv_z_sw__var = 249;
-      zcode_user_global_start_no = 0;
-      zcode_highest_allowed_global = LOWEST_SYSTEM_VAR_NUMBER; /* traditionally globals 249 to 255 are
-                                                                  used in compiled code (Z-code only;
-                                                                  in Glulx, the range can change) */
+        /* These variables are not used in Glulx. */
+        globalv_z_temp_var1 = -1;
+        globalv_z_temp_var2 = -1;
+        globalv_z_temp_var3 = -1;
+        globalv_z_temp_var4 = -1;
+        globalv_z_self = -1;
+        globalv_z_sender = -1;
+        globalv_z_sw__var = -1;
+        zcode_user_global_start_no = -1;
+        zcode_highest_allowed_global = -1;
     }
 }
 
