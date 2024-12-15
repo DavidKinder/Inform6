@@ -901,6 +901,8 @@ static void stockup_symbols(void)
         create_symbol("sender",        globalv_z_sender, GLOBAL_VARIABLE_T);
         create_symbol("sw__var",       globalv_z_sw__var, GLOBAL_VARIABLE_T);
 
+        /* These three are always the first three Z-machine globals,
+           which are significant in v3 (but not any later version). */
         create_symbol("sys__glob0",    16, GLOBAL_VARIABLE_T);
         create_symbol("sys__glob1",    17, GLOBAL_VARIABLE_T);
         create_symbol("sys__glob2",    18, GLOBAL_VARIABLE_T);
