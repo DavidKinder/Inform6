@@ -893,17 +893,17 @@ static void stockup_symbols(void)
     }    
 
     if (!glulx_mode) {
-        create_symbol("temp_global", globalv_z_temp_var1, GLOBAL_VARIABLE_T);
+        create_symbol("temp_global",   globalv_z_temp_var1, GLOBAL_VARIABLE_T);
         create_symbol("temp__global2", globalv_z_temp_var2, GLOBAL_VARIABLE_T);
         create_symbol("temp__global3", globalv_z_temp_var3, GLOBAL_VARIABLE_T);
         create_symbol("temp__global4", globalv_z_temp_var4, GLOBAL_VARIABLE_T);
-        create_symbol("self", globalv_z_self, GLOBAL_VARIABLE_T);
-        create_symbol("sender", globalv_z_sender, GLOBAL_VARIABLE_T);
-        create_symbol("sw__var", globalv_z_sw__var, GLOBAL_VARIABLE_T);
+        create_symbol("self",          globalv_z_self, GLOBAL_VARIABLE_T);
+        create_symbol("sender",        globalv_z_sender, GLOBAL_VARIABLE_T);
+        create_symbol("sw__var",       globalv_z_sw__var, GLOBAL_VARIABLE_T);
 
-        create_symbol("sys__glob0",     16, GLOBAL_VARIABLE_T);
-        create_symbol("sys__glob1",     17, GLOBAL_VARIABLE_T);
-        create_symbol("sys__glob2",     18, GLOBAL_VARIABLE_T);
+        create_symbol("sys__glob0",    16, GLOBAL_VARIABLE_T);
+        create_symbol("sys__glob1",    17, GLOBAL_VARIABLE_T);
+        create_symbol("sys__glob2",    18, GLOBAL_VARIABLE_T);
         
         create_symbol("create",        64, INDIVIDUAL_PROPERTY_T);
         create_symbol("recreate",      65, INDIVIDUAL_PROPERTY_T);
