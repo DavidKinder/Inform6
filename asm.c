@@ -310,10 +310,10 @@ extern char *variable_name(int32 i)
     if (i<MAX_LOCAL_VARIABLES) return get_local_variable_name(i-1);
 
     if (!glulx_mode) {
-      if (i == zcode_temp_var1) return("TEMP1");
-      if (i == zcode_temp_var2) return("TEMP2");
-      if (i == zcode_temp_var3) return("TEMP3");
-      if (i == zcode_temp_var4) return("TEMP4");
+      if (i == globalv_z_temp_var1) return("TEMP1");
+      if (i == globalv_z_temp_var2) return("TEMP2");
+      if (i == globalv_z_temp_var3) return("TEMP3");
+      if (i == globalv_z_temp_var4) return("TEMP4");
       if (i == zcode_self) return("self");
       if (i == zcode_sender) return("sender");
       if (i == zcode_sw__var) return("sw__var");
@@ -3293,7 +3293,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
             if ((token_type != SYMBOL_TT)
                 && (token_type != LOCAL_VARIABLE_TT))
                 ebf_curtoken_error("variable name or 'sp'");
-            n = zcode_temp_var1;
+            n = globalv_z_temp_var1;
             if (token_type == LOCAL_VARIABLE_TT) n = token_value;
             else
             {   if (strcmp(token_text, "sp") == 0) n = 0;
@@ -3398,7 +3398,7 @@ T (text), I (indirect addressing), F** (set this Flags 2 bit)");
     {   if (AI.store_variable_number == -1)
         {   if (AI.operand_count == 0)
             {   error_flag = TRUE;
-                AI.store_variable_number = zcode_temp_var1;
+                AI.store_variable_number = globalv_z_temp_var1;
             }
             else
             {   AI.store_variable_number

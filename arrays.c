@@ -67,10 +67,10 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
 
 static memory_list current_array_name; /* The name of the global or array
                                           currently being compiled.          */
-int zcode_temp_var1;
-int zcode_temp_var2;
-int zcode_temp_var3;
-int zcode_temp_var4;
+int globalv_z_temp_var1;
+int globalv_z_temp_var2;
+int globalv_z_temp_var3;
+int globalv_z_temp_var4;
 int zcode_sw__var;
 int zcode_self;
 int zcode_sender;
@@ -810,10 +810,10 @@ extern void init_arrays_vars(void)
     if (ZCODE_COMPACT_GLOBALS == 1) {
         zcode_highest_allowed_global = 256;
         if (version_number > 3) {
-          zcode_temp_var1 = 16;
-          zcode_temp_var2 = 17;
-          zcode_temp_var3 = 18;
-          zcode_temp_var4 = 19;
+          globalv_z_temp_var1 = 16;
+          globalv_z_temp_var2 = 17;
+          globalv_z_temp_var3 = 18;
+          globalv_z_temp_var4 = 19;
           zcode_self = 20;
           zcode_sender = 21;
           zcode_sw__var = 22;
@@ -822,10 +822,10 @@ extern void init_arrays_vars(void)
       else {
         /* In version 1-3 globals 1-3 (16-18) are hard-coded for interaction 
            with the statusline (location, moves and score) */
-        zcode_temp_var1 = 19;
-        zcode_temp_var2 = 20;
-        zcode_temp_var3 = 21;
-        zcode_temp_var4 = 22;
+        globalv_z_temp_var1 = 19;
+        globalv_z_temp_var2 = 20;
+        globalv_z_temp_var3 = 21;
+        globalv_z_temp_var4 = 22;
         zcode_self = 23;
         zcode_sender = 24;
         zcode_sw__var = 25;
@@ -833,10 +833,10 @@ extern void init_arrays_vars(void)
       }
     }
     else {
-      zcode_temp_var1 = 255;
-      zcode_temp_var2 = 254;
-      zcode_temp_var3 = 253;
-      zcode_temp_var4 = 252;
+      globalv_z_temp_var1 = 255;
+      globalv_z_temp_var2 = 254;
+      globalv_z_temp_var3 = 253;
+      globalv_z_temp_var4 = 252;
       zcode_self = 251;
       zcode_sender = 250;
       zcode_sw__var = 249;

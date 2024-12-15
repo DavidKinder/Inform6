@@ -893,10 +893,10 @@ static void stockup_symbols(void)
     }    
 
     if (!glulx_mode) {
-        create_symbol("temp_global", zcode_temp_var1, GLOBAL_VARIABLE_T);
-        create_symbol("temp__global2", zcode_temp_var2, GLOBAL_VARIABLE_T);
-        create_symbol("temp__global3", zcode_temp_var3, GLOBAL_VARIABLE_T);
-        create_symbol("temp__global4", zcode_temp_var4, GLOBAL_VARIABLE_T);
+        create_symbol("temp_global", globalv_z_temp_var1, GLOBAL_VARIABLE_T);
+        create_symbol("temp__global2", globalv_z_temp_var2, GLOBAL_VARIABLE_T);
+        create_symbol("temp__global3", globalv_z_temp_var3, GLOBAL_VARIABLE_T);
+        create_symbol("temp__global4", globalv_z_temp_var4, GLOBAL_VARIABLE_T);
         create_symbol("self", zcode_self, GLOBAL_VARIABLE_T);
         create_symbol("sender", zcode_sender, GLOBAL_VARIABLE_T);
         create_symbol("sw__var", zcode_sw__var, GLOBAL_VARIABLE_T);
