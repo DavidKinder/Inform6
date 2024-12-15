@@ -833,7 +833,7 @@ extern void init_arrays_vars(void)
             globalv_z_sender = 250;
             globalv_z_sw__var = 249;
             zcode_user_global_start_no = 0;
-            zcode_highest_allowed_global = LOWEST_SYSTEM_VAR_NUMBER;
+            zcode_highest_allowed_global = 249;
         }
         else {
             /* In the compact arrangement, the built-ins are numbered
