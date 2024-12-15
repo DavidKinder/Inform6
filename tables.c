@@ -2012,6 +2012,7 @@ extern void init_tables_vars(void)
       class_numbers_offset = 0x800;
       arrays_offset = 0x0800;
       static_arrays_offset = 0x0800;
+      zcode_compact_globals_adjustment = 0;
     }
     else {
       code_offset = 0x12345;
@@ -2026,6 +2027,7 @@ extern void init_tables_vars(void)
       identifier_names_offset=0x12345;
       class_numbers_offset = 0x12345;
       static_arrays_offset = 0x12345;
+      zcode_compact_globals_adjustment = -1;
     }
 }
 
