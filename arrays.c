@@ -879,8 +879,9 @@ extern void arrays_begin_pass(void)
     no_arrays = 0; 
     if (!glulx_mode) {
         no_globals = zcode_user_global_start_no;
-        /* The compiler-defined globals start at 239 and go down, so
-           we need to initialize the entire list from the start. */
+        /* The compiler-defined globals start at 239 and go down...
+           well, they might or might not. We'll just initialize the
+           entire globals list. */
         totalvar = MAX_ZCODE_GLOBAL_VARS;
     }
     else {
