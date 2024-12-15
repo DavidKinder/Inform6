@@ -511,7 +511,7 @@ extern void backpatch_zmachine_image_z(void)
         addr += offset;
 
         /* If arrays have been moved up, addr must be adjusted for the move */
-        if (ZCODE_COMPACT_GLOBALS == 1 && zmachine_area == DYNAMIC_ARRAY_ZA && offset >= 480) 
+        if (ZCODE_COMPACT_GLOBALS && zmachine_area == DYNAMIC_ARRAY_ZA && offset >= 480) 
             addr -= zcode_compact_globals_adjustment;
 
         value = 256*zmachine_paged_memory[addr]

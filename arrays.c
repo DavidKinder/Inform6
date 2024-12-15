@@ -354,7 +354,7 @@ extern void make_global()
         put_token_back();
     }
     
-    if (!glulx_mode && ZCODE_COMPACT_GLOBALS == 1 && version_number <= 3 && no_globals == 3) {
+    if (!glulx_mode && ZCODE_COMPACT_GLOBALS && version_number <= 3 && no_globals == 3) {
         /* Special handling for ZCODE_COMPACT_GLOBALS in z3.
            Because z3 requires that the first three global contain
            location, turns and score, we've let those be user globals.

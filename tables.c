@@ -518,7 +518,7 @@ static void construct_storyfile_z(void)
 
     globals_at = mark;
 
-    if (ZCODE_COMPACT_GLOBALS == 1) {
+    if (ZCODE_COMPACT_GLOBALS) {
         for (i = 0; i < no_globals; i++) {
             j = global_initial_value[i];
             p[mark++] = j / 256; p[mark++] = j % 256;
