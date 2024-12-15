@@ -71,9 +71,9 @@ int globalv_z_temp_var1;
 int globalv_z_temp_var2;
 int globalv_z_temp_var3;
 int globalv_z_temp_var4;
-int zcode_sw__var;
-int zcode_self;
-int zcode_sender;
+int globalv_z_sw__var;
+int globalv_z_self;
+int globalv_z_sender;
 int zcode_user_global_start_no;
 int zcode_highest_allowed_global;
 
@@ -814,9 +814,9 @@ extern void init_arrays_vars(void)
           globalv_z_temp_var2 = 17;
           globalv_z_temp_var3 = 18;
           globalv_z_temp_var4 = 19;
-          zcode_self = 20;
-          zcode_sender = 21;
-          zcode_sw__var = 22;
+          globalv_z_self = 20;
+          globalv_z_sender = 21;
+          globalv_z_sw__var = 22;
           zcode_user_global_start_no = 7;
       }
       else {
@@ -826,9 +826,9 @@ extern void init_arrays_vars(void)
         globalv_z_temp_var2 = 20;
         globalv_z_temp_var3 = 21;
         globalv_z_temp_var4 = 22;
-        zcode_self = 23;
-        zcode_sender = 24;
-        zcode_sw__var = 25;
+        globalv_z_self = 23;
+        globalv_z_sender = 24;
+        globalv_z_sw__var = 25;
         zcode_user_global_start_no = 0;
       }
     }
@@ -837,9 +837,9 @@ extern void init_arrays_vars(void)
       globalv_z_temp_var2 = 254;
       globalv_z_temp_var3 = 253;
       globalv_z_temp_var4 = 252;
-      zcode_self = 251;
-      zcode_sender = 250;
-      zcode_sw__var = 249;
+      globalv_z_self = 251;
+      globalv_z_sender = 250;
+      globalv_z_sw__var = 249;
       zcode_user_global_start_no = 0;
       zcode_highest_allowed_global = LOWEST_SYSTEM_VAR_NUMBER; /* traditionally globals 249 to 255 are
                                                                   used in compiled code (Z-code only;

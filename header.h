@@ -2159,9 +2159,9 @@ extern int globalv_z_temp_var1;
 extern int globalv_z_temp_var2;
 extern int globalv_z_temp_var3;
 extern int globalv_z_temp_var4;
-extern int zcode_sw__var;
-extern int zcode_sender;
-extern int zcode_self;
+extern int globalv_z_sw__var;
+extern int globalv_z_sender;
+extern int globalv_z_self;
 extern int zcode_user_global_start_no;
 extern int zcode_highest_allowed_global;
 

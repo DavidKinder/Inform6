@@ -314,9 +314,9 @@ extern char *variable_name(int32 i)
       if (i == globalv_z_temp_var2) return("TEMP2");
       if (i == globalv_z_temp_var3) return("TEMP3");
       if (i == globalv_z_temp_var4) return("TEMP4");
-      if (i == zcode_self) return("self");
-      if (i == zcode_sender) return("sender");
-      if (i == zcode_sw__var) return("sw__var");
+      if (i == globalv_z_self) return("self");
+      if (i == globalv_z_sender) return("sender");
+      if (i == globalv_z_sw__var) return("sw__var");
       if (i >= 256 && i < 286)
       {   if (i - 256 < NUMBER_SYSTEM_FUNCTIONS) return system_functions.keywords[i - 256];
           return "<unnamed system function>";
@@ -1829,7 +1829,7 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
           {
             if (embedded_flag)
             {
-                INITAOTV(&SLF, VARIABLE_OT, zcode_self);
+                INITAOTV(&SLF, VARIABLE_OT, globalv_z_self);
                 INITAOTV(&CON, SHORT_CONSTANT_OT, 0);
                 assemblez_2_branch(test_attr_zc, SLF, CON, ln2, FALSE);
             }
