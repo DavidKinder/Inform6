@@ -67,6 +67,11 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
 
 static memory_list current_array_name; /* The name of the global or array
                                           currently being compiled.          */
+
+/* In Z-code, the built-in globals may be numbered differently depending
+   on the version and the ZCODE_COMPACT_GLOBALS option. Here we store
+   the Z-code global index for each variable.
+*/
 int globalv_z_temp_var1;
 int globalv_z_temp_var2;
 int globalv_z_temp_var3;
@@ -74,8 +79,8 @@ int globalv_z_temp_var4;
 int globalv_z_sw__var;
 int globalv_z_self;
 int globalv_z_sender;
-int zcode_user_global_start_no;
-int zcode_highest_allowed_global;
+int zcode_user_global_start_no;     /* First global available to the user... */
+int zcode_highest_allowed_global;   /* ...and the last. */
 
 /* Complete the array. Fill in the size field (if it has one) and 
    advance foo_array_area_size.
