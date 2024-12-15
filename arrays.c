@@ -79,8 +79,15 @@ int globalv_z_temp_var4;
 int globalv_z_sw__var;
 int globalv_z_self;
 int globalv_z_sender;
-int zcode_user_global_start_no;     /* First global available to the user... */
-int zcode_highest_allowed_global;   /* ...and the last. */
+
+/* The range of global variables available to the user. These will be set
+   to avoid globalv_z_temp_var1..globalv_z_sender.
+   To make things just a bit confusing, these values are in the 0..239 range.
+   The values above are shifted by 16. (Remember that variable indexes 0-15
+   are reserved for the stack pointer and locals.)
+*/
+int zcode_user_global_start_no;
+int zcode_highest_allowed_global;
 
 /* Complete the array. Fill in the size field (if it has one) and 
    advance foo_array_area_size.
