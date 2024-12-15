@@ -362,7 +362,7 @@ extern void make_global()
            7. */
         no_globals += 7;
         /* Bump this by 7 also, so that the "global vars" in the stats
-           display come out right. */
+           display comes out right. */
         zcode_user_global_start_no = 7;
     }
 
@@ -872,7 +872,7 @@ extern void init_arrays_vars(void)
         }
     }
     else {
-        /* These variables are not used in Glulx. */
+        /* These are not used in Glulx. */
         globalv_z_temp_var1 = -1;
         globalv_z_temp_var2 = -1;
         globalv_z_temp_var3 = -1;
