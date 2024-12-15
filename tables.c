@@ -2010,7 +2010,7 @@ extern void init_tables_vars(void)
       individuals_offset=0x800;
       identifier_names_offset=0x800;
       class_numbers_offset = 0x800;
-      arrays_offset = 0x0800; /* only used in Glulx, but might as well set */
+      arrays_offset = 0x0800;
       static_arrays_offset = 0x0800;
     }
     else {
