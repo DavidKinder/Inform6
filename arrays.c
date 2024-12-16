@@ -356,14 +356,11 @@ extern void make_global()
     
     if (!glulx_mode && ZCODE_COMPACT_GLOBALS && version_number <= 3 && no_globals == 3) {
         /* Special handling for ZCODE_COMPACT_GLOBALS in z3.
-           Because z3 requires that the first three global contain
+           Because z3 requires that the first three globals contain
            location, turns and score, we've let those be user globals.
            Now we've reached globalv_z_temp_var1, so we skip ahead
            7. */
         no_globals += 7;
-        /* Bump this by 7 also, so that the "global vars" in the stats
-           display comes out right. */
-        zcode_user_global_start_no = 7;
     }
 
     if (!glulx_mode && no_globals == (233 + zcode_user_global_start_no))

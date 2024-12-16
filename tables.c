@@ -1766,6 +1766,7 @@ static void display_statistics_z()
     char *k_str = "";
     uchar *p = (uchar *) zmachine_paged_memory;
     char *output_called = "story file";
+    int globcount;
     int limit = 0;
 
     /* Yeah, we're repeating this calculation from construct_storyfile_z() */
@@ -1807,12 +1808,17 @@ Out:   Version %d \"%s\" %s %d.%c%c%c%c%c%c (%ld%sK long):\n",
                release_number, p[18], p[19], p[20], p[21], p[22], p[23],
                (long int) k_long, k_str);
 
+        if (version_number <= 3 && ZCODE_COMPACT_GLOBALS)
+            globcount = no_globals - (7+zcode_user_global_start_no);
+        else            
+            globcount = no_globals - zcode_user_global_start_no;
+        
         printf("\
 %6d classes                      %6d objects\n\
 %6d global vars (maximum 233)    %6d variable/array space\n",
                no_classes,
                no_objects,
-               no_globals - zcode_user_global_start_no,
+               globcount,
                dynamic_array_area_size);
 
         printf(
