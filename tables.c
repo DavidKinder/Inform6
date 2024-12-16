@@ -853,7 +853,7 @@ or less.");
     p[10]=prop_defaults_at/256; p[11]=prop_defaults_at%256;       /* Objects */
     p[12]=(globals_at/256); p[13]=(globals_at%256);          /* Dynamic area */
     p[14]=(grammar_table_at/256);
-    p[15]=(grammar_table_at%256);                                 /* Grammar */
+    p[15]=(grammar_table_at%256);                             /* Static area */
     for (i=0, j=0, k=1;i<16;i++, k=k*2)         /* Flags 2 as needed for any */
         j+=k*flags2_requirements[i];            /* unusual opcodes assembled */
     p[16]=j/256; p[17]=j%256;
