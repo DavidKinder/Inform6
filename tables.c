@@ -553,6 +553,15 @@ static void construct_storyfile_z(void)
         p[mark++] = 0;
     }
 
+    /*  ------------------------ Static Memory ----------------------------- */
+
+    /* Ensure that static memory begins at least 480 bytes after the globals.
+       There's normally 240 globals, but with ZCODE_COMPACT_GLOBALS it
+       might be less. */
+
+    if (mark < globals_at+480)
+        mark = globals_at+480;
+
     /*  ------------------------ Grammar Table ----------------------------- */
 
     grammar_table_at = mark;
