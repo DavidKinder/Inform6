@@ -287,6 +287,18 @@ extern void set_variable_value(int i, int32 v)
     global_initial_value[i]=v;
 }
 
+extern void ensure_builtin_globals(void)
+{
+    /* A corner case: in v3 ZCODE_COMPACT_GLOBALS mode, we might not
+       have allocated enough globals to hit the "skip ahead 7" point.
+       Adjust the global count to ensure that the built-ins are
+       reserved. */
+       
+    if (!glulx_mode && ZCODE_COMPACT_GLOBALS && version_number <= 3 && no_globals < 10) {
+        no_globals = 10;
+    }
+}
+
 /*  There are four ways to initialise arrays:                                */
 
 #define UNSPECIFIED_AI  -1

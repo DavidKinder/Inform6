@@ -2144,6 +2144,7 @@ extern arrayinfo *arrays;
 
 extern void make_global(void);
 extern void set_variable_value(int i, int32 v);
+extern void ensure_builtin_globals(void);
 extern void make_array(void);
 extern void check_globals(void);
 extern int32 begin_table_array(void);
