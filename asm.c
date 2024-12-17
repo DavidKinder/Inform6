@@ -1171,8 +1171,8 @@ extern void assemblez_instruction(const assembly_instruction *AI)
             are used as scratch workspace, so need no mapping between
             modules and story files: nor do local variables 0 to 15.
             (Modules no longer exist but why drop a good comment.) */
-        /*  Note 2: If COMPACT_GLOBALS the scratch workspace is moved to
-                    beginning of global area. */
+        /*  (If COMPACT_GLOBALS is set, the scratch workspace is moved
+            to beginning of the globals area.) */
 
         if ((o1.value >= MAX_LOCAL_VARIABLES) && (o1.value < zcode_highest_allowed_global))
             o1.marker = VARIABLE_MV;
