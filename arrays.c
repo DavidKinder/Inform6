@@ -292,7 +292,9 @@ extern void ensure_builtin_globals(void)
     /* A corner case: in v3 ZCODE_COMPACT_GLOBALS mode, we might not
        have allocated enough globals to hit the "skip ahead 7" point.
        Adjust the global count to ensure that the built-ins are
-       reserved. */
+       reserved.
+       In all other cases, this does nothing and can be peacefully
+       ignored. */
        
     if (!glulx_mode && ZCODE_COMPACT_GLOBALS && version_number <= 3 && no_globals < 10) {
         no_globals = 10;
