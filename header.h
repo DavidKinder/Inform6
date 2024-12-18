@@ -1289,11 +1289,6 @@ typedef struct operator_s
 #define FORINIT_CONTEXT    8
 #define RETURN_Q_CONTEXT   9
 
-#define LOWEST_SYSTEM_VAR_NUMBER 249        /* globals 249 to 255 are used
-                                               in compiled code (Z-code 
-                                               only; in Glulx, the range can
-                                               change) */
-
 /* ------------------------------------------------------------------------- */
 /*   Dictionary flags (for #dict_par1)                                       */
 /* ------------------------------------------------------------------------- */
@@ -2149,12 +2144,22 @@ extern arrayinfo *arrays;
 
 extern void make_global(void);
 extern void set_variable_value(int i, int32 v);
+extern void ensure_builtin_globals(void);
 extern void make_array(void);
 extern void check_globals(void);
 extern int32 begin_table_array(void);
 extern int32 begin_word_array(void);
 extern void array_entry(int32 i, int is_static, assembly_operand VAL);
 extern void finish_array(int32 i, int is_static);
+extern int globalv_z_temp_var1;
+extern int globalv_z_temp_var2;
+extern int globalv_z_temp_var3;
+extern int globalv_z_temp_var4;
+extern int globalv_z_sw__var;
+extern int globalv_z_sender;
+extern int globalv_z_self;
+extern int zcode_user_global_start_no;
+extern int zcode_highest_allowed_global;
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "asm"                                            */
@@ -2619,6 +2624,7 @@ extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int ZCODE_FILE_END_PADDING;
 extern int ZCODE_LESS_DICT_DATA;
 extern int ZCODE_MAX_INLINE_STRING;
+extern int ZCODE_COMPACT_GLOBALS;
 extern int NUM_ATTR_BYTES, GLULX_OBJECT_EXT_BYTES;
 extern int WARN_UNUSED_ROUTINES, OMIT_UNUSED_ROUTINES;
 extern int STRIP_UNREACHABLE_LABELS;
@@ -2782,6 +2788,7 @@ extern int release_number, statusline_flag;
 extern int flags2_requirements[];
 extern int serial_code_given_in_program;
 extern char serial_code_buffer[];
+extern int zcode_compact_globals_adjustment;
 
 extern void construct_storyfile(void);
 extern void write_serial_number(char *buffer);

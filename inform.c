@@ -1010,6 +1010,7 @@ static void run_pass(void)
 
     parse_program(NULL);
 
+    ensure_builtin_globals();
     find_the_actions();
     issue_unused_warnings();
     compile_veneer();
