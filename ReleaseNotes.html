@@ -66,6 +66,9 @@ declarations had been made with <tt>Extend</tt>, and a warning is produced to th
 <li><p>The output of the <tt>--trace-verbs</tt> option now shows all verb synonyms, rather than just the first one.
 <li><p>It is now an error to declare two verbs that refer to the same dictionary word. Previously this was accepted, but generated
 an incorrect story file.
+<li><p>A new setting <tt>$ZCODE_COMPACT_GLOBALS</tt> has been added. If this is set to 1, then when compiling to Z-code,
+the compiler tracks how many global variables are used, and moves the start of arrays to immediately after that. If this is left
+as the default of 0, then the compiler always allocates 480 bytes in the story file's dynamic memory for globals.
 <li><p>A new setting <tt>$ZCODE_FILE_END_PADDING</tt> has been added. By default it is set to 1, but if it is set to 0, then
 when outputting a Z-code game file Inform 6 will no longer pad the file to be a multiple of 512 bytes.
 <li><p>A warning is now issued if a dynamic string is used in another dynamic string or an abbreviation.
