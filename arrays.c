@@ -436,6 +436,10 @@ extern void make_global()
         compiler_error("Globalnum out of range");
     
     if (redefining) {
+        /* We permit a global to be redefined to the same (constant) value.
+           We also permit a zero global to be redefined, because (sigh)
+           we can't distinguish "Global g;" from "Global g=0;" after
+           the fact. */
         if (!is_constant_ot(AO.type)
             || !is_constant_ot(global_initial_value[globalnum].type)
             || (global_initial_value[globalnum].value && global_initial_value[globalnum].value != AO.value)) {
