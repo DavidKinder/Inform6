@@ -306,6 +306,12 @@ extern int is_variable_ot(int otval)
   }
 }
 
+extern int operands_identical(const assembly_operand *o1, const assembly_operand *o2)
+{
+    /* We don't need to check the symindex; that doesn't affect value generation. */
+    return (o1->type == o2->type && o1->value == o2->value && o1->marker == o2->marker);
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Used in printing assembly traces                                        */
 /* ------------------------------------------------------------------------- */

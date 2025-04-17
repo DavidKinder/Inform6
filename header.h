@@ -2188,6 +2188,7 @@ extern void set_constant_otv(assembly_operand *AO, int32 val);
 extern void set_constant_ot(assembly_operand *AO);
 extern int  is_constant_ot(int otval);
 extern int  is_variable_ot(int otval);
+extern int  operands_identical(const assembly_operand *o1, const assembly_operand *o2);
 extern void assemblez_instruction(const assembly_instruction *a);
 extern void assembleg_instruction(const assembly_instruction *a);
 extern void assemble_label_no(int n);
