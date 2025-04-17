@@ -391,8 +391,6 @@ extern void make_global()
     directive_keywords.enabled = TRUE;
 
     RedefinitionOfGlobalVar:
-    /* Note that if we jumped here to redefine a variable, it will wind
-       up with two debugfile entries. */
 
     get_next_token();
 
@@ -437,17 +435,26 @@ extern void make_global()
     
     if (redefining) {
         /* We permit a global to be redefined to the exact same value. */
+        if (operands_identical(&AO, &global_initial_value[globalnum])) {
+            /* The value and backpatch (and debug output) are already
+               set up, so we're done. */
+            return;
+        }
         
-        /* We permit a global to be redefined to the same (constant) value.
-           We also permit a zero global to be redefined, because (sigh)
+        /* We permit a zero global to be redefined, because (sigh)
            we can't distinguish "Global g;" from "Global g=0;" after
            the fact. */
-        if (!is_constant_ot(AO.type)
-            || !is_constant_ot(global_initial_value[globalnum].type)
-            || (global_initial_value[globalnum].value && global_initial_value[globalnum].value != AO.value)) {
+        if (!is_constant_ot(global_initial_value[globalnum].type)
+            || global_initial_value[globalnum].value != 0) {
+            /* Replacing a nonzero value is not allowed. */
             ebf_symbol_error("global variable with a different value", symbols[i].name, typename(symbols[i].type), symbols[i].line);
             return;
         }
+        
+        /* Fall through and replace the zero with the new value.
+           (Note that we wind up with two debug file entries, which is 
+           not great. But we need to write out the new initial value
+           somehow.) */
     }
 
     /* This error should have been caught above, but we'll check a different
