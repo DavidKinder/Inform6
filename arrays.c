@@ -317,6 +317,7 @@ extern void make_global()
 
     uint32 globalnum;
     int32 global_symbol;
+    int redefining = FALSE;
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
@@ -329,18 +330,10 @@ extern void make_global()
     ensure_memory_list_available(&current_array_name, name_length);
     strncpy(current_array_name.data, token_text, name_length);
 
-    if (!glulx_mode) {
-        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)
-            && (symbols[i].value >= zcode_highest_allowed_global)) {
-            globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
-            goto RedefinitionOfSystemVar;
-        }
-    }
-    else {
-        if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)) {
-            globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
-            goto RedefinitionOfSystemVar;
-        }
+    if ((token_type==SYMBOL_TT) && (symbols[i].type==GLOBAL_VARIABLE_T)) {
+        globalnum = symbols[i].value - MAX_LOCAL_VARIABLES;
+        redefining = TRUE;
+        goto RedefinitionOfGlobalVar;
     }
 
     if (token_type != SYMBOL_TT)
@@ -397,7 +390,7 @@ extern void make_global()
     
     directive_keywords.enabled = TRUE;
 
-    RedefinitionOfSystemVar:
+    RedefinitionOfGlobalVar:
     /* Note that if we jumped here to redefine a variable, it will wind
        up with two debugfile entries. */
 
@@ -405,7 +398,8 @@ extern void make_global()
 
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP))
     {
-        /* No initial value. */
+        /* No initial value. (If redefining, we let the previous initial value
+           stand.) */
         put_token_back();
         if (debugfile_switch)
         {
@@ -436,14 +430,27 @@ extern void make_global()
     if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
         put_token_back();
 
+    AO = parse_expression(CONSTANT_CONTEXT);
+    
     if (globalnum >= global_initial_value_memlist.count)
         compiler_error("Globalnum out of range");
+    
+    if (redefining) {
+        if (!is_constant_ot(AO.type)
+            || !is_constant_ot(global_initial_value[globalnum].type)
+            || (global_initial_value[globalnum].value && global_initial_value[globalnum].value != AO.value)) {
+            ebf_symbol_error("global variable with a different value", symbols[i].name, typename(symbols[i].type), symbols[i].line);
+            return;
+        }
+    }
+
+    /* This error should have been caught above, but we'll check a different
+       way just in case. (Prevents a backpatch error later.) */
     if (global_initial_value[globalnum].marker) {
         error("A global which has been defined as a non-constant cannot later be redefined");
         return;
     }
     
-    AO = parse_expression(CONSTANT_CONTEXT);
     if (!glulx_mode) {
         if (AO.marker != 0)
             backpatch_zmachine(AO.marker, DYNAMIC_ARRAY_ZA,
