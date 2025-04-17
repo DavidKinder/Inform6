@@ -398,6 +398,8 @@ extern void make_global()
     directive_keywords.enabled = TRUE;
 
     RedefinitionOfSystemVar:
+    /* Note that if we jumped here to redefine a variable, it will wind
+       up with two debugfile entries. */
 
     get_next_token();
 
@@ -434,6 +436,13 @@ extern void make_global()
     if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
         put_token_back();
 
+    if (globalnum >= global_initial_value_memlist.count)
+        compiler_error("Globalnum out of range");
+    if (global_initial_value[globalnum].marker) {
+        error("A global which has been defined as a non-constant cannot later be redefined");
+        return;
+    }
+    
     AO = parse_expression(CONSTANT_CONTEXT);
     if (!glulx_mode) {
         if (AO.marker != 0)
@@ -446,8 +455,6 @@ extern void make_global()
                 4*globalnum);
     }
     
-    if (globalnum >= global_initial_value_memlist.count)
-        compiler_error("Globalnum out of range");
     global_initial_value[globalnum] = AO;
     
     if (debugfile_switch)
