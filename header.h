@@ -2139,7 +2139,7 @@ extern memory_list dynamic_array_area_memlist;
 extern int static_array_area_size;
 extern uchar *static_array_area;
 extern memory_list static_array_area_memlist;
-extern int32 *global_initial_value;
+extern assembly_operand *global_initial_value;
 extern arrayinfo *arrays;
 
 extern void make_global(void);
@@ -2184,6 +2184,7 @@ extern int32 *named_routine_symbols;
 
 extern void print_operand(const assembly_operand *o, int annotate);
 extern char *variable_name(int32 i);
+extern void set_constant_otv(assembly_operand *AO, int32 val);
 extern void set_constant_ot(assembly_operand *AO);
 extern int  is_constant_ot(int otval);
 extern int  is_variable_ot(int otval);

@@ -255,6 +255,12 @@ static void mark_label_used(int label)
 /*   Useful tool for building operands                                       */
 /* ------------------------------------------------------------------------- */
 
+extern void set_constant_otv(assembly_operand *AO, int32 val)
+{
+    AO->value = val;
+    set_constant_ot(AO);
+}
+
 extern void set_constant_ot(assembly_operand *AO)
 {
   if (!glulx_mode) {

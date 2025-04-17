@@ -35,7 +35,7 @@ uchar   *dynamic_array_area;           /* See above                          */
 memory_list dynamic_array_area_memlist;
 int dynamic_array_area_size;           /* Size in bytes                      */
 
-int32   *global_initial_value;         /* Allocated to no_globals            */
+assembly_operand *global_initial_value;  /* Allocated to no_globals          */
 static memory_list global_initial_value_memlist;
 
 int no_globals;                        /* Number of global variables used
@@ -284,7 +284,7 @@ extern void set_variable_value(int i, int32 v)
     /* This isn't currently called to create a new global, but it has
        been used that way within living memory. So we call ensure. */
     ensure_memory_list_available(&global_initial_value_memlist, i+1);
-    global_initial_value[i]=v;
+    set_constant_otv(&global_initial_value[i], v);
 }
 
 extern void ensure_builtin_globals(void)
@@ -392,8 +392,9 @@ extern void make_global()
     assign_symbol(i, MAX_LOCAL_VARIABLES+no_globals, GLOBAL_VARIABLE_T);
 
     ensure_memory_list_available(&global_initial_value_memlist, no_globals+1);
-    global_initial_value[no_globals++]=0;
-
+    set_constant_otv(&global_initial_value[no_globals], 0);
+    no_globals++;
+    
     directive_keywords.enabled = TRUE;
 
     RedefinitionOfSystemVar:
@@ -447,7 +448,7 @@ extern void make_global()
     
     if (globalnum >= global_initial_value_memlist.count)
         compiler_error("Globalnum out of range");
-    global_initial_value[globalnum] = AO.value;
+    global_initial_value[globalnum] = AO;
     
     if (debugfile_switch)
     {
@@ -916,7 +917,7 @@ extern void arrays_begin_pass(void)
     
     ensure_memory_list_available(&global_initial_value_memlist, totalvar);
     for (ix=0; ix<totalvar; ix++) {
-        global_initial_value[ix] = 0;
+        set_constant_otv(&global_initial_value[ix], 0);
     }
     
     ensure_memory_list_available(&variables_memlist, MAX_LOCAL_VARIABLES+totalvar);
@@ -956,7 +957,7 @@ extern void arrays_allocate_arrays(void)
         sizeof(arrayinfo), 64, (void**)&arrays,
         "array info");
     initialise_memory_list(&global_initial_value_memlist,
-        sizeof(int32), 200, (void**)&global_initial_value,
+        sizeof(assembly_operand), 200, (void**)&global_initial_value,
         "global variable values");
 
     initialise_memory_list(&current_array_name,
