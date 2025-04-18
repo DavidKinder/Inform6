@@ -520,7 +520,7 @@ static void construct_storyfile_z(void)
 
     if (ZCODE_COMPACT_GLOBALS) {
         for (i = 0; i < no_globals; i++) {
-            j = global_initial_value[i];
+            j = global_initial_value[i].value;
             p[mark++] = j / 256; p[mark++] = j % 256;
         }
 
@@ -538,7 +538,7 @@ static void construct_storyfile_z(void)
 
         for (i = 0; i < 240; i++)
         {
-            j = global_initial_value[i];
+            j = global_initial_value[i].value;
             p[globals_at + i * 2] = j / 256; p[globals_at + i * 2 + 1] = j % 256;
         }
         arrays_at = globals_at + (MAX_ZCODE_GLOBAL_VARS * WORDSIZE);
@@ -1231,7 +1231,7 @@ static void construct_storyfile_g(void)
 
     globals_at = mark;
     for (i=0; i<no_globals; i++) {
-      j = global_initial_value[i];
+      j = global_initial_value[i].value;
       WriteInt32(p+mark, j);
       mark += 4;
     }

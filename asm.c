@@ -255,6 +255,12 @@ static void mark_label_used(int label)
 /*   Useful tool for building operands                                       */
 /* ------------------------------------------------------------------------- */
 
+extern void set_constant_otv(assembly_operand *AO, int32 val)
+{
+    AO->value = val;
+    set_constant_ot(AO);
+}
+
 extern void set_constant_ot(assembly_operand *AO)
 {
   if (!glulx_mode) {
@@ -298,6 +304,12 @@ extern int is_variable_ot(int otval)
     return ((otval == LOCALVAR_OT)
       || (otval == GLOBALVAR_OT));
   }
+}
+
+extern int operands_identical(const assembly_operand *o1, const assembly_operand *o2)
+{
+    /* We don't need to check the symindex; that doesn't affect value generation. */
+    return (o1->type == o2->type && o1->value == o2->value && o1->marker == o2->marker);
 }
 
 /* ------------------------------------------------------------------------- */

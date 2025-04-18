@@ -533,7 +533,8 @@ extern void issue_unused_warnings(void)
 
     /*  Update any ad-hoc variables that might help the library  */
     if (glulx_mode)
-    {   global_initial_value[10]=statusline_flag;
+    {
+        set_constant_otv(&global_initial_value[10], statusline_flag);
     }
     /*  Now back to mark anything necessary as used  */
 
