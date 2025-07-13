@@ -977,7 +977,7 @@ or less.");
                 }
             }
         }
-        else
+        else if (grammar_version_number == 2)
         {   for (l = 0; l<no_Inform_verbs; l++)
             {
                 int linecount;
@@ -1019,6 +1019,10 @@ or less.");
                     i++;
                 }
             }
+        }
+        else {
+            fatalerror_fmt(
+                "Invalid grammar version: %d", grammar_version_number);
         }
     }
 
