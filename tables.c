@@ -953,7 +953,9 @@ or less.");
         }
 
         if (grammar_version_number == 1 || grammar_version_number == 3)
-        {   mark = preactions_at;
+        {
+            /* backpatch the grammar routine addresses (in preactions) */
+            mark = preactions_at;
             for (i=0; i<no_grammar_token_routines; i++)
             {   j=grammar_token_routine[i];
                 if (OMIT_UNUSED_ROUTINES)
@@ -978,7 +980,8 @@ or less.");
             }
         }
         else if (grammar_version_number == 2)
-        {   for (l = 0; l<no_Inform_verbs; l++)
+        {
+            for (l = 0; l<no_Inform_verbs; l++)
             {
                 int linecount;
                 k = grammar_table_at + 2*l;
@@ -998,6 +1001,7 @@ or less.");
                         }
                     }
                     i = i + 2;
+                    /* backpatch the grammar routine addresses (in tokens) */
                     while (p[i] != 15)
                     {   topbits = (p[i]/0x40) & 3;
                         value = p[i+1]*256 + p[i+2];
