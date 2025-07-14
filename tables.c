@@ -975,6 +975,7 @@ or less.");
                         int action = p[i+7];
                         action = sorted_actions[action].internal_to_ext;
                         p[i+7] = action;
+                        i += 8;
                     }
                 }
             }
