@@ -1385,8 +1385,10 @@ static void generate_code_from(int n, int void_flag)
         if ((oc == je_zc) && (arity == 2))
         {   i = ET[ET[n].down].right;
             if ((ET[i].value.value == zero_operand.value)
-                && (ET[i].value.type == zero_operand.type))
-                oc = jz_zc;
+                && (ET[i].value.type == zero_operand.type)) {
+                if (ET[i].value.marker == 0 || (ET[i].value.marker == ACTION_MV && !GRAMMAR_META_FLAG))
+                    oc = jz_zc;
+            }
         }
 
         /*  If the condition has truth state flag, branch to
