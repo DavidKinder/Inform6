@@ -1606,8 +1606,6 @@ static void construct_storyfile_g(void)
           i -= Write_RAM_At;
           linecount = p[i++];
           for (j=0; j<linecount; j++) {
-            int topbits; 
-            int32 value;
             if (GRAMMAR_META_FLAG) {
               /* backpatch the action number */
               int action = (p[i+0] << 8) | (p[i+1]);
@@ -1617,8 +1615,8 @@ static void construct_storyfile_g(void)
             }
             i = i + 3;
             while (p[i] != 15) {
-              topbits = (p[i]/0x40) & 3;
-              value = ((p[i+1] << 24) | (p[i+2] << 16) 
+              int topbits = (p[i]/0x40) & 3;
+              int32 value = ((p[i+1] << 24) | (p[i+2] << 16) 
                 | (p[i+3] << 8) | (p[i+4]));
               switch(topbits) {
               case 1:
