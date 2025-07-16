@@ -1384,13 +1384,16 @@ static void generate_code_from(int n, int void_flag)
 
         /*  A condition comparing to constant zero can be converted
             to jz.
+            
             The marker check is *almost* redundant. Most backpatchable
             values (DWORD_MV, etc) are stored as LONG_CONSTANT_OT
             and thus fail the check against zero_operand.type. (This
             was probably deliberate but it was never documented.)
-            ACTION_MV is stored as SHORT_CONSTANT_OT, but actions are
-            not backpatchable -- unless GRAMMAR_META_FLAG is set. Thus
-            the extra check.
+            
+            ACTION_MV is stored as SHORT_CONSTANT_OT, so we check the
+            marker value to catch that case. But actions are only
+            backpatchable if GRAMMAR_META_FLAG is set. Thus the special
+            case.
         */
         if ((oc == je_zc) && (arity == 2))
         {   i = ET[ET[n].down].right;
