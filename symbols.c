@@ -722,7 +722,8 @@ extern void write_the_identifier_names(void)
 
 extern void write_debug_information_for_actions(void)
 {
-    int i;
+    int i, action;
+    
     for (i=0; i<no_symbols; i++) {
         if (symbols[i].flags & ACTION_SFLAG)
         {
@@ -731,10 +732,15 @@ extern void write_debug_information_for_actions(void)
             sprintf(temp_symbol_buf, "%s", symbols[i].name);
             temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
+            action = symbols[i].value;
+            if (GRAMMAR_META_FLAG) {
+                action = sorted_actions[action].internal_to_ext;
+            }
+            
             debug_file_printf("<action>");
             debug_file_printf
                 ("<identifier>##%s</identifier>", temp_symbol_buf);
-            debug_file_printf("<value>%d</value>", symbols[i].value);
+            debug_file_printf("<value>%d</value>", action);
             debug_file_printf("</action>");
         }
     }
