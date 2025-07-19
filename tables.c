@@ -1025,7 +1025,10 @@ or less.");
     /*  ---- From here on, it's all reportage: construction is finished ---- */
 
     if (debugfile_switch)
-    {   begin_writing_debug_sections();
+    {
+        write_debug_information_for_actions();
+        
+        begin_writing_debug_sections();
         write_debug_section("abbreviations", 64);
         write_debug_section("abbreviations table", abbrevs_at);
         write_debug_section("header extension", headerext_at);
@@ -1601,7 +1604,10 @@ static void construct_storyfile_g(void)
     /*  ---- From here on, it's all reportage: construction is finished ---- */
 
     if (debugfile_switch)
-    {   begin_writing_debug_sections();
+    {
+        write_debug_information_for_actions();
+        
+        begin_writing_debug_sections();
         write_debug_section("memory layout id", GLULX_HEADER_SIZE);
         write_debug_section("code area", Write_Code_At);
         write_debug_section("string decoding table", Write_Strings_At);

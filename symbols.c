@@ -720,7 +720,7 @@ extern void write_the_identifier_names(void)
     veneer_mode = FALSE;
 }
 
-extern void emit_debug_information_for_actions(void)
+extern void write_debug_information_for_actions(void)
 {
     int i;
     for (i=0; i<no_symbols; i++) {
@@ -731,13 +731,11 @@ extern void emit_debug_information_for_actions(void)
             sprintf(temp_symbol_buf, "%s", symbols[i].name);
             temp_symbol_buf[strlen(temp_symbol_buf)-3] = 0;
 
-            if (debugfile_switch)
-            {   debug_file_printf("<action>");
-                debug_file_printf
-                    ("<identifier>##%s</identifier>", temp_symbol_buf);
-                debug_file_printf("<value>%d</value>", symbols[i].value);
-                debug_file_printf("</action>");
-            }
+            debug_file_printf("<action>");
+            debug_file_printf
+                ("<identifier>##%s</identifier>", temp_symbol_buf);
+            debug_file_printf("<value>%d</value>", symbols[i].value);
+            debug_file_printf("</action>");
         }
     }
 }
