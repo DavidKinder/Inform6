@@ -306,7 +306,7 @@ extern int is_variable_ot(int otval)
   }
 }
 
-extern int operands_equal(const assembly_operand *AO1, const assembly_operand *AO2)
+extern int operands_identical(const assembly_operand *AO1, const assembly_operand *AO2)
 {
     /* We don't need to check the symindex; that doesn't affect value generation. */
     return (AO1->value == AO2->value

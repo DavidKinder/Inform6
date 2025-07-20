@@ -790,18 +790,18 @@ static int try_optimize_expr_z(int o_n,
     switch (o_n) {
         
     case add_zc:
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+        if (operands_identical(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
             /* x = x + 1 ==> x++ */
             assemblez_inc(st);
             return TRUE;
         }
-        if (operands_equal(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
+        if (operands_identical(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
             /* x = 1 + x ==> x++ */
             assemblez_inc(st);
             return TRUE;
         }
         if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x + 0 ==> skip */
                 return TRUE;
             }
@@ -812,7 +812,7 @@ static int try_optimize_expr_z(int o_n,
             }
         }
         if (o1.type == SHORT_CONSTANT_OT && o1.value == 0 && !o1.marker) {
-            if (operands_equal(&o2, &st)) {
+            if (operands_identical(&o2, &st)) {
                 /* x = 0 + x ==> skip */
                 return TRUE;
             }
@@ -825,13 +825,13 @@ static int try_optimize_expr_z(int o_n,
         break;
 
     case sub_zc:
-        if (operands_equal(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+        if (operands_identical(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
             /* x = x - 1 ==> x-- */
             assemblez_dec(st);
             return TRUE;
         }
         if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x - 0 ==> skip */
                 return TRUE;
             }
@@ -845,7 +845,7 @@ static int try_optimize_expr_z(int o_n,
 
     case mul_zc:
         if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x * 1 ==> skip */
                 return TRUE;
             }
@@ -856,7 +856,7 @@ static int try_optimize_expr_z(int o_n,
             }
         }
         if (o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
-            if (operands_equal(&o2, &st)) {
+            if (operands_identical(&o2, &st)) {
                 /* x = 1 * x ==> skip */
                 return TRUE;
             }
@@ -870,7 +870,7 @@ static int try_optimize_expr_z(int o_n,
 
     case div_zc:
         if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x / 1 ==> skip */
                 return TRUE;
             }
@@ -893,7 +893,7 @@ static int try_optimize_expr_g(int o_n,
 
     case add_gc:
         if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x + 0 ==> skip */
                 return TRUE;
             }
@@ -904,7 +904,7 @@ static int try_optimize_expr_g(int o_n,
             }
         }
         if (o1.type == ZEROCONSTANT_OT && o1.value == 0 && !o1.marker) {
-            if (operands_equal(&o2, &st)) {
+            if (operands_identical(&o2, &st)) {
                 /* x = 0 + x ==> skip */
                 return TRUE;
             }
@@ -918,7 +918,7 @@ static int try_optimize_expr_g(int o_n,
 
     case sub_gc:
         if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x - 0 ==> skip */
                 return TRUE;
             }
@@ -932,7 +932,7 @@ static int try_optimize_expr_g(int o_n,
 
     case mul_gc:
         if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x * 1 ==> skip */
                 return TRUE;
             }
@@ -943,7 +943,7 @@ static int try_optimize_expr_g(int o_n,
             }
         }
         if (o1.type == BYTECONSTANT_OT && o1.value == 1 && !o1.marker) {
-            if (operands_equal(&o2, &st)) {
+            if (operands_identical(&o2, &st)) {
                 /* x = 1 * x ==> skip */
                 return TRUE;
             }
@@ -957,7 +957,7 @@ static int try_optimize_expr_g(int o_n,
 
     case div_gc:
         if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
-            if (operands_equal(&o1, &st)) {
+            if (operands_identical(&o1, &st)) {
                 /* x = x / 1 ==> skip */
                 return TRUE;
             }
