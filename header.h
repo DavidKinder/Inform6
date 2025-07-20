@@ -2694,6 +2694,7 @@ extern void make_class(char *metaclass_name);
 extern int  object_provides(int obj, int id);
 extern void list_object_tree(void);
 extern void write_the_identifier_names(void);
+extern void write_debug_information_for_actions(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */
