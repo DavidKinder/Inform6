@@ -952,8 +952,10 @@ or less.");
             p[mark++]=j/256; p[mark++]=j%256;
         }
 
-        if (grammar_version_number == 1 || grammar_version_number == 3)
-        {   mark = preactions_at;
+        if (grammar_version_number == 1)
+        {
+            /* backpatch the grammar routine addresses (in preactions) */
+            mark = preactions_at;
             for (i=0; i<no_grammar_token_routines; i++)
             {   j=grammar_token_routine[i];
                 if (OMIT_UNUSED_ROUTINES)
@@ -973,20 +975,55 @@ or less.");
                         int action = p[i+7];
                         action = sorted_actions[action].internal_to_ext;
                         p[i+7] = action;
+                        i += 8;
                     }
                 }
             }
         }
-        else
-        {   for (l = 0; l<no_Inform_verbs; l++)
+        else if (grammar_version_number == 3)
+        {
+            /* backpatch the grammar routine addresses (in preactions) */
+            mark = preactions_at;
+            for (i=0; i<no_grammar_token_routines; i++)
+            {   j=grammar_token_routine[i];
+                if (OMIT_UNUSED_ROUTINES)
+                    j = df_stripped_address_for_address(j);
+                j += code_offset/scale_factor;
+                p[mark++]=j/256; p[mark++]=j%256;
+            }
+            if (GRAMMAR_META_FLAG) {
+                /* backpatch the action numbers */
+                for (l = 0; l<no_Inform_verbs; l++)
+                {
+                    int linecount;
+                    k = grammar_table_at + 2*l;
+                    i = p[k]*256 + p[k+1];
+                    linecount = p[i++];
+                    for (j=0; j<linecount; j++)
+                    {   int word = p[i]*256 + p[i+1];
+                        int action = word & 0x03FF;
+                        int flags = word & 0x0400;
+                        int tokcount = (word >> 11) & 0x1F;
+                        if (action >= 0 && action < no_actions) {
+                            action = sorted_actions[action].internal_to_ext;
+                            word = flags | action | (tokcount << 11);
+                            p[i] = word/256; p[i+1] = word%256;
+                        }
+                        i = i + 2 + 2*tokcount;
+                    }
+                }
+            }
+        }
+        else if (grammar_version_number == 2)
+        {
+            for (l = 0; l<no_Inform_verbs; l++)
             {
                 int linecount;
                 k = grammar_table_at + 2*l;
                 i = p[k]*256 + p[k+1];
                 linecount = p[i++];
                 for (j=0; j<linecount; j++)
-                {   int topbits; int32 value;
-                    if (GRAMMAR_META_FLAG) {
+                {   if (GRAMMAR_META_FLAG) {
                         /* backpatch the action number */
                         int word = p[i]*256 + p[i+1];
                         int action = word & 0x03FF;
@@ -998,9 +1035,10 @@ or less.");
                         }
                     }
                     i = i + 2;
+                    /* backpatch the grammar routine addresses (in tokens) */
                     while (p[i] != 15)
-                    {   topbits = (p[i]/0x40) & 3;
-                        value = p[i+1]*256 + p[i+2];
+                    {   int topbits = (p[i]/0x40) & 3;
+                        int32 value = p[i+1]*256 + p[i+2];
                         switch(topbits)
                         {   case 1:
                                 value = final_dict_order[value]
@@ -1019,6 +1057,10 @@ or less.");
                     i++;
                 }
             }
+        }
+        else {
+            fatalerror_fmt(
+                "Invalid grammar version: %d", grammar_version_number);
         }
     }
 
@@ -1564,8 +1606,6 @@ static void construct_storyfile_g(void)
           i -= Write_RAM_At;
           linecount = p[i++];
           for (j=0; j<linecount; j++) {
-            int topbits; 
-            int32 value;
             if (GRAMMAR_META_FLAG) {
               /* backpatch the action number */
               int action = (p[i+0] << 8) | (p[i+1]);
@@ -1575,8 +1615,8 @@ static void construct_storyfile_g(void)
             }
             i = i + 3;
             while (p[i] != 15) {
-              topbits = (p[i]/0x40) & 3;
-              value = ((p[i+1] << 24) | (p[i+2] << 16) 
+              int topbits = (p[i]/0x40) & 3;
+              int32 value = ((p[i+1] << 24) | (p[i+2] << 16) 
                 | (p[i+3] << 8) | (p[i+4]));
               switch(topbits) {
               case 1:

@@ -1382,11 +1382,26 @@ static void generate_code_from(int n, int void_flag)
 
         if (oc >= 400) { oc = oc - 400; flag = FALSE; }
 
+        /*  A condition comparing to constant zero can be converted
+            to jz.
+            
+            The marker check is *almost* redundant. Most backpatchable
+            values (DWORD_MV, etc) are stored as LONG_CONSTANT_OT
+            and thus fail the check against zero_operand.type. (This
+            was probably deliberate but it was never documented.)
+            
+            ACTION_MV is stored as SHORT_CONSTANT_OT, so we check the
+            marker value to catch that case. But actions are only
+            backpatchable if GRAMMAR_META_FLAG is set. Thus the special
+            case.
+        */
         if ((oc == je_zc) && (arity == 2))
         {   i = ET[ET[n].down].right;
             if ((ET[i].value.value == zero_operand.value)
-                && (ET[i].value.type == zero_operand.type))
-                oc = jz_zc;
+                && (ET[i].value.type == zero_operand.type)) {
+                if (ET[i].value.marker == 0 || (ET[i].value.marker == ACTION_MV && !GRAMMAR_META_FLAG))
+                    oc = jz_zc;
+            }
         }
 
         /*  If the condition has truth state flag, branch to
