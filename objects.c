@@ -1065,6 +1065,11 @@ static void manufacture_object_z(void)
             objectsz[no_objects].atts[i] = full_object.atts[i];
 
     no_objects++;
+
+    if (version_number == 3 && no_objects == 256) {
+        /* Only complain once, when no_objects reaches 256. */
+        error("Version 3 cannot have more than 255 objects");
+    }
 }
 
 static void manufacture_object_g(void)

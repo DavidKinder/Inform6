@@ -26,10 +26,10 @@ static void make_operands(void)
 {
   if (!glulx_mode) {
     INITAOTV(&stack_pointer, VARIABLE_OT, 0);
-    INITAOTV(&temp_var1, VARIABLE_OT, 255);
-    INITAOTV(&temp_var2, VARIABLE_OT, 254);
-    INITAOTV(&temp_var3, VARIABLE_OT, 253);
-    INITAOTV(&temp_var4, VARIABLE_OT, 252);
+    INITAOTV(&temp_var1, VARIABLE_OT, globalv_z_temp_var1);
+    INITAOTV(&temp_var2, VARIABLE_OT, globalv_z_temp_var2);
+    INITAOTV(&temp_var3, VARIABLE_OT, globalv_z_temp_var3);
+    INITAOTV(&temp_var4, VARIABLE_OT, globalv_z_temp_var4);
     INITAOTV(&zero_operand, SHORT_CONSTANT_OT, 0);
     INITAOTV(&one_operand, SHORT_CONSTANT_OT, 1);
     INITAOTV(&two_operand, SHORT_CONSTANT_OT, 2);
@@ -1573,11 +1573,26 @@ static void generate_code_from(int n, int void_flag)
 
         if (oc >= 400) { oc = oc - 400; flag = FALSE; }
 
+        /*  A condition comparing to constant zero can be converted
+            to jz.
+            
+            The marker check is *almost* redundant. Most backpatchable
+            values (DWORD_MV, etc) are stored as LONG_CONSTANT_OT
+            and thus fail the check against zero_operand.type. (This
+            was probably deliberate but it was never documented.)
+            
+            ACTION_MV is stored as SHORT_CONSTANT_OT, so we check the
+            marker value to catch that case. But actions are only
+            backpatchable if GRAMMAR_META_FLAG is set. Thus the special
+            case.
+        */
         if ((oc == je_zc) && (arity == 2))
         {   i = ET[ET[n].down].right;
             if ((ET[i].value.value == zero_operand.value)
-                && (ET[i].value.type == zero_operand.type))
-                oc = jz_zc;
+                && (ET[i].value.type == zero_operand.type)) {
+                if (ET[i].value.marker == 0 || (ET[i].value.marker == ACTION_MV && !GRAMMAR_META_FLAG))
+                    oc = jz_zc;
+            }
         }
 
         /*  If the condition has truth state flag, branch to
@@ -1638,7 +1653,7 @@ static void generate_code_from(int n, int void_flag)
                 if (((ET[below].value.type == VARIABLE_OT)
                      && (ET[below].value.value == 0))
                     && ((oc != je_zc) || (arity>4)) )
-                {   INITAOTV(&left_operand, VARIABLE_OT, 255);
+                {   INITAOTV(&left_operand, VARIABLE_OT, globalv_z_temp_var1);
                     assemblez_store(left_operand, ET[below].value);
                 }
                 else left_operand = ET[below].value;

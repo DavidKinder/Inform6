@@ -756,6 +756,8 @@ advance as part of 'Zcharacter table':", unicode);
                     error("'@..' must have two decimal digits");
                 else
                 {
+                    if (strctx == STRCTX_ABBREV || strctx == STRCTX_LOWSTRING)
+                        warning("The Z-machine standard does not allow dynamic strings inside an abbreviation or dynamic string.");
                     j = d1*10 + d2;
                     if (!glulx_mode && j >= 96) {
                         error_max_dynamic_strings(j);
@@ -1124,7 +1126,7 @@ void compress_game_text()
       "huffman node list");
 
     /* How many entities have we currently got? Well, 256 plus the
-       string-terminator plus Unicode chars plus abbrevations plus
+       string-terminator plus Unicode chars plus abbreviations plus
        dynamic strings. */
     entities = 256+1;
     huff_unicode_start = entities;
