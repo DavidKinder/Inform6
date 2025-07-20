@@ -81,8 +81,10 @@ possible, which is 255.
 <li><p>Dictionary flags were being set incorrectly when <tt>$DICT_WORD_SIZE</tt> was set sufficiently large.
 <li><p>In <tt>--trace asm</tt> output, when a Z-string has abbreviation marks, <tt>&lt;ABBR&gt;</tt> is printed, rather
 than Ctrl-A characters.
+<li><p>With the <tt>$OMIT_SYMBOL_TABLE</tt> option enabled, the <tt>&lt;action&gt;</tt> section was missing from the
+"gameinfo.dbg" file.
 <li><p>Dictionary words in UTF-8 encoded source files are now printed correctly in <tt>--trace dict</tt> and <tt>-r</tt>
-(gametext.txt) output.
+"gametext.txt" output.
 <li><p>The compiler is now consistent in how it handles the redeclaration of a global variable in Z-code and in Glulx: this
 is allowed, provided that all declarations have the same initial value.
 </ul>
