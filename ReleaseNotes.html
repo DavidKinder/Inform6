@@ -87,6 +87,15 @@ than Ctrl-A characters.
 "gametext.txt" output.
 <li><p>The compiler is now consistent in how it handles the redeclaration of a global variable in Z-code and in Glulx: this
 is allowed, provided that all declarations have the same initial value.
+<li><p>Dead code elimination no longer produces warnings on <tt>while</tt> loops where the closing brace cannot be reached,
+such as
+<pre>
+  while (true) {
+    i--;
+    if (i > 0) continue;
+    break;
+  }
+</pre>
 </ul>
 
 <h2>Inform 6.42</h2>
