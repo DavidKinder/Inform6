@@ -1742,7 +1742,8 @@ static void parse_statement_z(int break_label, int continue_label)
 
                  parse_code_block(ln2, ln, 0);
                  sequence_point_follows = FALSE;
-                 assemblez_jump(ln);
+                 if (!execution_never_reaches_here)
+                     assemblez_jump(ln);
                  assemble_forward_label_no(ln2);
                  return;
 
@@ -2704,7 +2705,8 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  parse_code_block(ln2, ln, 0);
                  sequence_point_follows = FALSE;
-                 assembleg_jump(ln);
+                 if (!execution_never_reaches_here)
+                     assembleg_jump(ln);
                  assemble_forward_label_no(ln2);
                  return;
 
