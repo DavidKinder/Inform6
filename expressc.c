@@ -1943,7 +1943,7 @@ static void generate_code_from(int n, int void_flag)
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
                  if ((!void_flag) && Result.type == VARIABLE_OT) {
-                     /* store directly to stack_pointer */
+                     /* store directly to variable */
                      assemblez_2_to(get_prop_addr_zc, AO,
                          ET[ET[below].right].value, Result);
                  }
@@ -1981,7 +1981,7 @@ static void generate_code_from(int n, int void_flag)
                  }
                  else {
                      if ((!void_flag) && Result.type == VARIABLE_OT) {
-                         /* store directly to stack_pointer */
+                         /* store directly to variable */
                          assemblez_2_to(get_prop_zc, ET[below].value,
                              ET[ET[below].right].value, Result);
                      }
