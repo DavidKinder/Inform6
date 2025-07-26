@@ -782,6 +782,197 @@ static void compile_conditional_z(int oc,
     assemblez_1_branch(jz_zc, AO3, label, !flag);
 }
 
+/* Pinhole optimizer for simple expression trees. */
+
+static int try_optimize_expr_z(int o_n,
+    assembly_operand o1, assembly_operand o2, assembly_operand st) 
+{
+    switch (o_n) {
+        
+    case add_zc:
+        if (operands_identical(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            /* x = x + 1 ==> x++ */
+            assemblez_inc(st);
+            return TRUE;
+        }
+        if (operands_identical(&o2, &st) && o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
+            /* x = 1 + x ==> x++ */
+            assemblez_inc(st);
+            return TRUE;
+        }
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x + 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x + 0 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
+        }
+        if (o1.type == SHORT_CONSTANT_OT && o1.value == 0 && !o1.marker) {
+            if (operands_identical(&o2, &st)) {
+                /* x = 0 + x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 0 + x ==> store */
+                assemblez_store(st, o2);
+                return TRUE;
+            }
+        }
+        break;
+
+    case sub_zc:
+        if (operands_identical(&o1, &st) && o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            /* x = x - 1 ==> x-- */
+            assemblez_dec(st);
+            return TRUE;
+        }
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x - 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x - 0 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
+        }
+        break;
+
+    case mul_zc:
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x * 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x * 1 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
+        }
+        if (o1.type == SHORT_CONSTANT_OT && o1.value == 1 && !o1.marker) {
+            if (operands_identical(&o2, &st)) {
+                /* x = 1 * x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 1 * x ==> store */
+                assemblez_store(st, o2);
+                return TRUE;
+            }
+        }
+        break;
+
+    case div_zc:
+        if (o2.type == SHORT_CONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x / 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x / 1 ==> store */
+                assemblez_store(st, o1);
+                return TRUE;
+            }
+        }
+        break;
+    }
+    
+    return FALSE;
+}
+
+static int try_optimize_expr_g(int o_n,
+    assembly_operand o1, assembly_operand o2, assembly_operand st) 
+{
+    switch (o_n) {
+
+    case add_gc:
+        if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x + 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x + 0 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
+        }
+        if (o1.type == ZEROCONSTANT_OT && o1.value == 0 && !o1.marker) {
+            if (operands_identical(&o2, &st)) {
+                /* x = 0 + x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 0 + x ==> store */
+                assembleg_store(st, o2);
+                return TRUE;
+            }
+        }
+        break;
+
+    case sub_gc:
+        if (o2.type == ZEROCONSTANT_OT && o2.value == 0 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x - 0 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x - 0 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
+        }
+        break;
+
+    case mul_gc:
+        if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x * 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x * 1 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
+        }
+        if (o1.type == BYTECONSTANT_OT && o1.value == 1 && !o1.marker) {
+            if (operands_identical(&o2, &st)) {
+                /* x = 1 * x ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = 1 * x ==> store */
+                assembleg_store(st, o2);
+                return TRUE;
+            }
+        }
+        break;
+
+    case div_gc:
+        if (o2.type == BYTECONSTANT_OT && o2.value == 1 && !o2.marker) {
+            if (operands_identical(&o1, &st)) {
+                /* x = x / 1 ==> skip */
+                return TRUE;
+            }
+            else {
+                /* y = x / 1 ==> store */
+                assembleg_store(st, o1);
+                return TRUE;
+            }
+        }
+        break;
+    }
+    
+    return FALSE;
+}
+
 static void value_in_void_context_g(assembly_operand AO)
 {   char *t;
 
@@ -1714,14 +1905,19 @@ static void generate_code_from(int n, int void_flag)
                     assemblez_2_to(o_n, temp_var1, temp_var2, Result);
                 }
             }
+            else if (try_optimize_expr_z(o_n, ET[below].value,
+                ET[ET[below].right].value, Result)) {
+                /* generated simplified code */
+            }
             else {
-            assemblez_2_to(o_n, ET[below].value,
-                ET[ET[below].right].value, Result);
+                assemblez_2_to(o_n, ET[below].value,
+                    ET[ET[below].right].value, Result);
             }
         }
-        else
+        else {
             assemblez_1_to(operators[opnum].opcode_number_z, ET[below].value,
                 Result);
+        }
     }
     else
     switch(opnum)
@@ -1746,9 +1942,16 @@ static void generate_code_from(int n, int void_flag)
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".&\" expression");
                  if (runtime_error_checking_switch && (!veneer_mode))
                      AO = check_nonzero_at_runtime(AO, -1, PROP_ADD_RTE);
-                 assemblez_2_to(get_prop_addr_zc, AO,
-                     ET[ET[below].right].value, temp_var1);
-                 if (!void_flag) write_result_z(Result, temp_var1);
+                 if ((!void_flag) && Result.type == VARIABLE_OT) {
+                     /* store directly to variable */
+                     assemblez_2_to(get_prop_addr_zc, AO,
+                         ET[ET[below].right].value, Result);
+                 }
+                 else {
+                     assemblez_2_to(get_prop_addr_zc, AO,
+                         ET[ET[below].right].value, temp_var1);
+                     if (!void_flag) write_result_z(Result, temp_var1);
+                 }
              }
              break;
 
@@ -1771,13 +1974,23 @@ static void generate_code_from(int n, int void_flag)
              {
                  check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".\" expression");
                  check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".\" expression");
-                 if (runtime_error_checking_switch && (!veneer_mode))
-                       assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
+                 if (runtime_error_checking_switch && (!veneer_mode)) {
+                     assemblez_3_to(call_vs_zc, veneer_routine(RT__ChPR_VR),
                          ET[below].value, ET[ET[below].right].value, temp_var1);
-                 else
-                 assemblez_2_to(get_prop_zc, ET[below].value,
-                     ET[ET[below].right].value, temp_var1);
-                 if (!void_flag) write_result_z(Result, temp_var1);
+                     if (!void_flag) write_result_z(Result, temp_var1);
+                 }
+                 else {
+                     if ((!void_flag) && Result.type == VARIABLE_OT) {
+                         /* store directly to variable */
+                         assemblez_2_to(get_prop_zc, ET[below].value,
+                             ET[ET[below].right].value, Result);
+                     }
+                     else {
+                         assemblez_2_to(get_prop_zc, ET[below].value,
+                             ET[ET[below].right].value, temp_var1);
+                         if (!void_flag) write_result_z(Result, temp_var1);
+                     }
+                 }
              }
              break;
 
@@ -2307,9 +2520,14 @@ static void generate_code_from(int n, int void_flag)
                     assembleg_3(o_n, temp_var1, temp_var2, Result);
                 }
             }
-            else
-            assembleg_3(o_n, ET[below].value,
-                ET[ET[below].right].value, Result);
+            else if (try_optimize_expr_g(o_n, ET[below].value,
+                ET[ET[below].right].value, Result)) {
+                /* generated simplified code */
+            }
+            else {
+                assembleg_3(o_n, ET[below].value,
+                    ET[ET[below].right].value, Result);
+            }
         }
         else
             assembleg_2(operators[opnum].opcode_number_g, ET[below].value,

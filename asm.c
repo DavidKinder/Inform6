@@ -306,10 +306,12 @@ extern int is_variable_ot(int otval)
   }
 }
 
-extern int operands_identical(const assembly_operand *o1, const assembly_operand *o2)
+extern int operands_identical(const assembly_operand *AO1, const assembly_operand *AO2)
 {
     /* We don't need to check the symindex; that doesn't affect value generation. */
-    return (o1->type == o2->type && o1->value == o2->value && o1->marker == o2->marker);
+    return (AO1->value == AO2->value
+        && AO1->type == AO2->type
+        && AO1->marker == AO2->marker);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2150,7 +2152,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 static void transfer_routine_z(void)
 {   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
           branch_on_true, rstart_pc;
-    int32 adjusted_pc;
+    int32 adjusted_pc, opcode_at_label;
 
     adjusted_pc = zmachine_pc - zcode_ha_size; rstart_pc = adjusted_pc;
 
@@ -2164,7 +2166,12 @@ static void transfer_routine_z(void)
             short form) with DELETED_MV.
             We also look for jumps that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            both label bytes get DELETED_MV. */
+            both label bytes get DELETED_MV.
+            We also look for jumps that can be eliminated because they
+            are jumping to a (one-byte) return opcode. The jump opcode is
+            replaced by a copy of the destination opcode; the label bytes
+            get DELETED_MV. (However, we don't do the extra work to detect
+            whether this orphans the destination opcode.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] == BRANCH_MV)
@@ -2184,6 +2191,7 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
             if (asm_trace_level >= 4)
                 printf("...To label %d, which is %d from here\n",
                     j, labels[j].offset-pc);
@@ -2192,6 +2200,19 @@ static void transfer_routine_z(void)
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
+            }
+            else if (opcode_at_label == 176
+                || opcode_at_label == 177
+                || opcode_at_label == 184) {
+                /* 176, 177, and 184 are the encoded forms of rtrue_zc,
+                   rfalse_zc, and ret_popped_zc. It would be cleaner
+                   to pull these from opcodes_table_z[] (adding 0xB0 for
+                   the opcode form) but it's not like they're going to
+                   ever change. */
+                if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
+                zcode_holding_area[i - 1] = opcode_at_label;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i + 1] = DELETED_MV;
             }
         }
     }
@@ -2370,7 +2391,10 @@ static void transfer_routine_g(void)
             short form) with DELETED_MV.
             We also look for branches that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            all label bytes get DELETED_MV. */
+            all label bytes get DELETED_MV.
+            (This doesn't bother with the "replace jump with return"
+            optimization that Z-code does. Figuring out the operand
+            lengths is too much work.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
       if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
