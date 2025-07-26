@@ -2146,7 +2146,6 @@ extern void make_global(void);
 extern void set_variable_value(int i, int32 v);
 extern void ensure_builtin_globals(void);
 extern void make_array(void);
-extern void check_globals(void);
 extern int32 begin_table_array(void);
 extern int32 begin_word_array(void);
 extern void array_entry(int32 i, int is_static, assembly_operand VAL);
@@ -2479,8 +2478,6 @@ extern void write_debug_undef(int32 symbol_index);
 
 extern void end_debug_file(void);
 
-extern void add_to_checksum(void *address);
-
 extern void load_sourcefile(char *story_name, int style);
 extern int file_load_chars(int file_number, char *buffer, int length);
 extern void close_all_source(void);
@@ -2691,7 +2688,6 @@ extern void make_object(int nearby_flag,
     char *textual_name, int specified_parent, int specified_class,
     int instance_of);
 extern void make_class(char *metaclass_name);
-extern int  object_provides(int obj, int id);
 extern void list_object_tree(void);
 extern void write_the_identifier_names(void);
 extern void write_debug_information_for_actions(void);
