@@ -74,6 +74,29 @@ when outputting a Z-code game file Inform 6 will no longer pad the file to be a 
 <li><p>A warning is now issued if a dynamic string is used in another dynamic string or an abbreviation.
 <li><p>When compiling to Z-code version 3, the compiler now checks that the number of objects does not exceed the maximum
 possible, which is 255.
+<li><p>Various arithmetic opcodes are replaced with shorter versions:
+ <ul>
+ <li><tt>@add x 0 -> x</tt> &rarr; (skip)
+ <li><tt>@add x 0 -> y</tt> &rarr; <tt>@store y x</tt>
+ <li><tt>@add x 1 -> x</tt> &rarr; <tt>@inc x</tt>
+ <li><tt>@sub x 0 -> x</tt> &rarr; (skip)
+ <li><tt>@sub x 0 -> y</tt> &rarr; <tt>@store y x</tt>
+ <li><tt>@sub x 1 -> x</tt> &rarr; <tt>@dec x</tt>
+ <li><tt>@mul x 1 -> x</tt> &rarr; (skip)
+ <li><tt>@mul x 1 -> y</tt> &rarr; <tt>@store y x</tt>
+ <li><tt>@div x 1 -> x</tt> &rarr; (skip)
+ <li><tt>@div x 1 -> y</tt> &rarr; <tt>@store y x</tt>
+ </ul>
+<li><p>The property operator previously generated code like the following:
+<pre>
+  @get_prop x p -> TEMP1
+  @store y TEMP1
+</pre>
+This now skips the <tt>TEMP1</tt> step and stores directly to the variable.
+<li><p>When performing Z-code branch optimizations, if there is a <tt>@jump</tt> to an <tt>@rtrue</tt>/<tt>@rfalse</tt>/<tt>@ret_popped</tt>,
+the <tt>@jump</tt> opcode is replaced with the return opcode, which shortens the jump by one byte. In some cases this
+leaves the original return opcode unreachable. Unfortunately the dead-code-strip phase has already finished by this
+point so it is not convenient to detect this and strip it out.
 </ul>
 
 <h3>Bugs fixed</h3>
