@@ -31,7 +31,7 @@
 /* ------------------------------------------------------------------------- */
 
 /* For releases, set to the release date in the form "1st January 2000" */
-#define RELEASE_DATE "6th August 2025"
+#define RELEASE_DATE "in development"
 #define RELEASE_NUMBER 1643
 #define GLULX_RELEASE_NUMBER 38
 #define VNUMBER RELEASE_NUMBER
