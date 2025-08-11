@@ -73,20 +73,21 @@ enum optionindex {
     OPT_ZCODE_FILE_END_PADDING    = 10,
     OPT_ZCODE_LESS_DICT_DATA      = 11,
     OPT_ZCODE_MAX_INLINE_STRING   = 12,
-    OPT_INDIV_PROP_START          = 13,
-    OPT_MEMORY_MAP_EXTENSION      = 14,
-    OPT_GLULX_OBJECT_EXT_BYTES    = 15,
-    OPT_MAX_STACK_SIZE            = 16,
-    OPT_TRANSCRIPT_FORMAT         = 17,
-    OPT_WARN_UNUSED_ROUTINES      = 18,
-    OPT_OMIT_UNUSED_ROUTINES      = 19,
-    OPT_STRIP_UNREACHABLE_LABELS  = 20,
-    OPT_OMIT_SYMBOL_TABLE         = 21,
-    OPT_DICT_IMPLICIT_SINGULAR    = 22,
-    OPT_DICT_TRUNCATE_FLAG        = 23,
-    OPT_LONG_DICT_FLAG_BUG        = 24,
-    OPT_SERIAL                    = 25,
-    OPT_OPTIONS_COUNT             = 26, /* terminator */
+    OPT_ZCODE_COMPACT_GLOBALS     = 13,
+    OPT_INDIV_PROP_START          = 14,
+    OPT_MEMORY_MAP_EXTENSION      = 15,
+    OPT_GLULX_OBJECT_EXT_BYTES    = 16,
+    OPT_MAX_STACK_SIZE            = 17,
+    OPT_TRANSCRIPT_FORMAT         = 18,
+    OPT_WARN_UNUSED_ROUTINES      = 19,
+    OPT_OMIT_UNUSED_ROUTINES      = 20,
+    OPT_STRIP_UNREACHABLE_LABELS  = 21,
+    OPT_OMIT_SYMBOL_TABLE         = 22,
+    OPT_DICT_IMPLICIT_SINGULAR    = 23,
+    OPT_DICT_TRUNCATE_FLAG        = 24,
+    OPT_LONG_DICT_FLAG_BUG        = 25,
+    OPT_SERIAL                    = 26,
+    OPT_OPTIONS_COUNT             = 27, /* terminator */
 };
 
 static optiont alloptions[] = {
@@ -227,6 +228,15 @@ static optiont alloptions[] = {
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
         DEFAULTVAL(32),
+    },
+    {
+        "ZCODE_COMPACT_GLOBALS",
+        "\
+  ZCODE_COMPACT_GLOBALS, if set, reuses space from unused global variables \n\
+  in the global variables segment. (Z-code only.)\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_ANY },
+        DEFAULTVAL(0),
     },
     {
         "INDIV_PROP_START",
@@ -711,6 +721,7 @@ extern void apply_compiler_options(void)
     ZCODE_FILE_END_PADDING = SELECTVAL(OPT_ZCODE_FILE_END_PADDING);
     ZCODE_LESS_DICT_DATA = SELECTVAL(OPT_ZCODE_LESS_DICT_DATA);
     ZCODE_MAX_INLINE_STRING = SELECTVAL(OPT_ZCODE_MAX_INLINE_STRING);
+    ZCODE_COMPACT_GLOBALS = SELECTVAL(OPT_ZCODE_COMPACT_GLOBALS);
     INDIV_PROP_START = SELECTVAL(OPT_INDIV_PROP_START);
     MEMORY_MAP_EXTENSION = SELECTVAL(OPT_MEMORY_MAP_EXTENSION);
     GLULX_OBJECT_EXT_BYTES = SELECTVAL(OPT_GLULX_OBJECT_EXT_BYTES);
