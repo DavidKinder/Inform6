@@ -2,7 +2,7 @@
 /*   "memory" : Memory management and ICL memory setting commands            */
 /*                                                                           */
 /*   Part of Inform 6.43                                                     */
-/*   copyright (c) Graham Nelson 1993 - 2024                                 */
+/*   copyright (c) Graham Nelson 1993 - 2025                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
 
@@ -264,6 +264,7 @@ int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int ZCODE_FILE_END_PADDING; /* 0: no, 1: yes (default) */
 int ZCODE_LESS_DICT_DATA; /* (zcode) use 2 data bytes per dict word instead of 3 */
 int ZCODE_MAX_INLINE_STRING; /* (zcode) length of string literals that can be inlined */
+int ZCODE_COMPACT_GLOBALS; /* (zcode) move all globals to the beginning of the globals segment and begin arrays right after them */
 int NUM_ATTR_BYTES;
 int GLULX_OBJECT_EXT_BYTES; /* (glulx) extra bytes for each object record */
 int32 MAX_STACK_SIZE;
