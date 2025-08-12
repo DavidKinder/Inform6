@@ -1682,7 +1682,7 @@ static void execute_icl_command(char *p)
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
         case '$': optprec = (in_compilation ? HEADCOM_OPTPREC : CMDLINE_OPTPREC);
-                  memory_command(p+1, optprec);
+                  execute_dollar_command(p+1, optprec);
                   break;
         case '(': len = strlen(p);
                   if (p[len-1] != ')') {

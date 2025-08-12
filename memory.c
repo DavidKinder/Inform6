@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------------- */
-/*   "memory" : Memory management and ICL memory setting commands            */
+/*   "memory" : Memory management, trace options, and ICL dollar commands    */
 /*                                                                           */
 /*   Part of Inform 6.43                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2025                                 */
@@ -504,11 +504,8 @@ static void set_trace_option(char *command)
 
    (Unix-style command-line options are converted to dollar-sign format
    before being sent here.)
-
-   The name of this function is outdated. Many of these settings are not
-   really about memory allocation.
 */
-extern void memory_command(char *command, int optprec)
+extern void execute_dollar_command(char *command, int optprec)
 {   int i, k;
 
     for (k=0; command[k]!=0; k++)
