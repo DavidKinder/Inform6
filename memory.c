@@ -540,7 +540,7 @@ extern void execute_dollar_command(char *command, int optprec)
             return;
         }
     }
-    printf("No such memory $ command as \"%s\"\n",command);
+    printf("No such $ command as \"%s\"\n",command);
 }
 
 extern void print_memory_usage(void)

@@ -586,7 +586,7 @@ extern void set_compiler_option(char *str, int32 val, int prec)
 {
     optiont *opt = find_option(str);
     if (!opt) {
-        printf("No such memory setting as \"%s\"\n", str);
+        printf("No such compiler setting as \"%s\"\n", str);
         return;
     }
     if (opt->use == OPTUSE_OBSOLETE_I5) {
@@ -678,7 +678,7 @@ extern void explain_compiler_option(char *str)
 {
     optiont *opt = find_option(str);
     if (!opt) {
-        printf("No such memory setting as \"%s\"\n", str);
+        printf("No such compiler setting as \"%s\"\n", str);
         return;
     }
     if (opt->use == OPTUSE_OBSOLETE_I5) {
