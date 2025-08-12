@@ -136,7 +136,11 @@ static int English_verbs_text_size;
 /* ------------------------------------------------------------------------- */
 
 /* Set grammar_version_number, or report an error if the number is not
-   valid for the current VM. */
+   valid for the current VM.
+   
+   This is called at verbs_begin_pass() time, but it can be changed
+   (carefully) by a "Constant Grammar__Version=..." directive.
+*/
 void set_grammar_version(int val)
 {
     if (!glulx_mode) {

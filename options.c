@@ -745,8 +745,9 @@ extern void apply_compiler_options(void)
     }
 }
 
-/* This option is handled a bit differently, so we have an accessor
-   for it. */
+/* This option is handled a bit differently; we don't check the value
+   until verbs_begin_pass(). So we have an accessor for it.
+*/
 extern int32 get_grammar_version_option(void)
 {
     return SELECTVAL(OPT_GRAMMAR_VERSION);
