@@ -299,7 +299,7 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
    value. This used to rely on atoi(), which allowed any garbage after
    the number, but we've gotten stricter.
  */
-static int parse_memory_setting(char *str, char *label, int32 *result)
+static int parse_numeric_setting(char *str, char *label, int32 *result)
 {
     char *cx = str;
     char *ex;
@@ -362,7 +362,7 @@ static void add_predefined_symbol(char *command)
     }
 
     if (valpos) {
-        if (!parse_memory_setting(valpos, command, &value)) {
+        if (!parse_numeric_setting(valpos, command, &value)) {
             return;
         };
     }
@@ -533,7 +533,7 @@ extern void execute_dollar_command(char *command, int optprec)
         {
             int32 j = 0;
             command[i]=0;
-            if (!parse_memory_setting(command+i+1, command, &j)) {
+            if (!parse_numeric_setting(command+i+1, command, &j)) {
                 return;
             }
             set_compiler_option(command, j, optprec);
