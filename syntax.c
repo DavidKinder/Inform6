@@ -332,7 +332,10 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
         }
 
         if (action_switch)
-        {   get_next_token();
+        {
+            dont_enter_into_symbol_table = TRUE;
+            get_next_token();
+            dont_enter_into_symbol_table = FALSE;
             if (token_type == SQ_TT || token_type == DQ_TT) {
                 ebf_curtoken_error("action (or fake action) name");
                 continue;
