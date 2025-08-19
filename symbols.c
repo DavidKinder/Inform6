@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   "symbols" :  The symbols table; creating stock of reserved words        */
 /*                                                                           */
-/*   Part of Inform 6.43                                                     */
+/*   Part of Inform 6.44                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2025                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */

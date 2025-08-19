@@ -1,7 +1,7 @@
 /* ------------------------------------------------------------------------- */
 /*   Header file for Inform:  Z-machine ("Infocom" format) compiler          */
 /*                                                                           */
-/*                              Inform 6.43                                  */
+/*                              Inform 6.44                                  */
 /*                                                                           */
 /*   This header file and the others making up the Inform source code are    */
 /*   copyright (c) Graham Nelson 1993 - 2025                                 */
@@ -32,7 +32,7 @@
 
 /* For releases, set to the release date in the form "1st January 2000" */
 #define RELEASE_DATE "in development"
-#define RELEASE_NUMBER 1643
+#define RELEASE_NUMBER 1644
 #define GLULX_RELEASE_NUMBER 38
 #define VNUMBER RELEASE_NUMBER
 

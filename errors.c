@@ -2,7 +2,7 @@
 /*   "errors" : Warnings, errors and fatal errors                            */
 /*              (with error throwback code for RISC OS machines)             */
 /*                                                                           */
-/*   Part of Inform 6.43                                                     */
+/*   Part of Inform 6.44                                                     */
 /*   copyright (c) Graham Nelson 1993 - 2025                                 */
 /*                                                                           */
 /* ------------------------------------------------------------------------- */
