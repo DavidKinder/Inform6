@@ -805,7 +805,13 @@ extern void explain_compiler_option(char *str)
     }
     
     printf("\n%s", opt->desc);
-    if (opt->val.z == opt->val.g) {
+    if (opt->limit.limittype == OPTLIM_STR) {
+        char *val = opt->val.s;
+        if (val == NULL)
+            val = "(not set)";
+        printf("\n  (currently: \"%s\")\n", val);
+    }
+    else if (opt->val.z == opt->val.g) {
         printf("\n  (currently: %d)\n", opt->val.z);
     }
     else {
