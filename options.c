@@ -584,7 +584,7 @@ int parse_numeric_setting(char *str, char *label, int32 *result)
     if (*ex) {
         printf("Bad numerical setting in $ command \"%s=%s\"\n",
             label, str);
-        return 0;
+        return FALSE;
     }
 
     if (*cx == '-') {
@@ -603,7 +603,7 @@ int parse_numeric_setting(char *str, char *label, int32 *result)
     }
 
     *result = (int32)val;
-    return 1;
+    return TRUE;
 }
 
 /* Prepare the options module for use.
