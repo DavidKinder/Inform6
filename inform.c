@@ -1536,22 +1536,6 @@ static int copy_icl_word(char *from, char *to, int max)
     return i;
 }
 
-/* Copy a string, converting to uppercase. The to array should be
-   (at least) max characters. Result will be null-terminated, so
-   at most max-1 characters will be copied. 
-*/
-static int strcpyupper(char *to, char *from, int max)
-{
-    int ix;
-    for (ix=0; ix<max-1; ix++) {
-        char ch = from[ix];
-        if (islower(ch)) ch = toupper(ch);
-        to[ix] = ch;
-    }
-    to[ix] = 0;
-    return ix;
-}
-
 static void execute_icl_command(char *p);
 static int execute_dashdash_command(char *p, char *p2);
 
@@ -1735,8 +1719,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--size must be followed by \"huge\", \"large\", or \"small\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$%s", p2);
     }
     else if (!strcmp(p, "opt")) {
         consumed2 = TRUE;
@@ -1744,8 +1727,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--opt must be followed by \"setting=number\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$%s", p2);
     }
     else if (!strcmp(p, "helpopt")) {
         consumed2 = TRUE;
@@ -1753,8 +1735,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--helpopt must be followed by \"setting\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$?");
-        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$?%s", p2);
     }
     else if (!strcmp(p, "define")) {
         consumed2 = TRUE;
@@ -1762,8 +1743,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--define must be followed by \"symbol=number\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$#");
-        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$#%s", p2);
     }
     else if (!strcmp(p, "path")) {
         consumed2 = TRUE;
