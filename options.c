@@ -776,7 +776,16 @@ extern void list_compiler_options(void)
         /* Don't display the serial number; it's not really a setting. */
         if (ix == OPT_SERIAL)
             continue;
-        printf("|  %25s = %-7d |\n", alloptions[ix].name, val);
+        
+        if (alloptions[ix].limit.limittype == OPTLIM_STR) {
+            /* Only display string options when set. */
+            if (alloptions[ix].val.s) 
+                printf("|  %25s = \"%s\" |\n", alloptions[ix].name, alloptions[ix].val.s);
+        }
+        else {
+            /* Numeric options. */
+            printf("|  %25s = %-7d |\n", alloptions[ix].name, val);
+        }
     }
 
     printf("+--------------------------------------+\n");
