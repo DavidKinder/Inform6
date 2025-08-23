@@ -282,61 +282,6 @@ int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
 /*   Memory control from the command line                                    */
 /* ------------------------------------------------------------------------- */
 
-/* Parse a decimal number as an int32. Return true if a valid number
-   was found; otherwise print a warning and return false.
-
-   Anything over nine digits is considered an overflow; we report a
-   warning but return +/- 999999999 (and true). This is not entirely
-   clever about leading zeroes ("0000000001" is treated as an
-   overflow) but this is better than trying to detect genuine
-   overflows in a long.
-
-   (The max value is a bit under $3BFFFFFF. Some Glulx settings might
-   conceivably want to go up to $7FFFFFFF, but we currently fall short
-   of that.)
-
-   Whitespace is allowed (and ignored) before and after the numeric
-   value. This used to rely on atoi(), which allowed any garbage after
-   the number, but we've gotten stricter.
- */
-static int parse_numeric_setting(char *str, char *label, int32 *result)
-{
-    char *cx = str;
-    char *ex;
-    int gotlen;
-    long val;
-
-    *result = 0;
-
-    while (*cx && isspace(*cx)) cx++;
-    val = strtol(cx, &ex, 10);
-    gotlen = (ex - cx);
-    while (*ex && isspace(*ex)) ex++;
-
-    if (*ex) {
-        printf("Bad numerical setting in $ command \"%s=%s\"\n",
-            label, str);
-        return 0;
-    }
-
-    if (*cx == '-') {
-        if (gotlen > 10) {
-            val = -999999999;
-            printf("Numerical setting underflowed in $ command \"%s=%s\" (limiting to %ld)\n",
-                label, str, val);
-        }
-    }
-    else {
-        if (gotlen > 9) {
-            val = 999999999;
-            printf("Numerical setting overflowed in $ command \"%s=%s\" (limiting to %ld)\n",
-                label, str, val);
-        }
-    }
-
-    *result = (int32)val;
-    return 1;
-}
 
 static void add_predefined_symbol(char *command)
 {

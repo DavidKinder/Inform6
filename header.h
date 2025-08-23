@@ -2699,6 +2699,7 @@ extern void write_debug_information_for_actions(void);
 /* ------------------------------------------------------------------------- */
 
 extern void prepare_compiler_options(void);
+extern int parse_numeric_setting(char *str, char *label, int32 *result);
 extern void set_compiler_option(char *str, int32 val, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
