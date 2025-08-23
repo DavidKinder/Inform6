@@ -25,6 +25,7 @@ enum optionlimit {
     OPTLIM_TOMAX       = 1,  /* zero to N inclusive */
     OPTLIM_TOMAXZONLY  = 2,  /* zero to N inclusive in Z-code; unlimited in Glulx */
     OPTLIM_MUL256      = 3,  /* any, round up to a multiple of 256 */
+    OPTLIM_STR         = 4,  /* a string, not a number at all */
 };
 
 typedef struct optionlimit_s {
@@ -35,11 +36,13 @@ typedef struct optionlimit_s {
 typedef struct platformval_s {
     int32 z;
     int32 g;
+    char *s;
 } platformval;
 
 /* Macros for initializing a platformval compactly. */
-#define DEFAULTVAL(v) { (v), (v) }
-#define DEFAULTVALS(z, g) { (z), (g) }
+#define DEFAULTVAL(v) { (v), (v), NULL }
+#define DEFAULTVALS(z, g) { (z), (g), NULL }
+#define DEFAULTSTR(s) { 0, 0, (s) }
 
 /* Grab the appropriate part of a platformval. */
 #define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
@@ -606,6 +609,36 @@ int parse_numeric_setting(char *str, char *label, int32 *result)
     return TRUE;
 }
 
+/* Parse a string. Return (in *result) a newly-malloced string object.
+   
+   This is an exception to the general rule of using memlists. Settings
+   are handled before compilation begins, anyhow.
+*/
+static int parse_string_setting(char *str, char *label, char **result)
+{
+    char *sval = NULL;
+    
+    char *cx = str;
+    int len;
+    
+    while (*cx && isspace(*cx)) cx++;
+    len = strlen(cx);
+    while (len && isspace(cx[len-1])) len--;
+
+    if (len == 0) {
+        printf("String setting was empty in $ command \"%s=%s\"\n",
+            label, str);
+        return FALSE;
+    }
+
+    sval = my_malloc(len+1, "compiler option string");
+    strncpy(sval, cx, len);
+    sval[len] = 0;
+
+    *result = sval;
+    return TRUE;
+}
+
 /* Prepare the options module for use.
    This is called from main(), not once per compile.
 */
@@ -640,9 +673,10 @@ extern void prepare_compiler_options(void)
    or Glulx when this is called. The option structure has two values,
    perhaps differing; we will set both.
  */
-extern void set_compiler_option(char *str, char *sval, int prec)
+extern void set_compiler_option(char *str, char *rawval, int prec)
 {
     int32 val = 0;
+    char *sval = NULL;
     
     optiont *opt = find_option(str);
     if (!opt) {
@@ -660,11 +694,18 @@ extern void set_compiler_option(char *str, char *sval, int prec)
         return;
     }
 
-    /* Parse the numeric value. */
-    if (!parse_numeric_setting(sval, str, &val)) {
-        /* Doesn't look like an integer. A warning has already been
-           printed. */
-        return;
+    /* Parse value. */
+    if (opt->limit.limittype == OPTLIM_STR) {
+        if (!parse_string_setting(rawval, str, &sval)) {
+            return;
+        }
+    }
+    else {
+        if (!parse_numeric_setting(rawval, str, &val)) {
+            /* Doesn't look like an integer. A warning has already been
+               printed. */
+            return;
+        }
     }
 
     if (prec < opt->precedence) {
@@ -696,12 +737,14 @@ extern void set_compiler_option(char *str, char *sval, int prec)
         val = (val + 0xFF) & (~0xFF);
         break;
     case OPTLIM_ANY:
+    case OPTLIM_STR:
     default:
         break;
     }
 
     opt->val.z = val;
     opt->val.g = val;
+    opt->val.s = sval;
 }
 
 /* Display all the options (for $LIST), assuming the current target platform
