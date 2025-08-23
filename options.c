@@ -551,6 +551,7 @@ static optiont *find_option(char *str)
 }
 
 /* Prepare the options module for use.
+   This is called from main(), not once per compile.
 */
 extern void prepare_compiler_options(void)
 {
@@ -566,6 +567,7 @@ extern void prepare_compiler_options(void)
        compilation won't begin for a while. We just want to set consistent
        starting values in case some stray bit of code refers to a compiler
        variable early. */
+    glulx_mode = FALSE; /* initial default */
     apply_compiler_options();
 }
 
