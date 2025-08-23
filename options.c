@@ -640,8 +640,10 @@ extern void prepare_compiler_options(void)
    or Glulx when this is called. The option structure has two values,
    perhaps differing; we will set both.
  */
-extern void set_compiler_option(char *str, int32 val, int prec)
+extern void set_compiler_option(char *str, char *sval, int prec)
 {
+    int32 val = 0;
+    
     optiont *opt = find_option(str);
     if (!opt) {
         printf("No such compiler setting as \"%s\"\n", str);
@@ -655,6 +657,13 @@ extern void set_compiler_option(char *str, int32 val, int prec)
     if (opt->use == OPTUSE_OBSOLETE_I6) {
         if (!nowarnings_switch)
             printf("The Inform 6 memory setting \"%s\" is no longer needed and has been withdrawn.\n", str);
+        return;
+    }
+
+    /* Parse the numeric value. */
+    if (!parse_numeric_setting(sval, str, &val)) {
+        /* Doesn't look like an integer. A warning has already been
+           printed. */
         return;
     }
 

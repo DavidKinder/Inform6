@@ -476,12 +476,8 @@ extern void execute_dollar_command(char *command, int optprec)
     for (i=0; command[i]!=0; i++)
     {   if (command[i]=='=')
         {
-            int32 j = 0;
             command[i]=0;
-            if (!parse_numeric_setting(command+i+1, command, &j)) {
-                return;
-            }
-            set_compiler_option(command, j, optprec);
+            set_compiler_option(command, command+i+1, optprec);
             return;
         }
     }
