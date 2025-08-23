@@ -453,8 +453,14 @@ static void set_trace_option(char *command)
 extern void execute_dollar_command(char *command, int optprec)
 {   int i, k;
 
-    for (k=0; command[k]!=0; k++)
-        if (islower((uchar)command[k])) command[k]=toupper((uchar)command[k]);
+    /* Upper-case the command, or the part of the command up to the equal
+       sign. (For $foo=val, the variable name is case-folded but the value
+       is not.) (Most values are numbers but we support string options now.)
+    */
+    for (k=0; command[k] != 0 && command[k] != '='; k++) {
+        if (islower((uchar)command[k]))
+            command[k]=toupper((uchar)command[k]);
+    }
 
     if (command[0]=='?') { explain_compiler_option(command+1); return; }
     if (command[0]=='#') { add_predefined_symbol(command+1); return; }
