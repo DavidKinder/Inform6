@@ -161,6 +161,42 @@ void set_grammar_version(int val)
     symbols[grammar_version_symbol].value = val;
 }
 
+/* This is called if we encounter a "Constant Grammar__Version=X" directive.
+   Check that the change is valid and safe. If so, do it.
+*/
+void set_grammar_option_constant(int optnum, assembly_operand AO)
+{
+    char *symname;
+    int origval;
+
+    if (optnum == grammar_version_symbol) {
+        symname = "Grammar__Version";
+        origval = grammar_version_number;
+    }
+    else {
+        compiler_error("set_grammar_option_constant called with invalid symbol");
+        return;
+    }
+
+    if (AO.marker != 0) {
+        error_fmt("%s must be given an explicit constant value", symname);
+        return;
+    }
+    if (origval == AO.value) {
+        /* no change needed */
+        return;
+    }    
+    if (no_fake_actions > 0) {
+        error_fmt("Once a fake action has been defined it is too late to change %s", symname);
+        return;
+    }
+    if (no_grammar_lines > 0) {
+        error_fmt("Once an action has been defined it is too late to change %s", symname);
+        return;
+    }
+    set_grammar_version(AO.value);
+}
+
 /* ------------------------------------------------------------------------- */
 /*   Tracing for compiler maintenance                                        */
 /* ------------------------------------------------------------------------- */
