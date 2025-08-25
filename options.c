@@ -28,11 +28,18 @@ enum optionlimit {
     OPTLIM_STR         = 4,  /* a string, not a number at all */
 };
 
+/* A limit is one of the OPTLIM_* constants combined with a value N.
+   (The value is only needed for TOMAX and TOMAXZONLY).
+*/
 typedef struct optionlimit_s {
     enum optionlimit limittype;
     int32 maxval;
 } optionlimitt;
 
+/* A current value, which may be different in Z-code and Glulx.
+   For OPTLIM_STR values, we use the string value instead. If not NULL,
+   this is malloced.
+*/
 typedef struct platformval_s {
     int32 z;
     int32 g;
@@ -44,10 +51,12 @@ typedef struct platformval_s {
 #define DEFAULTVALS(z, g) { (z), (g), NULL }
 #define DEFAULTSTR(s) { 0, 0, (s) }
 
-/* Grab the appropriate part of a platformval. */
+/* Grab the appropriate part of a platformval (numeric only). */
 #define SELECTVAL(i) (glulx_mode ? alloptions[i].val.g : alloptions[i].val.z)
 
-/* The main option structure. */
+/* The main option structure. The alloptions[] array is a list of these,
+   one per option that the compiler uses.
+*/
 typedef struct optiont_s {
     char *name;
     char *desc;
@@ -93,6 +102,7 @@ enum optionindex {
     OPT_OPTIONS_COUNT             = 27, /* terminator */
 };
 
+/* Our catalog of options. */
 static optiont alloptions[] = {
     {
         "MAX_ABBREVS",
