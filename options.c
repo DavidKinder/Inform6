@@ -682,7 +682,9 @@ extern void prepare_compiler_options(void)
    Note that we do not necessarily know whether the target is Z-code
    or Glulx when this is called. The option structure has two values,
    perhaps differing; we will set both.
- */
+
+   If this is a string option, we'll set the string value instead.
+*/
 extern void set_compiler_option(char *str, char *rawval, int prec)
 {
     int32 val = 0;
@@ -752,6 +754,9 @@ extern void set_compiler_option(char *str, char *rawval, int prec)
         break;
     }
 
+    /* We're setting all values here, but only one will matter. If this
+       is a numeric setting, sval is NULL. If not NULL, the string is
+       malloced. */
     opt->val.z = val;
     opt->val.g = val;
     opt->val.s = sval;
@@ -788,7 +793,7 @@ extern void list_compiler_options(void)
             continue;
         
         if (alloptions[ix].limit.limittype == OPTLIM_STR) {
-            /* Only display string options when set. */
+            /* Only display string options when non-NULL. */
             if (alloptions[ix].val.s) 
                 printf("|  %25s = \"%s\" |\n", alloptions[ix].name, alloptions[ix].val.s);
         }
