@@ -846,7 +846,9 @@ static void create_symbol(char *p, int32 value, int type)
 
 static void create_rsymbol(char *p, int value, int type)
 {   int i = symbol_index(p, -1, NULL);
-    /* This is only called for a few symbols with known names. */
+    /* Create a symbol which the user can redefine later.
+       This is only called for a few symbols with known names;
+       they shouldn't collide. */
     if (!(symbols[i].flags & UNKNOWN_SFLAG))
         compiler_error_named("create_rsymbol called with existing symbol", p);
     symbols[i].value = value; symbols[i].type = type; symbols[i].line = blank_brief_location;
