@@ -16,7 +16,8 @@
 /*   Compiler progress                                                       */
 /* ------------------------------------------------------------------------- */
 
-static int no_compilations;
+static int in_compilation;    /* set when inside compile() */
+static int no_compilations;   /* number of times we've entered compile() */
 
 int endofpass_flag;      /* set to TRUE when an "end" directive is reached
                             (the inputs routines insert one into the stream
@@ -105,15 +106,45 @@ int DICT_ENTRY_BYTE_LENGTH;
 */
 int DICT_ENTRY_FLAG_POS;
 
-static void select_target(int targ)
+static void set_compile_variables()
 {
-  if (!targ) {
+  /* Set all the compiler's globals, such as WORDSIZE.
+     
+     Most of these are taken from the options module; see
+     apply_compiler_options().
+     
+     Some globals must already be set when this is called: glulx_mode,
+     scale_factor, requested_glulx_version, and a few others. These
+     exceptional cases are handled directly by the switches() routine
+     during option parsing. */
+
+  /* First we set a few values that depend only on glulx_mode. */
+    
+  if (!glulx_mode) {
     /* Z-machine */
     WORDSIZE = 2;
     MAXINTWORD = 0x7FFF;
 
     MAX_LOCAL_VARIABLES = 16; /* including "sp" */
+  }
+  else {
+    /* Glulx */
+    WORDSIZE = 4;
+    MAXINTWORD = 0x7FFFFFFF;
+    scale_factor = 0; /* It should never even get used in Glulx */
 
+    /* This could really be 120, since the practical limit is the size
+       of local_variables.keywords. But historically it's been 119. */
+    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
+  }
+
+  /* Set all those option variables. */
+  
+  apply_compiler_options();
+
+  /* Now we do final safety checks on them. */
+  
+  if (!glulx_mode) {
     if (INDIV_PROP_START != 64) {
         INDIV_PROP_START = 64;
         fatalerror("You cannot change INDIV_PROP_START in Z-code");
@@ -132,15 +163,6 @@ static void select_target(int targ)
     }
   }
   else {
-    /* Glulx */
-    WORDSIZE = 4;
-    MAXINTWORD = 0x7FFFFFFF;
-    scale_factor = 0; /* It should never even get used in Glulx */
-
-    /* This could really be 120, since the practical limit is the size
-       of local_variables.keywords. But historically it's been 119. */
-    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
-
     if (INDIV_PROP_START < 256) {
         INDIV_PROP_START = 256;
         warning_fmt("INDIV_PROP_START should be at least 256 in Glulx; setting to %d", INDIV_PROP_START);
@@ -172,7 +194,7 @@ static void select_target(int targ)
 
   /* Set up a few more variables that depend on the above values */
 
-  if (!targ) {
+  if (!glulx_mode) {
     /* Z-machine */
     DICT_WORD_BYTES = DICT_WORD_SIZE;
     OBJECT_BYTE_LENGTH = 0;
@@ -193,7 +215,7 @@ static void select_target(int targ)
     }
   }
 
-  if (!targ) {
+  if (!glulx_mode) {
     /* Z-machine */
     /* The Z-machine's 96 abbreviations are used for these two purposes.
        Make sure they are set consistently. If exactly one has been
@@ -1084,10 +1106,14 @@ static int compile(int number_of_files_specified, char *file1, char *file2)
     TIMEVALUE time_start, time_end;
     float duration;
 
-    if (execute_icl_header(file1))
+    in_compilation = TRUE;
+    
+    if (execute_icl_header(file1)) {
+      in_compilation = FALSE;
       return 1;
+    }
 
-    select_target(glulx_mode);
+    set_compile_variables();
 
     if (define_INFIX_switch && glulx_mode) {
         printf("Infix (-X) facilities are not available in Glulx: \
@@ -1144,6 +1170,7 @@ disabling -X switch\n");
         ao_free_arrays();
     }
 
+    in_compilation = FALSE;
     return (no_errors==0)?0:1;
 }
 
@@ -1431,9 +1458,7 @@ extern void switches(char *p, int cmode)
                   else if (version_set_switch)
                       error("The '-G' switch cannot follow the '-v' switch");
                   else
-                  {   glulx_mode = state;
-                      adjust_memory_sizes();
-                  }
+                      glulx_mode = state;
                   break;
         case 'H': compression_switch = state; break;
         case 'V': exit(0); break;
@@ -1509,22 +1534,6 @@ static int copy_icl_word(char *from, char *to, int max)
     if (truncated == 1)
         printf("The following parameter has been truncated:\n%s\n", to);
     return i;
-}
-
-/* Copy a string, converting to uppercase. The to array should be
-   (at least) max characters. Result will be null-terminated, so
-   at most max-1 characters will be copied. 
-*/
-static int strcpyupper(char *to, char *from, int max)
-{
-    int ix;
-    for (ix=0; ix<max-1; ix++) {
-        char ch = from[ix];
-        if (islower(ch)) ch = toupper(ch);
-        to[ix] = ch;
-    }
-    to[ix] = 0;
-    return ix;
 }
 
 static void execute_icl_command(char *p);
@@ -1650,12 +1659,15 @@ static void run_icl_file(char *filename, FILE *command_file)
 static void execute_icl_command(char *p)
 {   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
     FILE *command_file;
+    int optprec;
     int len;
     
     switch(p[0])
     {   case '+': set_path_command(p+1); break;
         case '-': switches(p,1); break;
-        case '$': memory_command(p+1); break;
+        case '$': optprec = (in_compilation ? HEADCOM_OPTPREC : CMDLINE_OPTPREC);
+                  execute_dollar_command(p+1, optprec);
+                  break;
         case '(': len = strlen(p);
                   if (p[len-1] != ')') {
                       printf("Error in ICL: (command) missing closing paren\n");
@@ -1707,8 +1719,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--size must be followed by \"huge\", \"large\", or \"small\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$%s", p2);
     }
     else if (!strcmp(p, "opt")) {
         consumed2 = TRUE;
@@ -1716,8 +1727,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--opt must be followed by \"setting=number\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$");
-        strcpyupper(cli_buff+1, p2, CMD_BUF_SIZE-1);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$%s", p2);
     }
     else if (!strcmp(p, "helpopt")) {
         consumed2 = TRUE;
@@ -1725,8 +1735,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--helpopt must be followed by \"setting\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$?");
-        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$?%s", p2);
     }
     else if (!strcmp(p, "define")) {
         consumed2 = TRUE;
@@ -1734,8 +1743,7 @@ static int execute_dashdash_command(char *p, char *p2)
             printf("--define must be followed by \"symbol=number\"\n");
             return consumed2;
         }
-        strcpy(cli_buff, "$#");
-        strcpyupper(cli_buff+2, p2, CMD_BUF_SIZE-2);
+        snprintf(cli_buff, CMD_BUF_SIZE, "$#%s", p2);
     }
     else if (!strcmp(p, "path")) {
         consumed2 = TRUE;
@@ -1909,10 +1917,13 @@ static int sub_main(int argc, char **argv)
 
     banner();
 
-    set_memory_sizes(); set_default_paths();
+    prepare_compiler_options();
+    set_default_paths();
     reset_switch_settings(); select_version(5);
 
-    cli_files_specified = 0; no_compilations = 0;
+    in_compilation = FALSE;
+    no_compilations = 0;
+    cli_files_specified = 0;
     cli_file1 = "source"; cli_file2 = "output";
 
     read_command_line(argc, argv);

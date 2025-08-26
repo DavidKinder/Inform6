@@ -594,6 +594,11 @@
   ((ptr)[0] = (uchar)(((int32)(val)) >> 8),          \
    (ptr)[1] = (uchar)(((int32)(val))     ) )
 
+/* Precedence for compiler options (see set_compiler_option()) */
+#define DEFAULT_OPTPREC (0)   /* original default value */
+#define HEADCOM_OPTPREC (1)   /* header comment line */
+#define CMDLINE_OPTPREC (2)   /* command-line option */
+
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
 /*   define T_C as (char) 9; failing that, it _must_ be defined as ' '       */
@@ -2617,7 +2622,6 @@ extern int32 MAX_STACK_SIZE, MEMORY_MAP_EXTENSION;
 
 extern int MAX_LOCAL_VARIABLES;
 extern int DICT_WORD_SIZE, DICT_CHAR_SIZE, DICT_WORD_BYTES;
-extern int GRAMMAR_VERSION_z, GRAMMAR_VERSION_g;
 extern int GRAMMAR_META_FLAG;
 extern int ZCODE_HEADER_EXT_WORDS, ZCODE_HEADER_FLAGS_3;
 extern int ZCODE_FILE_END_PADDING;
@@ -2651,9 +2655,7 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     size_t howmany, char *whatfor);
 extern void my_free(void *pointer, char *whatitwas);
 
-extern void set_memory_sizes(void);
-extern void adjust_memory_sizes(void);
-extern void memory_command(char *command);
+extern void execute_dollar_command(char *command, int optprec);
 extern void print_memory_usage(void);
 
 extern void initialise_memory_list(memory_list *ML, size_t itemsize, size_t initalloc, void **extpointer, char *whatfor);
@@ -2691,6 +2693,18 @@ extern void make_class(char *metaclass_name);
 extern void list_object_tree(void);
 extern void write_the_identifier_names(void);
 extern void write_debug_information_for_actions(void);
+
+/* ------------------------------------------------------------------------- */
+/*   Extern definitions for "options"                                        */
+/* ------------------------------------------------------------------------- */
+
+extern void prepare_compiler_options(void);
+extern int parse_numeric_setting(char *str, char *label, int32 *result);
+extern void set_compiler_option(char *str, char *sval, int prec);
+extern void list_compiler_options(void);
+extern void explain_compiler_option(char *str);
+extern void apply_compiler_options(void);
+extern int32 get_grammar_version_option(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */
@@ -2914,6 +2928,7 @@ extern int32 *grammar_token_routine,
              *adjectives;
 
 extern void set_grammar_version(int val);
+extern void set_grammar_option_constant(int optnum, assembly_operand AO);
 extern void find_the_actions(void);
 extern int lowest_fake_action(void);
 extern void make_fake_action(void);

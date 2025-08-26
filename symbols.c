@@ -825,7 +825,8 @@ static void emit_debug_information_for_predefined_symbol
 }
 
 static void create_symbol(char *p, int32 value, int type)
-{   int i = symbol_index(p, -1, NULL);
+{
+    int i = symbol_index(p, -1, NULL);
     if (!(symbols[i].flags & (UNKNOWN_SFLAG + REDEFINABLE_SFLAG))) {
         /* Symbol already defined! */
         if (symbols[i].value == value && symbols[i].type == type) {
@@ -845,9 +846,13 @@ static void create_symbol(char *p, int32 value, int type)
 }
 
 static void create_rsymbol(char *p, int value, int type)
-{   int i = symbol_index(p, -1, NULL);
-    /* This is only called for a few symbols with known names.
-       They will not collide. */
+{
+    /* Create a symbol which the user can redefine later.
+       This is only called for a few symbols with known names;
+       they shouldn't collide. */
+    int i = symbol_index(p, -1, NULL);
+    if (!(symbols[i].flags & UNKNOWN_SFLAG))
+        compiler_error_named("create_rsymbol called with existing symbol", p);
     symbols[i].value = value; symbols[i].type = type; symbols[i].line = blank_brief_location;
     symbols[i].flags = USED_SFLAG + SYSTEM_SFLAG + REDEFINABLE_SFLAG;
     emit_debug_information_for_predefined_symbol(p, i, value, type);

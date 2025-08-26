@@ -136,7 +136,11 @@ static int English_verbs_text_size;
 /* ------------------------------------------------------------------------- */
 
 /* Set grammar_version_number, or report an error if the number is not
-   valid for the current VM. */
+   valid for the current VM.
+   
+   This is called at verbs_begin_pass() time, but it can be changed
+   (carefully) by a "Constant Grammar__Version=..." directive.
+*/
 void set_grammar_version(int val)
 {
     if (!glulx_mode) {
@@ -155,6 +159,42 @@ void set_grammar_version(int val)
     grammar_version_number = val;
     /* We also have to adjust the symbol value. */
     symbols[grammar_version_symbol].value = val;
+}
+
+/* This is called if we encounter a "Constant Grammar__Version=X" directive.
+   Check that the change is valid and safe. If so, do it.
+*/
+void set_grammar_option_constant(int optnum, assembly_operand AO)
+{
+    char *symname;
+    int origval;
+
+    if (optnum == grammar_version_symbol) {
+        symname = "Grammar__Version";
+        origval = grammar_version_number;
+    }
+    else {
+        compiler_error("set_grammar_option_constant called with invalid symbol");
+        return;
+    }
+
+    if (AO.marker != 0) {
+        error_fmt("%s must be given an explicit constant value", symname);
+        return;
+    }
+    if (origval == AO.value) {
+        /* no change needed */
+        return;
+    }    
+    if (no_fake_actions > 0) {
+        error_fmt("Once a fake action has been defined it is too late to change %s", symname);
+        return;
+    }
+    if (no_grammar_lines > 0) {
+        error_fmt("Once an action has been defined it is too late to change %s", symname);
+        return;
+    }
+    set_grammar_version(AO.value);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1617,10 +1657,7 @@ extern void verbs_begin_pass(void)
     grammar_lines_top = 0;
 
     /* Set the version requested by compiler setting (with validity check) */
-    if (!glulx_mode)
-        set_grammar_version(GRAMMAR_VERSION_z);
-    else
-        set_grammar_version(GRAMMAR_VERSION_g);
+    set_grammar_version(get_grammar_version_option());
 }
 
 extern void verbs_allocate_arrays(void)
