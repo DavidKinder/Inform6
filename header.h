@@ -314,7 +314,7 @@
 /* ------------------------------------------------------------------------- */
 #ifdef PC_WIN32
 /* 1 */
-#define MACHINE_STRING   "Win32"
+#define MACHINE_STRING   "Windows"
 /* 2 */
 #define HAS_REALPATH
 /* 4 */
