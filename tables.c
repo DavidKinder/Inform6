@@ -138,20 +138,20 @@ static char *show_percentage(int32 x, int32 total)
 
 static char *version_name(int v)
 {
-  if (!glulx_mode) {
-    switch(v)
-    {   case 3: return "Standard";
-        case 4: return "Plus";
-        case 5: return "Advanced";
-        case 6: return "Graphical";
-        case 7: return "Extended Alternate";
-        case 8: return "Extended";
+    if (!glulx_mode) {
+        switch(v)
+            {   case 3: return "Standard";
+            case 4: return "Plus";
+            case 5: return "Advanced";
+            case 6: return "Graphical";
+            case 7: return "Extended Alternate";
+            case 8: return "Extended";
+            }
+        return "experimental format";
     }
-    return "experimental format";
-  }
-  else {
-    return "Glulx";
-  }
+    else {
+        return "Glulx";
+    }
 }
 
 static int32 rough_size_of_paged_memory_z(void)
