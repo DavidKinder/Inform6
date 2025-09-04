@@ -2561,16 +2561,16 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case RFALSE_CODE:   
-          assembleg_1(return_gc, zero_operand); 
-          break;
+            assembleg_1(return_gc, zero_operand); 
+            break;
 
     /*  -------------------------------------------------------------------- */
     /*  rtrue -------------------------------------------------------------- */
     /*  -------------------------------------------------------------------- */
 
         case RTRUE_CODE:   
-          assembleg_1(return_gc, one_operand); 
-          break;
+            assembleg_1(return_gc, one_operand); 
+            break;
 
     /*  -------------------------------------------------------------------- */
     /*  spaces <expression> ------------------------------------------------ */
