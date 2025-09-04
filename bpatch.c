@@ -494,8 +494,8 @@ extern void backpatch_zmachine_image_z(void)
         zmachine_area
             = zmachine_backpatch_table[bm+1];
         offset
-          = 256*zmachine_backpatch_table[bm+2]
-            + zmachine_backpatch_table[bm+3];
+            = 256*zmachine_backpatch_table[bm+2]
+                + zmachine_backpatch_table[bm+3];
         bm += 4;
 
         switch(zmachine_area)
@@ -539,14 +539,14 @@ extern void backpatch_zmachine_image_g(void)
             = zmachine_backpatch_table[bm+1];
         offset = zmachine_backpatch_table[bm+2];
         offset = (offset << 8) |
-          zmachine_backpatch_table[bm+3];
+            zmachine_backpatch_table[bm+3];
         offset = (offset << 8) |
-          zmachine_backpatch_table[bm+4];
+            zmachine_backpatch_table[bm+4];
         offset = (offset << 8) |
-          zmachine_backpatch_table[bm+5];
+            zmachine_backpatch_table[bm+5];
         bm += 6;
 
-            switch(zmachine_area) {   
+        switch(zmachine_area) {   
         case PROP_DEFAULTS_ZA:   addr = prop_defaults_offset+4; break;
         case PROP_ZA:            addr = prop_values_offset; break;
         case INDIVIDUAL_PROP_ZA: addr = individuals_offset; break;

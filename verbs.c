@@ -586,9 +586,9 @@ extern assembly_operand action_of_name(char *name)
     {   INITAO(&AO);
         AO.value = symbols[j].value;
         if (!glulx_mode)
-          AO.type = LONG_CONSTANT_OT;
+            AO.type = LONG_CONSTANT_OT;
         else
-          set_constant_ot(&AO);
+            set_constant_ot(&AO);
         symbols[j].flags |= USED_SFLAG;
         return AO;
     }
@@ -706,8 +706,8 @@ static int make_adjective_v1(char *English_word)
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
         if (compare_sorts(new_sort_code,
-          adjective_sort_code+i*DICT_WORD_BYTES) == 0)
-            return(0xff-i);
+            adjective_sort_code+i*DICT_WORD_BYTES) == 0)
+                return(0xff-i);
     adjectives[no_adjectives]
         = dictionary_add(English_word,PREP_DFLAG,0,0xff-no_adjectives);
     return(0xff-no_adjectives++);

@@ -2467,7 +2467,7 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
         p[0]=prepared_sort[0]; p[1]=prepared_sort[1];
         p[2]=prepared_sort[2]; p[3]=prepared_sort[3];
         if (version_number > 3)
-          {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
+        {   p[4]=prepared_sort[4]; p[5]=prepared_sort[5]; }
         p[res]=flag1; p[res+1]=flag2;
         if (!ZCODE_LESS_DICT_DATA) p[res+2]=flag3;
 
@@ -2482,7 +2482,7 @@ extern int dictionary_add(char *dword, int flag1, int flag2, int flag3)
 
         p += DICT_CHAR_SIZE;
         for (i=0; i<DICT_WORD_BYTES; i++)
-          p[i] = prepared_sort[i];
+            p[i] = prepared_sort[i];
         
         p += DICT_WORD_BYTES;
         p[0] = (flag1/256); p[1] = (flag1%256);

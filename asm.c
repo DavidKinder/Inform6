@@ -1315,8 +1315,8 @@ static void assembleg_macro(const assembly_instruction *AI)
     for (ix = 0; ix < no_operands_given; ix++) {
         int type = AI->operand[ix].type;
         if ((opco.flags & St) 
-          && ((!(opco.flags & Br) && (ix == no_operands_given-1))
-          || ((opco.flags & Br) && (ix == no_operands_given-2)))) {
+            && ((!(opco.flags & Br) && (ix == no_operands_given-1))
+            || ((opco.flags & Br) && (ix == no_operands_given-2)))) {
             if (is_constant_ot(type)) {
                 error("*** assembly macro tried to store to a constant ***");
                 goto OpcodeSyntaxError; 
@@ -3026,12 +3026,12 @@ void assembleg_1_branch(int internal_number,
        to zero. */
     if (o1.marker == 0 && is_constant_ot(o1.type)) {
         if ((internal_number == jz_gc && o1.value == 0)
-          || (internal_number == jnz_gc && o1.value != 0)) {
+            || (internal_number == jnz_gc && o1.value != 0)) {
             assembleg_0_branch(jump_gc, label);
             return;
         }
         if ((internal_number == jz_gc && o1.value != 0)
-          || (internal_number == jnz_gc && o1.value == 0)) {
+            || (internal_number == jnz_gc && o1.value == 0)) {
             /* assemble nothing at all! */
             return;
         }

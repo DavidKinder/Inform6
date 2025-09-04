@@ -2529,33 +2529,33 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case REMOVE_CODE:
-                 AO = code_generate(parse_expression(QUANTITY_CONTEXT),
-                     QUANTITY_CONTEXT, -1);
-                 check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
-                 if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
-                     assembleg_call_1(veneer_routine(RT__ChR_VR), AO,
-                         zero_operand);
-                 else
-                     assembleg_call_1(veneer_routine(OB__Remove_VR), AO,
-                         zero_operand);
-                 break;
+            AO = code_generate(parse_expression(QUANTITY_CONTEXT),
+                QUANTITY_CONTEXT, -1);
+            check_warn_symbol_type(&AO, OBJECT_T, 0, "\"remove\" statement");
+            if ((runtime_error_checking_switch) && (veneer_mode == FALSE))
+                assembleg_call_1(veneer_routine(RT__ChR_VR), AO,
+                    zero_operand);
+            else
+                assembleg_call_1(veneer_routine(OB__Remove_VR), AO,
+                    zero_operand);
+            break;
 
     /*  -------------------------------------------------------------------- */
     /*  return [<expression>] ---------------------------------------------- */
     /*  -------------------------------------------------------------------- */
 
         case RETURN_CODE:
-          get_next_token();
-          if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
-            assembleg_1(return_gc, one_operand); 
-            return; 
-          }
-          put_token_back();
-          AO = code_generate(parse_expression(RETURN_Q_CONTEXT),
-            QUANTITY_CONTEXT, -1);
-          assembleg_1(return_gc, AO);
-          break;
-
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) {
+                assembleg_1(return_gc, one_operand); 
+                return; 
+            }
+            put_token_back();
+            AO = code_generate(parse_expression(RETURN_Q_CONTEXT),
+                QUANTITY_CONTEXT, -1);
+            assembleg_1(return_gc, AO);
+            break;
+            
     /*  -------------------------------------------------------------------- */
     /*  rfalse ------------------------------------------------------------- */
     /*  -------------------------------------------------------------------- */
@@ -2726,8 +2726,8 @@ static void parse_statement_g(int break_label, int continue_label)
        Inform compiler, but which is important in development. */
 
         default:
-          error("*** Statement code gen: Can't generate yet ***\n");
-          panic_mode_error_recovery(); return;
+            error("*** Statement code gen: Can't generate yet ***\n");
+            panic_mode_error_recovery(); return;
     }
 
     StatementTerminator:

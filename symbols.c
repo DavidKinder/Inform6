@@ -945,50 +945,50 @@ static void stockup_symbols(void)
         /* In Glulx, these system globals are entered in order, not down 
            from 255. */
         create_symbol("temp_global",  MAX_LOCAL_VARIABLES+0, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("temp__global2", MAX_LOCAL_VARIABLES+1, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("temp__global3", MAX_LOCAL_VARIABLES+2, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("temp__global4", MAX_LOCAL_VARIABLES+3, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("self",         MAX_LOCAL_VARIABLES+4, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("sender",       MAX_LOCAL_VARIABLES+5, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("sw__var",      MAX_LOCAL_VARIABLES+6, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
 
         /* These are almost certainly meaningless, and can be removed. */
         create_symbol("sys__glob0",     MAX_LOCAL_VARIABLES+7, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("sys__glob1",     MAX_LOCAL_VARIABLES+8, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
         create_symbol("sys__glob2",     MAX_LOCAL_VARIABLES+9, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
 
         /* value of statusline_flag to be written later */
         create_symbol("sys_statusline_flag",  MAX_LOCAL_VARIABLES+10, 
-          GLOBAL_VARIABLE_T);
+            GLOBAL_VARIABLE_T);
 
         /* These are created in order, but not necessarily at a fixed
            value. */
         create_symbol("create",        INDIV_PROP_START+0, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("recreate",      INDIV_PROP_START+1, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("destroy",       INDIV_PROP_START+2, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("remaining",     INDIV_PROP_START+3, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("copy",          INDIV_PROP_START+4, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("call",          INDIV_PROP_START+5, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("print",         INDIV_PROP_START+6, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
         create_symbol("print_to_array",INDIV_PROP_START+7, 
-          INDIVIDUAL_PROPERTY_T);
+            INDIVIDUAL_PROPERTY_T);
 
         /* Floating-point constants. Note that FLOAT_NINFINITY is not
            -FLOAT_INFINITY, because float negation doesn't work that

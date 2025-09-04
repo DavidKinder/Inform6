@@ -405,37 +405,37 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int l
         }
         else
         {   
-          if (!glulx_mode) {
-            if (i == speccount - 2)
-            {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
-                    label, TRUE);
-                assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
-                    label, TRUE);
+            if (!glulx_mode) {
+                if (i == speccount - 2)
+                {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
+                        label, TRUE);
+                    assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
+                        label, TRUE);
+                }
+                else
+                {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
+                        next_label, TRUE);
+                    assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
+                        label_after, FALSE);
+                    assemble_label_no(next_label++);
+                }
             }
-            else
-            {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
-                    next_label, TRUE);
-                assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
-                    label_after, FALSE);
-                assemble_label_no(next_label++);
+            else {
+                if (i == speccount - 2)
+                {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
+                        label);
+                    assembleg_2_branch(jgt_gc, switch_value, spec_stack[i+1],
+                        label);
+                }
+                else
+                {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
+                        next_label);
+                    assembleg_2_branch(jle_gc, switch_value, spec_stack[i+1],
+                        label_after);
+                    assemble_label_no(next_label++);
+                }
             }
-          }
-          else {
-            if (i == speccount - 2)
-            {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
-                    label);
-                assembleg_2_branch(jgt_gc, switch_value, spec_stack[i+1],
-                    label);
-            }
-            else
-            {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
-                    next_label);
-                assembleg_2_branch(jle_gc, switch_value, spec_stack[i+1],
-                    label_after);
-                assemble_label_no(next_label++);
-            }
-          }
-          i = i+2;
+            i = i+2;
         }
     }
 

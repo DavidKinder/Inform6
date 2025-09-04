@@ -957,7 +957,7 @@ static int32 write_property_block_g(void)
     }
 
     qsort(full_object_g.props, full_object_g.numprops, sizeof(propg), 
-          (int (*)(const void *, const void *))(&gpropsort));
+        (int (*)(const void *, const void *))(&gpropsort));
 
     full_object_g.finalpropaddr = mark;
 
@@ -2077,7 +2077,7 @@ extern void make_object(int nearby_flag,
 
     if ((token_type == SEP_TT) && (token_value == ARROW_SEP))
     {   if (nearby_flag)
-          error("The syntax '->' is only used as an alternative to 'Nearby'");
+            error("The syntax '->' is only used as an alternative to 'Nearby'");
 
         while ((token_type == SEP_TT) && (token_value == ARROW_SEP))
         {   tree_depth++;
