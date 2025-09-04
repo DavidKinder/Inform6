@@ -2539,53 +2539,53 @@ static void transfer_routine_g(void)
                 zcode_holding_area[i+3] = (addr) & 0xFF;
             }
             zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
-      }
-      else if (zcode_markers[i] == LABEL_MV) {
-          error("*** No LABEL opcodes in Glulx ***");
-      }
-      else if (zcode_markers[i] == DELETED_MV) {
-        /* skip it */
-      }
-      else {
-        switch(zcode_markers[i] & 0x7f) {
-        case NULL_MV: 
-            break;
-        case ERROR_MV:
-            break;
-        case IDENT_MV:
-            break;
-        case ACTION_MV:
-            if (!GRAMMAR_META_FLAG) break;
-            /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
-               through and create entry */
-            /* Fall through */
-        case OBJECT_MV:
-        case VARIABLE_MV:
-        default:
-            if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV) {
-                error("*** Illegal code backpatch value ***");
-                printf("Illegal value of %02x at PC = %04x\n",
-                zcode_markers[i] & 0x7f, new_pc);
+        }
+        else if (zcode_markers[i] == LABEL_MV) {
+            error("*** No LABEL opcodes in Glulx ***");
+        }
+        else if (zcode_markers[i] == DELETED_MV) {
+            /* skip it */
+        }
+        else {
+            switch(zcode_markers[i] & 0x7f) {
+            case NULL_MV: 
+                break;
+            case ERROR_MV:
+                break;
+            case IDENT_MV:
+                break;
+            case ACTION_MV:
+                if (!GRAMMAR_META_FLAG) break;
+                /* Actions are backpatchable if GRAMMAR_META_FLAG; fall
+                   through and create entry */
+                /* Fall through */
+            case OBJECT_MV:
+            case VARIABLE_MV:
+            default:
+                if ((zcode_markers[i] & 0x7f) > LARGEST_BPATCH_MV) {
+                    error("*** Illegal code backpatch value ***");
+                    printf("Illegal value of %02x at PC = %04x\n",
+                           zcode_markers[i] & 0x7f, new_pc);
+                    break;
+                }
+                /* The backpatch table format for Glulx:
+                   First, the marker byte (0..LARGEST_BPATCH_MV).
+                   Then a byte indicating the data size to be patched (1, 2, 4).
+                   Then the four-byte address (new_pc).
+                */
+                if (bpatch_trace_setting >= 2)
+                    printf("BP added: MV %d size %d PC %04x\n", zcode_markers[i], 4, new_pc);
+                ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+6);
+                zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i];
+                zcode_backpatch_table[zcode_backpatch_size++] = 4;
+                zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 24) & 0xFF);
+                zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 16) & 0xFF);
+                zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 8) & 0xFF);
+                zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
                 break;
             }
-          /* The backpatch table format for Glulx:
-             First, the marker byte (0..LARGEST_BPATCH_MV).
-             Then a byte indicating the data size to be patched (1, 2, 4).
-             Then the four-byte address (new_pc).
-          */
-          if (bpatch_trace_setting >= 2)
-              printf("BP added: MV %d size %d PC %04x\n", zcode_markers[i], 4, new_pc);
-          ensure_memory_list_available(&zcode_backpatch_table_memlist, zcode_backpatch_size+6);
-          zcode_backpatch_table[zcode_backpatch_size++] = zcode_markers[i];
-          zcode_backpatch_table[zcode_backpatch_size++] = 4;
-          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 24) & 0xFF);
-          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 16) & 0xFF);
-          zcode_backpatch_table[zcode_backpatch_size++] = ((new_pc >> 8) & 0xFF);
-          zcode_backpatch_table[zcode_backpatch_size++] = (new_pc & 0xFF);
-          break;
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
         }
-        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
-      }
     }
 
     /* Consistency check */
