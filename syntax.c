@@ -297,12 +297,12 @@ static void compile_alternatives_g(assembly_operand switch_value, int n,
     int the_zc = (flag) ? jeq_gc : jne_gc;
 
     if (n == 1) {
-      assembleg_2_branch(the_zc, switch_value,
-        spec_stack[stack_level],
-        label); 
+        assembleg_2_branch(the_zc, switch_value,
+            spec_stack[stack_level],
+            label); 
     }
     else {
-      error("*** Cannot generate multi-equality tests in Glulx ***");
+        error("*** Cannot generate multi-equality tests in Glulx ***");
     }
 }
 

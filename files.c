@@ -269,38 +269,38 @@ static void sf_put(int c)
 {
     if (!glulx_mode) {
 
-      /*  The checksum is the unsigned sum mod 65536 of the bytes in the
-          story file from 0x0040 (first byte after header) to the end.       */
+        /*  The checksum is the unsigned sum mod 65536 of the bytes in the
+            story file from 0x0040 (first byte after header) to the end.     */
 
-      checksum_low_byte += c;
-      if (checksum_low_byte>=256)
-      {   checksum_low_byte-=256;
-          if (++checksum_high_byte==256) checksum_high_byte=0;
-      }
-
+        checksum_low_byte += c;
+        if (checksum_low_byte>=256)
+        {   checksum_low_byte-=256;
+            if (++checksum_high_byte==256) checksum_high_byte=0;
+        }
+        
     }
     else {
 
-      /*  The checksum is the unsigned 32-bit sum of the entire story file,
-          considered as a list of 32-bit words, with the checksum field
-          being zero. */
-
-      switch (checksum_count) {
-      case 0:
-        checksum_long += (((uint32)(c & 0xFF)) << 24);
-        break;
-      case 1:
-        checksum_long += (((uint32)(c & 0xFF)) << 16);
-        break;
-      case 2:
-        checksum_long += (((uint32)(c & 0xFF)) << 8);
-        break;
-      case 3:
-        checksum_long += ((uint32)(c & 0xFF));
-        break;
-      }
+        /*  The checksum is the unsigned 32-bit sum of the entire story file,
+            considered as a list of 32-bit words, with the checksum field
+            being zero. */
+        
+        switch (checksum_count) {
+        case 0:
+            checksum_long += (((uint32)(c & 0xFF)) << 24);
+            break;
+        case 1:
+            checksum_long += (((uint32)(c & 0xFF)) << 16);
+            break;
+        case 2:
+            checksum_long += (((uint32)(c & 0xFF)) << 8);
+            break;
+        case 3:
+            checksum_long += ((uint32)(c & 0xFF));
+            break;
+        }
       
-      checksum_count = (checksum_count+1) & 3;
+        checksum_count = (checksum_count+1) & 3;
       
     }
 
@@ -1117,7 +1117,7 @@ static void output_file_g(void)
     fputc((checksum_long) & 0xFF, sf_handle);
 
     if (ferror(sf_handle))
-      fatalerror("I/O failure: couldn't backtrack on story file for checksum");
+        fatalerror("I/O failure: couldn't backtrack on story file for checksum");
 
     /*  Write a copy of the first 64 bytes into the debugging information file
         (mainly so that it can be used to identify which story file matches with
@@ -1462,7 +1462,7 @@ extern void write_debug_optional_identifier(int32 symbol_index)
         }
     }
     fgetpos
-      (Debug_fp, &symbol_debug_info[symbol_index].replacement_backpatch_pos.position);
+        (Debug_fp, &symbol_debug_info[symbol_index].replacement_backpatch_pos.position);
     symbol_debug_info[symbol_index].replacement_backpatch_pos.valid = TRUE;
     debug_file_printf("<identifier>%s</identifier>", symbols[symbol_index].name);
     /* Space for:       artificial="true" (superseded replacement) */

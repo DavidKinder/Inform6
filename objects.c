@@ -105,31 +105,31 @@ extern void make_attribute(void)
     debug_location_beginning beginning_debug_location =
         get_token_location_beginning();
 
- if (!glulx_mode) { 
-    if (no_attributes==((version_number==3)?32:48))
-    {   discard_token_location(beginning_debug_location);
-        if (version_number==3)
-            error("All 32 attributes already declared (compile as Advanced \
+    if (!glulx_mode) { 
+        if (no_attributes==((version_number==3)?32:48))
+            {   discard_token_location(beginning_debug_location);
+                if (version_number==3)
+                    error("All 32 attributes already declared (compile as Advanced \
 game to get an extra 16)");
-        else
-            error("All 48 attributes already declared");
-        panic_mode_error_recovery();
-        put_token_back();
-        return;
+                else
+                    error("All 48 attributes already declared");
+                panic_mode_error_recovery();
+                put_token_back();
+                return;
+            }
     }
- }
- else {
-    if (no_attributes==NUM_ATTR_BYTES*8) {
-      discard_token_location(beginning_debug_location);
-      error_fmt(
-        "All %d attributes already declared -- increase NUM_ATTR_BYTES to use \
+    else {
+        if (no_attributes==NUM_ATTR_BYTES*8) {
+            discard_token_location(beginning_debug_location);
+            error_fmt(
+                "All %d attributes already declared -- increase NUM_ATTR_BYTES to use \
 more", 
-        NUM_ATTR_BYTES*8);
-      panic_mode_error_recovery(); 
-      put_token_back();
-      return;
+                NUM_ATTR_BYTES*8);
+            panic_mode_error_recovery(); 
+            put_token_back();
+            return;
+        }
     }
- }
 
     get_next_token();
     i = token_value; name = token_text;
@@ -1100,7 +1100,7 @@ static void manufacture_object_g(void)
     }
 
     objectsg[no_objects].shortname = compile_string(shortname_buffer,
-      STRCTX_OBJNAME);
+        STRCTX_OBJNAME);
 
         /*  The properties table consists simply of a sequence of property
             blocks, one for each object in order of definition, exactly as
@@ -2401,23 +2401,23 @@ extern void objects_allocate_arrays(void)
         "temporary storage for inline function name");
     
     if (!glulx_mode) {
-      initialise_memory_list(&objectsz_memlist,
-          sizeof(objecttz), 256, (void**)&objectsz,
-          "z-objects");
+        initialise_memory_list(&objectsz_memlist,
+            sizeof(objecttz), 256, (void**)&objectsz,
+            "z-objects");
     }
     else {
-      initialise_memory_list(&objectsg_memlist,
-          sizeof(objecttg), 256, (void**)&objectsg,
-          "g-objects");
-      initialise_memory_list(&objectatts_memlist,
-          NUM_ATTR_BYTES, 256, (void**)&objectatts,
-          "g-attributes");
-      initialise_memory_list(&full_object_g.props_memlist,
-          sizeof(propg), 64, (void**)&full_object_g.props,
-          "object property list");
-      initialise_memory_list(&full_object_g.propdata_memlist,
-          sizeof(assembly_operand), 1024, (void**)&full_object_g.propdata,
-          "object property data table");
+        initialise_memory_list(&objectsg_memlist,
+            sizeof(objecttg), 256, (void**)&objectsg,
+            "g-objects");
+        initialise_memory_list(&objectatts_memlist,
+            NUM_ATTR_BYTES, 256, (void**)&objectatts,
+            "g-attributes");
+        initialise_memory_list(&full_object_g.props_memlist,
+            sizeof(propg), 64, (void**)&full_object_g.props,
+            "object property list");
+        initialise_memory_list(&full_object_g.propdata_memlist,
+            sizeof(assembly_operand), 1024, (void**)&full_object_g.propdata,
+            "object property data table");
     }
 }
 
