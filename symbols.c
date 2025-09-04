@@ -1146,8 +1146,8 @@ static int df_functions_sorted_count;
 static df_reference_t **df_symbol_map;
 
 /* Globals used while a function is being compiled. When a function
-  *isn't* being compiled, df_current_function_addr will be DF_NOT_IN_FUNCTION
-  and df_current_function will refer to the global namespace record. */
+   *isn't* being compiled, df_current_function_addr will be DF_NOT_IN_FUNCTION
+   and df_current_function will refer to the global namespace record. */
 static df_function_t *df_current_function;
 static char *df_current_function_name;
 static uint32 df_current_function_addr;
