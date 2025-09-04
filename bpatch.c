@@ -431,10 +431,10 @@ symbol");
 
 extern int32 backpatch_value(int32 value)
 {
-  if (!glulx_mode)
-    return backpatch_value_z(value);
-  else
-    return backpatch_value_g(value);
+    if (!glulx_mode)
+        return backpatch_value_z(value);
+    else
+        return backpatch_value_g(value);
 }
 
 static void backpatch_zmachine_z(int mv, int zmachine_area, int32 offset)
@@ -478,10 +478,10 @@ static void backpatch_zmachine_g(int mv, int zmachine_area, int32 offset)
 
 extern void backpatch_zmachine(int mv, int zmachine_area, int32 offset)
 {
-  if (!glulx_mode)
-    backpatch_zmachine_z(mv, zmachine_area, offset);
-  else
-    backpatch_zmachine_g(mv, zmachine_area, offset);
+    if (!glulx_mode)
+        backpatch_zmachine_z(mv, zmachine_area, offset);
+    else
+        backpatch_zmachine_g(mv, zmachine_area, offset);
 }
 
 extern void backpatch_zmachine_image_z(void)
