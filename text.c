@@ -1069,12 +1069,12 @@ string; substituting '?'.");
         write_z_char_g(0);
         zchars_trans_in_last_string=total_zchars_trans-zchars_trans_in_last_string;
 
-  }
+    }
 
-  if (text_out_overflow)
-      return -1;
-  else
-      return text_out_pos;
+    if (text_out_overflow)
+        return -1;
+    else
+        return text_out_pos;
 }
 
 static int unicode_entity_index(int32 unicode)
