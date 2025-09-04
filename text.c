@@ -2077,144 +2077,144 @@ apostrophe in", dword);
 /* Also used by verbs.c */
 static void dictionary_prepare_g(char *dword, uchar *optresult)
 { 
-  int i, j, k;
-  int32 unicode;
-  int negflag;
+    int i, j, k;
+    int32 unicode;
+    int negflag;
 
-  /* Flag to set if a dict word is truncated. We only do this if
-     DICT_TRUNCATE_FLAG, however. */
-  int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
+    /* Flag to set if a dict word is truncated. We only do this if
+       DICT_TRUNCATE_FLAG, however. */
+    int truncflag = (DICT_TRUNCATE_FLAG ? TRUNC_DFLAG : NONE_DFLAG);
 
-  /* Will be set to suppress dict flags if we're past the size limit.
-     But only if LONG_DICT_FLAG_BUG. */
-  int truncbug = FALSE;
+    /* Will be set to suppress dict flags if we're past the size limit.
+       But only if LONG_DICT_FLAG_BUG. */
+    int truncbug = FALSE;
 
-  prepared_dictflags_pos = 0;
-  prepared_dictflags_neg = 0;
+    prepared_dictflags_pos = 0;
+    prepared_dictflags_neg = 0;
 
-  for (i=0, j=0; (dword[j]!=0); j++) {
-    if ((dword[j] == '/') && (dword[j+1] == '/')) {
-      /* The rest of the word is dict flags. Run through them. */
-      negflag = FALSE;
-      for (j+=2; dword[j] != 0; j++) {
-        if (truncbug) continue; /* do not set flags */
-        switch(dword[j]) {
-        case '~':
-            if (!dword[j+1])
-                error_named("'//~' with no flag character (psn) in dict word", dword);
-            negflag = !negflag;
-            break;
-        case 'p':
-            if (!negflag)
-                prepared_dictflags_pos |= PLURAL_DFLAG;
-            else
-                prepared_dictflags_neg |= PLURAL_DFLAG;
+    for (i=0, j=0; (dword[j]!=0); j++) {
+        if ((dword[j] == '/') && (dword[j+1] == '/')) {
+            /* The rest of the word is dict flags. Run through them. */
             negflag = FALSE;
+            for (j+=2; dword[j] != 0; j++) {
+                if (truncbug) continue; /* do not set flags */
+                switch(dword[j]) {
+                case '~':
+                    if (!dword[j+1])
+                        error_named("'//~' with no flag character (psn) in dict word", dword);
+                    negflag = !negflag;
+                    break;
+                case 'p':
+                    if (!negflag)
+                        prepared_dictflags_pos |= PLURAL_DFLAG;
+                    else
+                        prepared_dictflags_neg |= PLURAL_DFLAG;
+                    negflag = FALSE;
+                    break;
+                case 's':
+                    if (!negflag)
+                        prepared_dictflags_pos |= SING_DFLAG;
+                    else
+                        prepared_dictflags_neg |= SING_DFLAG;
+                    negflag = FALSE;
+                    break;
+                case 'n':
+                    if (!negflag)
+                        prepared_dictflags_pos |= NOUN_DFLAG;
+                    else
+                        prepared_dictflags_neg |= NOUN_DFLAG;
+                    negflag = FALSE;
+                    break;
+                default:
+                    error_named("Expected flag character (psn~) after '//' in dict word", dword);
+                    break;
+                }
+            }
             break;
-        case 's':
-            if (!negflag)
-                prepared_dictflags_pos |= SING_DFLAG;
-            else
-                prepared_dictflags_neg |= SING_DFLAG;
-            negflag = FALSE;
-            break;
-        case 'n':
-            if (!negflag)
-                prepared_dictflags_pos |= NOUN_DFLAG;
-            else
-                prepared_dictflags_neg |= NOUN_DFLAG;
-            negflag = FALSE;
-            break;
-        default:
-          error_named("Expected flag character (psn~) after '//' in dict word", dword);
-          break;
         }
-      }
-      break;
-    }
 
-    /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
-       at DICT_WORD_SIZE. */
-    if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
-        truncbug = TRUE;
+        /* LONG_DICT_FLAG_BUG emulates the old behavior where we stop looping
+           at DICT_WORD_SIZE. */
+        if (LONG_DICT_FLAG_BUG && i>=DICT_WORD_SIZE)
+            truncbug = TRUE;
 
-    k= ((uchar *)dword)[j];
-    if (k=='\'') 
-      warning_named("Obsolete usage: use the ^ character for the \
+        k= ((uchar *)dword)[j];
+        if (k=='\'') 
+            warning_named("Obsolete usage: use the ^ character for the \
 apostrophe in", dword);
-    if (k=='^') 
-      k='\'';
-    if (k=='~') /* as in iso_to_alphabet_grid */
-      k='\"';
+        if (k=='^') 
+            k='\'';
+        if (k=='~') /* as in iso_to_alphabet_grid */
+            k='\"';
 
-    if (k=='@' || (character_set_unicode && (k & 0x80))) {
-      unicode = text_to_unicode(dword+j);
-      j += textual_form_length - 1;
-    }
-    else {
-      unicode = iso_to_unicode_grid[k];
-    }
+        if (k=='@' || (character_set_unicode && (k & 0x80))) {
+            unicode = text_to_unicode(dword+j);
+            j += textual_form_length - 1;
+        }
+        else {
+            unicode = iso_to_unicode_grid[k];
+        }
 
-    if (DICT_CHAR_SIZE != 1 || (unicode >= 0 && unicode < 256)) {
-      k = unicode;
-    }
-    else {
-      error("The dictionary cannot contain Unicode characters beyond Latin-1. \
+        if (DICT_CHAR_SIZE != 1 || (unicode >= 0 && unicode < 256)) {
+            k = unicode;
+        }
+        else {
+            error("The dictionary cannot contain Unicode characters beyond Latin-1. \
 Define DICT_CHAR_SIZE=4 for a Unicode-compatible dictionary.");
-      k = '?';
-    }
+            k = '?';
+        }
     
-    if (k >= 'A' && k <= 'Z')
-      k += ('a' - 'A');
+        if (k >= 'A' && k <= 'Z')
+            k += ('a' - 'A');
 
-    ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
+        ensure_memory_list_available(&prepared_sort_memlist, DICT_WORD_BYTES);
     
+        if (DICT_CHAR_SIZE == 1) {
+            if (i<DICT_WORD_SIZE)
+                prepared_sort[i++] = k;
+            else
+                prepared_dictflags_pos |= truncflag;          
+        }
+        else {
+            if (i<DICT_WORD_SIZE) {
+                prepared_sort[4*i]   = (k >> 24) & 0xFF;
+                prepared_sort[4*i+1] = (k >> 16) & 0xFF;
+                prepared_sort[4*i+2] = (k >>  8) & 0xFF;
+                prepared_sort[4*i+3] = (k)       & 0xFF;
+                i++;
+            }
+            else {
+                prepared_dictflags_pos |= truncflag;          
+            }
+        }
+    }
+
+    if (i > DICT_WORD_SIZE)
+        compiler_error("dict word buffer overflow");
+
+    /* Right-pad with zeroes */
     if (DICT_CHAR_SIZE == 1) {
-      if (i<DICT_WORD_SIZE)
-        prepared_sort[i++] = k;
-      else
-        prepared_dictflags_pos |= truncflag;          
+        for (; i<DICT_WORD_SIZE; i++)
+            prepared_sort[i] = 0;
     }
     else {
-      if (i<DICT_WORD_SIZE) {
-        prepared_sort[4*i]   = (k >> 24) & 0xFF;
-        prepared_sort[4*i+1] = (k >> 16) & 0xFF;
-        prepared_sort[4*i+2] = (k >>  8) & 0xFF;
-        prepared_sort[4*i+3] = (k)       & 0xFF;
-        i++;
-      }
-      else {
-        prepared_dictflags_pos |= truncflag;          
-      }
+        for (; i<DICT_WORD_SIZE; i++) {
+            prepared_sort[4*i]   = 0;
+            prepared_sort[4*i+1] = 0;
+            prepared_sort[4*i+2] = 0;
+            prepared_sort[4*i+3] = 0;
+        }
     }
-  }
 
-  if (i > DICT_WORD_SIZE)
-    compiler_error("dict word buffer overflow");
-
-  /* Right-pad with zeroes */
-  if (DICT_CHAR_SIZE == 1) {
-    for (; i<DICT_WORD_SIZE; i++)
-      prepared_sort[i] = 0;
-  }
-  else {
-    for (; i<DICT_WORD_SIZE; i++) {
-      prepared_sort[4*i]   = 0;
-      prepared_sort[4*i+1] = 0;
-      prepared_sort[4*i+2] = 0;
-      prepared_sort[4*i+3] = 0;
-    }
-  }
-
-  if (optresult) copy_sorts(optresult, prepared_sort);
+    if (optresult) copy_sorts(optresult, prepared_sort);
 }
 
 extern void dictionary_prepare(char *dword, uchar *optresult)
 {
-  if (!glulx_mode)
-    dictionary_prepare_z(dword, optresult);
-  else
-    dictionary_prepare_g(dword, optresult);
+    if (!glulx_mode)
+        dictionary_prepare_z(dword, optresult);
+    else
+        dictionary_prepare_g(dword, optresult);
 }
 
 /* ------------------------------------------------------------------------- */
