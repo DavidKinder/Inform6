@@ -309,10 +309,10 @@ static void compile_alternatives_g(assembly_operand switch_value, int n,
 static void compile_alternatives(assembly_operand switch_value, int n,
     int stack_level, int label, int flag)
 {
-  if (!glulx_mode)
-    compile_alternatives_z(switch_value, n, stack_level, label, flag);
-  else
-    compile_alternatives_g(switch_value, n, stack_level, label, flag);
+    if (!glulx_mode)
+        compile_alternatives_z(switch_value, n, stack_level, label, flag);
+    else
+        compile_alternatives_g(switch_value, n, stack_level, label, flag);
 }
 
 static void generate_switch_spec(assembly_operand switch_value, int label, int label_after, int speccount);
