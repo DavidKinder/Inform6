@@ -2397,54 +2397,54 @@ static void transfer_routine_g(void)
             lengths is too much work.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
-      if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
-        int opmodeoffset = (zcode_markers[i] - BRANCH_MV);
-        int32 opmodebyte;
-        if (asm_trace_level >= 4)
-            printf("Branch detected at offset %04x\n", pc);
-        j = ((zcode_holding_area[i] << 24) 
-            | (zcode_holding_area[i+1] << 16)
-            | (zcode_holding_area[i+2] << 8)
-            | (zcode_holding_area[i+3]));
-        offset_of_next = pc + 4;
-        addr = (labels[j].offset - offset_of_next) + 2;
-        opmodebyte = i - ((opmodeoffset+1)/2);
-        if (asm_trace_level >= 4)
-            printf("...To label %d, which is (%d-2) = %d from here\n",
-                j, addr, labels[j].offset - offset_of_next);
-        if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
-            if (asm_trace_level >= 4) printf("...Deleting branch\n");
-            zcode_markers[i-2] = DELETED_MV;
-            zcode_markers[i-1] = DELETED_MV;
-            zcode_markers[i] = DELETED_MV;
-            zcode_markers[i+1] = DELETED_MV;
-            zcode_markers[i+2] = DELETED_MV;
-            zcode_markers[i+3] = DELETED_MV;
+        if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
+            int opmodeoffset = (zcode_markers[i] - BRANCH_MV);
+            int32 opmodebyte;
+            if (asm_trace_level >= 4)
+                printf("Branch detected at offset %04x\n", pc);
+            j = ((zcode_holding_area[i] << 24) 
+                 | (zcode_holding_area[i+1] << 16)
+                 | (zcode_holding_area[i+2] << 8)
+                 | (zcode_holding_area[i+3]));
+            offset_of_next = pc + 4;
+            addr = (labels[j].offset - offset_of_next) + 2;
+            opmodebyte = i - ((opmodeoffset+1)/2);
+            if (asm_trace_level >= 4)
+                printf("...To label %d, which is (%d-2) = %d from here\n",
+                       j, addr, labels[j].offset - offset_of_next);
+            if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
+                if (asm_trace_level >= 4) printf("...Deleting branch\n");
+                zcode_markers[i-2] = DELETED_MV;
+                zcode_markers[i-1] = DELETED_MV;
+                zcode_markers[i] = DELETED_MV;
+                zcode_markers[i+1] = DELETED_MV;
+                zcode_markers[i+2] = DELETED_MV;
+                zcode_markers[i+3] = DELETED_MV;
+            }
+            else if (addr >= -0x80 && addr < 0x80) {
+                if (asm_trace_level >= 4) printf("...Byte form\n");
+                zcode_markers[i+1] = DELETED_MV;
+                zcode_markers[i+2] = DELETED_MV;
+                zcode_markers[i+3] = DELETED_MV;
+                if ((opmodeoffset & 1) == 0)
+                    zcode_holding_area[opmodebyte] = 
+                        (zcode_holding_area[opmodebyte] & 0xF0) | 0x01;
+                else
+                    zcode_holding_area[opmodebyte] = 
+                        (zcode_holding_area[opmodebyte] & 0x0F) | 0x10;
+            }
+            else if (addr >= -0x8000 && addr < 0x8000) {
+                if (asm_trace_level >= 4) printf("...Short form\n");
+                zcode_markers[i+2] = DELETED_MV;
+                zcode_markers[i+3] = DELETED_MV;
+                if ((opmodeoffset & 1) == 0)
+                    zcode_holding_area[opmodebyte] = 
+                        (zcode_holding_area[opmodebyte] & 0xF0) | 0x02;
+                else
+                    zcode_holding_area[opmodebyte] = 
+                        (zcode_holding_area[opmodebyte] & 0x0F) | 0x20;
+            }
         }
-        else if (addr >= -0x80 && addr < 0x80) {
-            if (asm_trace_level >= 4) printf("...Byte form\n");
-            zcode_markers[i+1] = DELETED_MV;
-            zcode_markers[i+2] = DELETED_MV;
-            zcode_markers[i+3] = DELETED_MV;
-            if ((opmodeoffset & 1) == 0)
-                zcode_holding_area[opmodebyte] = 
-                    (zcode_holding_area[opmodebyte] & 0xF0) | 0x01;
-            else
-                zcode_holding_area[opmodebyte] = 
-                    (zcode_holding_area[opmodebyte] & 0x0F) | 0x10;
-        }
-        else if (addr >= -0x8000 && addr < 0x8000) {
-            if (asm_trace_level >= 4) printf("...Short form\n");
-            zcode_markers[i+2] = DELETED_MV;
-            zcode_markers[i+3] = DELETED_MV;
-            if ((opmodeoffset & 1) == 0)
-                zcode_holding_area[opmodebyte] = 
-                    (zcode_holding_area[opmodebyte] & 0xF0) | 0x02;
-            else
-                zcode_holding_area[opmodebyte] = 
-                    (zcode_holding_area[opmodebyte] & 0x0F) | 0x20;
-        }
-      }
     }
 
     /*  (2) Calculate the new positions of the labels.  Note that since the
@@ -2485,60 +2485,60 @@ static void transfer_routine_g(void)
     
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++) {
 
-      if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
-        form_len = 4;
-        if (zcode_markers[i+1] == DELETED_MV) {
-            form_len = 1;
-        }
-        else {
-            if (zcode_markers[i+2] == DELETED_MV)
-                form_len = 2;
-        }
-        j = ((zcode_holding_area[i] << 24) 
-            | (zcode_holding_area[i+1] << 16)
-            | (zcode_holding_area[i+2] << 8)
-            | (zcode_holding_area[i+3]));
-
-        /* At the moment, we can safely assume that the branch operand
-           is the end of the opcode, so the next opcode starts right
-           after it. */
-        offset_of_next = new_pc + form_len;
-
-        if (labels[j].offset < 0) {
-            char *lname = "(anon)";
-            if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
-                lname = symbols[labels[j].symbol].name;
-            error_named("Attempt to jump to an unreachable label", lname);
-            addr = 0;
-        }
-        else {
-            addr = (labels[j].offset - offset_of_next) + 2;
-        }
-        if (asm_trace_level >= 4) {
-            printf("Branch at offset %04x: %04x (%s)\n",
-                new_pc, addr, ((form_len == 1) ? "byte" :
-                ((form_len == 2) ? "short" : "long")));
-        }
-        if (form_len == 1) {
-            if (addr < -0x80 || addr >= 0x80) {
-                error("*** Label out of range for byte branch ***");
+        if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
+            form_len = 4;
+            if (zcode_markers[i+1] == DELETED_MV) {
+                form_len = 1;
             }
-            zcode_holding_area[i] = (addr) & 0xFF;
-        }
-        else if (form_len == 2) {
-            if (addr < -0x8000 || addr >= 0x8000) {
-                error("*** Label out of range for short branch ***");
+            else {
+                if (zcode_markers[i+2] == DELETED_MV)
+                    form_len = 2;
             }
-            zcode_holding_area[i] = (addr >> 8) & 0xFF;
-            zcode_holding_area[i+1] = (addr) & 0xFF;
-        }
-        else {
-            zcode_holding_area[i] = (addr >> 24) & 0xFF;
-            zcode_holding_area[i+1] = (addr >> 16) & 0xFF;
-            zcode_holding_area[i+2] = (addr >> 8) & 0xFF;
-            zcode_holding_area[i+3] = (addr) & 0xFF;
-        }
-        zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
+            j = ((zcode_holding_area[i] << 24) 
+                 | (zcode_holding_area[i+1] << 16)
+                 | (zcode_holding_area[i+2] << 8)
+                 | (zcode_holding_area[i+3]));
+
+            /* At the moment, we can safely assume that the branch operand
+               is the end of the opcode, so the next opcode starts right
+               after it. */
+            offset_of_next = new_pc + form_len;
+
+            if (labels[j].offset < 0) {
+                char *lname = "(anon)";
+                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                    lname = symbols[labels[j].symbol].name;
+                error_named("Attempt to jump to an unreachable label", lname);
+                addr = 0;
+            }
+            else {
+                addr = (labels[j].offset - offset_of_next) + 2;
+            }
+            if (asm_trace_level >= 4) {
+                printf("Branch at offset %04x: %04x (%s)\n",
+                    new_pc, addr, ((form_len == 1) ? "byte" :
+                                   ((form_len == 2) ? "short" : "long")));
+            }
+            if (form_len == 1) {
+                if (addr < -0x80 || addr >= 0x80) {
+                    error("*** Label out of range for byte branch ***");
+                }
+                zcode_holding_area[i] = (addr) & 0xFF;
+            }
+            else if (form_len == 2) {
+                if (addr < -0x8000 || addr >= 0x8000) {
+                    error("*** Label out of range for short branch ***");
+                }
+                zcode_holding_area[i] = (addr >> 8) & 0xFF;
+                zcode_holding_area[i+1] = (addr) & 0xFF;
+            }
+            else {
+                zcode_holding_area[i] = (addr >> 24) & 0xFF;
+                zcode_holding_area[i+1] = (addr >> 16) & 0xFF;
+                zcode_holding_area[i+2] = (addr >> 8) & 0xFF;
+                zcode_holding_area[i+3] = (addr) & 0xFF;
+            }
+            zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
       }
       else if (zcode_markers[i] == LABEL_MV) {
           error("*** No LABEL opcodes in Glulx ***");
