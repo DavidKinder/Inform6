@@ -1325,137 +1325,137 @@ static void compile_conditional_g(condclass *cc,
     assembly_operand AO1, assembly_operand AO2, int label, int flag)
 {   assembly_operand AO4; 
     int the_zc, error_label = label,
-    va_flag = FALSE, va_label = 0;
+        va_flag = FALSE, va_label = 0;
 
     ASSERT_GLULX(); 
 
     the_zc = (flag ? cc->posform : cc->negform);
 
     if (the_zc == -1) {
-      switch ((cc-condclasses)*2 + 500) {
+        switch ((cc-condclasses)*2 + 500) {
 
-      case HAS_CC:
-        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
-        check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
-        if (runtime_error_checking_switch) {
-          if (flag) 
-            error_label = next_label++;
-          AO1 = check_nonzero_at_runtime(AO1, error_label, HAS_RTE);
-          if (is_constant_ot(AO2.type) && AO2.marker == 0) {
-            if ((AO2.value < 0) || (AO2.value >= NUM_ATTR_BYTES*8)) {
-              error("'has'/'hasnt' applied to illegal attribute number");
+        case HAS_CC:
+            check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"has/hasnt\" expression");
+            check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
+            if (runtime_error_checking_switch) {
+                if (flag) 
+                    error_label = next_label++;
+                AO1 = check_nonzero_at_runtime(AO1, error_label, HAS_RTE);
+                if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                    if ((AO2.value < 0) || (AO2.value >= NUM_ATTR_BYTES*8)) {
+                        error("'has'/'hasnt' applied to illegal attribute number");
+                    }
+                }
+                else {
+                    int pa_label = next_label++, fa_label = next_label++;
+                    assembly_operand en_ao, max_ao;
+
+                    if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
+                        if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
+                            assembleg_2(stkpeek_gc, zero_operand, temp_var1);
+                            assembleg_2(stkpeek_gc, one_operand, temp_var2);
+                        }
+                        else {
+                            assembleg_2(stkpeek_gc, zero_operand, temp_var1);
+                            assembleg_store(temp_var2, AO2);
+                        }
+                    }
+                    else {
+                        assembleg_store(temp_var1, AO1);
+                        if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
+                            assembleg_2(stkpeek_gc, zero_operand, temp_var2);
+                        }
+                        else {
+                            assembleg_store(temp_var2, AO2);
+                        }
+                    }
+
+                    INITAO(&max_ao);
+                    max_ao.value = NUM_ATTR_BYTES*8;
+                    set_constant_ot(&max_ao);
+                    assembleg_2_branch(jlt_gc, temp_var2, zero_operand, fa_label);
+                    assembleg_2_branch(jlt_gc, temp_var2, max_ao, pa_label);
+                    assemble_label_no(fa_label);
+                    INITAO(&en_ao);
+                    en_ao.value = 19; /* INVALIDATTR_RTE */
+                    set_constant_ot(&en_ao);
+                    assembleg_store(stack_pointer, temp_var2);
+                    assembleg_store(stack_pointer, temp_var1);
+                    assembleg_store(stack_pointer, en_ao);
+                    assembleg_3(call_gc, veneer_routine(RT__Err_VR),
+                        three_operand, zero_operand);
+                    va_flag = TRUE; 
+                    va_label = next_label++;
+                    assembleg_jump(va_label);
+                    assemble_label_no(pa_label);
+                }
             }
-          }
-          else {
-            int pa_label = next_label++, fa_label = next_label++;
-            assembly_operand en_ao, max_ao;
-
-            if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
-              if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
-                assembleg_2(stkpeek_gc, zero_operand, temp_var1);
-                assembleg_2(stkpeek_gc, one_operand, temp_var2);
-              }
-              else {
-                assembleg_2(stkpeek_gc, zero_operand, temp_var1);
-                assembleg_store(temp_var2, AO2);
-              }
+            if (is_constant_ot(AO2.type) && AO2.marker == 0) {
+                AO2.value += 8;
+                set_constant_ot(&AO2);
             }
             else {
-              assembleg_store(temp_var1, AO1);
-              if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) {
-                assembleg_2(stkpeek_gc, zero_operand, temp_var2);
-              }
-              else {
-                assembleg_store(temp_var2, AO2);
-              }
+                INITAO(&AO4);
+                AO4.value = 8;
+                AO4.type = BYTECONSTANT_OT;
+                if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
+                    if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) 
+                        assembleg_0(stkswap_gc);
+                    assembleg_3(add_gc, AO2, AO4, stack_pointer);
+                    assembleg_0(stkswap_gc);
+                }
+                else {
+                    assembleg_3(add_gc, AO2, AO4, stack_pointer);
+                }
+                AO2 = stack_pointer;
             }
+            assembleg_3(aloadbit_gc, AO1, AO2, stack_pointer);
+            the_zc = (flag ? jnz_gc : jz_gc);
+            AO1 = stack_pointer;
+            break;
 
-            INITAO(&max_ao);
-            max_ao.value = NUM_ATTR_BYTES*8;
-            set_constant_ot(&max_ao);
-            assembleg_2_branch(jlt_gc, temp_var2, zero_operand, fa_label);
-            assembleg_2_branch(jlt_gc, temp_var2, max_ao, pa_label);
-            assemble_label_no(fa_label);
-            INITAO(&en_ao);
-            en_ao.value = 19; /* INVALIDATTR_RTE */
-            set_constant_ot(&en_ao);
-            assembleg_store(stack_pointer, temp_var2);
-            assembleg_store(stack_pointer, temp_var1);
-            assembleg_store(stack_pointer, en_ao);
-            assembleg_3(call_gc, veneer_routine(RT__Err_VR),
-              three_operand, zero_operand);
-            va_flag = TRUE; 
-            va_label = next_label++;
-            assembleg_jump(va_label);
-            assemble_label_no(pa_label);
-          }
+        case IN_CC:
+            check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
+            check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
+            if (runtime_error_checking_switch) {
+                if (flag) 
+                    error_label = next_label++;
+                AO1 = check_nonzero_at_runtime(AO1, error_label, IN_RTE);
+            }
+            INITAO(&AO4);
+            AO4.value = GOBJFIELD_PARENT();
+            AO4.type = BYTECONSTANT_OT;
+            assembleg_3(aload_gc, AO1, AO4, stack_pointer);
+            AO1 = stack_pointer;
+            the_zc = (flag ? jeq_gc : jne_gc);
+            break;
+
+        case OFCLASS_CC:
+            /* first argument can be anything */
+            check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
+            assembleg_call_2(veneer_routine(OC__Cl_VR), AO1, AO2, stack_pointer);
+            the_zc = (flag ? jnz_gc : jz_gc);
+            AO1 = stack_pointer;
+            break;
+
+        case PROVIDES_CC:
+            /* first argument can be anything */
+            check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
+            assembleg_call_2(veneer_routine(OP__Pr_VR), AO1, AO2, stack_pointer);
+            the_zc = (flag ? jnz_gc : jz_gc);
+            AO1 = stack_pointer;
+            break;
+
+        default:
+            error("condition not yet supported in Glulx");
+            return;
         }
-        if (is_constant_ot(AO2.type) && AO2.marker == 0) {
-          AO2.value += 8;
-          set_constant_ot(&AO2);
-        }
-        else {
-          INITAO(&AO4);
-          AO4.value = 8;
-          AO4.type = BYTECONSTANT_OT;
-          if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
-            if ((AO2.type == LOCALVAR_OT) && (AO2.value == 0)) 
-              assembleg_0(stkswap_gc);
-            assembleg_3(add_gc, AO2, AO4, stack_pointer);
-            assembleg_0(stkswap_gc);
-          }
-          else {
-            assembleg_3(add_gc, AO2, AO4, stack_pointer);
-          }
-          AO2 = stack_pointer;
-        }
-        assembleg_3(aloadbit_gc, AO1, AO2, stack_pointer);
-        the_zc = (flag ? jnz_gc : jz_gc);
-        AO1 = stack_pointer;
-        break;
-
-      case IN_CC:
-        check_warn_symbol_type(&AO1, OBJECT_T, 0, "\"in/notin\" expression");
-        check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
-        if (runtime_error_checking_switch) {
-          if (flag) 
-            error_label = next_label++;
-          AO1 = check_nonzero_at_runtime(AO1, error_label, IN_RTE);
-        }
-        INITAO(&AO4);
-        AO4.value = GOBJFIELD_PARENT();
-        AO4.type = BYTECONSTANT_OT;
-        assembleg_3(aload_gc, AO1, AO4, stack_pointer);
-        AO1 = stack_pointer;
-        the_zc = (flag ? jeq_gc : jne_gc);
-        break;
-
-      case OFCLASS_CC:
-        /* first argument can be anything */
-        check_warn_symbol_type(&AO2, CLASS_T, 0, "\"ofclass\" expression");
-        assembleg_call_2(veneer_routine(OC__Cl_VR), AO1, AO2, stack_pointer);
-        the_zc = (flag ? jnz_gc : jz_gc);
-        AO1 = stack_pointer;
-        break;
-
-      case PROVIDES_CC:
-        /* first argument can be anything */
-        check_warn_symbol_type(&AO2, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\"provides\" expression");
-        assembleg_call_2(veneer_routine(OP__Pr_VR), AO1, AO2, stack_pointer);
-        the_zc = (flag ? jnz_gc : jz_gc);
-        AO1 = stack_pointer;
-        break;
-
-      default:
-        error("condition not yet supported in Glulx");
-        return;
-      }
     }
 
     if (the_zc == jnz_gc || the_zc == jz_gc)
-      assembleg_1_branch(the_zc, AO1, label);
+        assembleg_1_branch(the_zc, AO1, label);
     else
-      assembleg_2_branch(the_zc, AO1, AO2, label);
+        assembleg_2_branch(the_zc, AO1, AO2, label);
     if (error_label != label) assemble_label_no(error_label);
     if (va_flag) assemble_label_no(va_label);
 }
