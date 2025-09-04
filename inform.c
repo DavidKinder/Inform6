@@ -1187,18 +1187,18 @@ Copyright (c) Graham Nelson 1993 - 2025.\n\n");
 
    /* For people typing just "inform", a summary only: */
 
-   if (help_level==0)
-   {
+    if (help_level==0)
+    {
 
 #ifndef PROMPT_INPUT
-    printf("Usage: \"inform [commands...] <file1> [<file2>]\"\n\n");
+        printf("Usage: \"inform [commands...] <file1> [<file2>]\"\n\n");
 #else
-    printf("When run, Inform prompts you for commands (and switches),\n\
+        printf("When run, Inform prompts you for commands (and switches),\n\
 which are optional, then an input <file1> and an (optional) output\n\
 <file2>.\n\n");
 #endif
 
-    printf(
+        printf(
 "<file1> is the Inform source file of the game to be compiled. <file2>,\n\
 if given, overrides the filename Inform would normally use for the\n\
 compiled output.  Try \"inform -h1\" for file-naming conventions.\n\n\
@@ -1211,7 +1211,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   ++PATH=dir    add this directory to the PATH\n\n\
   $...          one of the following configuration commands:\n");
   
-    printf(
+        printf(
 "     $list            list current settings\n\
      $?SETTING        explain briefly what SETTING is for\n\
      $SETTING=number  change SETTING to given number\n\
@@ -1220,7 +1220,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
                       $! by itself to list all trace options)\n\
      $#SYMBOL=number  define SYMBOL as a constant in the story\n\n");
 
-    printf(
+        printf(
 "  (filename)    read in a list of commands (in the format above)\n\
                 from this \"setup file\"\n\n");
 
@@ -1238,20 +1238,20 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   --config filename      (read setup file)\n\n");
 
 #ifndef PROMPT_INPUT
-    printf("For example: \"inform -dexs curses\".\n\n");
+        printf("For example: \"inform -dexs curses\".\n\n");
 #endif
 
-    printf(
+        printf(
 "For fuller information, see the Inform Designer's Manual.\n");
 
-       return;
-   }
+        return;
+    }
 
-   /* The -h1 (filenaming) help information: */
+    /* The -h1 (filenaming) help information: */
 
-   if (help_level == 1) { help_on_filenames(); return; }
+    if (help_level == 1) { help_on_filenames(); return; }
 
-   /* The -h2 (switches) help information: */
+    /* The -h2 (switches) help information: */
 
     printf("Help on the full list of legal switch commands:\n\n\
   a   trace assembly-language\n\
