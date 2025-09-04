@@ -57,27 +57,27 @@ extern void select_version(int vn)
 
 static int select_glulx_version(char *str)
 {
-  /* Parse an "X.Y.Z" style version number, and store it for later use. */
-  char *cx = str;
-  int major=0, minor=0, patch=0;
+    /* Parse an "X.Y.Z" style version number, and store it for later use. */
+    char *cx = str;
+    int major=0, minor=0, patch=0;
 
-  while (isdigit((uchar)*cx))
-    major = major*10 + ((*cx++)-'0');
-  if (*cx == '.') {
-    cx++;
     while (isdigit((uchar)*cx))
-      minor = minor*10 + ((*cx++)-'0');
+        major = major*10 + ((*cx++)-'0');
     if (*cx == '.') {
-      cx++;
-      while (isdigit((uchar)*cx))
-        patch = patch*10 + ((*cx++)-'0');
+        cx++;
+        while (isdigit((uchar)*cx))
+            minor = minor*10 + ((*cx++)-'0');
+        if (*cx == '.') {
+            cx++;
+            while (isdigit((uchar)*cx))
+                patch = patch*10 + ((*cx++)-'0');
+        }
     }
-  }
 
-  requested_glulx_version = ((major & 0x7FFF) << 16) 
-    + ((minor & 0xFF) << 8) 
-    + (patch & 0xFF);
-  return (cx - str);
+    requested_glulx_version = ((major & 0x7FFF) << 16) 
+        + ((minor & 0xFF) << 8) 
+        + (patch & 0xFF);
+    return (cx - str);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -108,132 +108,132 @@ int DICT_ENTRY_FLAG_POS;
 
 static void set_compile_variables()
 {
-  /* Set all the compiler's globals, such as WORDSIZE.
+    /* Set all the compiler's globals, such as WORDSIZE.
      
-     Most of these are taken from the options module; see
-     apply_compiler_options().
+       Most of these are taken from the options module; see
+       apply_compiler_options().
      
-     Some globals must already be set when this is called: glulx_mode,
-     scale_factor, requested_glulx_version, and a few others. These
-     exceptional cases are handled directly by the switches() routine
-     during option parsing. */
+       Some globals must already be set when this is called: glulx_mode,
+       scale_factor, requested_glulx_version, and a few others. These
+       exceptional cases are handled directly by the switches() routine
+       during option parsing. */
 
-  /* First we set a few values that depend only on glulx_mode. */
+    /* First we set a few values that depend only on glulx_mode. */
     
-  if (!glulx_mode) {
-    /* Z-machine */
-    WORDSIZE = 2;
-    MAXINTWORD = 0x7FFF;
+    if (!glulx_mode) {
+        /* Z-machine */
+        WORDSIZE = 2;
+        MAXINTWORD = 0x7FFF;
 
-    MAX_LOCAL_VARIABLES = 16; /* including "sp" */
-  }
-  else {
-    /* Glulx */
-    WORDSIZE = 4;
-    MAXINTWORD = 0x7FFFFFFF;
-    scale_factor = 0; /* It should never even get used in Glulx */
-
-    /* This could really be 120, since the practical limit is the size
-       of local_variables.keywords. But historically it's been 119. */
-    MAX_LOCAL_VARIABLES = 119; /* including "sp" */
-  }
-
-  /* Set all those option variables. */
-  
-  apply_compiler_options();
-
-  /* Now we do final safety checks on them. */
-  
-  if (!glulx_mode) {
-    if (INDIV_PROP_START != 64) {
-        INDIV_PROP_START = 64;
-        fatalerror("You cannot change INDIV_PROP_START in Z-code");
-    }
-    if (DICT_WORD_SIZE != 6) {
-      DICT_WORD_SIZE = 6;
-      fatalerror("You cannot change DICT_WORD_SIZE in Z-code");
-    }
-    if (DICT_CHAR_SIZE != 1) {
-      DICT_CHAR_SIZE = 1;
-      fatalerror("You cannot change DICT_CHAR_SIZE in Z-code");
-    }
-    if (NUM_ATTR_BYTES != 6) {
-      NUM_ATTR_BYTES = 6;
-      fatalerror("You cannot change NUM_ATTR_BYTES in Z-code");
-    }
-  }
-  else {
-    if (INDIV_PROP_START < 256) {
-        INDIV_PROP_START = 256;
-        warning_fmt("INDIV_PROP_START should be at least 256 in Glulx; setting to %d", INDIV_PROP_START);
-    }
-
-    if (NUM_ATTR_BYTES % 4 != 3) {
-      NUM_ATTR_BYTES += (3 - (NUM_ATTR_BYTES % 4)); 
-      warning_fmt("NUM_ATTR_BYTES must be a multiple of four, plus three; increasing to %d", NUM_ATTR_BYTES);
-    }
-
-    if (DICT_CHAR_SIZE != 1 && DICT_CHAR_SIZE != 4) {
-      DICT_CHAR_SIZE = 4;
-      warning_fmt("DICT_CHAR_SIZE must be either 1 or 4; setting to %d", DICT_CHAR_SIZE);
-    }
-  }
-
-  if (MAX_LOCAL_VARIABLES > MAX_KEYWORD_GROUP_SIZE) {
-    compiler_error("MAX_LOCAL_VARIABLES cannot exceed MAX_KEYWORD_GROUP_SIZE");
-    MAX_LOCAL_VARIABLES = MAX_KEYWORD_GROUP_SIZE;
-  }
-
-  if (NUM_ATTR_BYTES > MAX_NUM_ATTR_BYTES) {
-    NUM_ATTR_BYTES = MAX_NUM_ATTR_BYTES;
-    warning_fmt(
-      "NUM_ATTR_BYTES cannot exceed MAX_NUM_ATTR_BYTES; resetting to %d",
-      MAX_NUM_ATTR_BYTES);
-    /* MAX_NUM_ATTR_BYTES can be increased in header.h without fear. */
-  }
-
-  /* Set up a few more variables that depend on the above values */
-
-  if (!glulx_mode) {
-    /* Z-machine */
-    DICT_WORD_BYTES = DICT_WORD_SIZE;
-    OBJECT_BYTE_LENGTH = 0;
-    DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
-    DICT_ENTRY_FLAG_POS = 0;
-  }
-  else {
-    /* Glulx */
-    OBJECT_BYTE_LENGTH = (1 + (NUM_ATTR_BYTES) + 6*4 + (GLULX_OBJECT_EXT_BYTES));
-    DICT_WORD_BYTES = DICT_WORD_SIZE*DICT_CHAR_SIZE;
-    if (DICT_CHAR_SIZE == 1) {
-      DICT_ENTRY_BYTE_LENGTH = (7+DICT_WORD_BYTES);
-      DICT_ENTRY_FLAG_POS = (1+DICT_WORD_BYTES);
+        MAX_LOCAL_VARIABLES = 16; /* including "sp" */
     }
     else {
-      DICT_ENTRY_BYTE_LENGTH = (12+DICT_WORD_BYTES);
-      DICT_ENTRY_FLAG_POS = (4+DICT_WORD_BYTES);
-    }
-  }
+        /* Glulx */
+        WORDSIZE = 4;
+        MAXINTWORD = 0x7FFFFFFF;
+        scale_factor = 0; /* It should never even get used in Glulx */
 
-  if (!glulx_mode) {
-    /* Z-machine */
-    /* The Z-machine's 96 abbreviations are used for these two purposes.
-       Make sure they are set consistently. If exactly one has been
-       set non-default, set the other to match. */
-    if (MAX_DYNAMIC_STRINGS == 32 && MAX_ABBREVS != 64) {
-        MAX_DYNAMIC_STRINGS = 96 - MAX_ABBREVS;
+        /* This could really be 120, since the practical limit is the size
+           of local_variables.keywords. But historically it's been 119. */
+        MAX_LOCAL_VARIABLES = 119; /* including "sp" */
     }
-    if (MAX_ABBREVS == 64 && MAX_DYNAMIC_STRINGS != 32) {
-        MAX_ABBREVS = 96 - MAX_DYNAMIC_STRINGS;
+
+    /* Set all those option variables. */
+  
+    apply_compiler_options();
+
+    /* Now we do final safety checks on them. */
+  
+    if (!glulx_mode) {
+        if (INDIV_PROP_START != 64) {
+            INDIV_PROP_START = 64;
+            fatalerror("You cannot change INDIV_PROP_START in Z-code");
+        }
+        if (DICT_WORD_SIZE != 6) {
+            DICT_WORD_SIZE = 6;
+            fatalerror("You cannot change DICT_WORD_SIZE in Z-code");
+        }
+        if (DICT_CHAR_SIZE != 1) {
+            DICT_CHAR_SIZE = 1;
+            fatalerror("You cannot change DICT_CHAR_SIZE in Z-code");
+        }
+        if (NUM_ATTR_BYTES != 6) {
+            NUM_ATTR_BYTES = 6;
+            fatalerror("You cannot change NUM_ATTR_BYTES in Z-code");
+        }
     }
-    if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
-        || MAX_ABBREVS < 0
-        || MAX_DYNAMIC_STRINGS < 0) {
-      warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting both");
-      MAX_DYNAMIC_STRINGS = 32;
-      MAX_ABBREVS = 64;
+    else {
+        if (INDIV_PROP_START < 256) {
+            INDIV_PROP_START = 256;
+            warning_fmt("INDIV_PROP_START should be at least 256 in Glulx; setting to %d", INDIV_PROP_START);
+        }
+
+        if (NUM_ATTR_BYTES % 4 != 3) {
+            NUM_ATTR_BYTES += (3 - (NUM_ATTR_BYTES % 4)); 
+            warning_fmt("NUM_ATTR_BYTES must be a multiple of four, plus three; increasing to %d", NUM_ATTR_BYTES);
+        }
+
+        if (DICT_CHAR_SIZE != 1 && DICT_CHAR_SIZE != 4) {
+            DICT_CHAR_SIZE = 4;
+            warning_fmt("DICT_CHAR_SIZE must be either 1 or 4; setting to %d", DICT_CHAR_SIZE);
+        }
     }
-  }
+
+    if (MAX_LOCAL_VARIABLES > MAX_KEYWORD_GROUP_SIZE) {
+        compiler_error("MAX_LOCAL_VARIABLES cannot exceed MAX_KEYWORD_GROUP_SIZE");
+        MAX_LOCAL_VARIABLES = MAX_KEYWORD_GROUP_SIZE;
+    }
+
+    if (NUM_ATTR_BYTES > MAX_NUM_ATTR_BYTES) {
+        NUM_ATTR_BYTES = MAX_NUM_ATTR_BYTES;
+        warning_fmt(
+                    "NUM_ATTR_BYTES cannot exceed MAX_NUM_ATTR_BYTES; resetting to %d",
+                    MAX_NUM_ATTR_BYTES);
+        /* MAX_NUM_ATTR_BYTES can be increased in header.h without fear. */
+    }
+
+    /* Set up a few more variables that depend on the above values */
+
+    if (!glulx_mode) {
+        /* Z-machine */
+        DICT_WORD_BYTES = DICT_WORD_SIZE;
+        OBJECT_BYTE_LENGTH = 0;
+        DICT_ENTRY_BYTE_LENGTH = ((version_number==3)?7:9) - (ZCODE_LESS_DICT_DATA?1:0);
+        DICT_ENTRY_FLAG_POS = 0;
+    }
+    else {
+        /* Glulx */
+        OBJECT_BYTE_LENGTH = (1 + (NUM_ATTR_BYTES) + 6*4 + (GLULX_OBJECT_EXT_BYTES));
+        DICT_WORD_BYTES = DICT_WORD_SIZE*DICT_CHAR_SIZE;
+        if (DICT_CHAR_SIZE == 1) {
+            DICT_ENTRY_BYTE_LENGTH = (7+DICT_WORD_BYTES);
+            DICT_ENTRY_FLAG_POS = (1+DICT_WORD_BYTES);
+        }
+        else {
+            DICT_ENTRY_BYTE_LENGTH = (12+DICT_WORD_BYTES);
+            DICT_ENTRY_FLAG_POS = (4+DICT_WORD_BYTES);
+        }
+    }
+
+    if (!glulx_mode) {
+        /* Z-machine */
+        /* The Z-machine's 96 abbreviations are used for these two purposes.
+           Make sure they are set consistently. If exactly one has been
+           set non-default, set the other to match. */
+        if (MAX_DYNAMIC_STRINGS == 32 && MAX_ABBREVS != 64) {
+            MAX_DYNAMIC_STRINGS = 96 - MAX_ABBREVS;
+        }
+        if (MAX_ABBREVS == 64 && MAX_DYNAMIC_STRINGS != 32) {
+            MAX_ABBREVS = 96 - MAX_DYNAMIC_STRINGS;
+        }
+        if (MAX_ABBREVS + MAX_DYNAMIC_STRINGS != 96
+            || MAX_ABBREVS < 0
+            || MAX_DYNAMIC_STRINGS < 0) {
+            warning("MAX_ABBREVS plus MAX_DYNAMIC_STRINGS must be 96 in Z-code; resetting both");
+            MAX_DYNAMIC_STRINGS = 32;
+            MAX_ABBREVS = 64;
+        }
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1551,50 +1551,50 @@ static int execute_dashdash_command(char *p, char *p2);
  */
 static int execute_icl_header(char *argname)
 {
-  FILE *command_file;
-  char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
-  int line = 0;
-  int errcount = 0;
-  int i;
-  char filename[PATHLEN]; 
-  int x = 0;
+    FILE *command_file;
+    char cli_buff[CMD_BUF_SIZE], fw[CMD_BUF_SIZE];
+    int line = 0;
+    int errcount = 0;
+    int i;
+    char filename[PATHLEN]; 
+    int x = 0;
 
-  do
-    {   x = translate_in_filename(x, filename, argname, 0, 1);
-        command_file = fopen(filename,"rb");
-    } while ((command_file == NULL) && (x != 0));
-  if (!command_file) {
-    /* Fail silently. The regular compiler will try to open the file
-       again, and report the problem. */
-    return 0;
-  }
-
-  while (feof(command_file)==0) {
-    if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
-    line++;
-    if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
-      break;
-    i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
-    if (icl_command(fw)) {
-      execute_icl_command(fw);
-      copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
-      if ((fw[0] != 0) && (fw[0] != '!')) {
-        icl_header_error(filename, line);
-        errcount++;
-        printf("expected comment or nothing but found '%s'\n", fw);
-      }
+    do
+        {   x = translate_in_filename(x, filename, argname, 0, 1);
+            command_file = fopen(filename,"rb");
+        } while ((command_file == NULL) && (x != 0));
+    if (!command_file) {
+        /* Fail silently. The regular compiler will try to open the file
+           again, and report the problem. */
+        return 0;
     }
-    else {
-      if (fw[0]!=0) {
-        icl_header_error(filename, line);
-        errcount++;
-        printf("Expected command or comment but found '%s'\n", fw);
-      }
-    }
-  }
-  fclose(command_file);
 
-  return (errcount==0)?0:1;
+    while (feof(command_file)==0) {
+        if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
+        line++;
+        if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
+            break;
+        i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
+        if (icl_command(fw)) {
+            execute_icl_command(fw);
+            copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
+            if ((fw[0] != 0) && (fw[0] != '!')) {
+                icl_header_error(filename, line);
+                errcount++;
+                printf("expected comment or nothing but found '%s'\n", fw);
+            }
+        }
+        else {
+            if (fw[0]!=0) {
+                icl_header_error(filename, line);
+                errcount++;
+                printf("Expected command or comment but found '%s'\n", fw);
+            }
+        }
+    }
+    fclose(command_file);
+
+    return (errcount==0)?0:1;
 }
 
 
