@@ -1191,14 +1191,14 @@ Copyright (c) Graham Nelson 1993 - 2025.\n\n");
    {
 
 #ifndef PROMPT_INPUT
-  printf("Usage: \"inform [commands...] <file1> [<file2>]\"\n\n");
+    printf("Usage: \"inform [commands...] <file1> [<file2>]\"\n\n");
 #else
-  printf("When run, Inform prompts you for commands (and switches),\n\
+    printf("When run, Inform prompts you for commands (and switches),\n\
 which are optional, then an input <file1> and an (optional) output\n\
 <file2>.\n\n");
 #endif
 
-  printf(
+    printf(
 "<file1> is the Inform source file of the game to be compiled. <file2>,\n\
 if given, overrides the filename Inform would normally use for the\n\
 compiled output.  Try \"inform -h1\" for file-naming conventions.\n\n\
@@ -1211,7 +1211,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   ++PATH=dir    add this directory to the PATH\n\n\
   $...          one of the following configuration commands:\n");
   
-  printf(
+    printf(
 "     $list            list current settings\n\
      $?SETTING        explain briefly what SETTING is for\n\
      $SETTING=number  change SETTING to given number\n\
@@ -1220,11 +1220,11 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
                       $! by itself to list all trace options)\n\
      $#SYMBOL=number  define SYMBOL as a constant in the story\n\n");
 
-  printf(
+    printf(
 "  (filename)    read in a list of commands (in the format above)\n\
                 from this \"setup file\"\n\n");
 
-  printf("Alternate command-line formats for the above:\n\
+    printf("Alternate command-line formats for the above:\n\
   --help                 (this page)\n\
   --path PATH=dir        (set path)\n\
   --addpath PATH=dir     (add to path)\n\
@@ -1253,7 +1253,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
 
    /* The -h2 (switches) help information: */
 
-   printf("Help on the full list of legal switch commands:\n\n\
+    printf("Help on the full list of legal switch commands:\n\n\
   a   trace assembly-language\n\
   a2  trace assembly with hex dumps\n\
   c   more concise error messages\n\
@@ -1261,7 +1261,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   d2  contract double spaces after exclamation and question marks, too\n\
   e   economy mode (slower): make use of declared abbreviations\n");
 
-   printf("\
+    printf("\
   f   frequencies mode: show how useful abbreviations are\n\
   g   traces calls to all game functions\n\
   g2  traces calls to all game and library functions\n\
@@ -1270,17 +1270,17 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   h1  print help information on filenames and path options\n\
   h2  print help information on switches (this page)\n");
 
-   printf("\
+    printf("\
   i   ignore default switches set within the file\n\
   k   output debugging information to \"%s\"\n",
           Debugging_Name);
-   printf("\
+    printf("\
   q   keep quiet about obsolete usages\n\
   r   record all the text to \"%s\"\n\
   s   give statistics\n",
       Transcript_Name);
 
-   printf("\
+    printf("\
   u   work out most useful abbreviations (very very slowly)\n\
   v3  compile to version-3 (\"Standard\"/\"ZIP\") story file\n\
   v4  compile to version-4 (\"Plus\"/\"EZIP\") story file\n\
@@ -1292,36 +1292,36 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   x   print # for every 100 lines compiled\n\
   z   print memory map of the virtual machine\n\n");
 
-printf("\
+    printf("\
   B   use big memory model (for large V6/V7 files)\n\
   C0  text character set is plain ASCII only\n\
   Cu  text character set is UTF-8\n\
   Cn  text character set is ISO 8859-n (n = 1 to 9)\n\
       (1 to 4, Latin1 to Latin4; 5, Cyrillic; 6, Arabic;\n\
        7, Greek; 8, Hebrew; 9, Latin5.  Default is -C1.)\n");
-printf("  D   insert \"Constant DEBUG;\" automatically\n");
-printf("  E0  Archimedes-style error messages%s\n",
-      (error_format==0)?" (current setting)":"");
-printf("  E1  Microsoft-style error messages%s\n",
-      (error_format==1)?" (current setting)":"");
-printf("  E2  Macintosh MPW-style error messages%s\n",
-      (error_format==2)?" (current setting)":"");
-printf("  G   compile a Glulx game file\n");
-printf("  H   use Huffman encoding to compress Glulx strings\n");
+    printf("  D   insert \"Constant DEBUG;\" automatically\n");
+    printf("  E0  Archimedes-style error messages%s\n",
+        (error_format==0)?" (current setting)":"");
+    printf("  E1  Microsoft-style error messages%s\n",
+        (error_format==1)?" (current setting)":"");
+    printf("  E2  Macintosh MPW-style error messages%s\n",
+        (error_format==2)?" (current setting)":"");
+    printf("  G   compile a Glulx game file\n");
+    printf("  H   use Huffman encoding to compress Glulx strings\n");
 
 #ifdef ARCHIMEDES
-printf("\
+    printf("\
   R0  use filetype 060 + version number for games (default)\n\
   R1  use official Acorn filetype 11A for all games\n");
 #endif
-printf("  S   compile strict error-checking at run-time (on by default)\n");
+    printf("  S   compile strict error-checking at run-time (on by default)\n");
 #ifdef ARC_THROWBACK
-printf("  T   enable throwback of errors in the DDE\n");
+    printf("  T   enable throwback of errors in the DDE\n");
 #endif
-printf("  V   print the version and date of this program\n");
-printf("  Wn  header extension table is at least n words (n = 3 to 99)\n");
-printf("  X   compile with INFIX debugging facilities present\n");
-  printf("\n");
+    printf("  V   print the version and date of this program\n");
+    printf("  Wn  header extension table is at least n words (n = 3 to 99)\n");
+    printf("  X   compile with INFIX debugging facilities present\n");
+    printf("\n");
 }
 
 extern void switches(char *p, int cmode)

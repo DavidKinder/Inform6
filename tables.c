@@ -1697,63 +1697,63 @@ printf("        +---------------------+   %06lx\n", (long int) Write_Code_At);
 printf("        |        code         |   %s\n",
     show_percentage(Write_Strings_At-Write_Code_At, Out_Size));
 printf("        +---------------------+   %06lx\n",
-  (long int) Write_Strings_At);
+    (long int) Write_Strings_At);
 printf("        | string decode table |   %s\n",
     show_percentage(compression_table_size, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
-  (long int) Write_Strings_At + compression_table_size);
+    (long int) Write_Strings_At + compression_table_size);
 addr = (static_array_area_size ? static_arrays_at : Write_RAM_At+globals_at);
 printf("        |       strings       |   %s\n",
     show_percentage(addr-(Write_Strings_At + compression_table_size), Out_Size));
             if (static_array_area_size)
             {
 printf("        +---------------------+   %06lx\n", 
-  (long int) (static_arrays_at));
+    (long int) (static_arrays_at));
 printf("        |    static arrays    |   %s\n",
     show_percentage(Write_RAM_At+globals_at-static_arrays_at, Out_Size));
             }
 printf("        +=====================+   %06lx\n", 
-  (long int) (Write_RAM_At+globals_at));
+    (long int) (Write_RAM_At+globals_at));
 printf("Dynamic |  global variables   |   %s\n",
     show_percentage(arrays_at-globals_at, Out_Size));
 printf("memory  + - - - - - - - - - - +   %06lx\n",
-  (long int) (Write_RAM_At+arrays_at));
+    (long int) (Write_RAM_At+arrays_at));
 printf("        |       arrays        |   %s\n",
     show_percentage(abbrevs_at-arrays_at, Out_Size));
 printf("        +---------------------+   %06lx\n",
-  (long int) (Write_RAM_At+abbrevs_at));
+    (long int) (Write_RAM_At+abbrevs_at));
 printf("        | printing variables  |   %s\n",
     show_percentage(object_tree_at-abbrevs_at, Out_Size));
 printf("        +---------------------+   %06lx\n", 
-  (long int) (Write_RAM_At+object_tree_at));
+    (long int) (Write_RAM_At+object_tree_at));
 printf("        |       objects       |   %s\n",
     show_percentage(object_props_at-object_tree_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
-  (long int) (Write_RAM_At+object_props_at));
+    (long int) (Write_RAM_At+object_props_at));
 printf("        |   property values   |   %s\n",
     show_percentage(prop_defaults_at-object_props_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
-  (long int) (Write_RAM_At+prop_defaults_at));
+    (long int) (Write_RAM_At+prop_defaults_at));
 printf("        |  property defaults  |   %s\n",
     show_percentage(class_numbers_offset-prop_defaults_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
-  (long int) (Write_RAM_At+class_numbers_offset));
+    (long int) (Write_RAM_At+class_numbers_offset));
 printf("        | class numbers table |   %s\n",
     show_percentage(identifier_names_offset-class_numbers_offset, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n",
-  (long int) (Write_RAM_At+identifier_names_offset));
+    (long int) (Write_RAM_At+identifier_names_offset));
 printf("        |   id names table    |   %s\n",
     show_percentage(grammar_table_at-identifier_names_offset, Out_Size));
 printf("        +---------------------+   %06lx\n",
-  (long int) (Write_RAM_At+grammar_table_at));
+    (long int) (Write_RAM_At+grammar_table_at));
 printf("        |    grammar table    |   %s\n",
     show_percentage(actions_at-grammar_table_at, Out_Size));
 printf("        + - - - - - - - - - - +   %06lx\n", 
-  (long int) (Write_RAM_At+actions_at));
+    (long int) (Write_RAM_At+actions_at));
 printf("        |       actions       |   %s\n",
     show_percentage(dictionary_offset-(Write_RAM_At+actions_at), Out_Size));
 printf("        +---------------------+   %06lx\n", 
-  (long int) dictionary_offset);
+    (long int) dictionary_offset);
 printf("        |     dictionary      |   %s\n",
     show_percentage(Out_Size-dictionary_offset, Out_Size));
             if (MEMORY_MAP_EXTENSION == 0)

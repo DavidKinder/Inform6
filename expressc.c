@@ -19,8 +19,8 @@ int vivc_flag;                      /*  TRUE if the last code-generated
 /* These data structures are global, because they're too useful to be
    static. */
 assembly_operand stack_pointer, temp_var1, temp_var2, temp_var3,
-  temp_var4, zero_operand, one_operand, two_operand, three_operand,
-  four_operand, valueless_operand;
+    temp_var4, zero_operand, one_operand, two_operand, three_operand,
+    four_operand, valueless_operand;
 
 static void make_operands(void)
 {

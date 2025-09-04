@@ -473,8 +473,8 @@ static char *opcode_list_g[] = {
 };
 
 keyword_group opcode_macros =
-{ { "" },
-  OPCODE_MACRO_TT, FALSE, TRUE
+{   { "" },
+    OPCODE_MACRO_TT, FALSE, TRUE
 };
 
 static char *opmacro_list_z[] = { "" };

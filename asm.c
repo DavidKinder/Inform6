@@ -2965,7 +2965,7 @@ void assembleg_1(int internal_number, assembly_operand o1)
 }
 
 void assembleg_2(int internal_number, assembly_operand o1,
-  assembly_operand o2)
+    assembly_operand o2)
 {   AI.internal_number = internal_number;
     AI.operand_count = 2;
     AI.operand[0] = o1;
@@ -2974,7 +2974,7 @@ void assembleg_2(int internal_number, assembly_operand o1,
 }
 
 void assembleg_3(int internal_number, assembly_operand o1,
-  assembly_operand o2, assembly_operand o3)
+    assembly_operand o2, assembly_operand o3)
 {   AI.internal_number = internal_number;
     AI.operand_count = 3;
     AI.operand[0] = o1;
@@ -2984,8 +2984,8 @@ void assembleg_3(int internal_number, assembly_operand o1,
 }
 
 void assembleg_4(int internal_number, assembly_operand o1,
-  assembly_operand o2, assembly_operand o3,
-  assembly_operand o4)
+    assembly_operand o2, assembly_operand o3,
+    assembly_operand o4)
 {   AI.internal_number = internal_number;
     AI.operand_count = 4;
     AI.operand[0] = o1;
@@ -2996,8 +2996,8 @@ void assembleg_4(int internal_number, assembly_operand o1,
 }
 
 void assembleg_5(int internal_number, assembly_operand o1,
-  assembly_operand o2, assembly_operand o3,
-  assembly_operand o4, assembly_operand o5)
+    assembly_operand o2, assembly_operand o3,
+    assembly_operand o4, assembly_operand o5)
 {   AI.internal_number = internal_number;
     AI.operand_count = 5;
     AI.operand[0] = o1;
