@@ -24,32 +24,32 @@ assembly_operand stack_pointer, temp_var1, temp_var2, temp_var3,
 
 static void make_operands(void)
 {
-  if (!glulx_mode) {
-    INITAOTV(&stack_pointer, VARIABLE_OT, 0);
-    INITAOTV(&temp_var1, VARIABLE_OT, globalv_z_temp_var1);
-    INITAOTV(&temp_var2, VARIABLE_OT, globalv_z_temp_var2);
-    INITAOTV(&temp_var3, VARIABLE_OT, globalv_z_temp_var3);
-    INITAOTV(&temp_var4, VARIABLE_OT, globalv_z_temp_var4);
-    INITAOTV(&zero_operand, SHORT_CONSTANT_OT, 0);
-    INITAOTV(&one_operand, SHORT_CONSTANT_OT, 1);
-    INITAOTV(&two_operand, SHORT_CONSTANT_OT, 2);
-    INITAOTV(&three_operand, SHORT_CONSTANT_OT, 3);
-    INITAOTV(&four_operand, SHORT_CONSTANT_OT, 4);
-    INITAOTV(&valueless_operand, OMITTED_OT, 0);
-  }
-  else {
-    INITAOTV(&stack_pointer, LOCALVAR_OT, 0);
-    INITAOTV(&temp_var1, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+0);
-    INITAOTV(&temp_var2, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+1);
-    INITAOTV(&temp_var3, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+2);
-    INITAOTV(&temp_var4, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+3);
-    INITAOTV(&zero_operand, ZEROCONSTANT_OT, 0);
-    INITAOTV(&one_operand, BYTECONSTANT_OT, 1);
-    INITAOTV(&two_operand, BYTECONSTANT_OT, 2);
-    INITAOTV(&three_operand, BYTECONSTANT_OT, 3);
-    INITAOTV(&four_operand, BYTECONSTANT_OT, 4);
-    INITAOTV(&valueless_operand, OMITTED_OT, 0);
-  }
+    if (!glulx_mode) {
+        INITAOTV(&stack_pointer, VARIABLE_OT, 0);
+        INITAOTV(&temp_var1, VARIABLE_OT, globalv_z_temp_var1);
+        INITAOTV(&temp_var2, VARIABLE_OT, globalv_z_temp_var2);
+        INITAOTV(&temp_var3, VARIABLE_OT, globalv_z_temp_var3);
+        INITAOTV(&temp_var4, VARIABLE_OT, globalv_z_temp_var4);
+        INITAOTV(&zero_operand, SHORT_CONSTANT_OT, 0);
+        INITAOTV(&one_operand, SHORT_CONSTANT_OT, 1);
+        INITAOTV(&two_operand, SHORT_CONSTANT_OT, 2);
+        INITAOTV(&three_operand, SHORT_CONSTANT_OT, 3);
+        INITAOTV(&four_operand, SHORT_CONSTANT_OT, 4);
+        INITAOTV(&valueless_operand, OMITTED_OT, 0);
+    }
+    else {
+        INITAOTV(&stack_pointer, LOCALVAR_OT, 0);
+        INITAOTV(&temp_var1, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+0);
+        INITAOTV(&temp_var2, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+1);
+        INITAOTV(&temp_var3, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+2);
+        INITAOTV(&temp_var4, GLOBALVAR_OT, MAX_LOCAL_VARIABLES+3);
+        INITAOTV(&zero_operand, ZEROCONSTANT_OT, 0);
+        INITAOTV(&one_operand, BYTECONSTANT_OT, 1);
+        INITAOTV(&two_operand, BYTECONSTANT_OT, 2);
+        INITAOTV(&three_operand, BYTECONSTANT_OT, 3);
+        INITAOTV(&four_operand, BYTECONSTANT_OT, 4);
+        INITAOTV(&valueless_operand, OMITTED_OT, 0);
+    }
 }
 
 /* ------------------------------------------------------------------------- */
@@ -68,19 +68,19 @@ static void make_operands(void)
 #define LAST_CC (515)
 
 typedef struct condclass_s {
-  int32 posform; /* Opcode for the conditional in its positive form. */
-  int32 negform; /* Opcode for the conditional in its negated form. */
+    int32 posform; /* Opcode for the conditional in its positive form. */
+    int32 negform; /* Opcode for the conditional in its negated form. */
 } condclass;
 
 condclass condclasses[] = {
-  { jz_gc, jnz_gc },
-  { jeq_gc, jne_gc },
-  { jlt_gc, jge_gc },
-  { jgt_gc, jle_gc },
-  { -1, -1 },
-  { -1, -1 },
-  { -1, -1 },
-  { -1, -1 }
+    { jz_gc, jnz_gc },
+    { jeq_gc, jne_gc },
+    { jlt_gc, jge_gc },
+    { jgt_gc, jle_gc },
+    { -1, -1 },
+    { -1, -1 },
+    { -1, -1 },
+    { -1, -1 }
 };
 
 /* ------------------------------------------------------------------------- */
@@ -1184,141 +1184,141 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
     }
 
     if ((oc == aloadb_gc) || (oc == aload_gc)) 
-      assembleg_call_2(veneer_routine(vr), AO1, AO2, AO3);
+        assembleg_call_2(veneer_routine(vr), AO1, AO2, AO3);
     else
-      assembleg_call_3(veneer_routine(vr), AO1, AO2, AO3, zero_operand);
+        assembleg_call_3(veneer_routine(vr), AO1, AO2, AO3, zero_operand);
 }
 
 static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
-        int error_label, int rte_number)
+                                                   int error_label, int rte_number)
 {
-  assembly_operand AO, AO2, AO3;
-  int ln;
-  int check_sp = FALSE, passed_label, failed_label, last_label;
-  int pre_unreach;
+    assembly_operand AO, AO2, AO3;
+    int ln;
+    int check_sp = FALSE, passed_label, failed_label, last_label;
+    int pre_unreach;
   
-  if (veneer_mode) 
-    return AO1;
+    if (veneer_mode) 
+        return AO1;
 
-  /*  Assemble to code to check that the operand AO1 is ofclass Object:
-      if it is, execution should continue and the stack should be
-      unchanged.  Otherwise, call the veneer's run-time-error routine
-      with the given error number, and then: if the label isn't -1,
-      switch execution to this label, with the value popped from
-      the stack if it was on the stack in the first place;
-      if the label is -1, either replace the top of the stack with
-      the constant symbol (class-object) Object.
+    /*  Assemble to code to check that the operand AO1 is ofclass Object:
+        if it is, execution should continue and the stack should be
+        unchanged.  Otherwise, call the veneer's run-time-error routine
+        with the given error number, and then: if the label isn't -1,
+        switch execution to this label, with the value popped from
+        the stack if it was on the stack in the first place;
+        if the label is -1, either replace the top of the stack with
+        the constant symbol (class-object) Object.
 
-      The Object has no parent, child or sibling, so that the
-      built-in tree functions will safely return 0 on this object. */
+        The Object has no parent, child or sibling, so that the
+        built-in tree functions will safely return 0 on this object. */
 
-  /*  Sometimes we can already see that the object number is valid. */
-  if (AO1.marker == OBJECT_MV && 
-    ((AO1.value >= 1) && (AO1.value <= no_objects))) {
-    return AO1;
-  }
+    /*  Sometimes we can already see that the object number is valid. */
+    if (AO1.marker == OBJECT_MV && 
+        ((AO1.value >= 1) && (AO1.value <= no_objects))) {
+        return AO1;
+    }
 
-  pre_unreach = execution_never_reaches_here;
+    pre_unreach = execution_never_reaches_here;
   
-  passed_label = next_label++;
-  failed_label = next_label++;  
+    passed_label = next_label++;
+    failed_label = next_label++;  
 
-  if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0) && (AO1.marker == 0)) {
-    /* That is, if AO1 is the stack pointer */
-    check_sp = TRUE;
-    assembleg_store(temp_var2, stack_pointer);
-    assembleg_store(stack_pointer, temp_var2);
-    AO = temp_var2;
-  }
-  else {
-    AO = AO1;
-  }
-  
-  if ((rte_number == IN_RTE) || (rte_number == HAS_RTE)
-    || (rte_number == PROPERTY_RTE) || (rte_number == PROP_NUM_RTE)
-    || (rte_number == PROP_ADD_RTE)) {   
-    /* Allow classes */
-    /* Test if zero... */
-    assembleg_1_branch(jz_gc, AO, failed_label);
-    if (!pre_unreach && execution_never_reaches_here)
-        execution_never_reaches_here |= EXECSTATE_NOWARN;
-    /* Test if first byte is 0x70... */
-    assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
-    INITAO(&AO3);
-    AO3.value = 0x70; /* type byte -- object */
-    set_constant_ot(&AO3);
-    assembleg_2_branch(jeq_gc, stack_pointer, AO3, passed_label);
-  }
-  else {
-    /* Test if zero... */
-    assembleg_1_branch(jz_gc, AO, failed_label);
-    if (!pre_unreach && execution_never_reaches_here)
-        execution_never_reaches_here |= EXECSTATE_NOWARN;
-    /* Test if first byte is 0x70... */
-    assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
-    INITAO(&AO3);
-    AO3.value = 0x70; /* type byte -- object */
-    set_constant_ot(&AO3);
-    assembleg_2_branch(jne_gc, stack_pointer, AO3, failed_label);
-    /* Test if inside the "Class" object... */
-    INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
-    assembleg_3(aload_gc, AO, AO3, stack_pointer);
-    ln = get_symbol_index("Class");
-    if (ln < 0) {
-        error("No 'Class' object found");
-        AO3 = zero_operand;
+    if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0) && (AO1.marker == 0)) {
+        /* That is, if AO1 is the stack pointer */
+        check_sp = TRUE;
+        assembleg_store(temp_var2, stack_pointer);
+        assembleg_store(stack_pointer, temp_var2);
+        AO = temp_var2;
     }
     else {
-        AO3.value = symbols[ln].value;
-        AO3.marker = OBJECT_MV;
-        AO3.type = CONSTANT_OT;
+        AO = AO1;
     }
-    assembleg_2_branch(jne_gc, stack_pointer, AO3, passed_label);
-  }
   
-  assemble_label_no(failed_label);
-  INITAO(&AO2);
-  AO2.value = rte_number; 
-  set_constant_ot(&AO2);
-  assembleg_call_2(veneer_routine(RT__Err_VR), AO2, AO1, zero_operand);
-  
-  if (error_label != -1) {
-    /* Jump to the error label */
-    if (error_label == -3) assembleg_1(return_gc, zero_operand);
-    else if (error_label == -4) assembleg_1(return_gc, one_operand);
-    else assembleg_jump(error_label);
-  }
-  else {
-    /* Build the symbol for "Object" */
-    ln = get_symbol_index("Object");
-    if (ln < 0) {
-        error("No 'Object' object found");
-        AO2 = zero_operand;
+    if ((rte_number == IN_RTE) || (rte_number == HAS_RTE)
+        || (rte_number == PROPERTY_RTE) || (rte_number == PROP_NUM_RTE)
+        || (rte_number == PROP_ADD_RTE)) {   
+        /* Allow classes */
+        /* Test if zero... */
+        assembleg_1_branch(jz_gc, AO, failed_label);
+        if (!pre_unreach && execution_never_reaches_here)
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        /* Test if first byte is 0x70... */
+        assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
+        INITAO(&AO3);
+        AO3.value = 0x70; /* type byte -- object */
+        set_constant_ot(&AO3);
+        assembleg_2_branch(jeq_gc, stack_pointer, AO3, passed_label);
     }
     else {
-        AO2.value = symbols[ln].value;
-        AO2.marker = OBJECT_MV;
-        AO2.type = CONSTANT_OT;
+        /* Test if zero... */
+        assembleg_1_branch(jz_gc, AO, failed_label);
+        if (!pre_unreach && execution_never_reaches_here)
+            execution_never_reaches_here |= EXECSTATE_NOWARN;
+        /* Test if first byte is 0x70... */
+        assembleg_3(aloadb_gc, AO, zero_operand, stack_pointer);
+        INITAO(&AO3);
+        AO3.value = 0x70; /* type byte -- object */
+        set_constant_ot(&AO3);
+        assembleg_2_branch(jne_gc, stack_pointer, AO3, failed_label);
+        /* Test if inside the "Class" object... */
+        INITAOTV(&AO3, BYTECONSTANT_OT, GOBJFIELD_PARENT());
+        assembleg_3(aload_gc, AO, AO3, stack_pointer);
+        ln = get_symbol_index("Class");
+        if (ln < 0) {
+            error("No 'Class' object found");
+            AO3 = zero_operand;
+        }
+        else {
+            AO3.value = symbols[ln].value;
+            AO3.marker = OBJECT_MV;
+            AO3.type = CONSTANT_OT;
+        }
+        assembleg_2_branch(jne_gc, stack_pointer, AO3, passed_label);
     }
-    if (check_sp) {
-      /* Push "Object" */
-      assembleg_store(AO1, AO2);
+  
+    assemble_label_no(failed_label);
+    INITAO(&AO2);
+    AO2.value = rte_number; 
+    set_constant_ot(&AO2);
+    assembleg_call_2(veneer_routine(RT__Err_VR), AO2, AO1, zero_operand);
+  
+    if (error_label != -1) {
+        /* Jump to the error label */
+        if (error_label == -3) assembleg_1(return_gc, zero_operand);
+        else if (error_label == -4) assembleg_1(return_gc, one_operand);
+        else assembleg_jump(error_label);
     }
     else {
-      /* Store either "Object" or the operand's value in the temporary
-         variable. */
-      assembleg_store(temp_var2, AO2);
-      last_label = next_label++;
-      assembleg_jump(last_label);
-      assemble_label_no(passed_label);
-      assembleg_store(temp_var2, AO1);
-      assemble_label_no(last_label);
-      return temp_var2;
+        /* Build the symbol for "Object" */
+        ln = get_symbol_index("Object");
+        if (ln < 0) {
+            error("No 'Object' object found");
+            AO2 = zero_operand;
+        }
+        else {
+            AO2.value = symbols[ln].value;
+            AO2.marker = OBJECT_MV;
+            AO2.type = CONSTANT_OT;
+        }
+        if (check_sp) {
+            /* Push "Object" */
+            assembleg_store(AO1, AO2);
+        }
+        else {
+            /* Store either "Object" or the operand's value in the temporary
+               variable. */
+            assembleg_store(temp_var2, AO2);
+            last_label = next_label++;
+            assembleg_jump(last_label);
+            assemble_label_no(passed_label);
+            assembleg_store(temp_var2, AO1);
+            assemble_label_no(last_label);
+            return temp_var2;
+        }
     }
-  }
     
-  assemble_label_no(passed_label);
-  return AO1;
+    assemble_label_no(passed_label);
+    return AO1;
 }
 
 static void compile_conditional_g(condclass *cc,
@@ -1462,20 +1462,20 @@ static void compile_conditional_g(condclass *cc,
 
 static void value_in_void_context(assembly_operand AO)
 {
-  if (!glulx_mode)
-    value_in_void_context_z(AO);
-  else
-    value_in_void_context_g(AO);
+    if (!glulx_mode)
+        value_in_void_context_z(AO);
+    else
+        value_in_void_context_g(AO);
 }
 
 
 extern assembly_operand check_nonzero_at_runtime(assembly_operand AO1,
-  int error_label, int rte_number)
+    int error_label, int rte_number)
 {
-  if (!glulx_mode)
-    return check_nonzero_at_runtime_z(AO1, error_label, rte_number);
-  else
-    return check_nonzero_at_runtime_g(AO1, error_label, rte_number);
+    if (!glulx_mode)
+        return check_nonzero_at_runtime_z(AO1, error_label, rte_number);
+    else
+        return check_nonzero_at_runtime_g(AO1, error_label, rte_number);
 }
 
 static void generate_code_from(int n, int void_flag)
