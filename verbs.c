@@ -627,11 +627,11 @@ extern assembly_operand action_of_name(char *name)
     AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
     if (!glulx_mode) {
-      AO.type = SHORT_CONSTANT_OT;
-      if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
+        AO.type = SHORT_CONSTANT_OT;
+        if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
     }
     else {
-      AO.type = CONSTANT_OT;
+        AO.type = CONSTANT_OT;
     }
     return AO;
 }

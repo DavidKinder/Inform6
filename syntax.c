@@ -349,7 +349,7 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
         }
         else {
             spec_stack[spec_sp] =
-      code_generate(parse_expression(CONSTANT_CONTEXT), CONSTANT_CONTEXT, -1);
+                code_generate(parse_expression(CONSTANT_CONTEXT), CONSTANT_CONTEXT, -1);
         }
 
         misc_keywords.enabled = TRUE;
