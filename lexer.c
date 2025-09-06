@@ -178,7 +178,7 @@ extern debug_locations get_token_location_end
        prior block and last exactly zero bytes there.  It's misleading to
        include such ranges, so we gobble them. */
     if (beginning.head->location.end_byte_index ==
-          beginning.beginning_byte_index &&
+        beginning.beginning_byte_index &&
         beginning.head->next)
     {   beginning.head = beginning.head->next;
         result.location = beginning.head->location;
@@ -473,8 +473,8 @@ static char *opcode_list_g[] = {
 };
 
 keyword_group opcode_macros =
-{ { "" },
-  OPCODE_MACRO_TT, FALSE, TRUE
+{   { "" },
+    OPCODE_MACRO_TT, FALSE, TRUE
 };
 
 static char *opmacro_list_z[] = { "" };

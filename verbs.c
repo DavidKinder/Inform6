@@ -109,27 +109,27 @@ static int English_verbs_text_size;
 /*   Arrays used by this file                                                */
 /* ------------------------------------------------------------------------- */
 
-  verbt   *Inform_verbs;  /* Allocated up to no_Inform_verbs */
-  static memory_list Inform_verbs_memlist;
-  uchar   *grammar_lines; /* Allocated to grammar_lines_top */
-  static memory_list grammar_lines_memlist;
-  int32    grammar_lines_top;
-  int      no_grammar_lines, no_grammar_tokens;
+verbt   *Inform_verbs;  /* Allocated up to no_Inform_verbs */
+static memory_list Inform_verbs_memlist;
+uchar   *grammar_lines; /* Allocated to grammar_lines_top */
+static memory_list grammar_lines_memlist;
+int32    grammar_lines_top;
+int      no_grammar_lines, no_grammar_tokens;
 
-  actioninfo *actions; /* Allocated to no_actions */
-  memory_list actions_memlist;
-  int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
-  static memory_list grammar_token_routine_memlist;
-  actionsort *sorted_actions; /* only used if GRAMMAR_META_FLAG */
-  int no_meta_actions; /* only used if GRAMMAR_META_FLAG */
+actioninfo *actions; /* Allocated to no_actions */
+memory_list actions_memlist;
+int32   *grammar_token_routine; /* Allocated to no_grammar_token_routines */
+static memory_list grammar_token_routine_memlist;
+actionsort *sorted_actions; /* only used if GRAMMAR_META_FLAG */
+int no_meta_actions; /* only used if GRAMMAR_META_FLAG */
 
-  int32   *adjectives; /* Allocated to no_adjectives */
-  static memory_list adjectives_memlist;
+int32   *adjectives; /* Allocated to no_adjectives */
+static memory_list adjectives_memlist;
 
-  static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES, except it's sometimes no_adjectives+1 because we can bump it tentatively */
-  static memory_list adjective_sort_code_memlist;
+static uchar *adjective_sort_code; /* Allocated to no_adjectives*DICT_WORD_BYTES, except it's sometimes no_adjectives+1 because we can bump it tentatively */
+static memory_list adjective_sort_code_memlist;
 
-  static memory_list action_symname_memlist; /* Used for temporary symbols */
+static memory_list action_symname_memlist; /* Used for temporary symbols */
 
 /* ------------------------------------------------------------------------- */
 /*   Grammar version                                                         */
@@ -586,9 +586,9 @@ extern assembly_operand action_of_name(char *name)
     {   INITAO(&AO);
         AO.value = symbols[j].value;
         if (!glulx_mode)
-          AO.type = LONG_CONSTANT_OT;
+            AO.type = LONG_CONSTANT_OT;
         else
-          set_constant_ot(&AO);
+            set_constant_ot(&AO);
         symbols[j].flags |= USED_SFLAG;
         return AO;
     }
@@ -627,11 +627,11 @@ extern assembly_operand action_of_name(char *name)
     AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
     if (!glulx_mode) {
-      AO.type = SHORT_CONSTANT_OT;
-      if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
+        AO.type = SHORT_CONSTANT_OT;
+        if (symbols[j].value >= 256) AO.type = LONG_CONSTANT_OT;
     }
     else {
-      AO.type = CONSTANT_OT;
+        AO.type = CONSTANT_OT;
     }
     return AO;
 }
@@ -706,8 +706,8 @@ static int make_adjective_v1(char *English_word)
     dictionary_prepare(English_word, new_sort_code);
     for (i=0; i<no_adjectives; i++)
         if (compare_sorts(new_sort_code,
-          adjective_sort_code+i*DICT_WORD_BYTES) == 0)
-            return(0xff-i);
+            adjective_sort_code+i*DICT_WORD_BYTES) == 0)
+                return(0xff-i);
     adjectives[no_adjectives]
         = dictionary_add(English_word,PREP_DFLAG,0,0xff-no_adjectives);
     return(0xff-no_adjectives++);

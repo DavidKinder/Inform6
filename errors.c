@@ -570,8 +570,8 @@ extern int compiler_error_named(char *s1, char *s2)
 #include "kernel.h"
 
 extern void throwback_start(void)
-{    _kernel_swi_regs regs;
-     if (throwback_switch)
+{   _kernel_swi_regs regs;
+    if (throwback_switch)
          _kernel_swi(DDEUtils_ThrowbackStart, &regs, &regs);
 }
 
