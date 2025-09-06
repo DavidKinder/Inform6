@@ -235,7 +235,7 @@ static int32 backpatch_value_z(int32 value)
                             value = df_stripped_address_for_address(value);
                         value += code_offset/scale_factor; 
                         break;
-                    case ARRAY_T: value += variables_offset; break;
+                    case ARRAY_T: value += variables_offset - zcode_compact_globals_adjustment; break;
                     case STATIC_ARRAY_T: value += static_arrays_offset; break;
                 }
             }
