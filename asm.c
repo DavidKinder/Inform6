@@ -1212,6 +1212,8 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         if (long_form==1)
         {
             int marker = BRANCH_MV + (zmachine_pc - offset);
+            if (marker >= BRANCHMAX_MV)
+                fatalerror("Branch instruction too long.");
             byteout(branch_on_true*0x80 + addr/256, marker);
             byteout(addr%256, 0);
         }
