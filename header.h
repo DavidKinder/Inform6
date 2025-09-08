@@ -1972,8 +1972,8 @@ typedef struct operator_s
 /* Values 32-35 were used only for module import/export. */
 
 /* Values used only in branch backpatching: */
-/* BRANCH_MV must be last; Glulx uses the whole range from BRANCH_MV
-   to BRANCHMAX_MV. */
+/* BRANCH_MV must be last; we use the whole range from BRANCH_MV to
+   BRANCHMAX_MV. */
 
 #define LABEL_MV              36     /* Ditto: marks "jump" operands */
 #define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
@@ -1982,7 +1982,8 @@ typedef struct operator_s
                                         BRANCHMAX_MV all means the same thing.
                                         The position within the range means
                                         how far back from the label to go
-                                        to find the opmode byte to modify. */
+                                        to find the opcode byte (Z) or the
+                                        opmode byte to modify (G). */
 
 /* ------------------------------------------------------------------------- */
 /*   "String contexts"; the purpose for a given string. This info gets       */
