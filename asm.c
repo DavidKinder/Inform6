@@ -709,7 +709,7 @@ static opcodeg opcodes_table_g[] = {
     { (uchar *) "sshiftr",    0x1D, St, 0, 3 },
     { (uchar *) "ushiftr",    0x1E, St, 0, 3 },
     { (uchar *) "jump",       0x20, Br|Rf, 0, 1 },
-    { (uchar *) "jz",     0x22, Br, 0, 2 },
+    { (uchar *) "jz",         0x22, Br, 0, 2 },
     { (uchar *) "jnz",        0x23, Br, 0, 2 },
     { (uchar *) "jeq",        0x24, Br, 0, 3 },
     { (uchar *) "jne",        0x25, Br, 0, 3 },
