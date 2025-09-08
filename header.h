@@ -1978,10 +1978,10 @@ typedef struct operator_s
    byte (Z) or the opmode byte (G).
 */
 
-#define LABEL_MV              36     /* Ditto: marks "jump" operands */
-#define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
-#define BRANCH_MV             38     /* Used in "asm.c" for routine coding */
-#define BRANCHMAX_MV          102
+#define LABEL_MV              36     /* Marks "jump" operands */
+#define DELETED_MV            37     /* Marks bytes deleted from code */
+#define BRANCH_MV             38     /* Marks "branch" operands... */
+#define BRANCHMAX_MV          102    /* ...through here */
 
 /* ------------------------------------------------------------------------- */
 /*   "String contexts"; the purpose for a given string. This info gets       */
