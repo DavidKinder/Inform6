@@ -1972,18 +1972,16 @@ typedef struct operator_s
 /* Values 32-35 were used only for module import/export. */
 
 /* Values used only in branch backpatching: */
-/* BRANCH_MV must be last; we use the whole range from BRANCH_MV to
-   BRANCHMAX_MV. */
+/* BRANCH_MV must be last; the whole range from BRANCH_MV to BRANCHMAX_MV
+   are branch markers. The value (m-BRANCH_MV) is an offset in the range
+   0 to 63. Looking back this many bytes allows you to find the opcode
+   byte (Z) or the opmode byte (G).
+*/
 
 #define LABEL_MV              36     /* Ditto: marks "jump" operands */
 #define DELETED_MV            37     /* Ditto: marks bytes deleted from code */
 #define BRANCH_MV             38     /* Used in "asm.c" for routine coding */
-#define BRANCHMAX_MV          102    /* In fact, the range BRANCH_MV to 
-                                        BRANCHMAX_MV all means the same thing.
-                                        The position within the range means
-                                        how far back from the label to go
-                                        to find the opcode byte (Z) or the
-                                        opmode byte to modify (G). */
+#define BRANCHMAX_MV          102
 
 /* ------------------------------------------------------------------------- */
 /*   "String contexts"; the purpose for a given string. This info gets       */
