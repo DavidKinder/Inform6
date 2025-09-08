@@ -1210,11 +1210,15 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         }
         if (addr > 0x7fff) fatalerror("Too many branch points in routine.");
         if (long_form==1)
-        {   byteout(branch_on_true*0x80 + addr/256, BRANCH_MV);
+        {
+            int marker = BRANCH_MV + (zmachine_pc - offset);
+            byteout(branch_on_true*0x80 + addr/256, marker);
             byteout(addr%256, 0);
         }
         else
+        {
             byteout(branch_on_true*0x80+ 0x40 + (addr&0x3f), 0);
+        }
     }
 
     Instruction_Done:
@@ -2174,7 +2178,7 @@ static void transfer_routine_z(void)
             whether this orphans the destination opcode.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
-    {   if (zcode_markers[i] == BRANCH_MV)
+    {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
         {   if (asm_trace_level >= 4)
                 printf("Branch detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
@@ -2254,7 +2258,11 @@ static void transfer_routine_z(void)
     ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
     
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++)
-    {   switch(zcode_markers[i])
+    {
+        int marker = zcode_markers[i];
+        if (marker >= BRANCH_MV && marker < BRANCHMAX_MV)
+            marker = BRANCH_MV;
+        switch(marker)
         { case BRANCH_MV:
             long_form = 1; if (zcode_markers[i+1] == DELETED_MV) long_form = 0;
 
