@@ -2199,24 +2199,24 @@ static void transfer_routine_z(void)
             
             /* Now we have to partially decode branch_opcode. */
             if (version_number >= 5 && branch_opcode == 0xBE)
-                branch_opcode = 0xFF; /* EXT, but we're not going to optimize any EXT branches */
+                branch_opcode = 0x400; /* EXT, but we're not going to optimize any EXT branches */
             else if (branch_opcode < 0x80)
-                branch_opcode &= 0x1F; /* TWO-OP */
+                branch_opcode = 0x200 + (branch_opcode & 0x1F); /* TWO-OP */
             else if (branch_opcode < 0xB0)
-                branch_opcode &= 0x0F; /* ONE-OP */
+                branch_opcode = 0x100 + (branch_opcode & 0x0F); /* ONE-OP */
             else if (branch_opcode < 0xC0)
-                branch_opcode &= 0x0F; /* ZERO-OP */
+                branch_opcode = (branch_opcode & 0x0F); /* ZERO-OP */
             else
-                branch_opcode &= 0x3F; /* VAR-OP */
+                branch_opcode = 0x200 + (branch_opcode & 0x3F); /* VAR-OP */
             
             /* (rtrue/rfalse have no operands so they always appear as
                B0/B1.) */
             if ((    opcode_at_label == 0xB0   /* rtrue */
                   || opcode_at_label == 0xB1)  /* rfalse */
-                && (   branch_opcode == 0x00   /* jz */
-                    || branch_opcode == 0x01   /* je */
-                    || branch_opcode == 0x02   /* jl */
-                    || branch_opcode == 0x03)) /* jg */
+                && (   branch_opcode == 0x100   /* jz */
+                    || branch_opcode == 0x201   /* je */
+                    || branch_opcode == 0x202   /* jl */
+                    || branch_opcode == 0x203)) /* jg */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
