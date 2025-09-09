@@ -2196,12 +2196,27 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
+            
+            /* Now we have to partially decode branch_opcode. */
+            if (version_number >= 5 && branch_opcode == 0xBE)
+                branch_opcode = 0xFF; /* EXT, but we're not going to optimize any EXT branches */
+            else if (branch_opcode < 0x80)
+                branch_opcode &= 0x1F; /* TWO-OP */
+            else if (branch_opcode < 0xB0)
+                branch_opcode &= 0x0F; /* ONE-OP */
+            else if (branch_opcode < 0xC0)
+                branch_opcode &= 0x0F; /* ZERO-OP */
+            else
+                branch_opcode &= 0x3F; /* VAR-OP */
+            
+            /* (rtrue/rfalse have no operands so they always appear as
+               B0/B1.) */
             if ((    opcode_at_label == 0xB0   /* rtrue */
                   || opcode_at_label == 0xB1)  /* rfalse */
-                && (   branch_opcode == 0xA0   /* jz */
-                    || branch_opcode == 0x41   /* je */
-                    || branch_opcode == 0x42   /* jl */
-                    || branch_opcode == 0x43)) /* jg */
+                && (   branch_opcode == 0x00   /* jz */
+                    || branch_opcode == 0x01   /* je */
+                    || branch_opcode == 0x02   /* jl */
+                    || branch_opcode == 0x03)) /* jg */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
