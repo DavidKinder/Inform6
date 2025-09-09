@@ -2183,7 +2183,7 @@ static void transfer_routine_z(void)
             Also branches to an rtrue/rfalse opcode, which can be converted
             to the rtrue/rfalse form of the branch. (Same orphan problem
             applies.) */
-
+      
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
         {
@@ -2196,8 +2196,11 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if ((opcode_at_label == 0xB0 || opcode_at_label == 0xB1)
-                && (branch_opcode == 0xA0 || branch_opcode == 0x41 || branch_opcode == 0x42))
+            if ((opcode_at_label == 0xB0       /* rtrue */
+                 || opcode_at_label == 0xB1)   /* rfalse */
+                && (branch_opcode == 0xA0      /* jz */
+                    || branch_opcode == 0x41   /* jl */
+                    || branch_opcode == 0x42)) /* jg */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
@@ -2223,14 +2226,9 @@ static void transfer_routine_z(void)
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
-            else if (opcode_at_label == 0xB0
-                || opcode_at_label == 0xB1
-                || opcode_at_label == 0xB8) {
-                /* 0xB0, 0xB1, and 0xB8 are the encoded forms of rtrue_zc,
-                   rfalse_zc, and ret_popped_zc. It would be cleaner
-                   to pull these from opcodes_table_z[] (adding 0xB0 for
-                   the opcode form) but it's not like they're going to
-                   ever change. */
+            else if (opcode_at_label == 0xB0   /* rtrue */
+                || opcode_at_label == 0xB1     /* rfalse */
+                || opcode_at_label == 0xB8) {  /* ret_popped */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
