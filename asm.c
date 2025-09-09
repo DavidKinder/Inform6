@@ -2196,11 +2196,11 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if ((opcode_at_label == 176 || opcode_at_label == 177)
+            if ((opcode_at_label == 0xB0 || opcode_at_label == 0xB1)
                 && (branch_opcode == 0xA0 || branch_opcode == 0x41 || branch_opcode == 0x42))
             {
-                if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 176) ? "rtrue" : "rfalse"));
-                zcode_markers[i+1] = (opcode_at_label == 176) ? DELETEDT_MV : DELETEDF_MV;
+                if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
+                zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
             }
             else if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
             {
@@ -2223,10 +2223,10 @@ static void transfer_routine_z(void)
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
-            else if (opcode_at_label == 176
-                || opcode_at_label == 177
-                || opcode_at_label == 184) {
-                /* 176, 177, and 184 are the encoded forms of rtrue_zc,
+            else if (opcode_at_label == 0xB0
+                || opcode_at_label == 0xB1
+                || opcode_at_label == 0xB8) {
+                /* 0xB0, 0xB1, and 0xB8 are the encoded forms of rtrue_zc,
                    rfalse_zc, and ret_popped_zc. It would be cleaner
                    to pull these from opcodes_table_z[] (adding 0xB0 for
                    the opcode form) but it's not like they're going to
