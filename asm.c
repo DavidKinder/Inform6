@@ -2199,8 +2199,9 @@ static void transfer_routine_z(void)
             if ((    opcode_at_label == 0xB0   /* rtrue */
                   || opcode_at_label == 0xB1)  /* rfalse */
                 && (   branch_opcode == 0xA0   /* jz */
-                    || branch_opcode == 0x41   /* jl */
-                    || branch_opcode == 0x42)) /* jg */
+                    || branch_opcode == 0x41   /* je */
+                    || branch_opcode == 0x42   /* jl */
+                    || branch_opcode == 0x43)) /* jg */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
