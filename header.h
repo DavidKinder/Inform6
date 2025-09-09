@@ -1978,7 +1978,7 @@ typedef struct operator_s
    byte (Z) or the opmode byte (G).
 */
 
-#define LABEL_MV              36     /* Marks "jump" operands */
+#define JUMP_MV               36     /* Marks "jump" operands */
 #define DELETED_MV            37     /* Marks bytes deleted from code */
 #define BRANCH_MV             38     /* Marks "branch" operands... */
 #define BRANCHMAX_MV          102    /* ...through here */

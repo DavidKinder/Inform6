@@ -1093,7 +1093,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     if (operand_rules==LABEL)
     {   j = (AI->operand[0]).value;
         mark_label_used(j);
-        byteout(j/256, LABEL_MV); byteout(j%256, 0);
+        byteout(j/256, JUMP_MV); byteout(j%256, 0);
         goto Instruction_Done;
     }
 
@@ -2198,7 +2198,7 @@ static void transfer_routine_z(void)
                 zcode_markers[i+1] = DELETED_MV;
             }
         }
-        else if (zcode_markers[i] == LABEL_MV)
+        else if (zcode_markers[i] == JUMP_MV)
         {
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
@@ -2307,7 +2307,7 @@ static void transfer_routine_z(void)
             zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
-          case LABEL_MV:
+          case JUMP_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
             if (labels[j].offset < 0) {
                 char *lname = "(anon)";
@@ -2556,8 +2556,8 @@ static void transfer_routine_g(void)
             }
             zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
         }
-        else if (zcode_markers[i] == LABEL_MV) {
-            error("*** No LABEL opcodes in Glulx ***");
+        else if (zcode_markers[i] == JUMP_MV) {
+            error("*** No JUMP markers in Glulx ***");
         }
         else if (zcode_markers[i] == DELETED_MV) {
             /* skip it */
