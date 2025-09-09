@@ -2196,9 +2196,9 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if ((opcode_at_label == 0xB0       /* rtrue */
-                 || opcode_at_label == 0xB1)   /* rfalse */
-                && (branch_opcode == 0xA0      /* jz */
+            if ((    opcode_at_label == 0xB0   /* rtrue */
+                  || opcode_at_label == 0xB1)  /* rfalse */
+                && (   branch_opcode == 0xA0   /* jz */
                     || branch_opcode == 0x41   /* jl */
                     || branch_opcode == 0x42)) /* jg */
             {
@@ -2226,9 +2226,9 @@ static void transfer_routine_z(void)
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
-            else if (opcode_at_label == 0xB0   /* rtrue */
-                || opcode_at_label == 0xB1     /* rfalse */
-                || opcode_at_label == 0xB8) {  /* ret_popped */
+            else if (opcode_at_label == 0xB0     /* rtrue */
+                ||   opcode_at_label == 0xB1     /* rfalse */
+                ||   opcode_at_label == 0xB8) {  /* ret_popped */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
