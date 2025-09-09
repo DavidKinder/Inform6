@@ -1978,10 +1978,12 @@ typedef struct operator_s
    byte (Z) or the opmode byte (G).
 */
 
-#define JUMP_MV               36     /* Marks "jump" operands */
-#define DELETED_MV            37     /* Marks bytes deleted from code */
-#define BRANCH_MV             38     /* Marks "branch" operands... */
-#define BRANCHMAX_MV          102    /* ...through here */
+#define DELETED_MV            36     /* Marks bytes deleted from code */
+#define DELETEDF_MV           37     /* ...branch arg rfalse */
+#define DELETEDT_MV           38     /* ...branch arg rtrue */
+#define JUMP_MV               39     /* Marks "jump" operands */
+#define BRANCH_MV             40     /* Marks "branch" operands... */
+#define BRANCHMAX_MV          104    /* ...through here */
 
 /* ------------------------------------------------------------------------- */
 /*   "String contexts"; the purpose for a given string. This info gets       */

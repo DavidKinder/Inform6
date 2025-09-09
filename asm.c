@@ -2158,7 +2158,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 /* ------------------------------------------------------------------------- */
 
 static void transfer_routine_z(void)
-{   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
+{   int32 i, j, pc, new_pc, label, long_form, addr,
           branch_on_true, rstart_pc;
     int32 adjusted_pc, opcode_at_label;
 
@@ -2179,7 +2179,10 @@ static void transfer_routine_z(void)
             are jumping to a (one-byte) return opcode. The jump opcode is
             replaced by a copy of the destination opcode; the label bytes
             get DELETED_MV. (However, we don't do the extra work to detect
-            whether this orphans the destination opcode.) */
+            whether this orphans the destination opcode.)
+            Also branches to an rtrue/rfalse opcode, which can be converted
+            to the rtrue/rfalse form of the branch. (Same orphan problem
+            applies.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
@@ -2193,8 +2196,15 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
-            {   if (asm_trace_level >= 4) printf("...Using short form\n");
+            if ((opcode_at_label == 176 || opcode_at_label == 177)
+                && (branch_opcode == 0xA0 || branch_opcode == 0x41 || branch_opcode == 0x42))
+            {
+                if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 176) ? "rtrue" : "rfalse"));
+                zcode_markers[i+1] = (opcode_at_label == 176) ? DELETEDT_MV : DELETEDF_MV;
+            }
+            else if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
+            {
+                if (asm_trace_level >= 4) printf("...Using short form\n");
                 zcode_markers[i+1] = DELETED_MV;
             }
         }
@@ -2255,7 +2265,7 @@ static void transfer_routine_z(void)
                 labels[label].offset = new_pc;
                 label = labels[label].next;
             }
-           if (zcode_markers[i] != DELETED_MV) new_pc++;
+           if (zcode_markers[i] != DELETED_MV && zcode_markers[i] != DELETEDT_MV && zcode_markers[i] != DELETEDF_MV) new_pc++;
         }
     }
 
@@ -2272,22 +2282,37 @@ static void transfer_routine_z(void)
             marker = BRANCH_MV;
         switch(marker)
         { case BRANCH_MV:
-            long_form = 1; if (zcode_markers[i+1] == DELETED_MV) long_form = 0;
-
-            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            branch_on_true = ((zcode_holding_area[i]) & 0x80);
-            offset_of_next = new_pc + long_form + 1;
-
-            if (labels[j].offset < 0) {
-                char *lname = "(anon)";
-                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
-                    lname = symbols[labels[j].symbol].name;
-                error_named("Attempt to jump to an unreachable label", lname);
-                addr = 0;
+            long_form = 1;
+            if (zcode_markers[i+1] == DELETEDT_MV) {
+                long_form = 0;
+                addr = 1; /* rtrue */
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
+            }
+            else if (zcode_markers[i+1] == DELETEDF_MV) {
+                long_form = 0;
+                addr = 0; /* rfalse */
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
             }
             else {
-                addr = labels[j].offset - offset_of_next + 2;
+                int32 offset_of_next;
+                if (zcode_markers[i+1] == DELETED_MV) long_form = 0;
+
+                j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
+                offset_of_next = new_pc + long_form + 1;
+
+                if (labels[j].offset < 0) {
+                    char *lname = "(anon)";
+                    if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                        lname = symbols[labels[j].symbol].name;
+                    error_named("Attempt to jump to an unreachable label", lname);
+                    addr = 0;
+                }
+                else {
+                    addr = labels[j].offset - offset_of_next + 2;
+                }
             }
+            
             if (addr<-0x2000 || addr>0x1fff) 
                 error_fmt("Branch out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr+=(int32) 0x10000L;
@@ -2328,6 +2353,8 @@ static void transfer_routine_z(void)
             break;
 
           case DELETED_MV:
+          case DELETEDT_MV:
+          case DELETEDF_MV:
             break;
 
           default:
