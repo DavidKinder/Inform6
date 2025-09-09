@@ -102,8 +102,8 @@ static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
 static memory_list labels_memlist;
 static int first_label, last_label;
 
-static int *labeluse;     /* Flags indicating whether a given label has been
-                             used as a branch target yet. */
+static int *labeluse;     /* Counters indicating how many times a given label
+                             has been used as a branch target. */
 static memory_list labeluse_memlist;
 static int labeluse_size; /* Entries up to here are initialized */
 
@@ -246,9 +246,9 @@ static void mark_label_used(int label)
        entries to FALSE. */
     ensure_memory_list_available(&labeluse_memlist, label+1);
     for (; labeluse_size < label+1; labeluse_size++) {
-        labeluse[labeluse_size] = FALSE;
+        labeluse[labeluse_size] = 0;
     }
-    labeluse[label] = TRUE;
+    labeluse[label] += 1;
 }
 
 /* ------------------------------------------------------------------------- */
