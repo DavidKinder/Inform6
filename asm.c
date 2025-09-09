@@ -2183,12 +2183,16 @@ static void transfer_routine_z(void)
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
-        {   if (asm_trace_level >= 4)
-                printf("Branch detected at offset %04x\n", pc);
-            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+        {
+            int branch_opcode = zcode_holding_area[i - (zcode_markers[i] - BRANCH_MV)];
             if (asm_trace_level >= 4)
-                printf("...To label %d, which is %d from here\n",
-                    j, labels[j].offset-pc);
+                printf("Branch detected at offset %04x (branch opcode %x)\n",
+                    pc, branch_opcode);
+            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
+            if (asm_trace_level >= 4)
+                printf("...To label %d (opcode %x), which is %d from here\n",
+                    j, opcode_at_label, labels[j].offset-pc);
             if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
             {   if (asm_trace_level >= 4) printf("...Using short form\n");
                 zcode_markers[i+1] = DELETED_MV;
@@ -2201,8 +2205,8 @@ static void transfer_routine_z(void)
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
             opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
             if (asm_trace_level >= 4)
-                printf("...To label %d, which is %d from here\n",
-                    j, labels[j].offset-pc);
+                printf("...To label %d (opcode %x), which is %d from here\n",
+                    j, opcode_at_label, labels[j].offset-pc);
             if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
                 zcode_markers[i-1] = DELETED_MV;
