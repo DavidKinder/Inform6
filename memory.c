@@ -136,7 +136,7 @@ extern void my_recalloc(void *pointer, size_t size, size_t oldhowmany,
     }
     c=realloc(*(int **)pointer, size*howmany);
     if (howmany > oldhowmany)
-        memset(c+size*oldhowmany, 0, size*(howmany-oldhowmany));
+        memset((char *)c+size*oldhowmany, 0, size*(howmany-oldhowmany));
     malloced_bytes+=size*(howmany-oldhowmany);
     if (c==0) fatalerror_memory_out(size, howmany, whatfor);
     if (memout_switch)
