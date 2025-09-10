@@ -1101,6 +1101,10 @@ or less.");
     if (memory_map_setting)
     {
         int32 addr;
+        int globseglen = 480;
+        if (ZCODE_COMPACT_GLOBALS)
+            globseglen = no_globals*WORDSIZE;
+        
         {
 printf("Dynamic +---------------------+   00000\n");
 printf("memory  |       header        |   %s\n",
@@ -1154,11 +1158,11 @@ printf("        | indiv prop values   |   %s\n",
     show_percentage(globals_at-individuals_offset, Out_Size));
 printf("        +---------------------+   %05lx\n", (long int) globals_at);
 printf("        |  global variables   |   %s\n",
-    show_percentage(480, Out_Size));
+    show_percentage(globseglen, Out_Size));
 printf("        + - - - - - - - - - - +   %05lx\n",
-                                          ((long int) globals_at)+480L);
+                                          ((long int) globals_at)+globseglen);
 printf("        |       arrays        |   %s\n",
-    show_percentage(grammar_table_at-(globals_at+480), Out_Size));
+    show_percentage(grammar_table_at-(globals_at+globseglen), Out_Size));
 printf("        +=====================+   %05lx\n",
                                           (long int) grammar_table_at);
 printf("Readable|    grammar table    |   %s\n",
