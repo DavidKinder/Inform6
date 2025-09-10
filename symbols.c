@@ -1671,10 +1671,8 @@ extern void symbols_allocate_arrays(void)
         df_tables_closed = FALSE;
 
         df_symbol_map = my_calloc(sizeof(df_reference_t *), DF_SYMBOL_HASH_BUCKETS, "df symbol-map hash table");
-        memset(df_symbol_map, 0, sizeof(df_reference_t *) * DF_SYMBOL_HASH_BUCKETS);
 
         df_functions = my_calloc(sizeof(df_function_t *), DF_FUNCTION_HASH_BUCKETS, "df function hash table");
-        memset(df_functions, 0, sizeof(df_function_t *) * DF_FUNCTION_HASH_BUCKETS);
         df_functions_head = NULL;
         df_functions_tail = NULL;
 
