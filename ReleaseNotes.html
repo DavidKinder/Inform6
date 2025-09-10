@@ -37,9 +37,14 @@ Previously, the options specified in the source code took precedence.
 
 <h3>Bugs fixed</h3>
 <ul>
-<li>A case where the line number in a "no such constant" error message was wrong has been fixed.
-<li>With <tt>$ZCODE_COMPACT_GLOBALS</tt> turned on, references in functions to arrays before the array declaration were
+<li><p>A problem with dynamic memory reallocation used for buffers in the compiler, which could lead to spurious errors when
+compiling with Inform 6.43.
+<li><p>A case where the line number in a "no such constant" error message was wrong.
+<li><p>With <tt>$ZCODE_COMPACT_GLOBALS</tt> turned on, references in functions to arrays before the array declaration were
 backpatched to an incorrect address.
+<li><p>The Z-machine memory map, in verbose <tt>--trace MAP=3</tt> mode, gave an incorrect size for the global variables area
+right when used with <tt>$ZCODE_COMPACT_GLOBALS</tt>.
+<li><p>The optimization logic could read outside allocated memory if it encountered an undefined label.
 </ul>
 
 <h2>Inform 6.43</h2>
