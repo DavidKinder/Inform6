@@ -559,8 +559,8 @@ static void construct_storyfile_z(void)
        There's normally 240 globals, but with ZCODE_COMPACT_GLOBALS it
        might be less. */
 
-    if (mark < globals_at+480)
-        mark = globals_at+480;
+    while (mark < globals_at+480)
+        p[mark++] = 0;
 
     /*  ------------------------ Grammar Table ----------------------------- */
 
