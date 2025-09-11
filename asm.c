@@ -2192,6 +2192,7 @@ static void transfer_routine_z(void)
                 printf("Branch detected at offset %04x (branch opcode %x)\n",
                     pc, branch_opcode);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            //### check!
             opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
