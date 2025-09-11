@@ -2229,10 +2229,17 @@ static void transfer_routine_z(void)
         }
         else if (zcode_markers[i] == JUMP_MV)
         {
+            int32 label_offset;
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
+            label_offset = i + labels[j].offset - pc;
+            if (label_offset < 0 || label_offset >= zcode_ha_size) {
+                /* Probably the label was never defined. We'll report
+                   that error later. */
+                continue;
+            }
+            opcode_at_label = zcode_holding_area[label_offset];
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
