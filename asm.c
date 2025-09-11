@@ -2187,13 +2187,19 @@ static void transfer_routine_z(void)
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
         {
+            int32 label_offset;
             int branch_opcode = zcode_holding_area[i - (zcode_markers[i] - BRANCH_MV)];
             if (asm_trace_level >= 4)
                 printf("Branch detected at offset %04x (branch opcode %x)\n",
                     pc, branch_opcode);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            //### check!
-            opcode_at_label = zcode_holding_area[i + labels[j].offset - pc];
+            label_offset = i + labels[j].offset - pc;
+            if (label_offset < 0 || label_offset >= zcode_ha_size) {
+                /* Probably the label was never defined. We'll report
+                   that error later. */
+                continue;
+            }
+            opcode_at_label = zcode_holding_area[label_offset];
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
