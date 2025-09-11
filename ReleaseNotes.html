@@ -42,8 +42,8 @@ compiling with Inform 6.43.
 <li><p>A case where the line number in a "no such constant" error message was wrong.
 <li><p>With <tt>$ZCODE_COMPACT_GLOBALS</tt> turned on, references in functions to arrays before the array declaration were
 backpatched to an incorrect address.
-<li><p>The Z-machine memory map, in verbose <tt>--trace MAP=3</tt> mode, gave an incorrect size for the global variables area
-right when used with <tt>$ZCODE_COMPACT_GLOBALS</tt>.
+<li><p>Output showing the Z-machine memory map gave an incorrect size for the global variables area with
+<tt>$ZCODE_COMPACT_GLOBALS</tt> enabled.
 <li><p>The optimization logic could read outside allocated memory if it encountered an undefined label.
 </ul>
 
