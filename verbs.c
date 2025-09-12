@@ -182,10 +182,14 @@ void set_grammar_option_constant(int optnum, assembly_operand AO)
         error_fmt("%s must be given an explicit constant value", symname);
         return;
     }
+    if (!set_current_option_precedence(optnum, AO.value)) {
+        /* already set with higher precedence */
+        return;
+    }
     if (origval == AO.value) {
         /* no change needed */
         return;
-    }    
+    }
     if (no_fake_actions > 0) {
         error_fmt("Once a fake action has been defined it is too late to change %s", symname);
         return;

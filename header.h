@@ -2746,8 +2746,8 @@ extern void set_compiler_option(char *str, char *sval, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);
-extern int32 get_current_option_value(optionindex_e val);
-extern int get_current_option_precedence(optionindex_e val);
+extern int32 get_current_option_value(optionindex_e optnum);
+extern int set_current_option_precedence(optionindex_e optnum, int32 val);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */

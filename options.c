@@ -849,13 +849,29 @@ extern void apply_compiler_options(void)
     }
 }
 
-extern int32 get_current_option_value(optionindex_e val)
+/* Fetch an option value. This is only needed for a couple of options
+   which are not fixed until late in compilation.
+*/
+extern int32 get_current_option_value(optionindex_e optnum)
 {
-    return SELECTVAL(val);
+    return SELECTVAL(optnum);
 }
 
-extern int get_current_option_precedence(optionindex_e val)
+/* Set an option late in compilation.
+   If this returns false, the option has already been set with higher
+   precedence and should not change.
+*/
+extern int set_current_option_precedence(optionindex_e optnum, int32 val)
 {
-    return alloptions[val].precedence;
+    if (alloptions[optnum].precedence > SRCCODE_OPTPREC)
+        return FALSE;
+
+    alloptions[optnum].precedence = SRCCODE_OPTPREC;
+    if (!glulx_mode)
+        alloptions[optnum].val.g = val;
+    else
+        alloptions[optnum].val.z = val;
+    
+    return TRUE;
 }
 
