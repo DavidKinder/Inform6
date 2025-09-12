@@ -868,9 +868,9 @@ extern int set_current_option_precedence(optionindex_e optnum, int32 val)
 
     alloptions[optnum].precedence = SRCCODE_OPTPREC;
     if (!glulx_mode)
-        alloptions[optnum].val.g = val;
-    else
         alloptions[optnum].val.z = val;
+    else
+        alloptions[optnum].val.g = val;
     
     return TRUE;
 }
