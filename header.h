@@ -603,6 +603,44 @@
 #define HEADCOM_OPTPREC (2)   /* header comment line */
 #define CMDLINE_OPTPREC (3)   /* command-line option */
 
+/* Enum for referring to individual options. This doesn't include obsolete
+   options, because we never have to refer to those.
+   
+   Must match the order of alloptions[] in options.c. It's not alphabetical
+   or really systematic at all; it was the order of the $LIST in the old
+   options system.
+*/
+enum optionindex {
+    OPT_MAX_ABBREVS               = 0,
+    OPT_NUM_ATTR_BYTES            = 1,
+    OPT_DICT_WORD_SIZE            = 2,
+    OPT_DICT_CHAR_SIZE            = 3,
+    OPT_GRAMMAR_VERSION           = 4,
+    OPT_GRAMMAR_META_FLAG         = 5,
+    OPT_MAX_DYNAMIC_STRINGS       = 6,
+    OPT_HASH_TAB_SIZE             = 7,
+    OPT_ZCODE_HEADER_EXT_WORDS    = 8,
+    OPT_ZCODE_HEADER_FLAGS_3      = 9,
+    OPT_ZCODE_FILE_END_PADDING    = 10,
+    OPT_ZCODE_LESS_DICT_DATA      = 11,
+    OPT_ZCODE_MAX_INLINE_STRING   = 12,
+    OPT_ZCODE_COMPACT_GLOBALS     = 13,
+    OPT_INDIV_PROP_START          = 14,
+    OPT_MEMORY_MAP_EXTENSION      = 15,
+    OPT_GLULX_OBJECT_EXT_BYTES    = 16,
+    OPT_MAX_STACK_SIZE            = 17,
+    OPT_TRANSCRIPT_FORMAT         = 18,
+    OPT_WARN_UNUSED_ROUTINES      = 19,
+    OPT_OMIT_UNUSED_ROUTINES      = 20,
+    OPT_STRIP_UNREACHABLE_LABELS  = 21,
+    OPT_OMIT_SYMBOL_TABLE         = 22,
+    OPT_DICT_IMPLICIT_SINGULAR    = 23,
+    OPT_DICT_TRUNCATE_FLAG        = 24,
+    OPT_LONG_DICT_FLAG_BUG        = 25,
+    OPT_SERIAL                    = 26,
+    OPT_OPTIONS_COUNT             = 27, /* terminator */
+};
+
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
 /*   define T_C as (char) 9; failing that, it _must_ be defined as ' '       */

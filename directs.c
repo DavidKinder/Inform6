@@ -198,7 +198,7 @@ extern int parse_given_directive(int internal_flag)
             if (i == grammar_version_symbol) {
                 /* Special case for changing Grammar__Version. We check
                    conditions carefully before applying the change. */
-                set_grammar_option_constant(i, AO);
+                set_grammar_option_constant(OPT_GRAMMAR_VERSION, AO);
             }
         }
 

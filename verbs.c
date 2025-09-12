@@ -169,7 +169,7 @@ void set_grammar_option_constant(int optnum, assembly_operand AO)
     char *symname;
     int origval;
 
-    if (optnum == grammar_version_symbol) {
+    if (optnum == OPT_GRAMMAR_VERSION) {
         symname = "Grammar__Version";
         origval = grammar_version_number;
     }
