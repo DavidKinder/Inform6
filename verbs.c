@@ -224,7 +224,6 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
             if (ix >= 0)
                 end_symbol_scope(ix, FALSE);
         }
-        printf("### Grammar_Meta__Value to %d\n", GRAMMAR_META_FLAG);
     }
     
     return TRUE;
