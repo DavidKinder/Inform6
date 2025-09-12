@@ -2223,7 +2223,10 @@ static void transfer_routine_z(void)
                 && (   branch_opcode == 0x100   /* jz */
                     || branch_opcode == 0x201   /* je */
                     || branch_opcode == 0x202   /* jl */
-                    || branch_opcode == 0x203)) /* jg */
+                    || branch_opcode == 0x203   /* jg */
+                    || branch_opcode == 0x206   /* jin */
+                    || branch_opcode == 0x207   /* test */
+                    || branch_opcode == 0x20A)) /* test_attr */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
