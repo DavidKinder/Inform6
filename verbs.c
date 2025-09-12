@@ -53,6 +53,8 @@ int32 grammar_meta_value_symbol;       /* Index of "Grammar_Meta__Value"     */
 int no_actions,                        /* Number of actions made so far      */
     no_fake_actions;                   /* Number of fake actions made so far */
 
+int any_action_symbols;            /* Have we evaluated action name symbols? */
+
 /* ------------------------------------------------------------------------- */
 /*   Adjectives.  (The term "adjective" is traditional; they are mainly      */
 /*                prepositions, such as "onto".)                             */
@@ -205,6 +207,10 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
     }
     if (no_grammar_lines > 0) {
         error_fmt("Once an action has been defined it is too late to change %s", symname);
+        return FALSE;
+    }
+    if (any_action_symbols && optnum == OPT_GRAMMAR_META_FLAG) {
+        error_fmt("Once an action value has been referenced it is too late to change %s", symname);
         return FALSE;
     }
 
@@ -655,6 +661,8 @@ extern assembly_operand action_of_name(char *name)
     }
     symbols[j].flags |= USED_SFLAG;
 
+    any_action_symbols = TRUE;
+    
     INITAO(&AO);
     AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
@@ -1655,6 +1663,7 @@ extern void init_verbs_vars(void)
 {
     no_fake_actions = 0;
     no_actions = 0;
+    any_action_symbols = FALSE;
     no_meta_actions = -1;
     no_grammar_lines = 0;
     no_grammar_tokens = 0;
@@ -1685,7 +1694,8 @@ extern void verbs_begin_pass(void)
     no_grammar_token_routines=0;
     no_actions=0;
 
-    no_fake_actions=0;
+    no_fake_actions = 0;
+    any_action_symbols = FALSE;
     grammar_lines_top = 0;
 
     /* Set the version requested by compiler setting (with validity check) */
