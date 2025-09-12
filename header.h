@@ -594,10 +594,14 @@
     ((ptr)[0] = (uchar)(((int32)(val)) >> 8),           \
      (ptr)[1] = (uchar)(((int32)(val))     ) )
 
-/* Precedence for compiler options (see set_compiler_option()) */
+/* Precedence for compiler options (see set_compiler_option()).
+   Only a couple of options (GRAMMAR_VERSION, GRAMMAR_META_FLAG) can
+   be set at SRCCODE level.
+*/
 #define DEFAULT_OPTPREC (0)   /* original default value */
-#define HEADCOM_OPTPREC (1)   /* header comment line */
-#define CMDLINE_OPTPREC (2)   /* command-line option */
+#define SRCCODE_OPTPREC (1)   /* source code constant */
+#define HEADCOM_OPTPREC (2)   /* header comment line */
+#define CMDLINE_OPTPREC (3)   /* command-line option */
 
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
