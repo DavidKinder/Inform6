@@ -53,7 +53,7 @@ int32 grammar_meta_value_symbol;       /* Index of "Grammar_Meta__Value"     */
 int no_actions,                        /* Number of actions made so far      */
     no_fake_actions;                   /* Number of fake actions made so far */
 
-int any_action_symbols;            /* Have we evaluated action name symbols? */
+int any_action_symbols;            /* Have we evaluated action-name symbols? */
 
 /* ------------------------------------------------------------------------- */
 /*   Adjectives.  (The term "adjective" is traditional; they are mainly      */
