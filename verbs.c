@@ -15,21 +15,24 @@
 /* The grammar version is handled in a somewhat messy way. It can be:
      1 for pre-Inform 6.06 table format
      2 for modern Inform format
+     3 for alternate more-compact format.
      
    The default is 1 for Z-code (for backwards compatibility), 2 for Glulx.
-   This can be altered by the $GRAMMAR_VERSION compiler setting, and
-   then altered again during compilation by a "Constant Grammar__Version"
-   directive. (Note double underscore.)
+   This can be altered by the $GRAMMAR_VERSION compiler setting, or during
+   compilation by a "Constant Grammar__Version" directive. (Note double
+   underscore.)
 
    Typically the library has a "Constant Grammar__Version 2;" line to
    ensure we get the modern version for both VMs.
 
-   (Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
-   which actions are meta, rather than relying on dict word flags.)
+   Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
+   which actions are meta, rather than relying on dict word flags.
+   This can similarly be altered by "Constant Grammar_Meta__Value 1".
  */
 int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"
                                           within symbols table               */
+int32 grammar_meta_value_symbol;       /* Index of "Grammar_Meta__Value"     */
 
 /* ------------------------------------------------------------------------- */
 /*   Actions.                                                                */

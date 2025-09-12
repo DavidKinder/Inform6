@@ -2959,7 +2959,7 @@ extern void compile_veneer(void);
 extern int no_adjectives, no_Inform_verbs, no_grammar_token_routines,
            no_fake_actions, no_actions, no_grammar_lines, no_grammar_tokens,
            grammar_version_number;
-extern int32 grammar_version_symbol;
+extern int32 grammar_version_symbol, grammar_meta_value_symbol;
 extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
