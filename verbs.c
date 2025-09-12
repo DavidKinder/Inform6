@@ -162,9 +162,10 @@ void set_grammar_version(int val)
 }
 
 /* This is called if we encounter a "Constant Grammar__Version=X" directive.
-   Check that the change is valid and safe. If so, do it.
+   Check that the change is valid and safe. If so, do it and return true.
+   Otherwise, do nothing and return false.
 */
-void set_grammar_option_constant(int optnum, assembly_operand AO)
+int set_grammar_option_constant(int optnum, assembly_operand AO)
 {
     char *symname;
     int origval;
@@ -175,30 +176,32 @@ void set_grammar_option_constant(int optnum, assembly_operand AO)
     }
     else {
         compiler_error("set_grammar_option_constant called with invalid symbol");
-        return;
+        return FALSE;
     }
 
     if (AO.marker != 0) {
         error_fmt("%s must be given an explicit constant value", symname);
-        return;
+        return FALSE;
     }
     if (!set_current_option_precedence(optnum, AO.value)) {
         /* already set with higher precedence */
-        return;
+        return FALSE;
     }
     if (origval == AO.value) {
         /* no change needed */
-        return;
+        return FALSE;
     }
     if (no_fake_actions > 0) {
         error_fmt("Once a fake action has been defined it is too late to change %s", symname);
-        return;
+        return FALSE;
     }
     if (no_grammar_lines > 0) {
         error_fmt("Once an action has been defined it is too late to change %s", symname);
-        return;
+        return FALSE;
     }
+    
     set_grammar_version(AO.value);
+    return TRUE;
 }
 
 /* ------------------------------------------------------------------------- */

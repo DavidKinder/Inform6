@@ -55,8 +55,9 @@ extern int parse_given_directive(int internal_flag)
 
         Returns: FALSE if program continues, TRUE if end of file reached.    */
 
-    int *trace_level = NULL; int32 i, j, k, n, flag;
+    int *trace_level = NULL; int32 i, j, k, n, flag, prevvalue;
     const char *constant_name;
+    assembly_operand AO;
     debug_location_beginning beginning_debug_location;
 
     if (internal_flag)
@@ -155,6 +156,7 @@ extern int parse_given_directive(int internal_flag)
             return ebf_symbol_error_recover("new constant name", typename(symbols[i].type), symbols[i].line);
         }
 
+        prevvalue = symbols[i].value;
         assign_symbol(i, 0, CONSTANT_T);
         constant_name = token_text;
 
@@ -185,23 +187,30 @@ extern int parse_given_directive(int internal_flag)
         if (!((token_type == SEP_TT) && (token_value == SETEQUALS_SEP)))
             put_token_back();
 
-        {   assembly_operand AO = parse_expression(CONSTANT_CONTEXT);
-            if (AO.marker != 0)
-            {   assign_marked_symbol(i, AO.marker, AO.value,
-                    CONSTANT_T);
-                symbols[i].flags |= CHANGE_SFLAG;
-            }
-            else
-            {   assign_symbol(i, AO.value, CONSTANT_T);
-            }
+        AO = parse_expression(CONSTANT_CONTEXT);
             
-            if (i == grammar_version_symbol) {
-                /* Special case for changing Grammar__Version. We check
-                   conditions carefully before applying the change. */
-                set_grammar_option_constant(OPT_GRAMMAR_VERSION, AO);
+        if (i == grammar_version_symbol) {
+            /* Special case for changing Grammar__Version. We check
+               conditions carefully before applying the change. */
+            int ok = set_grammar_option_constant(OPT_GRAMMAR_VERSION, AO);
+            if (!ok) {
+                /* Revert to the previous value. This is a bit hacky,
+                   in that we've lost the symbol marker and type --
+                   but these constants should always be CONSTANT
+                   to begin with. */
+                INITAOTV(&AO, CONSTANT_T, prevvalue);
             }
         }
 
+        if (AO.marker != 0)
+        {   assign_marked_symbol(i, AO.marker, AO.value,
+                CONSTANT_T);
+            symbols[i].flags |= CHANGE_SFLAG;
+        }
+        else
+        {   assign_symbol(i, AO.value, CONSTANT_T);
+        }
+    
         if (debugfile_switch && !(symbols[i].flags & REDEFINABLE_SFLAG))
         {   debug_file_printf("<constant>");
             debug_file_printf("<identifier>%s</identifier>", constant_name);

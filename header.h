@@ -2971,7 +2971,7 @@ extern int32 *grammar_token_routine,
              *adjectives;
 
 extern void set_grammar_version(int val);
-extern void set_grammar_option_constant(int optnum, assembly_operand AO);
+extern int set_grammar_option_constant(int optnum, assembly_operand AO);
 extern void find_the_actions(void);
 extern int lowest_fake_action(void);
 extern void make_fake_action(void);
