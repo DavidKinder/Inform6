@@ -849,10 +849,13 @@ extern void apply_compiler_options(void)
     }
 }
 
-/* This option is handled a bit differently; we don't check the value
-   until verbs_begin_pass(). So we have an accessor for it.
-*/
-extern int32 get_grammar_version_option(void)
+extern int32 get_current_option_value(optionindex_e val)
 {
-    return SELECTVAL(OPT_GRAMMAR_VERSION);
+    return SELECTVAL(val);
 }
+
+extern int get_current_option_precedence(optionindex_e val)
+{
+    return alloptions[val].precedence;
+}
+

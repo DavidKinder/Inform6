@@ -610,7 +610,7 @@
    or really systematic at all; it was the order of the $LIST in the old
    options system.
 */
-enum optionindex {
+typedef enum optionindex {
     OPT_MAX_ABBREVS               = 0,
     OPT_NUM_ATTR_BYTES            = 1,
     OPT_DICT_WORD_SIZE            = 2,
@@ -639,7 +639,7 @@ enum optionindex {
     OPT_LONG_DICT_FLAG_BUG        = 25,
     OPT_SERIAL                    = 26,
     OPT_OPTIONS_COUNT             = 27, /* terminator */
-};
+} optionindex_e;
 
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
@@ -2746,7 +2746,8 @@ extern void set_compiler_option(char *str, char *sval, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);
-extern int32 get_grammar_version_option(void);
+extern int32 get_current_option_value(optionindex_e val);
+extern int get_current_option_precedence(optionindex_e val);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */

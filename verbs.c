@@ -1657,7 +1657,7 @@ extern void verbs_begin_pass(void)
     grammar_lines_top = 0;
 
     /* Set the version requested by compiler setting (with validity check) */
-    set_grammar_version(get_grammar_version_option());
+    set_grammar_version(get_current_option_value(OPT_GRAMMAR_VERSION));
 }
 
 extern void verbs_allocate_arrays(void)
