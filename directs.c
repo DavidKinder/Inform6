@@ -189,10 +189,12 @@ extern int parse_given_directive(int internal_flag)
 
         AO = parse_expression(CONSTANT_CONTEXT);
             
-        if (i == grammar_version_symbol) {
-            /* Special case for changing Grammar__Version. We check
-               conditions carefully before applying the change. */
-            int ok = set_grammar_option_constant(OPT_GRAMMAR_VERSION, AO);
+        if (i == grammar_version_symbol || i == grammar_meta_value_symbol) {
+            /* Special case for changing Grammar__Version or
+               Grammar_Meta__Value. We check conditions carefully before
+               applying the change. */
+            optionindex_e optnum = (i == grammar_version_symbol ? OPT_GRAMMAR_VERSION : OPT_GRAMMAR_META_FLAG);
+            int ok = set_grammar_option_constant(optnum, AO);
             if (!ok) {
                 /* Revert to the previous value. This is a bit hacky,
                    in that we've lost the symbol marker and type --

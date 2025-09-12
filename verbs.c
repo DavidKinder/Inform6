@@ -164,7 +164,8 @@ void set_grammar_version(int val)
     symbols[grammar_version_symbol].value = val;
 }
 
-/* This is called if we encounter a "Constant Grammar__Version=X" directive.
+/* This is called if we encounter a "Constant Grammar__Version=X"
+   or "Grammar_Meta__Value=Y" directive.
    Check that the change is valid and safe. If so, do it and return true.
    Otherwise, do nothing and return false.
 */
@@ -176,6 +177,10 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
     if (optnum == OPT_GRAMMAR_VERSION) {
         symname = "Grammar__Version";
         origval = grammar_version_number;
+    }
+    else if (optnum == OPT_GRAMMAR_META_FLAG) {
+        symname = "Grammar_Meta__Value";
+        origval = GRAMMAR_META_FLAG;
     }
     else {
         compiler_error("set_grammar_option_constant called with invalid symbol");
@@ -202,8 +207,26 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
         error_fmt("Once an action has been defined it is too late to change %s", symname);
         return FALSE;
     }
+
+    if (optnum == OPT_GRAMMAR_VERSION) {
+        set_grammar_version(AO.value);
+    }
+    else if (optnum == OPT_GRAMMAR_META_FLAG) {
+        GRAMMAR_META_FLAG = AO.value;
+        /* Now we have to create or destroy the GRAMMAR_META_FLAG constant,
+           as appropriate. */
+        if (GRAMMAR_META_FLAG) {
+            int ix = symbol_index("GRAMMAR_META_FLAG", -1, NULL);
+            assign_symbol(ix, 0, CONSTANT_T);
+        }
+        else {
+            int ix = get_symbol_index("GRAMMAR_META_FLAG");
+            if (ix >= 0)
+                end_symbol_scope(ix, FALSE);
+        }
+        printf("### Grammar_Meta__Value to %d\n", GRAMMAR_META_FLAG);
+    }
     
-    set_grammar_version(AO.value);
     return TRUE;
 }
 
