@@ -2227,8 +2227,8 @@ static void transfer_routine_z(void)
                     || branch_opcode == 0x206   /* jin */
                     || branch_opcode == 0x207   /* test */
                     || branch_opcode == 0x20A   /* test_attr */
-                    || branch_opcode == 0x102   /* get_child */
-                    || branch_opcode == 0x103)) /* get_sibling */
+                    || branch_opcode == 0x101   /* get_sibling */
+                    || branch_opcode == 0x102)) /* get_child */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
