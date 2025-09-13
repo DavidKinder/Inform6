@@ -215,10 +215,16 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
     }
 
     if (optnum == OPT_GRAMMAR_VERSION) {
-        set_grammar_version(AO.value);
+        set_grammar_version(AO.value);   /* Rejects invalid values */
     }
     else if (optnum == OPT_GRAMMAR_META_FLAG) {
+        /* The option clips the value to max 1, but that's slightly
+           inconvenient here. We'll just reject it. */
+        if (AO.value != 0 && AO.value != 1)
+            error_fmt("%s must be 0 or 1", symname);
+        
         GRAMMAR_META_FLAG = AO.value;
+        
         /* Now we have to create or destroy the GRAMMAR_META_FLAG constant,
            as appropriate. */
         if (GRAMMAR_META_FLAG) {
