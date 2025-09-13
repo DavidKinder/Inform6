@@ -230,6 +230,7 @@ int set_grammar_option_constant(int optnum, assembly_operand AO)
         if (GRAMMAR_META_FLAG) {
             int ix = symbol_index("GRAMMAR_META_FLAG", -1, NULL);
             assign_symbol(ix, 0, CONSTANT_T);
+            symbols[ix].flags |= USED_SFLAG;
         }
         else {
             int ix = get_symbol_index("GRAMMAR_META_FLAG");
