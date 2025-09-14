@@ -102,8 +102,8 @@ static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
 static memory_list labels_memlist;
 static int first_label, last_label;
 
-static int *labeluse;     /* Flags indicating whether a given label has been
-                             used as a branch target yet. */
+static int *labeluse;     /* Counters indicating how many times a given label
+                             has been used as a branch target. */
 static memory_list labeluse_memlist;
 static int labeluse_size; /* Entries up to here are initialized */
 
@@ -246,9 +246,9 @@ static void mark_label_used(int label)
        entries to FALSE. */
     ensure_memory_list_available(&labeluse_memlist, label+1);
     for (; labeluse_size < label+1; labeluse_size++) {
-        labeluse[labeluse_size] = FALSE;
+        labeluse[labeluse_size] = 0;
     }
-    labeluse[label] = TRUE;
+    labeluse[label] += 1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -709,7 +709,7 @@ static opcodeg opcodes_table_g[] = {
     { (uchar *) "sshiftr",    0x1D, St, 0, 3 },
     { (uchar *) "ushiftr",    0x1E, St, 0, 3 },
     { (uchar *) "jump",       0x20, Br|Rf, 0, 1 },
-    { (uchar *) "jz",     0x22, Br, 0, 2 },
+    { (uchar *) "jz",         0x22, Br, 0, 2 },
     { (uchar *) "jnz",        0x23, Br, 0, 2 },
     { (uchar *) "jeq",        0x24, Br, 0, 3 },
     { (uchar *) "jne",        0x25, Br, 0, 3 },
@@ -1093,7 +1093,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
     if (operand_rules==LABEL)
     {   j = (AI->operand[0]).value;
         mark_label_used(j);
-        byteout(j/256, LABEL_MV); byteout(j%256, 0);
+        byteout(j/256, JUMP_MV); byteout(j%256, 0);
         goto Instruction_Done;
     }
 
@@ -1210,11 +1210,17 @@ extern void assemblez_instruction(const assembly_instruction *AI)
         }
         if (addr > 0x7fff) fatalerror("Too many branch points in routine.");
         if (long_form==1)
-        {   byteout(branch_on_true*0x80 + addr/256, BRANCH_MV);
+        {
+            int marker = BRANCH_MV + (zmachine_pc - offset);
+            if (marker >= BRANCHMAX_MV)
+                fatalerror("Branch instruction too long.");
+            byteout(branch_on_true*0x80 + addr/256, marker);
             byteout(addr%256, 0);
         }
         else
+        {
             byteout(branch_on_true*0x80+ 0x40 + (addr&0x3f), 0);
+        }
     }
 
     Instruction_Done:
@@ -1826,7 +1832,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
         if (instruction_set_number<5)
             for (i=0; i<no_locals; i++) { byteout(0,0); byteout(0,0); }
 
-        next_label = 0; next_sequence_point = 0; last_label = -1;
+        next_label = 0; next_sequence_point = 0;
+        first_label = 0; last_label = -1;
         labeluse_size = 0;
 
         /*  Compile code to print out text like "a=3, b=4, c=5" when the     */
@@ -1913,7 +1920,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
             byteout(0x40, 0); byteout(0x98, 0); byteout(0x00, 0);
         }
 
-        next_label = 0; next_sequence_point = 0; last_label = -1; 
+        next_label = 0; next_sequence_point = 0;
+        first_label = 0; last_label = -1; 
         labeluse_size = 0;
 
         if ((routine_asterisked) || (define_INFIX_switch)) {
@@ -2150,7 +2158,7 @@ void assemble_routine_end(int embedded_flag, debug_locations locations)
 /* ------------------------------------------------------------------------- */
 
 static void transfer_routine_z(void)
-{   int32 i, j, pc, new_pc, label, long_form, offset_of_next, addr,
+{   int32 i, j, pc, new_pc, label, long_form, addr,
           branch_on_true, rstart_pc;
     int32 adjusted_pc, opcode_at_label;
 
@@ -2171,22 +2179,67 @@ static void transfer_routine_z(void)
             are jumping to a (one-byte) return opcode. The jump opcode is
             replaced by a copy of the destination opcode; the label bytes
             get DELETED_MV. (However, we don't do the extra work to detect
-            whether this orphans the destination opcode.) */
-
+            whether this orphans the destination opcode.)
+            Also branches to an rtrue/rfalse opcode, which can be converted
+            to the rtrue/rfalse form of the branch. (Same orphan problem
+            applies.) */
+      
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
-    {   if (zcode_markers[i] == BRANCH_MV)
-        {   if (asm_trace_level >= 4)
-                printf("Branch detected at offset %04x\n", pc);
-            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+    {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
+        {
+            int32 label_offset;
+            int branch_opcode = zcode_holding_area[i - (zcode_markers[i] - BRANCH_MV)];
             if (asm_trace_level >= 4)
-                printf("...To label %d, which is %d from here\n",
-                    j, labels[j].offset-pc);
-            if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
-            {   if (asm_trace_level >= 4) printf("...Using short form\n");
+                printf("Branch detected at offset %04x (branch opcode %x)\n",
+                    pc, branch_opcode);
+            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+            label_offset = i + labels[j].offset - pc;
+            if (label_offset < 0 || label_offset >= zcode_ha_size) {
+                /* Probably the label was never defined. We'll report
+                   that error later. */
+                continue;
+            }
+            opcode_at_label = zcode_holding_area[label_offset];
+            if (asm_trace_level >= 4)
+                printf("...To label %d (opcode %x), which is %d from here\n",
+                    j, opcode_at_label, labels[j].offset-pc);
+            
+            /* Now we have to partially decode branch_opcode. */
+            if (version_number >= 5 && branch_opcode == 0xBE)
+                branch_opcode = 0x400; /* EXT, but we're not going to optimize any EXT branches */
+            else if (branch_opcode < 0x80)
+                branch_opcode = 0x200 + (branch_opcode & 0x1F); /* TWO-OP */
+            else if (branch_opcode < 0xB0)
+                branch_opcode = 0x100 + (branch_opcode & 0x0F); /* ONE-OP */
+            else if (branch_opcode < 0xC0)
+                branch_opcode = (branch_opcode & 0x0F); /* ZERO-OP */
+            else
+                branch_opcode = 0x200 + (branch_opcode & 0x3F); /* VAR-OP */
+            
+            /* (rtrue/rfalse have no operands so they always appear as
+               B0/B1.) */
+            if ((    opcode_at_label == 0xB0   /* rtrue */
+                  || opcode_at_label == 0xB1)  /* rfalse */
+                && (   branch_opcode == 0x100   /* jz */
+                    || branch_opcode == 0x201   /* je */
+                    || branch_opcode == 0x202   /* jl */
+                    || branch_opcode == 0x203   /* jg */
+                    || branch_opcode == 0x206   /* jin */
+                    || branch_opcode == 0x207   /* test */
+                    || branch_opcode == 0x20A   /* test_attr */
+                    || branch_opcode == 0x101   /* get_sibling */
+                    || branch_opcode == 0x102)) /* get_child */
+            {
+                if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
+                zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
+            }
+            else if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
+            {
+                if (asm_trace_level >= 4) printf("...Using short form\n");
                 zcode_markers[i+1] = DELETED_MV;
             }
         }
-        else if (zcode_markers[i] == LABEL_MV)
+        else if (zcode_markers[i] == JUMP_MV)
         {
             int32 label_offset;
             if (asm_trace_level >= 4)
@@ -2200,22 +2253,17 @@ static void transfer_routine_z(void)
             }
             opcode_at_label = zcode_holding_area[label_offset];
             if (asm_trace_level >= 4)
-                printf("...To label %d, which is %d from here\n",
-                    j, labels[j].offset-pc);
+                printf("...To label %d (opcode %x), which is %d from here\n",
+                    j, opcode_at_label, labels[j].offset-pc);
             if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
             }
-            else if (opcode_at_label == 176
-                || opcode_at_label == 177
-                || opcode_at_label == 184) {
-                /* 176, 177, and 184 are the encoded forms of rtrue_zc,
-                   rfalse_zc, and ret_popped_zc. It would be cleaner
-                   to pull these from opcodes_table_z[] (adding 0xB0 for
-                   the opcode form) but it's not like they're going to
-                   ever change. */
+            else if (opcode_at_label == 0xB0     /* rtrue */
+                ||   opcode_at_label == 0xB1     /* rfalse */
+                ||   opcode_at_label == 0xB8) {  /* ret_popped */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
@@ -2250,7 +2298,7 @@ static void transfer_routine_z(void)
                 labels[label].offset = new_pc;
                 label = labels[label].next;
             }
-           if (zcode_markers[i] != DELETED_MV) new_pc++;
+           if (zcode_markers[i] != DELETED_MV && zcode_markers[i] != DELETEDT_MV && zcode_markers[i] != DELETEDF_MV) new_pc++;
         }
     }
 
@@ -2261,24 +2309,43 @@ static void transfer_routine_z(void)
     ensure_memory_list_available(&zcode_area_memlist, adjusted_pc+zcode_ha_size);
     
     for (i=0, new_pc=adjusted_pc; i<zcode_ha_size; i++)
-    {   switch(zcode_markers[i])
+    {
+        int marker = zcode_markers[i];
+        if (marker >= BRANCH_MV && marker < BRANCHMAX_MV)
+            marker = BRANCH_MV;
+        switch(marker)
         { case BRANCH_MV:
-            long_form = 1; if (zcode_markers[i+1] == DELETED_MV) long_form = 0;
-
-            j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            branch_on_true = ((zcode_holding_area[i]) & 0x80);
-            offset_of_next = new_pc + long_form + 1;
-
-            if (labels[j].offset < 0) {
-                char *lname = "(anon)";
-                if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
-                    lname = symbols[labels[j].symbol].name;
-                error_named("Attempt to jump to an unreachable label", lname);
-                addr = 0;
+            long_form = 1;
+            if (zcode_markers[i+1] == DELETEDT_MV) {
+                long_form = 0;
+                addr = 1; /* rtrue */
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
+            }
+            else if (zcode_markers[i+1] == DELETEDF_MV) {
+                long_form = 0;
+                addr = 0; /* rfalse */
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
             }
             else {
-                addr = labels[j].offset - offset_of_next + 2;
+                int32 offset_of_next;
+                if (zcode_markers[i+1] == DELETED_MV) long_form = 0;
+
+                j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
+                branch_on_true = ((zcode_holding_area[i]) & 0x80);
+                offset_of_next = new_pc + long_form + 1;
+
+                if (labels[j].offset < 0) {
+                    char *lname = "(anon)";
+                    if (labels[j].symbol >= 0 && labels[j].symbol < no_symbols)
+                        lname = symbols[labels[j].symbol].name;
+                    error_named("Attempt to jump to an unreachable label", lname);
+                    addr = 0;
+                }
+                else {
+                    addr = labels[j].offset - offset_of_next + 2;
+                }
             }
+            
             if (addr<-0x2000 || addr>0x1fff) 
                 error_fmt("Branch out of range: routine \"%s\" is too large", current_routine_name.data);
             if (addr<0) addr+=(int32) 0x10000L;
@@ -2298,7 +2365,7 @@ static void transfer_routine_z(void)
             zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
             break;
 
-          case LABEL_MV:
+          case JUMP_MV:
             j = 256*zcode_holding_area[i] + zcode_holding_area[i+1];
             if (labels[j].offset < 0) {
                 char *lname = "(anon)";
@@ -2319,6 +2386,8 @@ static void transfer_routine_z(void)
             break;
 
           case DELETED_MV:
+          case DELETEDT_MV:
+          case DELETEDF_MV:
             break;
 
           default:
@@ -2547,8 +2616,8 @@ static void transfer_routine_g(void)
             }
             zcode_area[adjusted_pc++] = zcode_holding_area[i]; new_pc++;
         }
-        else if (zcode_markers[i] == LABEL_MV) {
-            error("*** No LABEL opcodes in Glulx ***");
+        else if (zcode_markers[i] == JUMP_MV) {
+            error("*** No JUMP markers in Glulx ***");
         }
         else if (zcode_markers[i] == DELETED_MV) {
             /* skip it */

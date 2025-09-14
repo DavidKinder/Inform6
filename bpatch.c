@@ -85,8 +85,10 @@ extern char *describe_mv_short(int mval)
         case ACTION_MV:     return("action");
         case OBJECT_MV:     return("obj");
 
-        case LABEL_MV:      return("lbl");
+        case JUMP_MV:       return("jmp");
         case DELETED_MV:    return("del");
+        case DELETEDT_MV:   return("del-t");
+        case DELETEDF_MV:   return("del-f");
 
         /* Only occurs secondary to another reported error */
         case ERROR_MV:      return("err");
