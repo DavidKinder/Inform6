@@ -66,42 +66,6 @@ typedef struct optiont_s {
     int precedence;
 } optiont;
 
-/* Enum for referring to individual options. This doesn't include obsolete
-   options, because we never have to refer to those.
-   
-   Must match the order of alloptions[], which is the order of the $LIST
-   in the old options system, which was not very systematic. */
-enum optionindex {
-    OPT_MAX_ABBREVS               = 0,
-    OPT_NUM_ATTR_BYTES            = 1,
-    OPT_DICT_WORD_SIZE            = 2,
-    OPT_DICT_CHAR_SIZE            = 3,
-    OPT_GRAMMAR_VERSION           = 4,
-    OPT_GRAMMAR_META_FLAG         = 5,
-    OPT_MAX_DYNAMIC_STRINGS       = 6,
-    OPT_HASH_TAB_SIZE             = 7,
-    OPT_ZCODE_HEADER_EXT_WORDS    = 8,
-    OPT_ZCODE_HEADER_FLAGS_3      = 9,
-    OPT_ZCODE_FILE_END_PADDING    = 10,
-    OPT_ZCODE_LESS_DICT_DATA      = 11,
-    OPT_ZCODE_MAX_INLINE_STRING   = 12,
-    OPT_ZCODE_COMPACT_GLOBALS     = 13,
-    OPT_INDIV_PROP_START          = 14,
-    OPT_MEMORY_MAP_EXTENSION      = 15,
-    OPT_GLULX_OBJECT_EXT_BYTES    = 16,
-    OPT_MAX_STACK_SIZE            = 17,
-    OPT_TRANSCRIPT_FORMAT         = 18,
-    OPT_WARN_UNUSED_ROUTINES      = 19,
-    OPT_OMIT_UNUSED_ROUTINES      = 20,
-    OPT_STRIP_UNREACHABLE_LABELS  = 21,
-    OPT_OMIT_SYMBOL_TABLE         = 22,
-    OPT_DICT_IMPLICIT_SINGULAR    = 23,
-    OPT_DICT_TRUNCATE_FLAG        = 24,
-    OPT_LONG_DICT_FLAG_BUG        = 25,
-    OPT_SERIAL                    = 26,
-    OPT_OPTIONS_COUNT             = 27, /* terminator */
-};
-
 /* Our catalog of options. */
 static optiont alloptions[] = {
     {
@@ -885,10 +849,29 @@ extern void apply_compiler_options(void)
     }
 }
 
-/* This option is handled a bit differently; we don't check the value
-   until verbs_begin_pass(). So we have an accessor for it.
+/* Fetch an option value. This is only needed for a couple of options
+   which are not fixed until late in compilation.
 */
-extern int32 get_grammar_version_option(void)
+extern int32 get_current_option_value(optionindex_e optnum)
 {
-    return SELECTVAL(OPT_GRAMMAR_VERSION);
+    return SELECTVAL(optnum);
 }
+
+/* Set an option late in compilation.
+   If this returns false, the option has already been set with higher
+   precedence and should not change.
+*/
+extern int set_current_option_precedence(optionindex_e optnum, int32 val)
+{
+    if (alloptions[optnum].precedence > SRCCODE_OPTPREC)
+        return FALSE;
+
+    alloptions[optnum].precedence = SRCCODE_OPTPREC;
+    if (!glulx_mode)
+        alloptions[optnum].val.z = val;
+    else
+        alloptions[optnum].val.g = val;
+    
+    return TRUE;
+}
+

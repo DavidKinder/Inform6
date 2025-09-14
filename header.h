@@ -594,10 +594,52 @@
     ((ptr)[0] = (uchar)(((int32)(val)) >> 8),           \
      (ptr)[1] = (uchar)(((int32)(val))     ) )
 
-/* Precedence for compiler options (see set_compiler_option()) */
+/* Precedence for compiler options (see set_compiler_option()).
+   Only a couple of options (GRAMMAR_VERSION, GRAMMAR_META_FLAG) can
+   be set at SRCCODE level.
+*/
 #define DEFAULT_OPTPREC (0)   /* original default value */
-#define HEADCOM_OPTPREC (1)   /* header comment line */
-#define CMDLINE_OPTPREC (2)   /* command-line option */
+#define SRCCODE_OPTPREC (1)   /* source code constant */
+#define HEADCOM_OPTPREC (2)   /* header comment line */
+#define CMDLINE_OPTPREC (3)   /* command-line option */
+
+/* Enum for referring to individual options. This doesn't include obsolete
+   options, because we never have to refer to those.
+   
+   Must match the order of alloptions[] in options.c. It's not alphabetical
+   or really systematic at all; it was the order of the $LIST in the old
+   options system.
+*/
+typedef enum optionindex {
+    OPT_MAX_ABBREVS               = 0,
+    OPT_NUM_ATTR_BYTES            = 1,
+    OPT_DICT_WORD_SIZE            = 2,
+    OPT_DICT_CHAR_SIZE            = 3,
+    OPT_GRAMMAR_VERSION           = 4,
+    OPT_GRAMMAR_META_FLAG         = 5,
+    OPT_MAX_DYNAMIC_STRINGS       = 6,
+    OPT_HASH_TAB_SIZE             = 7,
+    OPT_ZCODE_HEADER_EXT_WORDS    = 8,
+    OPT_ZCODE_HEADER_FLAGS_3      = 9,
+    OPT_ZCODE_FILE_END_PADDING    = 10,
+    OPT_ZCODE_LESS_DICT_DATA      = 11,
+    OPT_ZCODE_MAX_INLINE_STRING   = 12,
+    OPT_ZCODE_COMPACT_GLOBALS     = 13,
+    OPT_INDIV_PROP_START          = 14,
+    OPT_MEMORY_MAP_EXTENSION      = 15,
+    OPT_GLULX_OBJECT_EXT_BYTES    = 16,
+    OPT_MAX_STACK_SIZE            = 17,
+    OPT_TRANSCRIPT_FORMAT         = 18,
+    OPT_WARN_UNUSED_ROUTINES      = 19,
+    OPT_OMIT_UNUSED_ROUTINES      = 20,
+    OPT_STRIP_UNREACHABLE_LABELS  = 21,
+    OPT_OMIT_SYMBOL_TABLE         = 22,
+    OPT_DICT_IMPLICIT_SINGULAR    = 23,
+    OPT_DICT_TRUNCATE_FLAG        = 24,
+    OPT_LONG_DICT_FLAG_BUG        = 25,
+    OPT_SERIAL                    = 26,
+    OPT_OPTIONS_COUNT             = 27, /* terminator */
+} optionindex_e;
 
 /* ------------------------------------------------------------------------- */
 /*   If your compiler doesn't recognise \t, and you use ASCII, you could     */
@@ -2704,7 +2746,8 @@ extern void set_compiler_option(char *str, char *sval, int prec);
 extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);
-extern int32 get_grammar_version_option(void);
+extern int32 get_current_option_value(optionindex_e optnum);
+extern int set_current_option_precedence(optionindex_e optnum, int32 val);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "symbols"                                        */
@@ -2916,7 +2959,7 @@ extern void compile_veneer(void);
 extern int no_adjectives, no_Inform_verbs, no_grammar_token_routines,
            no_fake_actions, no_actions, no_grammar_lines, no_grammar_tokens,
            grammar_version_number;
-extern int32 grammar_version_symbol;
+extern int32 grammar_version_symbol, grammar_meta_value_symbol;
 extern verbt *Inform_verbs;
 extern uchar *grammar_lines;
 extern int32 grammar_lines_top;
@@ -2928,7 +2971,7 @@ extern int32 *grammar_token_routine,
              *adjectives;
 
 extern void set_grammar_version(int val);
-extern void set_grammar_option_constant(int optnum, assembly_operand AO);
+extern int set_grammar_option_constant(int optnum, assembly_operand AO);
 extern void find_the_actions(void);
 extern int lowest_fake_action(void);
 extern void make_fake_action(void);

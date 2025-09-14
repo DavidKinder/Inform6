@@ -15,21 +15,24 @@
 /* The grammar version is handled in a somewhat messy way. It can be:
      1 for pre-Inform 6.06 table format
      2 for modern Inform format
+     3 for alternate more-compact format.
      
    The default is 1 for Z-code (for backwards compatibility), 2 for Glulx.
-   This can be altered by the $GRAMMAR_VERSION compiler setting, and
-   then altered again during compilation by a "Constant Grammar__Version"
-   directive. (Note double underscore.)
+   This can be altered by the $GRAMMAR_VERSION compiler setting, or during
+   compilation by a "Constant Grammar__Version" directive. (Note double
+   underscore.)
 
    Typically the library has a "Constant Grammar__Version 2;" line to
    ensure we get the modern version for both VMs.
 
-   (Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
-   which actions are meta, rather than relying on dict word flags.)
+   Note also the $GRAMMAR_META_FLAG setting, which lets us indicate
+   which actions are meta, rather than relying on dict word flags.
+   This can similarly be altered by "Constant Grammar_Meta__Value 1".
  */
 int grammar_version_number;
 int32 grammar_version_symbol;          /* Index of "Grammar__Version"
                                           within symbols table               */
+int32 grammar_meta_value_symbol;       /* Index of "Grammar_Meta__Value"     */
 
 /* ------------------------------------------------------------------------- */
 /*   Actions.                                                                */
@@ -49,6 +52,8 @@ int32 grammar_version_symbol;          /* Index of "Grammar__Version"
 
 int no_actions,                        /* Number of actions made so far      */
     no_fake_actions;                   /* Number of fake actions made so far */
+
+int any_action_symbols;            /* Have we evaluated action-name symbols? */
 
 /* ------------------------------------------------------------------------- */
 /*   Adjectives.  (The term "adjective" is traditional; they are mainly      */
@@ -161,40 +166,80 @@ void set_grammar_version(int val)
     symbols[grammar_version_symbol].value = val;
 }
 
-/* This is called if we encounter a "Constant Grammar__Version=X" directive.
-   Check that the change is valid and safe. If so, do it.
+/* This is called if we encounter a "Constant Grammar__Version=X"
+   or "Grammar_Meta__Value=Y" directive.
+   Check that the change is valid and safe. If so, do it and return true.
+   Otherwise, do nothing and return false.
 */
-void set_grammar_option_constant(int optnum, assembly_operand AO)
+int set_grammar_option_constant(int optnum, assembly_operand AO)
 {
     char *symname;
     int origval;
 
-    if (optnum == grammar_version_symbol) {
+    if (optnum == OPT_GRAMMAR_VERSION) {
         symname = "Grammar__Version";
         origval = grammar_version_number;
     }
+    else if (optnum == OPT_GRAMMAR_META_FLAG) {
+        symname = "Grammar_Meta__Value";
+        origval = GRAMMAR_META_FLAG;
+    }
     else {
         compiler_error("set_grammar_option_constant called with invalid symbol");
-        return;
+        return FALSE;
     }
 
     if (AO.marker != 0) {
         error_fmt("%s must be given an explicit constant value", symname);
-        return;
+        return FALSE;
+    }
+    if (!set_current_option_precedence(optnum, AO.value)) {
+        /* already set with higher precedence */
+        return FALSE;
     }
     if (origval == AO.value) {
         /* no change needed */
-        return;
-    }    
+        return FALSE;
+    }
     if (no_fake_actions > 0) {
         error_fmt("Once a fake action has been defined it is too late to change %s", symname);
-        return;
+        return FALSE;
     }
     if (no_grammar_lines > 0) {
         error_fmt("Once an action has been defined it is too late to change %s", symname);
-        return;
+        return FALSE;
     }
-    set_grammar_version(AO.value);
+    if (any_action_symbols && optnum == OPT_GRAMMAR_META_FLAG) {
+        error_fmt("Once an action value has been referenced it is too late to change %s", symname);
+        return FALSE;
+    }
+
+    if (optnum == OPT_GRAMMAR_VERSION) {
+        set_grammar_version(AO.value);   /* Rejects invalid values */
+    }
+    else if (optnum == OPT_GRAMMAR_META_FLAG) {
+        /* The option clips the value to max 1, but that's slightly
+           inconvenient here. We'll just reject it. */
+        if (AO.value != 0 && AO.value != 1)
+            error_fmt("%s must be 0 or 1", symname);
+        
+        GRAMMAR_META_FLAG = AO.value;
+        
+        /* Now we have to create or destroy the GRAMMAR_META_FLAG constant,
+           as appropriate. */
+        if (GRAMMAR_META_FLAG) {
+            int ix = symbol_index("GRAMMAR_META_FLAG", -1, NULL);
+            assign_symbol(ix, 0, CONSTANT_T);
+            symbols[ix].flags |= USED_SFLAG;
+        }
+        else {
+            int ix = get_symbol_index("GRAMMAR_META_FLAG");
+            if (ix >= 0)
+                end_symbol_scope(ix, FALSE);
+        }
+    }
+    
+    return TRUE;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -623,6 +668,8 @@ extern assembly_operand action_of_name(char *name)
     }
     symbols[j].flags |= USED_SFLAG;
 
+    any_action_symbols = TRUE;
+    
     INITAO(&AO);
     AO.value = symbols[j].value;
     AO.marker = ACTION_MV;
@@ -1623,6 +1670,7 @@ extern void init_verbs_vars(void)
 {
     no_fake_actions = 0;
     no_actions = 0;
+    any_action_symbols = FALSE;
     no_meta_actions = -1;
     no_grammar_lines = 0;
     no_grammar_tokens = 0;
@@ -1653,11 +1701,12 @@ extern void verbs_begin_pass(void)
     no_grammar_token_routines=0;
     no_actions=0;
 
-    no_fake_actions=0;
+    no_fake_actions = 0;
+    any_action_symbols = FALSE;
     grammar_lines_top = 0;
 
     /* Set the version requested by compiler setting (with validity check) */
-    set_grammar_version(get_grammar_version_option());
+    set_grammar_version(get_current_option_value(OPT_GRAMMAR_VERSION));
 }
 
 extern void verbs_allocate_arrays(void)
