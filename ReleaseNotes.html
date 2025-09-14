@@ -31,6 +31,20 @@ These are the changes delivered in version 6.45 of the Inform compiler.
 
 <h3>Features added</h3>
 <ul>
+<li><p>It is now possible to set (or clear) the <tt>$GRAMMAR_META_FLAG</tt> option in code by writing
+<pre>
+  Constant Grammar_Meta__Value = 0;
+  ! ...or...
+  Constant Grammar_Meta__Value = 1;
+</pre>
+As before, it is allowed to check whether the option is set in code by writing
+<pre>
+  #Ifdef GRAMMAR_META_FLAG;
+  ! ...
+  #Endif;
+</pre>
+The intended use of this is that a library can set the grammar option in included code, so that the user doesn't
+have to set the option themselves.
 </ul>
 
 <h3>Bugs fixed</h3>
