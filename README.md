@@ -29,9 +29,8 @@ bugs fixed and minor, non-breaking features added, but development continues.
 
 To use the compiler, you will need an executable. There are
 [pre-built executables](https://ifarchive.org/indexes/if-archive/infocom/compilers/inform6/executables/)
-available, or you can compile the source yourself. There is no makefile as
-compilation does not really need one: all that is required is a C compiler and
-for it to be invoked with something like
+available, or you can compile the source yourself. All that is required is a
+C compiler and for it to be invoked with something like
 
       cc -O2 -o inform *.c
 
