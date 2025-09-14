@@ -45,6 +45,11 @@ As before, it is allowed to check whether the option is set in code by writing
 </pre>
 The intended use of this is that a library can set the grammar option in included code, so that the user doesn't
 have to set the option themselves.
+<li><p>When performing Z-code branch optimizations, if there is a <tt>@jz</tt>, <tt>@je</tt>, <tt>@jl</tt>, <tt>@jg</tt>,
+<tt>@jin</tt>, <tt>@test</tt>, <tt>@test_attr</tt>, <tt>@get_sibling</tt> or <tt>@get_child</tt> opcode branching to an
+<tt>@rtrue</tt> or <tt>@rfalse</tt>, the branch operand is changed to 1 or 0. (That is, the direct return true/false form of
+the branch). In some cases this leaves the original return opcode unreachable. Unfortunately the dead-code-strip phase has
+already finished by this point so it is not convenient to detect this and strip it out.
 </ul>
 
 <h3>Bugs fixed</h3>
