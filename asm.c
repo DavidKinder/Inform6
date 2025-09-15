@@ -102,6 +102,14 @@ static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
 static memory_list labels_memlist;
 static int first_label, last_label;
 
+/* The allocation plan for labels (labels_memlist) is a bit occult.
+   The statement code in states.c will prospectively allocate a new
+   label by doing "next_label++", and then later fill in the entry
+   by calling assemble_label_no() or assemble_forward_label_no().
+   The latter step is what calls ensure. So the memlist can lag behind
+   next_label briefly.
+ */
+
 static int *labeluse;     /* Counters indicating how many times a given label
                              has been used as a branch target. */
 static memory_list labeluse_memlist;
