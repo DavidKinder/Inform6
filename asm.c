@@ -1755,6 +1755,7 @@ extern int assemble_forward_label_no(int n)
 
 extern void define_symbol_label(int symbol)
 {
+    /* The symbol type should be LABEL_T. */
     int label = symbols[symbol].value;
     /* We may be creating a new label (label = next_label) or filling in
        the value of an old one. So we call ensure. */
