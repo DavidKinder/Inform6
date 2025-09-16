@@ -2178,20 +2178,22 @@ static void generate_code_from(int n, int void_flag)
     
                          case YOUNGEST_SYSF:
                              {   assembly_operand AO;
+                                 int label, label2;
                                  AO = ET[ET[below].right].value;
                                  if (runtime_error_checking_switch)
                                      AO = check_nonzero_at_runtime(AO, -1,
                                          YOUNGEST_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
                                  assemblez_objcode(get_child_zc,
-                                     AO, temp_var1, next_label+1, FALSE);
+                                     AO, temp_var1, label2, FALSE);
                                  assemblez_1(push_zc, temp_var1);
-                                 assemble_label_no(next_label);
+                                 assemble_label_no(label);
                                  assemblez_store(temp_var1, stack_pointer);
                                  assemblez_objcode(get_sibling_zc,
-                                     temp_var1, stack_pointer, next_label, TRUE);
-                                 assemble_label_no(next_label+1);
+                                     temp_var1, stack_pointer, label, TRUE);
+                                 assemble_label_no(label2);
                                  if (!void_flag) write_result_z(Result, temp_var1);
-                                 next_label += 2;
                              }
                              break;
     
@@ -3008,23 +3010,26 @@ static void generate_code_from(int n, int void_flag)
                              break;
     
                          case YOUNGEST_SYSF:
-                             AO = ET[ET[below].right].value;
-                             if (runtime_error_checking_switch)
-                                 AO = check_nonzero_at_runtime(AO, -1,
-                                     YOUNGEST_RTE);
-                             INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
-                             assembleg_3(aload_gc, AO, AO2, temp_var1);
-                             AO2.value = GOBJFIELD_SIBLING();
-                             assembleg_1_branch(jz_gc, temp_var1, next_label+1);
-                             assemble_label_no(next_label);
-                             assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
-                             assembleg_1_branch(jz_gc, temp_var2, next_label+1);
-                             assembleg_store(temp_var1, temp_var2);
-                             assembleg_0_branch(jump_gc, next_label);
-                             assemble_label_no(next_label+1);
-                             if (!void_flag) 
-                               write_result_g(Result, temp_var1);
-                             next_label += 2;
+                             {   int label, label2;
+                                 AO = ET[ET[below].right].value;
+                                 if (runtime_error_checking_switch)
+                                     AO = check_nonzero_at_runtime(AO, -1,
+                                         YOUNGEST_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
+                                 assembleg_3(aload_gc, AO, AO2, temp_var1);
+                                 AO2.value = GOBJFIELD_SIBLING();
+                                 assembleg_1_branch(jz_gc, temp_var1, label2);
+                                 assemble_label_no(label);
+                                 assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
+                                 assembleg_1_branch(jz_gc, temp_var2, label2);
+                                 assembleg_store(temp_var1, temp_var2);
+                                 assembleg_0_branch(jump_gc, label);
+                                 assemble_label_no(label2);
+                                 if (!void_flag) 
+                                     write_result_g(Result, temp_var1);
+                             }
                              break;
     
                          case ELDER_SYSF:
