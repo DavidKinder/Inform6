@@ -2225,7 +2225,7 @@ extern debug_location statement_debug_location;
 extern int   execution_never_reaches_here;
 extern variableinfo *variables;
 extern memory_list variables_memlist;
-extern int   next_label, no_sequence_points;
+extern int   no_sequence_points;
 extern assembly_instruction AI;
 extern int32 *named_routine_symbols;
 

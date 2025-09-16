@@ -29,7 +29,7 @@ int execution_never_reaches_here;  /* nonzero if the current PC value in the
                                       the previous instruction was a "quit"
                                       opcode and no label is set to here
                                       (see EXECSTATE flags for more) */
-int next_label,                    /* Used to count the labels created all
+static int next_label,             /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
 int no_sequence_points;            /* Total over all routines; kept for
