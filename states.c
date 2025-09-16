@@ -1431,8 +1431,8 @@ static void parse_statement_z(int break_label, int continue_label)
                              && ((AO4.type != VARIABLE_OT)||(AO4.value != 0))
                              && ((AO4.type != VARIABLE_OT)
                                  ||(AO4.value != AO.value)))
-                         {   assembly_operand en_ao;
-                             int label = alloc_label();
+                         {   int label = alloc_label();
+                             assembly_operand en_ao;
                              INITAOTV(&en_ao, SHORT_CONSTANT_OT, OBJECTLOOP_BROKEN_RTE);
                              assemblez_2_branch(jin_zc, AO, AO4,
                                  label, TRUE);
@@ -2449,8 +2449,8 @@ static void parse_statement_g(int break_label, int continue_label)
                          if ((ln == 3)
                              && ((AO5.type != LOCALVAR_OT)||(AO5.value != 0))
                              && ((AO5.type != LOCALVAR_OT)||(AO5.value != AO.value)))
-                         {   assembly_operand en_ao;
-                             int label = alloc_label();
+                         {   int label = alloc_label();
+                             assembly_operand en_ao;
                              INITAO(&en_ao);
                              en_ao.value = OBJECTLOOP_BROKEN_RTE;
                              set_constant_ot(&en_ao);
