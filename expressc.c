@@ -2154,23 +2154,25 @@ static void generate_code_from(int n, int void_flag)
                              goto IndirectFunctionCallZ;
     
                          case CHILDREN_SYSF:
-                             {  assembly_operand AO;
+                             {   assembly_operand AO;
+                                 int label, label2;
                                  AO = ET[ET[below].right].value;
                                  if (runtime_error_checking_switch)
                                      AO = check_nonzero_at_runtime(AO, -1,
                                          CHILDREN_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
                                  assemblez_store(temp_var1, zero_operand);
                                  assemblez_objcode(get_child_zc,
-                                     AO, stack_pointer, next_label+1, FALSE);
-                                 assemble_label_no(next_label);
+                                     AO, stack_pointer, label2, FALSE);
+                                 assemble_label_no(label);
                                  assemblez_inc(temp_var1);
                                  assemblez_objcode(get_sibling_zc,
                                      stack_pointer, stack_pointer,
-                                     next_label, TRUE);
-                                 assemble_label_no(next_label+1);
+                                     label, TRUE);
+                                 assemble_label_no(label2);
                                  assemblez_store(temp_var2, stack_pointer);
                                  if (!void_flag) write_result_z(Result, temp_var1);
-                                 next_label += 2;
                              }
                              break;
     
@@ -2966,25 +2968,27 @@ static void generate_code_from(int n, int void_flag)
                              break;
     
                          case CHILDREN_SYSF:
-                             {  assembly_operand AO;
-                                AO = ET[ET[below].right].value;
-                                if (runtime_error_checking_switch)
-                                    AO = check_nonzero_at_runtime(AO, -1,
-                                        CHILDREN_RTE);
-                                INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
-                                assembleg_store(temp_var1, zero_operand);
-                                assembleg_3(aload_gc, AO, AO2, temp_var2);
-                                AO2.value = GOBJFIELD_SIBLING();
-                                assemble_label_no(next_label);
-                                assembleg_1_branch(jz_gc, temp_var2, next_label+1);
-                                assembleg_3(add_gc, temp_var1, one_operand, 
-                                  temp_var1);
-                                assembleg_3(aload_gc, temp_var2, AO2, temp_var2);
-                                assembleg_0_branch(jump_gc, next_label);
-                                assemble_label_no(next_label+1);
-                                next_label += 2;
-                                if (!void_flag) 
-                                  write_result_g(Result, temp_var1);
+                             {   int label, label2;
+                                 assembly_operand AO;
+                                 AO = ET[ET[below].right].value;
+                                 if (runtime_error_checking_switch)
+                                     AO = check_nonzero_at_runtime(AO, -1,
+                                         CHILDREN_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
+                                 assembleg_store(temp_var1, zero_operand);
+                                 assembleg_3(aload_gc, AO, AO2, temp_var2);
+                                 AO2.value = GOBJFIELD_SIBLING();
+                                 assemble_label_no(label);
+                                 assembleg_1_branch(jz_gc, temp_var2, label2);
+                                 assembleg_3(add_gc, temp_var1, one_operand, 
+                                     temp_var1);
+                                 assembleg_3(aload_gc, temp_var2, AO2, temp_var2);
+                                 assembleg_0_branch(jump_gc, label);
+                                 assemble_label_no(label2);
+                                 if (!void_flag) 
+                                     write_result_g(Result, temp_var1);
                              }
                              break;
     
