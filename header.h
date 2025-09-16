@@ -2242,6 +2242,7 @@ extern void assemble_label_no(int n);
 extern int assemble_forward_label_no(int n);
 extern void assemble_jump(int n);
 extern void define_symbol_label(int symbol);
+extern int alloc_label(void);
 extern int32 assemble_routine_header(int debug_flag,
     char *name, int embedded_flag, int the_symbol);
 extern void assemble_routine_end(int embedded_flag, debug_locations locations);

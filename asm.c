@@ -217,6 +217,19 @@ static memory_list sequence_points_memlist;
    several -- any "continue" in the loop will jump to .TopLabel.)
 */
 
+extern int alloc_label(void)
+{
+    int label = next_label++;
+
+    ensure_memory_list_available(&labels_memlist, label+1);
+    labels[label].offset = -1;
+    labels[label].symbol = -1;
+    labels[label].prev = -1;
+    labels[label].next = -1;
+
+    return label;
+}
+
 /* Set the position of the given label. The offset will be the current
    zmachine_pc, or -1 if the label is definitely unused.
 

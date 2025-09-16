@@ -365,7 +365,7 @@ static void parse_switch_spec(assembly_operand switch_value, int label,
                 panic_mode_error_recovery();
                 return;
             case 1: goto GenSpecCode;
-            case 3: if (label_after == -1) label_after = next_label++;
+            case 3: if (label_after == -1) label_after = alloc_label();
         }
     } while(TRUE);
 
@@ -383,7 +383,7 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int l
     sequence_point_follows = FALSE;
 
     if ((speccount > max_equality_args) && (label_after == -1))
-        label_after = next_label++;
+        label_after = alloc_label();
 
     if (label_after == -1)
     {   compile_alternatives(switch_value, speccount, 0, label, FALSE); return;
@@ -413,11 +413,12 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int l
                         label, TRUE);
                 }
                 else
-                {   assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
-                        next_label, TRUE);
+                {   int label = alloc_label();
+                    assemblez_2_branch(jl_zc, switch_value, spec_stack[i],
+                        label, TRUE);
                     assemblez_2_branch(jg_zc, switch_value, spec_stack[i+1],
                         label_after, FALSE);
-                    assemble_label_no(next_label++);
+                    assemble_label_no(label);
                 }
             }
             else {
@@ -428,11 +429,12 @@ static void generate_switch_spec(assembly_operand switch_value, int label, int l
                         label);
                 }
                 else
-                {   assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
-                        next_label);
+                {   int label = alloc_label();
+                    assembleg_2_branch(jlt_gc, switch_value, spec_stack[i],
+                        label);
                     assembleg_2_branch(jle_gc, switch_value, spec_stack[i+1],
                         label_after);
-                    assemble_label_no(next_label++);
+                    assemble_label_no(label);
                 }
             }
             i = i+2;
@@ -586,7 +588,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
                     assemble_label_no(switch_label);
                 }
 
-                switch_label = next_label++;
+                switch_label = alloc_label();
                 switch_clause_made = TRUE;
                 put_token_back(); put_token_back();
 
@@ -742,7 +744,7 @@ extern void parse_code_block(int break_label, int continue_label,
                             assemble_label_no(switch_label);
                         }
                         
-                        switch_label = next_label++;
+                        switch_label = alloc_label();
                         switch_clause_made = TRUE;
                         
                         AO = temp_var1;
@@ -783,7 +785,7 @@ extern void parse_code_block(int break_label, int continue_label,
                         assemble_label_no(switch_label);
                     }
 
-                    switch_label = next_label++;
+                    switch_label = alloc_label();
                     switch_clause_made = TRUE;
                     put_token_back(); put_token_back();
                     if (unary_minus_flag) put_token_back();
