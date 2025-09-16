@@ -256,9 +256,9 @@ extern int parse_label(void)
     }
 
     if ((token_type == SYMBOL_TT) && (symbols[token_value].flags & UNKNOWN_SFLAG))
-    {   assign_symbol(token_value, next_label, LABEL_T);
+    {   int label = alloc_label();
+        assign_symbol(token_value, label, LABEL_T);
         define_symbol_label(token_value);
-        next_label++;
         symbols[token_value].flags |= CHANGE_SFLAG + USED_SFLAG;
         return(symbols[token_value].value);
     }
@@ -752,11 +752,11 @@ static int parse_named_label_statements()
         }
 
         if (symbols[token_value].flags & UNKNOWN_SFLAG)
-        {   assign_symbol(token_value, next_label, LABEL_T);
+        {   int label = alloc_label();
+            assign_symbol(token_value, label, LABEL_T);
             symbols[token_value].flags |= USED_SFLAG;
-            assemble_label_no(next_label);
+            assemble_label_no(label);
             define_symbol_label(token_value);
-            next_label++;
         }
         else
         {   if (symbols[token_value].type != LABEL_T) {
@@ -1432,13 +1432,14 @@ static void parse_statement_z(int break_label, int continue_label)
                              && ((AO4.type != VARIABLE_OT)
                                  ||(AO4.value != AO.value)))
                          {   assembly_operand en_ao;
+                             int label = alloc_label();
                              INITAOTV(&en_ao, SHORT_CONSTANT_OT, OBJECTLOOP_BROKEN_RTE);
                              assemblez_2_branch(jin_zc, AO, AO4,
-                                 next_label, TRUE);
+                                 label, TRUE);
                              assemblez_3(call_vn_zc, veneer_routine(RT__Err_VR),
                                  en_ao, AO);
                              assemblez_jump(ln2);
-                             assemble_label_no(next_label++);
+                             assemble_label_no(label);
                          }
                      }
                      else AO2 = AO;
@@ -2449,17 +2450,18 @@ static void parse_statement_g(int break_label, int continue_label)
                              && ((AO5.type != LOCALVAR_OT)||(AO5.value != 0))
                              && ((AO5.type != LOCALVAR_OT)||(AO5.value != AO.value)))
                          {   assembly_operand en_ao;
+                             int label = alloc_label();
                              INITAO(&en_ao);
                              en_ao.value = OBJECTLOOP_BROKEN_RTE;
                              set_constant_ot(&en_ao);
                              INITAOTV(&AO4, BYTECONSTANT_OT, GOBJFIELD_PARENT());
                              assembleg_3(aload_gc, AO, AO4, stack_pointer);
                              assembleg_2_branch(jeq_gc, stack_pointer, AO5, 
-                                 next_label);
+                                 label);
                              assembleg_call_2(veneer_routine(RT__Err_VR),
                                  en_ao, AO, zero_operand);
                              assembleg_jump(ln2);
-                             assemble_label_no(next_label++);
+                             assemble_label_no(label);
                          }
                      }
                      else {

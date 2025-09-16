@@ -2277,9 +2277,9 @@ static void compile_symbol_table_routine(void)
         INITAOT(&AO2, SHORT_CONSTANT_OT);
         INITAOT(&AO3, LONG_CONSTANT_OT);
     
-        arrays_l = next_label++;
-        routines_l = next_label++;
-        constants_l = next_label++;
+        arrays_l = alloc_label();
+        routines_l = alloc_label();
+        constants_l = alloc_label();
     
         sequence_point_follows = FALSE;
         AO2.value = 1;
@@ -2299,7 +2299,7 @@ static void compile_symbol_table_routine(void)
         {   {   AO2.value = j;
                 if (AO2.value<256) AO2.type = SHORT_CONSTANT_OT;
                 else AO2.type = LONG_CONSTANT_OT;
-                nl = next_label++;
+                nl = alloc_label();
                 sequence_point_follows = FALSE;
                 assemblez_2_branch(je_zc, AO, AO2, nl, FALSE);
                 AO3.value = arrays[j].size;
@@ -2323,7 +2323,7 @@ static void compile_symbol_table_routine(void)
         {   AO2.value = j;
             if (AO2.value<256) AO2.type = SHORT_CONSTANT_OT;
             else AO2.type = LONG_CONSTANT_OT;
-            nl = next_label++;
+            nl = alloc_label();
             sequence_point_follows = FALSE;
             assemblez_2_branch(je_zc, AO, AO2, nl, FALSE);
             AO3.value = 0;
@@ -2347,7 +2347,7 @@ static void compile_symbol_table_routine(void)
             {   AO2.value = no_named_constants++;
                 if (AO2.value<256) AO2.type = SHORT_CONSTANT_OT;
                 else AO2.type = LONG_CONSTANT_OT;
-                nl = next_label++;
+                nl = alloc_label();
                 sequence_point_follows = FALSE;
                 assemblez_2_branch(je_zc, AO, AO2, nl, FALSE);
                 AO3.value = 0;
