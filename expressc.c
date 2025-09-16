@@ -3045,7 +3045,7 @@ static void generate_code_from(int n, int void_flag)
                                  AO2.value = GOBJFIELD_SIBLING();
                                  assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
                                  assembleg_2_branch(jeq_gc, temp_var3, temp_var2,
-                                     label+3);
+                                     label3);
                                  assembleg_store(temp_var1, temp_var2);
                                  assembleg_0_branch(jump_gc, label);
                                  assemble_label_no(label2);
