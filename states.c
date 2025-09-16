@@ -914,8 +914,8 @@ static void parse_statement_z(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case DO_CODE:
-                 assemble_label_no(ln = next_label++);
-                 ln2 = next_label++; ln3 = next_label++;
+                 assemble_label_no(ln = alloc_label());
+                 ln2 = alloc_label(); ln3 = alloc_label();
                  parse_code_block(ln3, ln2, 0);
                  statements.enabled = TRUE;
                  get_next_token();
@@ -1011,8 +1011,8 @@ static void parse_statement_z(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value == SUPERCLASS_SEP))
                      {   get_next_token();
                          if ((token_type==SEP_TT)&&(token_value == CLOSEB_SEP))
-                         {   assemble_label_no(ln = next_label++);
-                             ln2 = next_label++;
+                         {   assemble_label_no(ln = alloc_label());
+                             ln2 = alloc_label();
                              parse_code_block(ln2, ln, 0);
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
@@ -1044,9 +1044,9 @@ static void parse_statement_z(int break_label, int continue_label)
                      flag = test_for_incdec(AO2);
                  }
 
-                 ln = next_label++;
-                 ln2 = next_label++;
-                 ln3 = next_label++;
+                 ln = alloc_label();
+                 ln2 = alloc_label();
+                 ln3 = alloc_label();
 
                  if ((AO2.type == OMITTED_OT) || (flag != 0))
                  {
@@ -1188,7 +1188,7 @@ static void parse_statement_z(int break_label, int continue_label)
                      ln = -3;
                  else
                  {   put_token_back();
-                     ln = next_label++;
+                     ln = alloc_label();
                  }
 
                  /* The condition */
@@ -1225,7 +1225,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
-                     {   ln2 = next_label++;
+                     {   ln2 = alloc_label();
                          if (!execution_never_reaches_here)
                          {   sequence_point_follows = FALSE;
                              assemblez_jump(ln2);
@@ -1419,9 +1419,9 @@ static void parse_statement_z(int break_label, int continue_label)
                          AO2 = AO3;
                      }
                      assemblez_store(AO, AO2);
-                     assemblez_1_branch(jz_zc, AO, ln2 = next_label++, TRUE);
-                     assemble_label_no(ln4 = next_label++);
-                     parse_code_block(ln2, ln3 = next_label++, 0);
+                     assemblez_1_branch(jz_zc, AO, ln2 = alloc_label(), TRUE);
+                     assemble_label_no(ln4 = alloc_label());
+                     parse_code_block(ln2, ln3 = alloc_label(), 0);
                      sequence_point_follows = FALSE;
                      assemble_label_no(ln3);
                      if (runtime_error_checking_switch)
@@ -1452,9 +1452,9 @@ static void parse_statement_z(int break_label, int continue_label)
                  INITAOTV(&AO2, SHORT_CONSTANT_OT, 1);
                  assemblez_store(AO, AO2);
 
-                 assemble_label_no(ln = next_label++);
-                 ln2 = next_label++;
-                 ln3 = next_label++;
+                 assemble_label_no(ln = alloc_label());
+                 ln2 = alloc_label();
+                 ln3 = alloc_label();
                  if (flag)
                  {   put_token_back();
                      put_token_back();
@@ -1635,8 +1635,8 @@ static void parse_statement_z(int break_label, int continue_label)
                  INITAOTV(&AO, SHORT_CONSTANT_OT, 32);
                  INITAOTV(&AO3, SHORT_CONSTANT_OT, 1);
 
-                 assemblez_2_branch(jl_zc, AO2, AO3, ln = next_label++, TRUE);
-                 assemble_label_no(ln2 = next_label++);
+                 assemblez_2_branch(jl_zc, AO2, AO3, ln = alloc_label(), TRUE);
+                 assemble_label_no(ln2 = alloc_label());
                  assemblez_1(print_char_zc, AO);
                  assemblez_dec(AO2);
                  assemblez_1_branch(jz_zc, AO2, ln2, FALSE);
@@ -1725,7 +1725,7 @@ static void parse_statement_z(int break_label, int continue_label)
                  INITAOTV(&AO2, VARIABLE_OT, globalv_z_temp_var1);
                  assemblez_store(AO2, AO);
 
-                 parse_code_block(ln = next_label++, continue_label, 1);
+                 parse_code_block(ln = alloc_label(), continue_label, 1);
                  assemble_forward_label_no(ln);
                  return;
 
@@ -1734,11 +1734,11 @@ static void parse_statement_z(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case WHILE_CODE:
-                 assemble_label_no(ln = next_label++);
+                 assemble_label_no(ln = alloc_label());
                  match_open_bracket();
 
                  code_generate(parse_expression(CONDITION_CONTEXT),
-                     CONDITION_CONTEXT, ln2 = next_label++);
+                     CONDITION_CONTEXT, ln2 = alloc_label());
                  match_close_bracket();
 
                  parse_code_block(ln2, ln, 0);
@@ -1883,8 +1883,8 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case DO_CODE:
-                 assemble_label_no(ln = next_label++);
-                 ln2 = next_label++; ln3 = next_label++;
+                 assemble_label_no(ln = alloc_label());
+                 ln2 = alloc_label(); ln3 = alloc_label();
                  parse_code_block(ln3, ln2, 0);
                  statements.enabled = TRUE;
                  get_next_token();
@@ -1962,8 +1962,8 @@ static void parse_statement_g(int break_label, int continue_label)
                      if ((token_type==SEP_TT)&&(token_value == SUPERCLASS_SEP))
                      {   get_next_token();
                          if ((token_type==SEP_TT)&&(token_value == CLOSEB_SEP))
-                         {   assemble_label_no(ln = next_label++);
-                             ln2 = next_label++;
+                         {   assemble_label_no(ln = alloc_label());
+                             ln2 = alloc_label();
                              parse_code_block(ln2, ln, 0);
                              sequence_point_follows = FALSE;
                              if (!execution_never_reaches_here)
@@ -1995,9 +1995,9 @@ static void parse_statement_g(int break_label, int continue_label)
                      flag = test_for_incdec(AO2);
                  }
 
-                 ln = next_label++;
-                 ln2 = next_label++;
-                 ln3 = next_label++;
+                 ln = alloc_label();
+                 ln2 = alloc_label();
+                 ln3 = alloc_label();
 
                  if ((AO2.type == OMITTED_OT) || (flag != 0))
                  {
@@ -2178,7 +2178,7 @@ static void parse_statement_g(int break_label, int continue_label)
                      ln = -3;
                  else
                  {   put_token_back();
-                     ln = next_label++;
+                     ln = alloc_label();
                  }
 
                  /* The condition */
@@ -2215,7 +2215,7 @@ static void parse_statement_g(int break_label, int continue_label)
                  if ((token_type == STATEMENT_TT) && (token_value == ELSE_CODE))
                  {   flag = TRUE;
                      if (ln >= 0)
-                     {   ln2 = next_label++;
+                     {   ln2 = alloc_label();
                          if (!execution_never_reaches_here)
                          {   sequence_point_follows = FALSE;
                              assembleg_jump(ln2);
@@ -2438,9 +2438,9 @@ static void parse_statement_g(int break_label, int continue_label)
                          /* do nothing */
                      }
                      assembleg_store(AO, AO2);
-                     assembleg_1_branch(jz_gc, AO, ln2 = next_label++);
-                     assemble_label_no(ln4 = next_label++);
-                     parse_code_block(ln2, ln3 = next_label++, 0);
+                     assembleg_1_branch(jz_gc, AO, ln2 = alloc_label());
+                     assemble_label_no(ln4 = alloc_label());
+                     parse_code_block(ln2, ln3 = alloc_label(), 0);
                      sequence_point_follows = FALSE;
                      assemble_label_no(ln3);
                      if (runtime_error_checking_switch) {
@@ -2487,9 +2487,9 @@ static void parse_statement_g(int break_label, int continue_label)
                  }
                  assembleg_store(AO, AO2);
 
-                 assemble_label_no(ln = next_label++);
-                 ln2 = next_label++;
-                 ln3 = next_label++;
+                 assemble_label_no(ln = alloc_label());
+                 ln2 = alloc_label();
+                 ln3 = alloc_label();
                  if (flag)
                  {   put_token_back();
                      put_token_back();
@@ -2588,8 +2588,8 @@ static void parse_statement_g(int break_label, int continue_label)
                  AO.value = 32; set_constant_ot(&AO);
 
                  assembleg_2_branch(jlt_gc, temp_var1, one_operand, 
-                     ln = next_label++);
-                 assemble_label_no(ln2 = next_label++);
+                     ln = alloc_label());
+                 assemble_label_no(ln2 = alloc_label());
                  assembleg_1(streamchar_gc, AO);
                  assembleg_dec(temp_var1);
                  assembleg_1_branch(jnz_gc, temp_var1, ln2);
@@ -2689,7 +2689,7 @@ static void parse_statement_g(int break_label, int continue_label)
 
                  assembleg_store(temp_var1, AO); 
 
-                 parse_code_block(ln = next_label++, continue_label, 1);
+                 parse_code_block(ln = alloc_label(), continue_label, 1);
                  assemble_forward_label_no(ln);
                  return;
 
@@ -2698,11 +2698,11 @@ static void parse_statement_g(int break_label, int continue_label)
     /*  -------------------------------------------------------------------- */
 
         case WHILE_CODE:
-                 assemble_label_no(ln = next_label++);
+                 assemble_label_no(ln = alloc_label());
                  match_open_bracket();
 
                  code_generate(parse_expression(CONDITION_CONTEXT),
-                     CONDITION_CONTEXT, ln2 = next_label++);
+                     CONDITION_CONTEXT, ln2 = alloc_label());
                  match_close_bracket();
 
                  parse_code_block(ln2, ln, 0);
