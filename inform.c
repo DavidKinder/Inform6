@@ -1487,7 +1487,7 @@ extern void switches(char *p, int cmode)
 }
 
 /* Check whether the string looks like an ICL command. */
-static int icl_command(char *p)
+static int is_icl_command(char *p)
 {   if ((p[0]=='+')||(p[0]=='-')||(p[0]=='$')
         || ((p[0]=='(')&&(p[strlen(p)-1]==')')) ) return TRUE;
     return FALSE;
@@ -1575,7 +1575,8 @@ static int execute_icl_header(char *argname)
         if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
             break;
         i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
-        if (icl_command(fw)) {
+        printf("### comment '%s'\n", fw);
+        if (is_icl_command(fw)) {
             execute_icl_command(fw);
             copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!')) {
@@ -1607,7 +1608,7 @@ static void run_icl_file(char *filename, FILE *command_file)
     {   if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
         line++;
         i = copy_icl_word(cli_buff, fw, CMD_BUF_SIZE);
-        if (icl_command(fw))
+        if (is_icl_command(fw))
         {   execute_icl_command(fw);
             copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!'))
@@ -1851,7 +1852,7 @@ static void read_command_line(int argc, char **argv)
                 i++;
             }
         }
-        else if (icl_command(argv[i])) {
+        else if (is_icl_command(argv[i])) {
             execute_icl_command(argv[i]);
         }
         else {
