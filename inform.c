@@ -1567,10 +1567,11 @@ static int execute_icl_header(char *argname)
     char filename[PATHLEN]; 
     int x = 0;
 
-    do
-        {   x = translate_in_filename(x, filename, argname, 0, 1);
-            command_file = fopen(filename,"rb");
-        } while ((command_file == NULL) && (x != 0));
+    do {
+        x = translate_in_filename(x, filename, argname, 0, 1);
+        command_file = fopen(filename,"rb");
+    } while ((command_file == NULL) && (x != 0));
+    
     if (!command_file) {
         /* Fail silently. The regular compiler will try to open the file
            again, and report the problem. */
@@ -1582,6 +1583,14 @@ static int execute_icl_header(char *argname)
         line++;
         if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
             break;
+        /* Right-strip whitespace and optionally one semicolon. */
+        i = strlen(cli_buff);
+        while (i && (cli_buff[i-1] == ' ' || cli_buff[i-1] == TAB_CHARACTER || cli_buff[i-1] == (char) 10 || cli_buff[i-1] == (char) 13))
+            i--;
+        if (cli_buff[i-1] == ';')
+            i--;
+        cli_buff[i] = 0;
+        /* Look for the first ICL token, same as you'd find in an ICL file. */
         i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
         if (is_icl_command(fw)) {
             execute_icl_command(fw);
