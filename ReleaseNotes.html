@@ -50,6 +50,14 @@ have to set the option themselves.
 <tt>@rtrue</tt> or <tt>@rfalse</tt>, the branch operand is changed to 1 or 0. (That is, the direct return true/false form of
 the branch). In some cases this leaves the original return opcode unreachable. Unfortunately the dead-code-strip phase has
 already finished by this point so it is not convenient to detect this and strip it out.
+<li><p>Inform 6.43 accepted header comment lines with trailing non-numeric data, even though this was technically incorrect.
+Inform 7 10.1 unfortunately generated some header comments with trailing semicolons, like this:
+<pre>
+  !% $ZCODE_LESS_DICT_DATA=1;
+</pre>
+While Inform 6.43 accepted this, Inform 6.44 did not, due to the reworking of the options code. Since there is a strong desire
+for the output from all versions of Inform 7 to work with the latest Inform 6 compiler, such lines with a trailing semicolon are
+now accepted.
 </ul>
 
 <h3>Bugs fixed</h3>
