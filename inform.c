@@ -1501,6 +1501,14 @@ static void icl_header_error(char *filename, int line)
 {   printf("Error in ICL header of file '%s', line %d:\n", filename, line);
 }
 
+static int icl_whitespace(char ch)
+{
+    return ((ch == ' ')
+         || (ch == TAB_CHARACTER)
+         || (ch == (char) 10)
+         || (ch == (char) 13));
+}
+
 static int copy_icl_word(char *from, char *to, int max)
 {
     /*  Copies one token from 'from' to 'to', null-terminated:
@@ -1517,8 +1525,7 @@ static int copy_icl_word(char *from, char *to, int max)
     int i, j, quoted_mode, truncated;
 
     i = 0; truncated = 0;
-    while ((from[i] == ' ') || (from[i] == TAB_CHARACTER)
-           || (from[i] == (char) 10) || (from[i] == (char) 13)) i++;
+    while (icl_whitespace(from[i])) i++;
 
     if (from[i] == '!')
     {   while (from[i] != 0) i++;
@@ -1585,9 +1592,9 @@ static int execute_icl_header(char *argname)
             break;
         /* Right-strip whitespace and optionally one semicolon. */
         i = strlen(cli_buff);
-        while (i && (cli_buff[i-1] == ' ' || cli_buff[i-1] == TAB_CHARACTER || cli_buff[i-1] == (char) 10 || cli_buff[i-1] == (char) 13))
+        while (i && icl_whitespace(cli_buff[i-1]))
             i--;
-        if (cli_buff[i-1] == ';')
+        if (i && cli_buff[i-1] == ';')
             i--;
         cli_buff[i] = 0;
         /* Look for the first ICL token, same as you'd find in an ICL file. */
