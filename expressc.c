@@ -336,12 +336,12 @@ static void annotate_for_conditions(int n, int a, int b)
         || (operators[opnum].precedence == 3))
     {   if ((a == -1) && (b == -1))
         {   if (opnum == LOGAND_OP)
-            {   b = next_label++;
+            {   b = alloc_label();
                 ET[n].false_label = b;
                 ET[n].to_expression = TRUE;
             }
             else
-            {   a = next_label++;
+            {   a = alloc_label();
                 ET[n].true_label = a;
                 ET[n].to_expression = TRUE;
             }
@@ -351,7 +351,7 @@ static void annotate_for_conditions(int n, int a, int b)
     switch(opnum)
     {   case LOGAND_OP:
             if (b == -1)
-            {   b = next_label++;
+            {   b = alloc_label();
                 ET[n].false_label = b;
                 ET[n].label_after = b;
             }
@@ -362,7 +362,7 @@ static void annotate_for_conditions(int n, int a, int b)
             return;
         case LOGOR_OP:
             if (a == -1)
-            {   a = next_label++;
+            {   a = alloc_label();
                 ET[n].true_label = a;
                 ET[n].label_after = a;
             }
@@ -502,8 +502,8 @@ static void access_memory_z(int oc, assembly_operand AO1, assembly_operand AO2,
 
     if ((AO1.marker == ARRAY_MV || AO1.marker == STATIC_ARRAY_MV))
     {   
-        int passed_label = next_label++, failed_label = next_label++,
-            final_label = next_label++; 
+        int passed_label = alloc_label(), failed_label = alloc_label(),
+            final_label = alloc_label(); 
         /* Calculate the largest permitted array entry + 1
            Here "size_ao.value" = largest permitted entry of its own kind */
         max_ao = size_ao;
@@ -619,8 +619,8 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
         && (AO1.marker == 0) && (AO1.value >= 1) && (AO1.value < no_objects))
         return AO1;
 
-    passed_label = next_label++;
-    failed_label = next_label++;
+    passed_label = alloc_label();
+    failed_label = alloc_label();
     INITAOTV(&AO2, LONG_CONSTANT_OT, actual_largest_object_SC);
     AO2.marker = INCON_MV;
     INITAOTV(&AO3, SHORT_CONSTANT_OT, 5);
@@ -686,7 +686,7 @@ static assembly_operand check_nonzero_at_runtime_z(assembly_operand AO1,
                the temporary variable */
             INITAOTV(&AO2, SHORT_CONSTANT_OT, 2);
             AO3 = temp_var2; assemblez_store(AO3, AO2);
-            last_label = next_label++;
+            last_label = alloc_label();
             assemblez_jump(last_label);
             assemble_label_no(passed_label);
             assemblez_store(AO3, AO1);
@@ -726,11 +726,11 @@ static void compile_conditional_z(int oc,
     
     if (oc<200)
     {   if ((runtime_error_checking_switch) && (oc == jin_zc))
-        {   if (flag) error_label = next_label++;
+        {   if (flag) error_label = alloc_label();
             AO1 = check_nonzero_at_runtime(AO1, error_label, IN_RTE);
         }
         if ((runtime_error_checking_switch) && (oc == test_attr_zc))
-        {   if (flag) error_label = next_label++;
+        {   if (flag) error_label = alloc_label();
             AO1 = check_nonzero_at_runtime(AO1, error_label, HAS_RTE);
             switch(AO2.type)
             {   case SHORT_CONSTANT_OT:
@@ -742,7 +742,7 @@ static void compile_conditional_z(int oc,
                     }
                     /* Fall through */
                 case VARIABLE_OT:
-                {   int pa_label = next_label++, fa_label = next_label++;
+                {   int pa_label = alloc_label(), fa_label = alloc_label();
                     assembly_operand en_ao, zero_ao, max_ao;
                     assemblez_store(temp_var1, AO1);
                     if ((AO1.type == VARIABLE_OT)&&(AO1.value == 0))
@@ -759,7 +759,7 @@ static void compile_conditional_z(int oc,
                     en_ao = zero_ao; en_ao.value = 19;
                     assemblez_4(call_vn_zc, veneer_routine(RT__Err_VR),
                         en_ao, temp_var1, temp_var2);
-                    va_flag = TRUE; va_label = next_label++;
+                    va_flag = TRUE; va_label = alloc_label();
                     assemblez_jump(va_label);
                     assemble_label_no(pa_label);
                 }
@@ -1122,9 +1122,9 @@ static void access_memory_g(int oc, assembly_operand AO1, assembly_operand AO2,
             return;
         }
 
-        passed_label = next_label++; 
-        failed_label = next_label++;
-        final_label = next_label++;
+        passed_label = alloc_label(); 
+        failed_label = alloc_label();
+        final_label = alloc_label();
 
         index_ao = AO2;
         if ((AO2.type == LOCALVAR_OT)&&(AO2.value == 0))
@@ -1220,8 +1220,8 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
 
     pre_unreach = execution_never_reaches_here;
   
-    passed_label = next_label++;
-    failed_label = next_label++;  
+    passed_label = alloc_label();
+    failed_label = alloc_label();  
 
     if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0) && (AO1.marker == 0)) {
         /* That is, if AO1 is the stack pointer */
@@ -1308,7 +1308,7 @@ static assembly_operand check_nonzero_at_runtime_g(assembly_operand AO1,
             /* Store either "Object" or the operand's value in the temporary
                variable. */
             assembleg_store(temp_var2, AO2);
-            last_label = next_label++;
+            last_label = alloc_label();
             assembleg_jump(last_label);
             assemble_label_no(passed_label);
             assembleg_store(temp_var2, AO1);
@@ -1339,7 +1339,7 @@ static void compile_conditional_g(condclass *cc,
             check_warn_symbol_type(&AO2, ATTRIBUTE_T, 0, "\"has/hasnt\" expression");
             if (runtime_error_checking_switch) {
                 if (flag) 
-                    error_label = next_label++;
+                    error_label = alloc_label();
                 AO1 = check_nonzero_at_runtime(AO1, error_label, HAS_RTE);
                 if (is_constant_ot(AO2.type) && AO2.marker == 0) {
                     if ((AO2.value < 0) || (AO2.value >= NUM_ATTR_BYTES*8)) {
@@ -1347,7 +1347,7 @@ static void compile_conditional_g(condclass *cc,
                     }
                 }
                 else {
-                    int pa_label = next_label++, fa_label = next_label++;
+                    int pa_label = alloc_label(), fa_label = alloc_label();
                     assembly_operand en_ao, max_ao;
 
                     if ((AO1.type == LOCALVAR_OT) && (AO1.value == 0)) {
@@ -1385,7 +1385,7 @@ static void compile_conditional_g(condclass *cc,
                     assembleg_3(call_gc, veneer_routine(RT__Err_VR),
                         three_operand, zero_operand);
                     va_flag = TRUE; 
-                    va_label = next_label++;
+                    va_label = alloc_label();
                     assembleg_jump(va_label);
                     assemble_label_no(pa_label);
                 }
@@ -1419,7 +1419,7 @@ static void compile_conditional_g(condclass *cc,
             check_warn_symbol_type(&AO2, OBJECT_T, CLASS_T, "\"in/notin\" expression");
             if (runtime_error_checking_switch) {
                 if (flag) 
-                    error_label = next_label++;
+                    error_label = alloc_label();
                 AO1 = check_nonzero_at_runtime(AO1, error_label, IN_RTE);
             }
             INITAO(&AO4);
@@ -1631,7 +1631,7 @@ static void generate_code_from(int n, int void_flag)
                       .branch_other                                          */
     
                 if (branch_other == -1)
-                {   branch_other = next_label++; make_branch_label = TRUE;
+                {   branch_other = alloc_label(); make_branch_label = TRUE;
                 }
             }
     
@@ -1782,7 +1782,7 @@ static void generate_code_from(int n, int void_flag)
                     .branch_other                                          */
         
                 if (branch_other == -1) {
-                    branch_other = next_label++; make_branch_label = TRUE;
+                    branch_other = alloc_label(); make_branch_label = TRUE;
                 }
             }
 
@@ -1894,7 +1894,7 @@ static void generate_code_from(int n, int void_flag)
                     {
                         assemblez_store(temp_var1, ET[below].value);
                         assemblez_store(temp_var2, by_ao);
-                        ln = next_label++;
+                        ln = alloc_label();
                         assemblez_1_branch(jz_zc, temp_var2, ln, FALSE);
                         INITAOT(&error_ao, SHORT_CONSTANT_OT);
                         error_ao.value = DBYZERO_RTE;
@@ -1956,16 +1956,18 @@ static void generate_code_from(int n, int void_flag)
                  break;
     
             case PROP_NUM_OP:
-                 {   assembly_operand AO = ET[below].value;
+                 {   int label;
+                     assembly_operand AO = ET[below].value;
                      check_warn_symbol_type(&ET[below].value, OBJECT_T, CLASS_T, "\".#\" expression");
                      check_warn_symbol_type(&ET[ET[below].right].value, PROPERTY_T, INDIVIDUAL_PROPERTY_T, "\".#\" expression");
                      if (runtime_error_checking_switch && (!veneer_mode))
                          AO = check_nonzero_at_runtime(AO, -1, PROP_NUM_RTE);
+                     label = alloc_label();
                      assemblez_2_to(get_prop_addr_zc, AO,
                          ET[ET[below].right].value, temp_var1);
-                     assemblez_1_branch(jz_zc, temp_var1, next_label++, TRUE);
+                     assemblez_1_branch(jz_zc, temp_var1, label, TRUE);
                      assemblez_1_to(get_prop_len_zc, temp_var1, temp_var1);
-                     assemble_label_no(next_label-1);
+                     assemble_label_no(label);
                      if (!void_flag) write_result_z(Result, temp_var1);
                  }
                  break;
@@ -2152,64 +2154,74 @@ static void generate_code_from(int n, int void_flag)
                              goto IndirectFunctionCallZ;
     
                          case CHILDREN_SYSF:
-                             {  assembly_operand AO;
+                             {   assembly_operand AO;
+                                 int label, label2;
                                  AO = ET[ET[below].right].value;
                                  if (runtime_error_checking_switch)
                                      AO = check_nonzero_at_runtime(AO, -1,
                                          CHILDREN_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
                                  assemblez_store(temp_var1, zero_operand);
                                  assemblez_objcode(get_child_zc,
-                                     AO, stack_pointer, next_label+1, FALSE);
-                                 assemble_label_no(next_label);
+                                     AO, stack_pointer, label2, FALSE);
+                                 assemble_label_no(label);
                                  assemblez_inc(temp_var1);
                                  assemblez_objcode(get_sibling_zc,
                                      stack_pointer, stack_pointer,
-                                     next_label, TRUE);
-                                 assemble_label_no(next_label+1);
+                                     label, TRUE);
+                                 assemble_label_no(label2);
                                  assemblez_store(temp_var2, stack_pointer);
                                  if (!void_flag) write_result_z(Result, temp_var1);
-                                 next_label += 2;
                              }
                              break;
     
                          case YOUNGEST_SYSF:
-                             {  assembly_operand AO;
+                             {   assembly_operand AO;
+                                 int label, label2;
                                  AO = ET[ET[below].right].value;
                                  if (runtime_error_checking_switch)
                                      AO = check_nonzero_at_runtime(AO, -1,
                                          YOUNGEST_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
                                  assemblez_objcode(get_child_zc,
-                                     AO, temp_var1, next_label+1, FALSE);
+                                     AO, temp_var1, label2, FALSE);
                                  assemblez_1(push_zc, temp_var1);
-                                 assemble_label_no(next_label);
+                                 assemble_label_no(label);
                                  assemblez_store(temp_var1, stack_pointer);
                                  assemblez_objcode(get_sibling_zc,
-                                     temp_var1, stack_pointer, next_label, TRUE);
-                                 assemble_label_no(next_label+1);
+                                     temp_var1, stack_pointer, label, TRUE);
+                                 assemble_label_no(label2);
                                  if (!void_flag) write_result_z(Result, temp_var1);
-                                 next_label += 2;
                              }
                              break;
     
                          case ELDER_SYSF:
-                             assemblez_store(temp_var1, ET[ET[below].right].value);
-                             if (runtime_error_checking_switch)
-                                 check_nonzero_at_runtime(temp_var1, -1,
-                                     ELDER_RTE);
-                             assemblez_1_to(get_parent_zc, temp_var1, temp_var3);
-                             assemblez_1_branch(jz_zc, temp_var3,next_label+1,TRUE);
-                             assemblez_store(temp_var2, temp_var3);
-                             assemblez_store(temp_var3, zero_operand);
-                             assemblez_objcode(get_child_zc,
-                                 temp_var2, temp_var2, next_label, TRUE);
-                             assemble_label_no(next_label++);
-                             assemblez_2_branch(je_zc, temp_var1, temp_var2,
-                                 next_label, TRUE);
-                             assemblez_store(temp_var3, temp_var2);
-                             assemblez_objcode(get_sibling_zc,
-                                 temp_var2, temp_var2, next_label - 1, TRUE);
-                             assemble_label_no(next_label++);
-                             if (!void_flag) write_result_z(Result, temp_var3);
+                             {   int label, label2;
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 assemblez_store(temp_var1, ET[ET[below].right].value);
+                                 if (runtime_error_checking_switch)
+                                     check_nonzero_at_runtime(temp_var1, -1,
+                                         ELDER_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 assemblez_1_to(get_parent_zc, temp_var1, temp_var3);
+                                 assemblez_1_branch(jz_zc, temp_var3, label2, TRUE);
+                                 assemblez_store(temp_var2, temp_var3);
+                                 assemblez_store(temp_var3, zero_operand);
+                                 assemblez_objcode(get_child_zc,
+                                     temp_var2, temp_var2, label, TRUE);
+                                 assemble_label_no(label);
+                                 assemblez_2_branch(je_zc, temp_var1, temp_var2,
+                                     label2, TRUE);
+                                 assemblez_store(temp_var3, temp_var2);
+                                 assemblez_objcode(get_sibling_zc,
+                                     temp_var2, temp_var2, label, TRUE);
+                                 assemble_label_no(label2);
+                                 if (!void_flag) write_result_z(Result, temp_var3);
+                             }
                              break;
     
                          case METACLASS_SYSF:
@@ -2508,7 +2520,7 @@ static void generate_code_from(int n, int void_flag)
                     else
                     {   assembleg_store(temp_var1, ET[below].value);
                         assembleg_store(temp_var2, by_ao);
-                        ln = next_label++;
+                        ln = alloc_label();
                         assembleg_1_branch(jnz_gc, temp_var2, ln);
                         INITAO(&error_ao);
                         error_ao.value = DBYZERO_RTE;
@@ -2904,8 +2916,8 @@ static void generate_code_from(int n, int void_flag)
                                  /* One argument, not known at compile time */
                                  int ln, ln2;
                                  assembleg_store(temp_var1, ET[ET[below].right].value);
-                                 ln = next_label++;
-                                 ln2 = next_label++;
+                                 ln = alloc_label();
+                                 ln2 = alloc_label();
                                  assembleg_2_branch(jle_gc, temp_var1, zero_operand, ln);
                                  assembleg_2(random_gc,
                                      temp_var1, stack_pointer);
@@ -2958,25 +2970,27 @@ static void generate_code_from(int n, int void_flag)
                              break;
     
                          case CHILDREN_SYSF:
-                             {  assembly_operand AO;
-                                AO = ET[ET[below].right].value;
-                                if (runtime_error_checking_switch)
-                                    AO = check_nonzero_at_runtime(AO, -1,
-                                        CHILDREN_RTE);
-                                INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
-                                assembleg_store(temp_var1, zero_operand);
-                                assembleg_3(aload_gc, AO, AO2, temp_var2);
-                                AO2.value = GOBJFIELD_SIBLING();
-                                assemble_label_no(next_label);
-                                assembleg_1_branch(jz_gc, temp_var2, next_label+1);
-                                assembleg_3(add_gc, temp_var1, one_operand, 
-                                  temp_var1);
-                                assembleg_3(aload_gc, temp_var2, AO2, temp_var2);
-                                assembleg_0_branch(jump_gc, next_label);
-                                assemble_label_no(next_label+1);
-                                next_label += 2;
-                                if (!void_flag) 
-                                  write_result_g(Result, temp_var1);
+                             {   int label, label2;
+                                 assembly_operand AO;
+                                 AO = ET[ET[below].right].value;
+                                 if (runtime_error_checking_switch)
+                                     AO = check_nonzero_at_runtime(AO, -1,
+                                         CHILDREN_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
+                                 assembleg_store(temp_var1, zero_operand);
+                                 assembleg_3(aload_gc, AO, AO2, temp_var2);
+                                 AO2.value = GOBJFIELD_SIBLING();
+                                 assemble_label_no(label);
+                                 assembleg_1_branch(jz_gc, temp_var2, label2);
+                                 assembleg_3(add_gc, temp_var1, one_operand, 
+                                     temp_var1);
+                                 assembleg_3(aload_gc, temp_var2, AO2, temp_var2);
+                                 assembleg_0_branch(jump_gc, label);
+                                 assemble_label_no(label2);
+                                 if (!void_flag) 
+                                     write_result_g(Result, temp_var1);
                              }
                              break;
     
@@ -2996,52 +3010,59 @@ static void generate_code_from(int n, int void_flag)
                              break;
     
                          case YOUNGEST_SYSF:
-                             AO = ET[ET[below].right].value;
-                             if (runtime_error_checking_switch)
-                                 AO = check_nonzero_at_runtime(AO, -1,
-                                     YOUNGEST_RTE);
-                             INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
-                             assembleg_3(aload_gc, AO, AO2, temp_var1);
-                             AO2.value = GOBJFIELD_SIBLING();
-                             assembleg_1_branch(jz_gc, temp_var1, next_label+1);
-                             assemble_label_no(next_label);
-                             assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
-                             assembleg_1_branch(jz_gc, temp_var2, next_label+1);
-                             assembleg_store(temp_var1, temp_var2);
-                             assembleg_0_branch(jump_gc, next_label);
-                             assemble_label_no(next_label+1);
-                             if (!void_flag) 
-                               write_result_g(Result, temp_var1);
-                             next_label += 2;
+                             {   int label, label2;
+                                 AO = ET[ET[below].right].value;
+                                 if (runtime_error_checking_switch)
+                                     AO = check_nonzero_at_runtime(AO, -1,
+                                         YOUNGEST_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_CHILD());
+                                 assembleg_3(aload_gc, AO, AO2, temp_var1);
+                                 AO2.value = GOBJFIELD_SIBLING();
+                                 assembleg_1_branch(jz_gc, temp_var1, label2);
+                                 assemble_label_no(label);
+                                 assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
+                                 assembleg_1_branch(jz_gc, temp_var2, label2);
+                                 assembleg_store(temp_var1, temp_var2);
+                                 assembleg_0_branch(jump_gc, label);
+                                 assemble_label_no(label2);
+                                 if (!void_flag) 
+                                     write_result_g(Result, temp_var1);
+                             }
                              break;
     
-                         case ELDER_SYSF: 
-                             AO = ET[ET[below].right].value;
-                             if (runtime_error_checking_switch)
-                                 AO = check_nonzero_at_runtime(AO, -1,
-                                     YOUNGEST_RTE);
-                             assembleg_store(temp_var3, AO);
-                             INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_PARENT());
-                             assembleg_3(aload_gc, temp_var3, AO2, temp_var1);
-                             assembleg_1_branch(jz_gc, temp_var1, next_label+2);
-                             AO2.value = GOBJFIELD_CHILD();
-                             assembleg_3(aload_gc, temp_var1, AO2, temp_var1);
-                             assembleg_1_branch(jz_gc, temp_var1, next_label+2);
-                             assembleg_2_branch(jeq_gc, temp_var3, temp_var1, 
-                                 next_label+1);
-                             assemble_label_no(next_label);
-                             AO2.value = GOBJFIELD_SIBLING();
-                             assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
-                             assembleg_2_branch(jeq_gc, temp_var3, temp_var2,
-                                 next_label+2);
-                             assembleg_store(temp_var1, temp_var2);
-                             assembleg_0_branch(jump_gc, next_label);
-                             assemble_label_no(next_label+1);
-                             assembleg_store(temp_var1, zero_operand);
-                             assemble_label_no(next_label+2);
-                             if (!void_flag)
-                                 write_result_g(Result, temp_var1);
-                             next_label += 3;
+                         case ELDER_SYSF:
+                             {   int label, label2, label3;
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 label3 = alloc_label();
+                                 AO = ET[ET[below].right].value;
+                                 if (runtime_error_checking_switch)
+                                     AO = check_nonzero_at_runtime(AO, -1,
+                                         YOUNGEST_RTE);
+                                 assembleg_store(temp_var3, AO);
+                                 INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_PARENT());
+                                 assembleg_3(aload_gc, temp_var3, AO2, temp_var1);
+                                 assembleg_1_branch(jz_gc, temp_var1, label3);
+                                 AO2.value = GOBJFIELD_CHILD();
+                                 assembleg_3(aload_gc, temp_var1, AO2, temp_var1);
+                                 assembleg_1_branch(jz_gc, temp_var1, label3);
+                                 assembleg_2_branch(jeq_gc, temp_var3, temp_var1, 
+                                     label2);
+                                 assemble_label_no(label);
+                                 AO2.value = GOBJFIELD_SIBLING();
+                                 assembleg_3(aload_gc, temp_var1, AO2, temp_var2);
+                                 assembleg_2_branch(jeq_gc, temp_var3, temp_var2,
+                                     label3);
+                                 assembleg_store(temp_var1, temp_var2);
+                                 assembleg_0_branch(jump_gc, label);
+                                 assemble_label_no(label2);
+                                 assembleg_store(temp_var1, zero_operand);
+                                 assemble_label_no(label3);
+                                 if (!void_flag)
+                                     write_result_g(Result, temp_var1);
+                             }
                              break;
     
                          default:
@@ -3155,7 +3176,7 @@ static void generate_code_from(int n, int void_flag)
             }
             else if (ET[n].true_label != -1)
             {
-                donelabel = next_label++;
+                donelabel = alloc_label();
                 if (!execution_never_reaches_here) {
                     assemblez_1(push_zc, zero_operand);
                     assemblez_jump(donelabel);
@@ -3166,7 +3187,7 @@ static void generate_code_from(int n, int void_flag)
             }
             else
             {
-                donelabel = next_label++;
+                donelabel = alloc_label();
                 if (!execution_never_reaches_here) {
                     assemblez_1(push_zc, one_operand);
                     assemblez_jump(donelabel);
@@ -3196,7 +3217,7 @@ static void generate_code_from(int n, int void_flag)
             }
             else if (ET[n].true_label != -1)
             {
-                donelabel = next_label++;
+                donelabel = alloc_label();
                 if (!execution_never_reaches_here) {
                     assembleg_store(stack_pointer, zero_operand);
                     assembleg_jump(donelabel);
@@ -3207,7 +3228,7 @@ static void generate_code_from(int n, int void_flag)
             }
             else
             {
-                donelabel = next_label++;
+                donelabel = alloc_label();
                 if (!execution_never_reaches_here) {
                     assembleg_store(stack_pointer, one_operand);
                     assembleg_jump(donelabel);

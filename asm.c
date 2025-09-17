@@ -29,7 +29,7 @@ int execution_never_reaches_here;  /* nonzero if the current PC value in the
                                       the previous instruction was a "quit"
                                       opcode and no label is set to here
                                       (see EXECSTATE flags for more) */
-int next_label,                    /* Used to count the labels created all
+static int next_label,             /* Used to count the labels created all
                                       over Inform in current routine, from 0 */
     next_sequence_point;           /* Likewise, for sequence points          */
 int no_sequence_points;            /* Total over all routines; kept for
@@ -101,6 +101,15 @@ static labelinfo *labels; /* Label offsets  (i.e. zmachine_pc values).
                              to last_label (in PC order). */
 static memory_list labels_memlist;
 static int first_label, last_label;
+
+/* The allocation plan for labels (labels_memlist) is a bit occult.
+   The codegen in states.c, expressc.c, etc will call alloc_label(),
+   and then later fill in the entry by calling assemble_label_no() or
+   assemble_forward_label_no().
+
+   Every allocated label should eventually be filled in. But if the code
+   has a "no such label" error, this will not be true.
+ */
 
 static int *labeluse;     /* Counters indicating how many times a given label
                              has been used as a branch target. */
@@ -199,6 +208,19 @@ static memory_list sequence_points_memlist;
    several -- any "continue" in the loop will jump to .TopLabel.)
 */
 
+extern int alloc_label(void)
+{
+    int label = next_label++;
+
+    ensure_memory_list_available(&labels_memlist, label+1);
+    labels[label].offset = -1;
+    labels[label].symbol = -1;
+    labels[label].prev = -1;
+    labels[label].next = -1;
+
+    return label;
+}
+
 /* Set the position of the given label. The offset will be the current
    zmachine_pc, or -1 if the label is definitely unused.
 
@@ -212,7 +234,8 @@ static memory_list sequence_points_memlist;
 */
 static void set_label_offset(int label, int32 offset)
 {
-    ensure_memory_list_available(&labels_memlist, label+1);
+    if (label < 0 || label >= next_label)
+        fatalerror("Called set_label_offset on unallocated label");
 
     labels[label].offset = offset;
     labels[label].symbol = -1;
@@ -1047,7 +1070,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
             sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
-            set_label_offset(next_label++, zmachine_pc);
+            set_label_offset(alloc_label(), zmachine_pc);
         }
         next_sequence_point++;
     }
@@ -1430,7 +1453,7 @@ extern void assembleg_instruction(const assembly_instruction *AI)
             sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
-            set_label_offset(next_label++, zmachine_pc);
+            set_label_offset(alloc_label(), zmachine_pc);
         }
         next_sequence_point++;
     }
@@ -1755,10 +1778,10 @@ extern int assemble_forward_label_no(int n)
 
 extern void define_symbol_label(int symbol)
 {
+    /* The symbol type should be LABEL_T. */
     int label = symbols[symbol].value;
-    /* We may be creating a new label (label = next_label) or filling in
-       the value of an old one. So we call ensure. */
-    ensure_memory_list_available(&labels_memlist, label+1);
+    if (label < 0 || label >= next_label)
+        fatalerror("Called define_symbol_label on unallocated label");
     labels[label].symbol = symbol;
 }
 
@@ -1843,8 +1866,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
         {   char fnt[256]; assembly_operand PV, RFA, CON, STP, SLF; int ln, ln2;
             /* TODO: fnt[256] is unsafe */
           
-            ln = next_label++;
-            ln2 = next_label++;
+            ln = alloc_label();
+            ln2 = alloc_label();
           
             if (define_INFIX_switch)
             {
@@ -1984,8 +2007,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
                    }
                 */
                 assembleg_store(temp_var4, zero_operand);
-                lntop = next_label++;
-                lnbottom = next_label++;
+                lntop = alloc_label();
+                lnbottom = alloc_label();
                 assemble_label_no(lntop);
                 assembleg_2_branch(jge_gc, temp_var4, AO, lnbottom); /* AO is _vararg_count */
                 assembleg_1(streamchar_gc, AO2); /* AO2 is space */
@@ -3838,9 +3861,12 @@ extern void asm_allocate_arrays(void)
     initialise_memory_list(&labeluse_memlist,
         sizeof(int), 1000, (void**)&labeluse,
         "labeluse");
-    initialise_memory_list(&sequence_points_memlist,
-        sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
-        "sequence points");
+    if (debugfile_switch)
+    {
+        initialise_memory_list(&sequence_points_memlist,
+            sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
+            "sequence points");
+    }
 
     initialise_memory_list(&zcode_holding_area_memlist,
         sizeof(uchar), 2000, (void**)&zcode_holding_area,
@@ -3867,7 +3893,10 @@ extern void asm_free_arrays(void)
     deallocate_memory_list(&variables_memlist);
 
     deallocate_memory_list(&labels_memlist);
-    deallocate_memory_list(&sequence_points_memlist);
+    if (debugfile_switch)
+    {
+        deallocate_memory_list(&sequence_points_memlist);
+    }
 
     deallocate_memory_list(&zcode_holding_area_memlist);
     deallocate_memory_list(&zcode_markers_memlist);
