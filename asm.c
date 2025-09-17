@@ -1069,7 +1069,7 @@ extern void assemblez_instruction(const assembly_instruction *AI)
             sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
-            set_label_offset(next_label++, zmachine_pc);
+            set_label_offset(alloc_label(), zmachine_pc);
         }
         next_sequence_point++;
     }
@@ -1452,7 +1452,7 @@ extern void assembleg_instruction(const assembly_instruction *AI)
             sequence_points[next_sequence_point].label = next_label;
             sequence_points[next_sequence_point].location =
                 statement_debug_location;
-            set_label_offset(next_label++, zmachine_pc);
+            set_label_offset(alloc_label(), zmachine_pc);
         }
         next_sequence_point++;
     }
@@ -1866,8 +1866,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
         {   char fnt[256]; assembly_operand PV, RFA, CON, STP, SLF; int ln, ln2;
             /* TODO: fnt[256] is unsafe */
           
-            ln = next_label++;
-            ln2 = next_label++;
+            ln = alloc_label();
+            ln2 = alloc_label();
           
             if (define_INFIX_switch)
             {
@@ -2007,8 +2007,8 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
                    }
                 */
                 assembleg_store(temp_var4, zero_operand);
-                lntop = next_label++;
-                lnbottom = next_label++;
+                lntop = alloc_label();
+                lnbottom = alloc_label();
                 assemble_label_no(lntop);
                 assembleg_2_branch(jge_gc, temp_var4, AO, lnbottom); /* AO is _vararg_count */
                 assembleg_1(streamchar_gc, AO2); /* AO2 is space */
