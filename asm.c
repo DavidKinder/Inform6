@@ -234,7 +234,8 @@ extern int alloc_label(void)
 */
 static void set_label_offset(int label, int32 offset)
 {
-    ensure_memory_list_available(&labels_memlist, label+1);
+    if (label < 0 || label >= next_label)
+        fatalerror("Called set_label_offset on unallocated label");
 
     labels[label].offset = offset;
     labels[label].symbol = -1;
@@ -1779,9 +1780,8 @@ extern void define_symbol_label(int symbol)
 {
     /* The symbol type should be LABEL_T. */
     int label = symbols[symbol].value;
-    /* We may be creating a new label (label = next_label) or filling in
-       the value of an old one. So we call ensure. */
-    ensure_memory_list_available(&labels_memlist, label+1);
+    if (label < 0 || label >= next_label)
+        fatalerror("Called define_symbol_label on unallocated label");
     labels[label].symbol = symbol;
 }
 
