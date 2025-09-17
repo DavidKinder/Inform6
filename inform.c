@@ -1504,7 +1504,13 @@ static void icl_header_error(char *filename, int line)
 static int copy_icl_word(char *from, char *to, int max)
 {
     /*  Copies one token from 'from' to 'to', null-terminated:
-        returns the number of chars in 'from' read past (possibly 0).  */
+        returns the number of chars in 'from' read past (possibly 0).
+
+        A token, for ICL purposes, is delimited by whitespace.
+        All or part a token can be double-quoted; the quotes are
+        stripped, but the quoted part can then contain space
+        characters.
+    */
 
     int i, j, quoted_mode, truncated;
 
