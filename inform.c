@@ -1583,7 +1583,6 @@ static int execute_icl_header(char *argname)
         if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
             break;
         i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
-        printf("### comment '%s'\n", fw);
         if (is_icl_command(fw)) {
             execute_icl_command(fw);
             copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
