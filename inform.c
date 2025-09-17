@@ -1678,7 +1678,7 @@ static void run_icl_file(char *filename, FILE *command_file)
 }
 
 /* This should only be called if the argument has been verified to be
-   an ICL command, e.g. by checking icl_command().
+   an ICL command, e.g. by checking is_icl_command().
 */
 static void execute_icl_command(char *p)
 {   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
