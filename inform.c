@@ -1507,9 +1507,11 @@ static int copy_icl_word(char *from, char *to, int max)
         returns the number of chars in 'from' read past (possibly 0).
 
         A token, for ICL purposes, is delimited by whitespace.
-        All or part a token can be double-quoted; the quotes are
+        All or part of a token can be double-quoted; the quotes are
         stripped, but the quoted part can then contain space
         characters.
+
+        (The trailing quote is optional, which maybe I should fix.)
     */
 
     int i, j, quoted_mode, truncated;
