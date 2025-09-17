@@ -1487,7 +1487,7 @@ extern void switches(char *p, int cmode)
 }
 
 /* Check whether the string looks like an ICL command. */
-static int icl_command(char *p)
+static int is_icl_command(char *p)
 {   if ((p[0]=='+')||(p[0]=='-')||(p[0]=='$')
         || ((p[0]=='(')&&(p[strlen(p)-1]==')')) ) return TRUE;
     return FALSE;
@@ -1501,16 +1501,31 @@ static void icl_header_error(char *filename, int line)
 {   printf("Error in ICL header of file '%s', line %d:\n", filename, line);
 }
 
+static int is_icl_whitespace(char ch)
+{
+    return ((ch == ' ')
+         || (ch == TAB_CHARACTER)
+         || (ch == (char) 10)
+         || (ch == (char) 13));
+}
+
 static int copy_icl_word(char *from, char *to, int max)
 {
     /*  Copies one token from 'from' to 'to', null-terminated:
-        returns the number of chars in 'from' read past (possibly 0).  */
+        returns the number of chars in 'from' read past (possibly 0).
+
+        A token, for ICL purposes, is delimited by whitespace.
+        All or part of a token can be double-quoted; the quotes are
+        stripped, but the quoted part can then contain space
+        characters.
+
+        (The trailing quote is optional, which maybe I should fix.)
+    */
 
     int i, j, quoted_mode, truncated;
 
     i = 0; truncated = 0;
-    while ((from[i] == ' ') || (from[i] == TAB_CHARACTER)
-           || (from[i] == (char) 10) || (from[i] == (char) 13)) i++;
+    while (is_icl_whitespace(from[i])) i++;
 
     if (from[i] == '!')
     {   while (from[i] != 0) i++;
@@ -1559,10 +1574,11 @@ static int execute_icl_header(char *argname)
     char filename[PATHLEN]; 
     int x = 0;
 
-    do
-        {   x = translate_in_filename(x, filename, argname, 0, 1);
-            command_file = fopen(filename,"rb");
-        } while ((command_file == NULL) && (x != 0));
+    do {
+        x = translate_in_filename(x, filename, argname, 0, 1);
+        command_file = fopen(filename,"rb");
+    } while ((command_file == NULL) && (x != 0));
+    
     if (!command_file) {
         /* Fail silently. The regular compiler will try to open the file
            again, and report the problem. */
@@ -1574,8 +1590,16 @@ static int execute_icl_header(char *argname)
         line++;
         if (!(cli_buff[0] == '!' && cli_buff[1] == '%'))
             break;
+        /* Right-strip whitespace and optionally one semicolon. */
+        i = strlen(cli_buff);
+        while (i && is_icl_whitespace(cli_buff[i-1]))
+            i--;
+        if (i && cli_buff[i-1] == ';')
+            i--;
+        cli_buff[i] = 0;
+        /* Look for the first ICL token, same as you'd find in an ICL file. */
         i = copy_icl_word(cli_buff+2, fw, CMD_BUF_SIZE);
-        if (icl_command(fw)) {
+        if (is_icl_command(fw)) {
             execute_icl_command(fw);
             copy_icl_word(cli_buff+2 + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!')) {
@@ -1607,7 +1631,7 @@ static void run_icl_file(char *filename, FILE *command_file)
     {   if (fgets(cli_buff,CMD_BUF_SIZE,command_file)==0) break;
         line++;
         i = copy_icl_word(cli_buff, fw, CMD_BUF_SIZE);
-        if (icl_command(fw))
+        if (is_icl_command(fw))
         {   execute_icl_command(fw);
             copy_icl_word(cli_buff + i, fw, CMD_BUF_SIZE);
             if ((fw[0] != 0) && (fw[0] != '!'))
@@ -1654,7 +1678,7 @@ static void run_icl_file(char *filename, FILE *command_file)
 }
 
 /* This should only be called if the argument has been verified to be
-   an ICL command, e.g. by checking icl_command().
+   an ICL command, e.g. by checking is_icl_command().
 */
 static void execute_icl_command(char *p)
 {   char filename[PATHLEN], cli_buff[CMD_BUF_SIZE];
@@ -1851,7 +1875,7 @@ static void read_command_line(int argc, char **argv)
                 i++;
             }
         }
-        else if (icl_command(argv[i])) {
+        else if (is_icl_command(argv[i])) {
             execute_icl_command(argv[i]);
         }
         else {
