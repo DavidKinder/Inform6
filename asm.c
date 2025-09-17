@@ -3861,9 +3861,12 @@ extern void asm_allocate_arrays(void)
     initialise_memory_list(&labeluse_memlist,
         sizeof(int), 1000, (void**)&labeluse,
         "labeluse");
-    initialise_memory_list(&sequence_points_memlist,
-        sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
-        "sequence points");
+    if (debugfile_switch)
+    {
+        initialise_memory_list(&sequence_points_memlist,
+            sizeof(sequencepointinfo), 1000, (void**)&sequence_points,
+            "sequence points");
+    }
 
     initialise_memory_list(&zcode_holding_area_memlist,
         sizeof(uchar), 2000, (void**)&zcode_holding_area,
@@ -3890,7 +3893,10 @@ extern void asm_free_arrays(void)
     deallocate_memory_list(&variables_memlist);
 
     deallocate_memory_list(&labels_memlist);
-    deallocate_memory_list(&sequence_points_memlist);
+    if (debugfile_switch)
+    {
+        deallocate_memory_list(&sequence_points_memlist);
+    }
 
     deallocate_memory_list(&zcode_holding_area_memlist);
     deallocate_memory_list(&zcode_markers_memlist);
