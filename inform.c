@@ -1501,7 +1501,7 @@ static void icl_header_error(char *filename, int line)
 {   printf("Error in ICL header of file '%s', line %d:\n", filename, line);
 }
 
-static int icl_whitespace(char ch)
+static int is_icl_whitespace(char ch)
 {
     return ((ch == ' ')
          || (ch == TAB_CHARACTER)
@@ -1525,7 +1525,7 @@ static int copy_icl_word(char *from, char *to, int max)
     int i, j, quoted_mode, truncated;
 
     i = 0; truncated = 0;
-    while (icl_whitespace(from[i])) i++;
+    while (is_icl_whitespace(from[i])) i++;
 
     if (from[i] == '!')
     {   while (from[i] != 0) i++;
@@ -1592,7 +1592,7 @@ static int execute_icl_header(char *argname)
             break;
         /* Right-strip whitespace and optionally one semicolon. */
         i = strlen(cli_buff);
-        while (i && icl_whitespace(cli_buff[i-1]))
+        while (i && is_icl_whitespace(cli_buff[i-1]))
             i--;
         if (i && cli_buff[i-1] == ';')
             i--;
