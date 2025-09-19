@@ -215,6 +215,7 @@ extern int alloc_label(void)
     ensure_memory_list_available(&labels_memlist, label+1);
     labels[label].offset = -1;
     labels[label].symbol = -1;
+    labels[label].never_reaches = FALSE;
     labels[label].prev = -1;
     labels[label].next = -1;
 
@@ -239,6 +240,7 @@ static void set_label_offset(int label, int32 offset)
 
     labels[label].offset = offset;
     labels[label].symbol = -1;
+    labels[label].never_reaches = execution_never_reaches_here;
     if (offset < 0) {
         /* Mark this label as invalid and don't put it in the linked list. */
         labels[label].prev = -1;

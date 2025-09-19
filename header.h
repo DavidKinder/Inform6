@@ -916,6 +916,7 @@ typedef struct arrayinfo_s {
 typedef struct labelinfo_s {
     int32 offset; /* Offset (zmachine_pc) value */
     int32 symbol; /* Symbol numbers if defined in source */
+    int never_reaches;  /* Set if execution never reaches here (from above) */
     int next;     /* For linked list */
     int prev;     /* For linked list */
 } labelinfo;
