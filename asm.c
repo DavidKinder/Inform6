@@ -241,10 +241,12 @@ static void set_label_offset(int label, int32 offset)
     labels[label].offset = offset;
     labels[label].symbol = -1;
     labels[label].never_reaches = execution_never_reaches_here;
+    
     if (offset < 0) {
         /* Mark this label as invalid and don't put it in the linked list. */
         labels[label].prev = -1;
         labels[label].next = -1;
+        labels[label].never_reaches = TRUE;
         return;
     }
     
