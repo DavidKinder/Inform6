@@ -2307,7 +2307,7 @@ static void transfer_routine_z(void)
             (if two labels move inside the "short" range as a result of
             a previous optimisation).  However, this is acceptably uncommon. */
 
-    if (next_label > 0)
+    if (last_label >= 0)
     {   if (asm_trace_level >= 4)
         {   printf("Opening label: %d\n", first_label);
             for (i=0;i<next_label;i++)
@@ -2557,7 +2557,7 @@ static void transfer_routine_g(void)
             optimisations which are possible but which have been missed
             (if two labels move inside the "short" range as a result of
             a previous optimisation).  However, this is acceptably uncommon. */
-    if (next_label > 0) {
+    if (last_label >= 0) {
         if (asm_trace_level >= 4) {
             printf("Opening label: %d\n", first_label);
             for (i=0;i<next_label;i++)
