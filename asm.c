@@ -1860,7 +1860,7 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
             for (i=0; i<no_locals; i++) { byteout(0,0); byteout(0,0); }
 
         next_label = 0; next_sequence_point = 0;
-        first_label = 0; last_label = -1;
+        first_label = -1; last_label = -1;
         labeluse_size = 0;
 
         /*  Compile code to print out text like "a=3, b=4, c=5" when the     */
@@ -1948,7 +1948,7 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
         }
 
         next_label = 0; next_sequence_point = 0;
-        first_label = 0; last_label = -1; 
+        first_label = -1; last_label = -1; 
         labeluse_size = 0;
 
         if ((routine_asterisked) || (define_INFIX_switch)) {
