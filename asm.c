@@ -288,7 +288,6 @@ static void mark_label_unused(int label)
     if (label < 0 || label >= next_label)
         return;
     
-    /* Never marked used. */
     if (label >= labeluse_size || labeluse[label] == 0)
         fatalerror("Tried to mark never-used label as less used");
 
