@@ -264,6 +264,9 @@ static void set_label_offset(int label, int32 offset)
 
 /* Increase the counter indicating how many times the given label is
    jumped to.
+   Note that we may do this for labels that aren't yet allocated. That's
+   why labeluse[] is a separate array, with a separate allocation
+   count (labeluse_size).
 */
 static void mark_label_used(int label)
 {
