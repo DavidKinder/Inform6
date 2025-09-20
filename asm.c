@@ -262,7 +262,9 @@ static void set_label_offset(int label, int32 offset)
     labels[label].next = -1;
 }
 
-/* Set a flag indicating that the given label has been jumped to. */
+/* Increase the counter indicating how many times the given label is
+   jumped to.
+*/
 static void mark_label_used(int label)
 {
     if (label < 0)
@@ -276,6 +278,21 @@ static void mark_label_used(int label)
         labeluse[labeluse_size] = 0;
     }
     labeluse[label] += 1;
+}
+
+/* Decrement the counter. We do this in the transfer_routine phase as
+   branches are optimized away.
+*/
+static void mark_label_unused(int label)
+{
+    if (label < 0 || label >= next_label)
+        return;
+    
+    /* Never marked used. */
+    if (label >= labeluse_size || labeluse[label] == 0)
+        fatalerror("Tried to mark never-used label as less used");
+
+    labeluse[label] -= 1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -2258,6 +2275,7 @@ static void transfer_routine_z(void)
                     || branch_opcode == 0x102)) /* get_child */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
+                mark_label_unused(j);
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
             }
             else if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
@@ -2284,6 +2302,7 @@ static void transfer_routine_z(void)
                     j, opcode_at_label, labels[j].offset-pc);
             if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
+                mark_label_unused(j);
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
@@ -2292,6 +2311,7 @@ static void transfer_routine_z(void)
                 ||   opcode_at_label == 0xB1     /* rfalse */
                 ||   opcode_at_label == 0xB8) {  /* ret_popped */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
+                mark_label_unused(j);
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i + 1] = DELETED_MV;
@@ -2517,6 +2537,7 @@ static void transfer_routine_g(void)
                        j, addr, labels[j].offset - offset_of_next);
             if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
                 if (asm_trace_level >= 4) printf("...Deleting branch\n");
+                mark_label_unused(j);
                 zcode_markers[i-2] = DELETED_MV;
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
