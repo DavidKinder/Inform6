@@ -2323,6 +2323,27 @@ static void transfer_routine_z(void)
         }
     }
 
+    /*  (2) ### */
+
+    if (last_label >= 0) {
+        for (label=first_label; label>=0; label=labels[label].next) {
+            if (labels[label].never_reaches &&
+                (label >= labeluse_size || labeluse[label] == 0)) {
+                int32 label_offset = labels[label].offset - adjusted_pc;
+                if (label_offset < 0 || label_offset >= zcode_ha_size) {
+                    continue;
+                }
+                opcode_at_label = zcode_holding_area[label_offset];
+                if (     opcode_at_label == 0xB0     /* rtrue */
+                    ||   opcode_at_label == 0xB1     /* rfalse */
+                    ||   opcode_at_label == 0xB8) {  /* ret_popped */
+                    if (asm_trace_level >= 4) printf("Removing unreachable return opcode at %04x (label %d)\n", labels[label].offset, label);
+                    zcode_markers[label_offset] = DELETED_MV;
+                }
+            }
+        }
+    }
+
     /*  (2) Calculate the new positions of the labels.  Note that since the
             long/short decision was taken on the basis of the old labels,
             and since the new labels are slightly closer together because
