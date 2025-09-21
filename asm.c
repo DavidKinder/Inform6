@@ -2334,9 +2334,21 @@ static void transfer_routine_z(void)
     if (last_label >= 0)
     {   if (asm_trace_level >= 4)
         {   printf("Opening label: %d\n", first_label);
-            for (i=0;i<next_label;i++)
-                printf("Label %d offset %04x next -> %d previous -> %d\n",
-                    i, labels[i].offset, labels[i].next, labels[i].prev);
+            for (i=0;i<next_label;i++) {
+                if (labels[i].offset < 0) {
+                    printf("Label %d omitted (used=%d%s)\n",
+                        i,
+                        (i < labeluse_size ? labeluse[i] : 0),
+                        (labels[i].never_reaches ? ", jo" : ""));
+                    continue;
+                }
+                printf("Label %d offset %04x (used=%d%s) (next->%d, prev->%d)\n",
+                    i,
+                    labels[i].offset,
+                    (i < labeluse_size ? labeluse[i] : 0),
+                    (labels[i].never_reaches ? ", jo" : ""),
+                    labels[i].next, labels[i].prev);
+            }
         }
 
         /* label will advance through the linked list as pc increases. */
@@ -2585,9 +2597,21 @@ static void transfer_routine_g(void)
     if (last_label >= 0) {
         if (asm_trace_level >= 4) {
             printf("Opening label: %d\n", first_label);
-            for (i=0;i<next_label;i++)
-                printf("Label %d offset %04x next -> %d previous -> %d\n",
-                       i, labels[i].offset, labels[i].next, labels[i].prev);
+            for (i=0;i<next_label;i++) {
+                if (labels[i].offset < 0) {
+                    printf("Label %d omitted (used=%d%s)\n",
+                        i,
+                        (i < labeluse_size ? labeluse[i] : 0),
+                        (labels[i].never_reaches ? ", jo" : ""));
+                    continue;
+                }
+                printf("Label %d offset %04x (used=%d%s) (next->%d, prev->%d)\n",
+                    i,
+                    labels[i].offset,
+                    (i < labeluse_size ? labeluse[i] : 0),
+                    (labels[i].never_reaches ? ", jo" : ""),
+                    labels[i].next, labels[i].prev);
+            }
         }
 
         /* label will advance through the linked list as pc increases. */
