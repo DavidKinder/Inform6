@@ -2241,7 +2241,7 @@ static void transfer_routine_z(void)
                 printf("Branch detected at offset %04x (branch opcode %x)\n",
                     pc, branch_opcode);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            label_offset = i + labels[j].offset - pc;
+            label_offset = labels[j].offset - adjusted_pc;
             if (label_offset < 0 || label_offset >= zcode_ha_size) {
                 /* Probably the label was never defined. We'll report
                    that error later. */
@@ -2294,7 +2294,7 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            label_offset = i + labels[j].offset - pc;
+            label_offset = labels[j].offset - adjusted_pc;
             if (label_offset < 0 || label_offset >= zcode_ha_size) {
                 /* Probably the label was never defined. We'll report
                    that error later. */
