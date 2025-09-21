@@ -2226,11 +2226,9 @@ static void transfer_routine_z(void)
             We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
             replaced by a copy of the destination opcode; the label bytes
-            get DELETED_MV. (However, we don't do the extra work to detect
-            whether this orphans the destination opcode.)
+            get DELETED_MV.
             Also branches to an rtrue/rfalse opcode, which can be converted
-            to the rtrue/rfalse form of the branch. (Same orphan problem
-            applies.) */
+            to the rtrue/rfalse form of the branch. */
       
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
@@ -2329,8 +2327,8 @@ static void transfer_routine_z(void)
     }
 
     /*  (1a) Check for any return opcodes which are no longer branched to
-             at all, and which also cannot be reached from the previous
-             opcode. These can be deleted. */
+             at all (as a result of step 1), and which also cannot be
+             reached from the previous opcode. These can be deleted. */
 
     if (last_label >= 0) {
         for (label=first_label; label>=0; label=labels[label].next) {
