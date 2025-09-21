@@ -2304,7 +2304,8 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
+            if (labels[j].offset-pc == 2 && i >= 1
+                && zcode_holding_area[i-1] == 0x8C) {  /* jump */
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
                 mark_label_unused(j);
                 zcode_markers[i-1] = DELETED_MV;
