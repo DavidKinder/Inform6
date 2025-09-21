@@ -2307,7 +2307,8 @@ static void transfer_routine_z(void)
             if (labels[j].offset-pc == 2 && i >= 1
                 && zcode_holding_area[i-1] == 0x8C) {  /* jump */
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
-                mark_label_unused(j);
+                /* Do *not* mark the label unused, because we're going
+                   to fall through to it. */
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
@@ -2575,7 +2576,8 @@ static void transfer_routine_g(void)
                        j, addr, labels[j].offset - offset_of_next);
             if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
                 if (asm_trace_level >= 4) printf("...Deleting branch\n");
-                mark_label_unused(j);
+                /* Do *not* mark the label unused, because we're going
+                   to fall through to it. */
                 zcode_markers[i-2] = DELETED_MV;
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
