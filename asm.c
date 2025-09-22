@@ -2328,13 +2328,33 @@ static void transfer_routine_z(void)
 
     /*  (1a) Check for any return opcodes which are no longer branched to
              at all (as a result of step 1), and which also cannot be
-             reached from the previous opcode. These can be deleted. */
+             reached from the previous opcode. These can be deleted.
+
+             The tricky bit is that several labels can point to the same
+             return opcode. We must check that they're *all* unused.
+             (However, we only need check never_reaches flag for the first
+             one. Later labels at the same address get marked reachable,
+             but that just means "from the previous label", not from real
+             code.)
+    */
 
     if (last_label >= 0) {
-        for (label=first_label; label>=0; label=labels[label].next) {
-            if (labels[label].never_reaches &&
-                (label >= labeluse_size || labeluse[label] == 0)) {
-                int32 label_offset = labels[label].offset - adjusted_pc;
+        label = first_label;
+        while (label >= 0) {
+            int32 origlabel = label;
+            int offset = labels[label].offset;
+            int never_reaches = labels[label].never_reaches;
+            int totaluse = 0;
+            int count = 0;
+            /* Advance to the next label at a different address. */
+            while (label >= 0 && labels[label].offset == offset) {
+                if (label < labeluse_size)
+                    totaluse += labeluse[label];
+                count++;
+                label = labels[label].next;
+            }
+            if (totaluse == 0 && never_reaches) {
+                int32 label_offset = offset - adjusted_pc;
                 if (label_offset < 0 || label_offset >= zcode_ha_size) {
                     continue;
                 }
@@ -2342,7 +2362,7 @@ static void transfer_routine_z(void)
                 if (     opcode_at_label == 0xB0     /* rtrue */
                     ||   opcode_at_label == 0xB1     /* rfalse */
                     ||   opcode_at_label == 0xB8) {  /* ret_popped */
-                    if (asm_trace_level >= 4) printf("Removing unreachable return opcode at %04x (label %d)\n", labels[label].offset, label);
+                    if (asm_trace_level >= 4) printf("Removing unreachable return opcode at %04x (label %d%s)\n", offset, origlabel, (count > 1 ? " etc" : ""));
                     zcode_markers[label_offset] = DELETED_MV;
                 }
             }
