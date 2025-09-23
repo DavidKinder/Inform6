@@ -2334,8 +2334,8 @@ static void transfer_routine_z(void)
              return opcode. We must check that they're *all* unused.
              (However, we only need check never_reaches flag for the first
              one. Later labels at the same address get marked reachable,
-             but that just means "from the previous label", not from real
-             code.)
+             but that just means "from the previous label", not from a
+             previous real opcode.)
     */
 
     if (last_label >= 0) {
