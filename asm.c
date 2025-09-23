@@ -2222,7 +2222,7 @@ static void transfer_routine_z(void)
             short form) with DELETED_MV.
             We also look for jumps that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            both label bytes get DELETED_MV.
+            its operand gets DELETED_MV.
             We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
             replaced by a copy of the destination opcode; the original
@@ -2332,10 +2332,10 @@ static void transfer_routine_z(void)
 
              The tricky bit is that several labels can point to the same
              return opcode. We must check that they're *all* unused.
-             (However, we only need check never_reaches flag for the first
-             one. Later labels at the same address get marked reachable,
-             but that just means "from the previous label", not from a
-             previous real opcode.)
+             (However, we only need check the never_reaches flag for the
+             first one. Later labels at the same address get marked
+             reachable, but that just means "from the previous label", not
+             from a previous real opcode.)
     */
 
     if (last_label >= 0) {
