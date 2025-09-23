@@ -2307,7 +2307,7 @@ static void transfer_routine_z(void)
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
                 /* Do *not* mark the label unused, because we're going
                    to fall through to it.
-                   (Pedants would want to mark the label unused but also
+                   (Pedantically we'd want to mark the label unused and then
                    clear the never_reaches flag. Doing nothing is easier,
                    same result.) */
                 zcode_markers[i-1] = DELETED_MV;
