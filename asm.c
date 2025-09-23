@@ -2225,8 +2225,8 @@ static void transfer_routine_z(void)
             both label bytes get DELETED_MV.
             We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
-            replaced by a copy of the destination opcode; the label bytes
-            get DELETED_MV.
+            replaced by a copy of the destination opcode; the original
+            operand gets DELETED_MV.
             Also branches to an rtrue/rfalse opcode, which can be converted
             to the rtrue/rfalse form of the branch. */
       
