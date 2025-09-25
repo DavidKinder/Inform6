@@ -215,6 +215,7 @@ extern int alloc_label(void)
     ensure_memory_list_available(&labels_memlist, label+1);
     labels[label].offset = -1;
     labels[label].symbol = -1;
+    labels[label].never_reaches = FALSE;
     labels[label].prev = -1;
     labels[label].next = -1;
 
@@ -239,10 +240,13 @@ static void set_label_offset(int label, int32 offset)
 
     labels[label].offset = offset;
     labels[label].symbol = -1;
+    labels[label].never_reaches = execution_never_reaches_here;
+    
     if (offset < 0) {
         /* Mark this label as invalid and don't put it in the linked list. */
         labels[label].prev = -1;
         labels[label].next = -1;
+        labels[label].never_reaches = TRUE;
         return;
     }
     
@@ -258,7 +262,12 @@ static void set_label_offset(int label, int32 offset)
     labels[label].next = -1;
 }
 
-/* Set a flag indicating that the given label has been jumped to. */
+/* Increase the counter indicating how many times the given label is
+   jumped to.
+   Note that we may do this for labels that aren't yet allocated. That's
+   why labeluse[] is a separate array, with a separate allocation
+   count (labeluse_size).
+*/
 static void mark_label_used(int label)
 {
     if (label < 0)
@@ -272,6 +281,22 @@ static void mark_label_used(int label)
         labeluse[labeluse_size] = 0;
     }
     labeluse[label] += 1;
+}
+
+/* Decrement the counter. We do this in the transfer_routine phase as
+   branches are optimized away.
+*/
+static void mark_label_unused(int label)
+{
+    if (label < 0 || label >= next_label)
+        return;
+    
+    if (label >= labeluse_size || labeluse[label] == 0) {
+        compiler_error("Tried to mark never-used label as less used");
+        return;
+    }
+
+    labeluse[label] -= 1;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1856,7 +1881,7 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
             for (i=0; i<no_locals; i++) { byteout(0,0); byteout(0,0); }
 
         next_label = 0; next_sequence_point = 0;
-        first_label = 0; last_label = -1;
+        first_label = -1; last_label = -1;
         labeluse_size = 0;
 
         /*  Compile code to print out text like "a=3, b=4, c=5" when the     */
@@ -1944,7 +1969,7 @@ extern int32 assemble_routine_header(int routine_asterisked, char *name,
         }
 
         next_label = 0; next_sequence_point = 0;
-        first_label = 0; last_label = -1; 
+        first_label = -1; last_label = -1; 
         labeluse_size = 0;
 
         if ((routine_asterisked) || (define_INFIX_switch)) {
@@ -2197,15 +2222,13 @@ static void transfer_routine_z(void)
             short form) with DELETED_MV.
             We also look for jumps that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            both label bytes get DELETED_MV.
+            its operand gets DELETED_MV.
             We also look for jumps that can be eliminated because they
             are jumping to a (one-byte) return opcode. The jump opcode is
-            replaced by a copy of the destination opcode; the label bytes
-            get DELETED_MV. (However, we don't do the extra work to detect
-            whether this orphans the destination opcode.)
+            replaced by a copy of the destination opcode; the original
+            operand gets DELETED_MV.
             Also branches to an rtrue/rfalse opcode, which can be converted
-            to the rtrue/rfalse form of the branch. (Same orphan problem
-            applies.) */
+            to the rtrue/rfalse form of the branch. */
       
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++)
     {   if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV)
@@ -2216,7 +2239,7 @@ static void transfer_routine_z(void)
                 printf("Branch detected at offset %04x (branch opcode %x)\n",
                     pc, branch_opcode);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            label_offset = i + labels[j].offset - pc;
+            label_offset = labels[j].offset - adjusted_pc;
             if (label_offset < 0 || label_offset >= zcode_ha_size) {
                 /* Probably the label was never defined. We'll report
                    that error later. */
@@ -2254,6 +2277,7 @@ static void transfer_routine_z(void)
                     || branch_opcode == 0x102)) /* get_child */
             {
                 if (asm_trace_level >= 4) printf("...Using %s form\n", ((opcode_at_label == 0xB0) ? "rtrue" : "rfalse"));
+                mark_label_unused(j);
                 zcode_markers[i+1] = (opcode_at_label == 0xB0) ? DELETEDT_MV : DELETEDF_MV;
             }
             else if ((labels[j].offset >= pc+2) && (labels[j].offset < pc+64))
@@ -2268,7 +2292,7 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("Jump detected at offset %04x\n", pc);
             j = (256*zcode_holding_area[i] + zcode_holding_area[i+1]) & 0x7fff;
-            label_offset = i + labels[j].offset - pc;
+            label_offset = labels[j].offset - adjusted_pc;
             if (label_offset < 0 || label_offset >= zcode_ha_size) {
                 /* Probably the label was never defined. We'll report
                    that error later. */
@@ -2278,8 +2302,14 @@ static void transfer_routine_z(void)
             if (asm_trace_level >= 4)
                 printf("...To label %d (opcode %x), which is %d from here\n",
                     j, opcode_at_label, labels[j].offset-pc);
-            if (labels[j].offset-pc == 2 && i >= 1 && zcode_holding_area[i-1] == opcodes_table_z[jump_zc].code+128) {
+            if (labels[j].offset-pc == 2 && i >= 1
+                && zcode_holding_area[i-1] == 0x8C) {  /* jump */
                 if (asm_trace_level >= 4) printf("...Deleting jump\n");
+                /* Do *not* mark the label unused, because we're going
+                   to fall through to it.
+                   (Pedantically we'd want to mark the label unused and then
+                   clear the never_reaches flag. Doing nothing is easier,
+                   same result.) */
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i+1] = DELETED_MV;
@@ -2288,9 +2318,53 @@ static void transfer_routine_z(void)
                 ||   opcode_at_label == 0xB1     /* rfalse */
                 ||   opcode_at_label == 0xB8) {  /* ret_popped */
                 if (asm_trace_level >= 4) printf("...Replacing jump with return opcode\n");
+                mark_label_unused(j);
                 zcode_holding_area[i - 1] = opcode_at_label;
                 zcode_markers[i] = DELETED_MV;
                 zcode_markers[i + 1] = DELETED_MV;
+            }
+        }
+    }
+
+    /*  (1a) Check for any return opcodes which are no longer branched to
+             at all (as a result of step 1), and which also cannot be
+             reached from the previous opcode. These can be deleted.
+
+             The tricky bit is that several labels can point to the same
+             return opcode. We must check that they're *all* unused.
+             (However, we only need check the never_reaches flag for the
+             first one. Later labels at the same address get marked
+             reachable, but that just means "from the previous label", not
+             from a previous real opcode.)
+    */
+
+    if (last_label >= 0) {
+        label = first_label;
+        while (label >= 0) {
+            int32 origlabel = label;
+            int offset = labels[label].offset;
+            int never_reaches = labels[label].never_reaches;
+            int totaluse = 0;
+            int count = 0;
+            /* Advance to the next label at a different address. */
+            while (label >= 0 && labels[label].offset == offset) {
+                if (label < labeluse_size)
+                    totaluse += labeluse[label];
+                count++;
+                label = labels[label].next;
+            }
+            if (totaluse == 0 && never_reaches) {
+                int32 label_offset = offset - adjusted_pc;
+                if (label_offset < 0 || label_offset >= zcode_ha_size) {
+                    continue;
+                }
+                opcode_at_label = zcode_holding_area[label_offset];
+                if (     opcode_at_label == 0xB0     /* rtrue */
+                    ||   opcode_at_label == 0xB1     /* rfalse */
+                    ||   opcode_at_label == 0xB8) {  /* ret_popped */
+                    if (asm_trace_level >= 4) printf("Removing unreachable return opcode at %04x (label %d%s)\n", offset, origlabel, (count > 1 ? " etc" : ""));
+                    zcode_markers[label_offset] = DELETED_MV;
+                }
             }
         }
     }
@@ -2303,12 +2377,24 @@ static void transfer_routine_z(void)
             (if two labels move inside the "short" range as a result of
             a previous optimisation).  However, this is acceptably uncommon. */
 
-    if (next_label > 0)
+    if (last_label >= 0)
     {   if (asm_trace_level >= 4)
         {   printf("Opening label: %d\n", first_label);
-            for (i=0;i<next_label;i++)
-                printf("Label %d offset %04x next -> %d previous -> %d\n",
-                    i, labels[i].offset, labels[i].next, labels[i].prev);
+            for (i=0;i<next_label;i++) {
+                if (labels[i].offset < 0) {
+                    printf("Label %d omitted (used=%d%s)\n",
+                        i,
+                        (i < labeluse_size ? labeluse[i] : 0),
+                        (labels[i].never_reaches ? ", jo" : ""));
+                    continue;
+                }
+                printf("Label %d offset %04x (used=%d%s) (next->%d, prev->%d)\n",
+                    i,
+                    labels[i].offset,
+                    (i < labeluse_size ? labeluse[i] : 0),
+                    (labels[i].never_reaches ? ", jo" : ""),
+                    labels[i].next, labels[i].prev);
+            }
         }
 
         /* label will advance through the linked list as pc increases. */
@@ -2490,10 +2576,10 @@ static void transfer_routine_g(void)
             short form) with DELETED_MV.
             We also look for branches that can be entirely eliminated (because
             they are jumping to the very next instruction). The opcode and
-            all label bytes get DELETED_MV.
+            its operand gets DELETED_MV.
             (This doesn't bother with the "replace jump with return"
-            optimization that Z-code does. Figuring out the operand
-            lengths is too much work.) */
+            optimization that Z-code does. It's harder and Glulx isn't
+            generally in need of tight optimization.) */
 
     for (i=0, pc=adjusted_pc; i<zcode_ha_size; i++, pc++) {
         if (zcode_markers[i] >= BRANCH_MV && zcode_markers[i] < BRANCHMAX_MV) {
@@ -2513,6 +2599,8 @@ static void transfer_routine_g(void)
                        j, addr, labels[j].offset - offset_of_next);
             if (addr == 2 && i >= 2 && opmodeoffset == 2 && zcode_holding_area[opmodebyte-1] == opcodes_table_g[jump_gc].code) {
                 if (asm_trace_level >= 4) printf("...Deleting branch\n");
+                /* Do *not* mark the label unused, because we're going
+                   to fall through to it. */
                 zcode_markers[i-2] = DELETED_MV;
                 zcode_markers[i-1] = DELETED_MV;
                 zcode_markers[i] = DELETED_MV;
@@ -2553,12 +2641,24 @@ static void transfer_routine_g(void)
             optimisations which are possible but which have been missed
             (if two labels move inside the "short" range as a result of
             a previous optimisation).  However, this is acceptably uncommon. */
-    if (next_label > 0) {
+    if (last_label >= 0) {
         if (asm_trace_level >= 4) {
             printf("Opening label: %d\n", first_label);
-            for (i=0;i<next_label;i++)
-                printf("Label %d offset %04x next -> %d previous -> %d\n",
-                       i, labels[i].offset, labels[i].next, labels[i].prev);
+            for (i=0;i<next_label;i++) {
+                if (labels[i].offset < 0) {
+                    printf("Label %d omitted (used=%d%s)\n",
+                        i,
+                        (i < labeluse_size ? labeluse[i] : 0),
+                        (labels[i].never_reaches ? ", jo" : ""));
+                    continue;
+                }
+                printf("Label %d offset %04x (used=%d%s) (next->%d, prev->%d)\n",
+                    i,
+                    labels[i].offset,
+                    (i < labeluse_size ? labeluse[i] : 0),
+                    (labels[i].never_reaches ? ", jo" : ""),
+                    labels[i].next, labels[i].prev);
+            }
         }
 
         /* label will advance through the linked list as pc increases. */

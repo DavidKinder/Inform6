@@ -2199,8 +2199,6 @@ static void generate_code_from(int n, int void_flag)
     
                          case ELDER_SYSF:
                              {   int label, label2;
-                                 label = alloc_label();
-                                 label2 = alloc_label();
                                  assemblez_store(temp_var1, ET[ET[below].right].value);
                                  if (runtime_error_checking_switch)
                                      check_nonzero_at_runtime(temp_var1, -1,
@@ -3034,13 +3032,13 @@ static void generate_code_from(int n, int void_flag)
     
                          case ELDER_SYSF:
                              {   int label, label2, label3;
-                                 label = alloc_label();
-                                 label2 = alloc_label();
-                                 label3 = alloc_label();
                                  AO = ET[ET[below].right].value;
                                  if (runtime_error_checking_switch)
                                      AO = check_nonzero_at_runtime(AO, -1,
                                          YOUNGEST_RTE);
+                                 label = alloc_label();
+                                 label2 = alloc_label();
+                                 label3 = alloc_label();
                                  assembleg_store(temp_var3, AO);
                                  INITAOTV(&AO2, BYTECONSTANT_OT, GOBJFIELD_PARENT());
                                  assembleg_3(aload_gc, temp_var3, AO2, temp_var1);
