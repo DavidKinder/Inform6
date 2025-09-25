@@ -48,8 +48,9 @@ have to set the option themselves.
 <li><p>When performing Z-code branch optimizations, if there is a <tt>@jz</tt>, <tt>@je</tt>, <tt>@jl</tt>, <tt>@jg</tt>,
 <tt>@jin</tt>, <tt>@test</tt>, <tt>@test_attr</tt>, <tt>@get_sibling</tt> or <tt>@get_child</tt> opcode branching to an
 <tt>@rtrue</tt> or <tt>@rfalse</tt>, the branch operand is changed to 1 or 0. (That is, the direct return true/false form of
-the branch). In some cases this leaves the original return opcode unreachable. Unfortunately the dead-code-strip phase has
-already finished by this point so it is not convenient to detect this and strip it out.
+the branch).
+<li><p>If either the above Z-code optimization, or the <tt>@jump</tt> optimization in Inform 6.43, leaves the original
+return opcode unreachable, the return opcode will now be removed.
 <li><p>Inform 6.43 accepted header comment lines with trailing non-numeric data, even though this was technically incorrect.
 Inform 7 10.1 unfortunately generated some header comments with trailing semicolons, like this:
 <pre>
