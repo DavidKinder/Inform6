@@ -852,6 +852,7 @@ extern void apply_compiler_options(void)
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
     /* Grammar version: this will be handled later, in verbs_begin_pass(). */
+    /* Z-alphabet: will be handled in init_chars_vars(). */
 
     /* Serial number: only set it if a non-default value has been given. */
     if (alloptions[OPT_SERIAL].precedence > DEFAULT_OPTPREC) {
@@ -867,6 +868,13 @@ extern void apply_compiler_options(void)
 extern int32 get_current_option_value(optionindex_e optnum)
 {
     return SELECTVAL(optnum);
+}
+
+/* Fetch a string option value. (OPTLIM_STR only.)
+*/
+extern char *get_current_option_string_value(optionindex_e optnum)
+{
+    return alloptions[optnum].val.s;
 }
 
 /* Set an option late in compilation.

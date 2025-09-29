@@ -1281,7 +1281,10 @@ extern void make_upper_case(char *str)
 /* ------------------------------------------------------------------------- */
 
 extern void init_chars_vars(void)
-{   int n;
+{   
+    char *alphastr;
+    int n;
+    
     for (n=0; n<128; n++) character_digit_value[n] = 127;
     character_digit_value['0'] = 0;
     character_digit_value['1'] = 1;
@@ -1313,8 +1316,13 @@ extern void init_chars_vars(void)
     alphabet_modified = FALSE;
 
     for (n=0; n<78; n++) alphabet_used[n] = 'N';
-
+    
     change_character_set();
+
+    alphastr = get_current_option_string_value(OPT_ZALPHABET);
+    if (alphastr) {
+        printf("### ZALPHABET: \"%s\"\n", alphastr);
+    }
 }
 
 extern void chars_begin_pass(void)
