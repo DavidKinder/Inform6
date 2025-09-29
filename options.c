@@ -344,6 +344,15 @@ static optiont alloptions[] = {
         { OPTLIM_TOMAX, 999999 },
         DEFAULTVAL(0),
     },
+    {
+        "ZALPHABET",
+        "\
+  ZALPHABET, if set, will provide the Z-machine alphabet table. Must be \n\
+  exactly 75 characters (ignoring spaces); @{XX} escapes are allowed.\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_STR },
+        DEFAULTSTR(NULL),
+    },
     
     /* obsolete options run past OPT_OPTIONS_COUNT */
     {
@@ -796,8 +805,9 @@ extern void explain_compiler_option(char *str)
     if (opt->limit.limittype == OPTLIM_STR) {
         char *val = opt->val.s;
         if (val == NULL)
-            val = "(not set)";
-        printf("\n  (currently: \"%s\")\n", val);
+            printf("\n  (currently: not set)\n");
+        else
+            printf("\n  (currently: \"%s\")\n", val);
     }
     else if (opt->val.z == opt->val.g) {
         printf("\n  (currently: %d)\n", opt->val.z);
