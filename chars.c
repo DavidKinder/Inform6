@@ -287,6 +287,7 @@ entered into Zcharacter table", unicode);
     if (which_alph == 2)
     {   int test_dups[0x100];
         for (i=0; i<0x100; i++) test_dups[i] = 0;
+        test_dups[0x22] = 1; /* no literal double-quote in our texts */
         for (i=0; i<3; i++) for (j=0; j<26; j++)
         {   if (test_dups[alphabet[i][j]]++ == 1)
                 unicode_char_error("Character duplicated in alphabet:",
