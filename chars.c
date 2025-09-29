@@ -242,9 +242,11 @@ extern void new_alphabet(char *text, int which_alph)
        The skipped three entries are reserved for escape, newline,
        and double-quote.
 
-       Note that in the default alphabet, double-quote is alphabet[2][19],
-       not alphabet[2][2]. This means that you can't exactly replicate
-       the default alphabet using the ZCHARACTER directive.
+       Note that when calling this, double-quote is always placed at
+       alphabet[2][2] (A2 letter 8). This does *not* match the Z-machine
+       default alphabet, in which double-quote is A2 letter 25.
+       This means that the ZCHARACTER directive can't exactly replicate
+       the default alphabet, although it can generate a permutation of it.
 
        As described above, double-quote is stored as "~", newline as "^".
        This matches the way Z-code text is stored during compilation.
