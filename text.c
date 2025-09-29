@@ -2825,7 +2825,13 @@ static void show_alphabet(int i)
 {   int j, c; char chartext[8];
 
     for (j=0; j<26; j++)
-    {   c = alphabet[i][j];
+    {
+        if (i==2 && j==0) {
+            printf("esc"); /* escape for a ten-bit ZSCII code */
+            continue;
+        }
+        
+        c = alphabet[i][j];
 
         if (alphabet_used[26*i+j] == 'N') printf("("); else printf(" ");
 
@@ -2849,8 +2855,13 @@ extern void show_dictionary(int level)
         else
             recursively_show_g(root, level);
     }
+    
     if (!glulx_mode)
     {
+        /* Also print the Z-machine alphabet. This is entries 6-31
+           of each alphabet row. (Entries 0-5 are reserved for special
+           stuff.)
+        */
         printf("\nZ-machine alphabet entries:\n");
         show_alphabet(0);
         show_alphabet(1);
