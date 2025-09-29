@@ -766,8 +766,10 @@ extern void list_compiler_options(void)
             continue;
         
         if (alloptions[ix].limit.limittype == OPTLIM_STR) {
-            /* Only display string options when non-NULL. */
-            if (alloptions[ix].val.s) 
+            /* String option could be NULL. */
+            if (!alloptions[ix].val.s) 
+                printf("|  %25s = not set |\n", alloptions[ix].name);
+            else
                 printf("|  %25s = \"%s\" |\n", alloptions[ix].name, alloptions[ix].val.s);
         }
         else {
