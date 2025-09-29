@@ -239,7 +239,7 @@ extern void new_alphabet(char *text, int which_alph)
        For wa=0 or 1, this sets entries 0-25 of the alphabet table
        (which is letters 6-31 of the Z-machine alphabet A0/A1).
        For wa=2, this sets entries 3-25 of the table (letters 9-31 of A2).
-       The skipped three entries are reserved for escape, newline,
+       The skipped three entries are reserved for ZSCII escape, newline,
        and double-quote.
 
        Note that when calling this, double-quote is always placed at
@@ -250,6 +250,8 @@ extern void new_alphabet(char *text, int which_alph)
 
        As described above, double-quote is stored as "~", newline as "^".
        This matches the way Z-code text is stored during compilation.
+       Unfortunately this means that literal ~ and ^ can't be placed in
+       the alphabet table at all.
     */
 
     int i, j, zscii; int32 unicode;
