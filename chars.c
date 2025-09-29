@@ -137,12 +137,12 @@ int iso_to_alphabet_grid[0x100];
                     alphabet[2][1] is ignored by the Z-machine
                                    (char 1 in A2 means new-line)
                                    but used by Inform to hold ISO circumflex
-                                   so that ^ is translated as new-line
+                                   so that ^ is translated as new-line.
                     alphabet[2][19] is used by Inform to hold ISO tilde
-                                   so that ~ is translated as ": after
-                                   compilation, when the alphabet table is
-                                   written into the Z-machine, this entry
-                                   is changed back to ".
+                                   so that ~ is translated as double-quote.
+                                   After compilation, when the alphabet table
+                                   is written into the Z-machine, this entry
+                                   is changed back to double-quote.
 
    Note that the alphabet can only hold ZSCII values between 0 and 255.
 
@@ -232,7 +232,23 @@ extern void map_new_zchar(int32 unicode)
 
 extern void new_alphabet(char *text, int which_alph)
 {
-    /*  Called three times in succession, with which_alph = 0, 1, 2  */
+    /* Used by the ZCHARACTER directive when setting the entire
+       alphabet.
+
+       Called three times in succession, with which_alph = 0, 1, 2.
+       For wa=0 or 1, this sets entries 0-25 of the alphabet table
+       (which is letters 6-31 of the Z-machine alphabet A0/A1).
+       For wa=2, this sets entries 3-25 of the table (letters 9-31 of A2).
+       The skipped three entries are reserved for escape, newline,
+       and double-quote.
+
+       Note that in the default alphabet, double-quote is alphabet[2][19],
+       not alphabet[2][2]. This means that you can't exactly replicate
+       the default alphabet using the ZCHARACTER directive.
+
+       As described above, double-quote is stored as "~", newline as "^".
+       This matches the way Z-code text is stored during compilation.
+    */
 
     int i, j, zscii; int32 unicode;
 
