@@ -1344,6 +1344,8 @@ extern int32 text_to_unicode(char *text)
 /*  In either case, output uses the same ISO set as the source code.         */
 /* ------------------------------------------------------------------------- */
 
+/* The text argument must have room for at least seven characters plus
+   terminator. */
 extern void zscii_to_text(char *text, int zscii)
 {   int i;
     int32 unicode;
