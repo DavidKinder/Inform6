@@ -312,7 +312,7 @@ static void new_alphabet_raw(char *text)
             continue;
         }
         
-        if (*cx == '{') {
+        if (*cx == '@' && *(cx+1) == '{') {
             unicode = 0x5C; //###
         }
         else if ((uchar)(*cx) >= 0x7F) {
