@@ -2387,6 +2387,8 @@ extern void  new_zscii_finished(void);
 extern void  map_new_zchar(int32 unicode);
 extern void  make_lower_case(char *str);
 extern void  make_upper_case(char *str);
+extern void show_unicode_translation_table(void);
+
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "directs"                                        */
@@ -2565,7 +2567,7 @@ extern int
     define_DEBUG_switch,    define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,
-    list_symbols_setting;
+    list_symbols_setting,   list_unicode_setting;
 
 extern int oddeven_packing_switch;
 

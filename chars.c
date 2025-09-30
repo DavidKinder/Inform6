@@ -1402,6 +1402,17 @@ extern void make_upper_case(char *str)
 }
 
 /* ========================================================================= */
+
+extern void show_unicode_translation_table(void)
+{
+    if (glulx_mode) {
+        return;
+    }
+    printf("Z-machine Unicode translation table:\n");
+}
+
+
+/* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
 
