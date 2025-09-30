@@ -2387,7 +2387,6 @@ extern void  new_zscii_finished(void);
 extern void  map_new_zchar(int32 unicode);
 extern void  make_lower_case(char *str);
 extern void  make_upper_case(char *str);
-extern void show_unicode_translation_table(void);
 
 
 /* ------------------------------------------------------------------------- */
@@ -2946,6 +2945,7 @@ extern int   dictionary_find(char *dword);
 extern void  dictionary_set_verb_number(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
 extern void  copy_sorts(uchar *d1, uchar *d2);
+extern void  show_unicode_translation_table(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "veneer"                                         */
