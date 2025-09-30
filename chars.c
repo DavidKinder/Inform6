@@ -1405,10 +1405,24 @@ extern void make_upper_case(char *str)
 
 extern void show_unicode_translation_table(void)
 {
+    int i, j;
+    
     if (glulx_mode) {
         return;
     }
+    
+    if (!zscii_defn_modified) {
+        printf("The Unicode translation table is not used.\n");
+        return;
+    }
+
     printf("Z-machine Unicode translation table:\n");
+
+    for (i=0; i<zscii_high_water_mark; i++) {
+        j = zscii_to_unicode(155 + i);
+        printf("  $%02x: @{%x}\n", 155+i, j);
+    }
+
 }
 
 
