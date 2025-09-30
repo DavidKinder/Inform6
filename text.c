@@ -2915,6 +2915,7 @@ extern void show_unicode_translation_table(void)
     for (i=0; i<zscii_high_water_mark; i++) {
         j = zscii_to_unicode(155 + i);
         printf("  $%02x: ", 155+i);
+        /* show the hex form even if the character was printable */
         if (show_uchar(j))
             printf(" @{%x}", j);
         printf("\n");
