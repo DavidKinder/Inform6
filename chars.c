@@ -295,9 +295,60 @@ static void new_alphabet_raw(char *text)
        entire alphabet. The text contains all 75 characters. We will
        ignore spaces. @{XX} escapes have not yet been translated, so
        we will do that.
-    */
 
-    //###
+       This somewhat repeats the logic of new_alphabet(), but it's
+       simpler. In particular, we *don't* use the full text_to_unicode()
+       logic; we only accept literal ASCII and @{XX} escapes. This
+       avoids UTF-8 confusion.
+    */
+    char *cx;
+    int i = 0, count = 0;
+    int which_alph = 0;
+
+    for (cx=text; *cx; cx++) {
+        int unicode, zscii;
+
+        if (*cx == ' ') {
+            continue;
+        }
+        
+        if (*cx == '{') {
+            unicode = 0x5C; //###
+        }
+        else if ((uchar)(*cx) >= 0x7F) {
+            error("ZALPHABET option may only include ASCII and @{...} characters");
+            continue;
+        }
+        else {
+            unicode = *cx;
+        }
+
+        zscii = unicode_to_zscii(unicode);
+        if ((zscii == 5) || (zscii >= 0x100)) {
+            unicode_char_error("Character can't be used in alphabets unless \
+entered into Zcharacter table", unicode);
+            continue;
+        }
+
+        if (which_alph <= 2) {
+            alphabet[which_alph][i] = zscii;
+            i++;
+        }
+        count++;
+
+        if (i == 26) {
+            i = 0;
+            which_alph++;
+            if (which_alph == 2) {
+                alphabet[2][2] = '~';
+                i = 3;
+            }
+        }
+    }
+
+    if (count != 75) {
+        error_fmt("ZALPHABET option had %d non-space characters (should be exactly 75)", count);
+    }
 
     finish_new_alphabet();
 }
