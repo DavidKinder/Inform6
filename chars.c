@@ -346,6 +346,7 @@ static void new_alphabet_raw(char *text)
                 unicode = -1;
                 break;
             }
+            /* cx is on the '}'; continue on. */
         }
         else if (*cx >= 0x7F) {
             error("ZALPHABET option may only include ASCII and @{...} characters");
@@ -1401,7 +1402,6 @@ extern void make_upper_case(char *str)
 
 extern void init_chars_vars(void)
 {   
-    char *alphastr;
     int n;
     
     for (n=0; n<128; n++) character_digit_value[n] = 127;
@@ -1437,15 +1437,14 @@ extern void init_chars_vars(void)
     for (n=0; n<78; n++) alphabet_used[n] = 'N';
     
     change_character_set();
-
-    alphastr = get_current_option_string_value(OPT_ZALPHABET);
-    if (alphastr) {
-        new_alphabet_raw(alphastr);
-    }
 }
 
 extern void chars_begin_pass(void)
 {
+    char *alphastr = get_current_option_string_value(OPT_ZALPHABET);
+    if (alphastr) {
+        new_alphabet_raw(alphastr);
+    }
 }
 
 extern void chars_allocate_arrays(void)

@@ -852,7 +852,7 @@ extern void apply_compiler_options(void)
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
     /* Grammar version: this will be handled later, in verbs_begin_pass(). */
-    /* Z-alphabet: will be handled in init_chars_vars(). */
+    /* Z-alphabet: will be handled in chars_begin_pass(). */
 
     /* Serial number: only set it if a non-default value has been given. */
     if (alloptions[OPT_SERIAL].precedence > DEFAULT_OPTPREC) {
