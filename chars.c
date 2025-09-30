@@ -230,6 +230,8 @@ extern void map_new_zchar(int32 unicode)
     }
 }
 
+static void finish_new_alphabet(void);
+
 extern void new_alphabet(char *text, int which_alph)
 {
     /* Used by the ZCHARACTER directive when setting the entire
@@ -255,8 +257,6 @@ extern void new_alphabet(char *text, int which_alph)
     */
 
     int i, j, zscii; int32 unicode;
-
-    alphabet_modified = TRUE;
 
     if (which_alph == 2)
     {   i=3; alphabet[2][2] = '~';
@@ -284,18 +284,50 @@ entered into Zcharacter table", unicode);
             error("Alphabet string must give exactly 26 characters");
     }
 
+    /* We call new_alphabet(2) last, so it's time to finish up. */
     if (which_alph == 2)
-    {   int test_dups[0x100];
-        for (i=0; i<0x100; i++) test_dups[i] = 0;
-        test_dups[0x22] = 1; /* no literal double-quote in our texts */
-        for (i=0; i<3; i++) for (j=0; j<26; j++)
-        {   if (test_dups[alphabet[i][j]]++ == 1)
+        finish_new_alphabet();
+}
+
+static void new_alphabet_raw(char *text)
+{
+    /* Used by the $ZALPHABET option (not directive) when setting the
+       entire alphabet. The text contains all 75 characters. We will
+       ignore spaces. @{XX} escapes have not yet been translated, so
+       we will do that.
+    */
+
+    //###
+
+    finish_new_alphabet();
+}
+
+static void finish_new_alphabet(void)
+{
+    /*  We must call this after new_alphabet() or new_alphabet_raw().
+    */
+    int i, j;
+    int test_dups[0x100];
+
+    alphabet_modified = TRUE;
+
+    /* Check to see if any character appears twice. */
+    
+    for (i=0; i<0x100; i++)
+        test_dups[i] = 0;
+    test_dups[0x22] = 1; /* The alphabet table will have "~" for double-quote,
+                            so we shouldn't have a literal double-quote. */
+    
+    for (i=0; i<3; i++) {
+        for (j=0; j<26; j++) {
+            if (test_dups[alphabet[i][j]]++ == 1)
                 unicode_char_error("Character duplicated in alphabet:",
                     zscii_to_unicode(alphabet[i][j]));
         }
-
-        make_iso_to_alphabet_grid();
     }
+
+    /* Rebuild the grids. */
+    make_iso_to_alphabet_grid();
 }
 
 static void read_source_to_iso_file(uchar *uccg)
@@ -1321,7 +1353,7 @@ extern void init_chars_vars(void)
 
     alphastr = get_current_option_string_value(OPT_ZALPHABET);
     if (alphastr) {
-        printf("### ZALPHABET: \"%s\"\n", alphastr);
+        new_alphabet_raw(alphastr);
     }
 }
 
