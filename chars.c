@@ -197,7 +197,8 @@ extern void map_new_zchar(int32 unicode)
 
     zscii = unicode_to_zscii(unicode);
 
-    /*  Out of ZSCII range?  */
+    /*  Out of ZSCII range? (The alphabet array can only contain 8-bit
+        values.) */
     if ((zscii == 5) || (zscii >= 0x100))
     {   unicode_char_error(
             "Character must first be entered into Zcharacter table:", unicode);
@@ -996,6 +997,7 @@ switch(iso)
 
 int zscii_defn_modified, zscii_high_water_mark;
 
+/* Unicode values of ZSCII 155...251. */
 int32 zscii_to_unicode_grid[0x61];
 
 static void zscii_unicode_map(int zscii, int32 unicode)
@@ -1174,6 +1176,9 @@ static void make_unicode_zscii_map(void)
 
 extern void new_zscii_character(int32 u, int plus_flag)
 {
+    /* Add a character to the ZSCII character set, so that it has a
+       byte-sized value. If plus_flag is true, we add to the existing
+       set; if false, we clear the set first. */
     if (u < 0 || u > 0xFFFF)
         error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
     if (plus_flag == FALSE)
