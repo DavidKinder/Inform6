@@ -301,11 +301,11 @@ static void new_alphabet_raw(char *text)
        logic; we only accept literal ASCII and @{XX} escapes. This
        avoids UTF-8 confusion.
     */
-    char *cx;
+    uchar *cx;
     int i = 0, count = 0;
     int which_alph = 0;
 
-    for (cx=text; *cx; cx++) {
+    for (cx = (uchar *)text; *cx; cx++) {
         int unicode, zscii;
 
         if (*cx == ' ') {
@@ -313,16 +313,52 @@ static void new_alphabet_raw(char *text)
         }
         
         if (*cx == '@' && *(cx+1) == '{') {
-            unicode = 0x5C; //###
+            uchar *sx;
+            cx += 2;
+            sx = cx;
+            unicode = 0;
+            while (*cx && *cx < 0x7F && *cx != '}') {
+                int d = character_digit_value[*cx];
+                if (d == 127) {
+                    break; /* will display error shortly */
+                }
+                unicode = unicode*16 + d;
+                cx++;
+            }
+
+            if (*cx == 0) {
+                error("'@{' without matching '}'");
+                unicode = -1;
+                break;
+            }
+            else if (*cx != '}') {
+                error("'@{...}' may only contain hexadecimal digits");
+                unicode = -1;
+                break;
+            }
+            else if (cx - sx == 0) {
+                error("Hexadecimal digits required in '@{...}'");
+                unicode = -1;
+                break;
+            }
+            else if (cx - sx > 6) {
+                error("At most six hexadecimal digits allowed in '@{...}'");
+                unicode = -1;
+                break;
+            }
         }
-        else if ((uchar)(*cx) >= 0x7F) {
+        else if (*cx >= 0x7F) {
             error("ZALPHABET option may only include ASCII and @{...} characters");
-            continue;
+            unicode = -1;
+            break;
         }
         else {
             unicode = *cx;
         }
 
+        if (unicode < 0)
+            break;
+        
         zscii = unicode_to_zscii(unicode);
         if ((zscii == 5) || (zscii >= 0x100)) {
             unicode_char_error("Character can't be used in alphabets unless \
