@@ -2556,8 +2556,10 @@ static void show_char(uchar c)
 }
 
 /* Display a Unicode character in user-readable form. This uses the same
-   character encoding as the source code (determined by the -C option). */
-static void show_uchar(uint32 c)
+   character encoding as the source code (determined by the -C option).
+   Returns true if it was able to print the character directly; false
+   if it used an @{XX} escape. */
+static int show_uchar(uint32 c)
 {
     char buf[16];
     int ix;
@@ -2565,7 +2567,7 @@ static void show_uchar(uint32 c)
     if (c < 0x80) {
         /* ASCII always works */
         show_char(c);
-        return;
+        return TRUE;
     }
     if (character_set_unicode) {
         /* UTF-8 the character */
@@ -2590,12 +2592,12 @@ static void show_uchar(uint32 c)
         else {
             show_char('?');
         }
-        return;
+        return TRUE;
     }
     if (character_set_setting == 1 && c < 0x100) {
         /* Fits in Latin-1 */
         show_char(c);
-        return;
+        return TRUE;
     }
     /* Supporting other character_set_setting is harder; not currently implemented. */
     
@@ -2603,6 +2605,7 @@ static void show_uchar(uint32 c)
     sprintf(buf, "@{%x}", c);
     for (ix=0; buf[ix]; ix++)
         show_char(buf[ix]);
+    return FALSE;
 }
 
 extern void word_to_ascii(uchar *p, char *results)
@@ -2912,7 +2915,8 @@ extern void show_unicode_translation_table(void)
     for (i=0; i<zscii_high_water_mark; i++) {
         j = zscii_to_unicode(155 + i);
         printf("  $%02x: ", 155+i);
-        show_uchar(j);
+        if (show_uchar(j))
+            printf(" @{%x}", j);
         printf("\n");
     }
 
