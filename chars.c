@@ -1358,7 +1358,8 @@ extern void zscii_to_text(char *text, int zscii)
         {   text[0] = '@';
             text[1] = accents[2*i];
             text[2] = accents[2*i+1];
-            text[3] = 0; return;
+            text[3] = 0;
+            return;
         }
     sprintf(text, "@{%x}", unicode);
 }
@@ -1408,6 +1409,7 @@ extern void show_unicode_translation_table(void)
     int i, j;
     
     if (glulx_mode) {
+        printf("Glulx does not have a Unicode translation table.\n");
         return;
     }
     
