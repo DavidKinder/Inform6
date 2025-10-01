@@ -302,55 +302,27 @@ static void new_alphabet_raw(char *text)
        logic; we only accept literal ASCII and @{XX} escapes. This
        avoids UTF-8 confusion.
     */
-    uchar *cx;
+    char *cx;
     int i = 0, count = 0;
     int which_alph = 0;
 
-    for (cx = (uchar *)text; *cx; cx++) {
+    for (cx = text; *cx; cx++) {
         int unicode, zscii;
 
         if (*cx == ' ') {
             continue;
         }
-        
-        if (*cx == '@' && *(cx+1) == '{') {
-            uchar *sx;
-            cx += 2;
-            sx = cx;
-            unicode = 0;
-            while (*cx && *cx < 0x7F && *cx != '}') {
-                int d = character_digit_value[*cx];
-                if (d == 127) {
-                    break; /* will display error shortly */
-                }
-                unicode = unicode*16 + d;
-                cx++;
-            }
 
-            if (*cx == 0) {
-                error("'@{' without matching '}'");
+        if (*cx == '@') {
+            unicode = text_to_unicode(cx);
+            cx += (textual_form_length-1);
+            if (textual_form_error) {
+                /* Error already displayed */
                 unicode = -1;
-                break;
             }
-            else if (*cx != '}') {
-                error("'@{...}' may only contain hexadecimal digits");
-                unicode = -1;
-                break;
-            }
-            else if (cx - sx == 0) {
-                error("Hexadecimal digits required in '@{...}'");
-                unicode = -1;
-                break;
-            }
-            else if (cx - sx > 6) {
-                error("At most six hexadecimal digits allowed in '@{...}'");
-                unicode = -1;
-                break;
-            }
-            /* cx is on the '}'; continue on. */
         }
-        else if (*cx >= 0x7F) {
-            error("ZALPHABET option may only include ASCII and @{...} characters");
+        else if (*(uchar *)cx >= 0x7F) {
+            error("ZALPHABET option may only include ASCII and @-escaped characters");
             unicode = -1;
             break;
         }
@@ -1237,6 +1209,7 @@ extern int32 text_to_unicode(char *text)
 {   int i;
 
     textual_form_error = FALSE;
+    
     if (text[0] != '@')
     {   if (character_set_unicode)
         {   if (text[0] & 0x80) /* 8-bit */
@@ -1344,6 +1317,11 @@ extern int32 text_to_unicode(char *text)
                 break;
             }
             total = total*16 + d;
+        }
+        if (i == 2) {
+            error("'@{...}' must contain hexadecimal digits");
+            textual_form_error = TRUE;
+            total = '?';
         }
         while ((text[i] != '}') && (text[i] != 0)) i++;
         if (text[i] == '}') i++;
