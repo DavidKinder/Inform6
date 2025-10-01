@@ -666,9 +666,9 @@ advance as part of 'Zcharacter table':", unicode);
     
                     @@decimalnumber  :  write this ZSCII char (0 to 1023)
                     @twodigits or    :  write the abbreviation string with this
-                    @(digits)           decimal number
+                    @(digits)               decimal number
                     @(symbol)        :  write the abbreviation string with this
-                                        (constant) value
+                                            (constant) value
                     @accentcode      :  this accented character: e.g.,
                                             for @'e write an E-acute
                     @{...}           :  this Unicode char (in hex)          */
