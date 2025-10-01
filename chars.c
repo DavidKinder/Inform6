@@ -1217,7 +1217,6 @@ extern int32 text_to_unicode(char *text)
             textual_form_error = TRUE;
             return '?';
         }
-        
         while ((text[i] != '}') && (text[i] != 0)) i++;
         if (text[i] == '}') i++;
         textual_form_length = i;
