@@ -1092,6 +1092,7 @@ extern int32 text_to_unicode(char *text)
 {   int i;
 
     textual_form_error = FALSE;
+    
     if (text[0] != '@')
     {   if (character_set_unicode)
         {   if (text[0] & 0x80) /* 8-bit */
@@ -1211,6 +1212,12 @@ extern int32 text_to_unicode(char *text)
             }
             total = total*16 + d;
         }
+        if (i == 2 && !textual_form_error) {
+            error("'@{...}' must contain hexadecimal digits");
+            textual_form_error = TRUE;
+            return '?';
+        }
+        
         while ((text[i] != '}') && (text[i] != 0)) i++;
         if (text[i] == '}') i++;
         textual_form_length = i;
