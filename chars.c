@@ -1066,10 +1066,11 @@ extern int32 zscii_to_unicode(int z)
 /*  This routine is not used for ordinary text compilation as it is too      */
 /*  slow, but it's useful for handling @ string escapes, or to avoid writing */
 /*  special code when speed is not especially required.                      */
-/*  Note that the two string escapes which can define Unicode are:           */
+/*  Note that the string escapes which can define Unicode are:               */
 /*                                                                           */
 /*      @..      where .. is an accent                                       */
-/*  and @{...}   where ... specifies a Unicode char in hexadecimal           */
+/*      @@...    where ... is decimal digits                                 */
+/*      @{...}   where ... specifies a Unicode char in hexadecimal           */
 /*               (1 to 6 digits long)                                        */
 /*                                                                           */
 /*  The global textual_form_length is set to the number of characters        */
@@ -1154,8 +1155,19 @@ extern int32 text_to_unicode(char *text)
         }
     }
 
+    if (text[1] == '@' && isdigit((uchar)text[2]))
+    {   int32 total = 0;
+        int i = 2;
+        while (isdigit((uchar)text[i])) {
+            total = 10*total + (text[i]-'0');
+            i++;
+        }
+        textual_form_length = i;
+        return total;
+    }
+    
     if ((isdigit((uchar)text[1])) || (text[1] == '@'))
-    {   ebf_error("'@' plus an accent code or '@{...}'", text);
+    {   ebf_error("'@' plus an accent code, '@@..', or '@{...}'", text);
         textual_form_error = TRUE;
         textual_form_length = 1;
         return '?';
