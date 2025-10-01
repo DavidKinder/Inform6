@@ -877,6 +877,11 @@ extern char *get_current_option_string_value(optionindex_e optnum)
     return alloptions[optnum].val.s;
 }
 
+extern int get_current_option_precedence(optionindex_e optnum)
+{
+    return alloptions[optnum].precedence;
+}
+
 /* Set an option late in compilation.
    If this returns false, the option has already been set with higher
    precedence and should not change.
