@@ -1191,15 +1191,21 @@ extern int parse_given_directive(int internal_flag)
 
         switch(token_type)
         {   case DQ_TT:
-                new_alphabet(token_text, 0);
+                flag = set_current_option_precedence(OPT_ZALPHABET, 0);
+                /* The 0 is a dummy value. We just want to know if the
+                   option has been set already. */
+                if (flag)
+                    new_alphabet(token_text, 0);
                 get_next_token();
                 if (token_type != DQ_TT)
                     return ebf_error_recover("double-quoted alphabet string");
-                new_alphabet(token_text, 1);
+                if (flag)
+                    new_alphabet(token_text, 1);
                 get_next_token();
                 if (token_type != DQ_TT)
                     return ebf_error_recover("double-quoted alphabet string");
-                new_alphabet(token_text, 2);
+                if (flag)
+                    new_alphabet(token_text, 2);
             break;
 
             case SQ_TT:
