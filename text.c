@@ -674,28 +674,7 @@ advance as part of 'Zcharacter table':", unicode);
                     @{...}           :  this Unicode char (in hex)          */
     
             if (text_in[i]=='@')
-            {   if (text_in[i+1]=='@')
-                {
-                    /*   @@... (ascii value)  */
-    
-                    i+=2; j=atoi((char *) (text_in+i));
-                    switch(j)
-                    {   /* Prevent ~ and ^ from being translated to double-quote
-                           and new-line, as they ordinarily would be */
-    
-                        case 94:   write_z_char_z(5); write_z_char_z(6);
-                                   write_z_char_z(94/32); write_z_char_z(94%32);
-                                   break;
-                        case 126:  write_z_char_z(5); write_z_char_z(6);
-                                   write_z_char_z(126/32); write_z_char_z(126%32);
-                                   break;
-    
-                        default:   write_zscii(j); break;
-                    }
-                    while (isdigit(text_in[i])) i++;
-                    i--;
-                }
-                else if (text_in[i+1]=='(')
+            {   if (text_in[i+1]=='(')
                 {
                     /*   @(...) (dynamic string)   */
                     int len = 0, digits = 0;
@@ -780,13 +759,26 @@ advance as part of 'Zcharacter table':", unicode);
                 else
                 {
                     /*   A string escape specifying an unusual character   */
+                    /*   Handles @@decimalnumber, @accentcode, @{...}  */
     
                     unicode = text_to_unicode((char *) (text_in+i));
                     zscii = unicode_to_zscii(unicode);
-                    if (zscii != 5) write_zscii(zscii);
-                    else
-                    {   unicode_char_error(
-                           "Character can only be used if declared in \
+                    /* Prevent ~ and ^ from being translated to double-quote
+                       and new-line, as they ordinarily would be */
+                    if (zscii == 94) {
+                        write_z_char_z(5); write_z_char_z(6);
+                        write_z_char_z(94/32); write_z_char_z(94%32);
+                    }
+                    else if (zscii == 126) {
+                        write_z_char_z(5); write_z_char_z(6);
+                        write_z_char_z(126/32); write_z_char_z(126%32);
+                    }
+                    else if (zscii != 5) {
+                        write_zscii(zscii);
+                    }
+                    else {
+                        unicode_char_error(
+                            "Character can only be used if declared in \
 advance as part of 'Zcharacter table':", unicode);
                     }
                     i += textual_form_length - 1;
@@ -794,7 +786,7 @@ advance as part of 'Zcharacter table':", unicode);
             }
             else
             {   /*  Skip a character which has been over-written with the null
-                    value 1 earlier on                                           */
+                    value 1 earlier on  */
     
                 if (text_in[i]!=1)
                 {   if (text_in[i]==' ') write_z_char_z(0);
@@ -802,8 +794,8 @@ advance as part of 'Zcharacter table':", unicode);
                     {   j = (int) text_in[i];
                         lookup_value = iso_to_alphabet_grid[j];
                         if (lookup_value < 0)
-                        {   /*  The character isn't in the standard alphabets, so
-                                we have to use the ZSCII 4-Z-char sequence */
+                        {   /*  The character isn't in the standard alphabets,
+                                so we have to use the ZSCII 4-char sequence */
     
                             if (lookup_value == -5)
                             {   /*  Character isn't in the ZSCII set at all */
@@ -818,9 +810,10 @@ advance as part of 'Zcharacter table':", unicode);
                             else write_zscii(-lookup_value);
                         }
                         else
-                        {   /*  The character is in one of the standard alphabets:
-                                write a SHIFT to temporarily change alphabet if
-                                it isn't in alphabet 0, then write the Z-char    */
+                        {   /*  The character is in one of the standard
+                                alphabets: write a SHIFT to temporarily change
+                                alphabet if it isn't in alphabet 0, then write
+                                the Z-char */
     
                             alphabet_used[lookup_value] = 'Y';
                             in_alphabet = lookup_value/26;
@@ -884,23 +877,7 @@ advance as part of 'Zcharacter table':", unicode);
                 write_z_char_g('A' + ((j     ) & 0x0F));
             }
             else if (text_in[i] == '@') {
-                if (text_in[i+1]=='@') {
-                    /* An ASCII code */
-                    i+=2; j=atoi((char *) (text_in+i));
-                    if (j == '@' || j == '\0') {
-                        write_z_char_g('@');
-                        if (j == 0) {
-                            j = '0';
-                            if (!compression_switch)
-                                warning("Ascii @@0 will prematurely terminate non-compressed \
-string.");
-                        }
-                    }
-                    write_z_char_g(j);
-                    while (isdigit(text_in[i])) i++;
-                    i--;
-                }
-                else if (text_in[i+1]=='(') {
+                if (text_in[i+1]=='(') {
                     int len = 0, digits = 0;
                     i += 2;
                     /* This accepts "12xyz" as a symbol, which it really isn't,
