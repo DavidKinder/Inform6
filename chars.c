@@ -1088,6 +1088,8 @@ extern int32 zscii_to_unicode(int z)
 int textual_form_length;
 int textual_form_error;
 
+/* The text argument must have room for at least seven characters plus
+   terminator. */
 extern int32 text_to_unicode(char *text)
 {   int i;
 
