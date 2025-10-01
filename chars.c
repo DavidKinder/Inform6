@@ -294,13 +294,13 @@ static void new_alphabet_raw(char *text)
 {
     /* Used by the $ZALPHABET option (not directive) when setting the
        entire alphabet. The text contains all 75 characters. We will
-       ignore spaces. @{XX} escapes have not yet been translated, so
+       ignore spaces. @-escapes have not yet been translated, so
        we will do that.
 
        This somewhat repeats the logic of new_alphabet(), but it's
-       simpler. In particular, we *don't* use the full text_to_unicode()
-       logic; we only accept literal ASCII and @{XX} escapes. This
-       avoids UTF-8 confusion.
+       simpler. Note that while we accept all @-escapes, we do *not*
+       accept UTF-8 characters. The character set is not known at option
+       time.
     */
     char *cx;
     int i = 0, count = 0;
@@ -1318,10 +1318,10 @@ extern int32 text_to_unicode(char *text)
             }
             total = total*16 + d;
         }
-        if (i == 2) {
+        if (i == 2 && !textual_form_error) {
             error("'@{...}' must contain hexadecimal digits");
             textual_form_error = TRUE;
-            total = '?';
+            return '?';
         }
         while ((text[i] != '}') && (text[i] != 0)) i++;
         if (text[i] == '}') i++;
