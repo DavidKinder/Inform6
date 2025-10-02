@@ -1222,9 +1222,6 @@ extern int32 text_to_unicode(char *text)
         textual_form_length = i;
         return total;
     }
-
-    textual_form_length = 1;
-    return '?';
 }
 
 /* ------------------------------------------------------------------------- */
