@@ -171,6 +171,42 @@ static optiont alloptions[] = {
         DEFAULTVAL(3),
     },
     {
+        "ZCODE_HEADER_FLAGS_1",
+        "\
+  ZCODE_HEADER_FLAGS_1 gives bits to set in the Flags 1 byte of the \n\
+  header (address $1).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_ANY },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_1_CLEAR",
+        "\
+  ZCODE_HEADER_FLAGS_1_CLEAR gives bits to clear in the Flags 1 byte of the \n\
+  header (address $1).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_ANY },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_2",
+        "\
+  ZCODE_HEADER_FLAGS_2 gives bits to set in the Flags 2 word of the \n\
+  header (address $10-11).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_ANY },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_2_CLEAR",
+        "\
+  ZCODE_HEADER_FLAGS_2 gives bits to clear in the Flags 2 word of the \n\
+  header (address $10-11).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_ANY },
+        DEFAULTVAL(0),
+    },
+    {
         "ZCODE_HEADER_FLAGS_3",
         "\
   ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
