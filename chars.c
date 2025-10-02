@@ -1175,15 +1175,17 @@ extern int32 text_to_unicode(char *text)
     }
 
     if (text[1] != '{')
-    {   for (i=0; accents[i] != 0; i+=2)
+    {   for (i=0; accents[i] != 0; i+=2) {
             if ((text[1] == accents[i]) && (text[2] == accents[i+1]))
             {   textual_form_length = 3;
                 return default_zscii_to_unicode_c01[i/2];
             }
-
-        {   ebf_error("'@' plus an accent code, '@@..', or '@{...}'", text);
-            textual_form_error = TRUE;
         }
+
+        ebf_error("'@' plus an accent code, '@@NUM', or '@{HEX}'", text);
+        textual_form_error = TRUE;
+        textual_form_length = 1;
+        return '?';
     }
     else
     {   int32 total = 0;
