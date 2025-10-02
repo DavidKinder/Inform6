@@ -176,7 +176,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_1 gives bits to set in the Flags 1 byte of the \n\
   header (address $1).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 255 },
         DEFAULTVAL(0),
     },
     {
@@ -185,7 +185,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_1_CLR gives bits to clear in the Flags 1 byte of the \n\
   header (address $1).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 255 },
         DEFAULTVAL(0),
     },
     {
@@ -194,7 +194,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_2 gives bits to set in the Flags 2 word of the \n\
   header (address $10-11).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 65535 },
         DEFAULTVAL(0),
     },
     {
@@ -203,7 +203,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_2 gives bits to clear in the Flags 2 word of the \n\
   header (address $10-11).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 65535 },
         DEFAULTVAL(0),
     },
     {
@@ -212,7 +212,7 @@ static optiont alloptions[] = {
   ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
   header extension table (Z-Spec 1.1).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 65535 },
         DEFAULTVAL(0),
     },
     {
