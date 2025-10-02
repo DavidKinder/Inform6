@@ -1167,8 +1167,8 @@ extern int32 text_to_unicode(char *text)
         return total;
     }
     
-    if ((isdigit((uchar)text[1])) || (text[1] == '@'))
-    {   ebf_error("'@' plus an accent code, '@@..', or '@{...}'", text);
+    if ((isdigit((uchar)text[1])) || (text[1] == '('))
+    {   error_named("Abbreviations can only be used in double-quoted strings; found", text);
         textual_form_error = TRUE;
         textual_form_length = 1;
         return '?';
@@ -1181,9 +1181,7 @@ extern int32 text_to_unicode(char *text)
                 return default_zscii_to_unicode_c01[i/2];
             }
 
-        {   char uac[4];
-            uac[0]='@'; uac[1]=text[1]; uac[2]=text[2]; uac[3]=0;
-            error_named("No such accented character as", uac);
+        {   ebf_error("'@' plus an accent code, '@@..', or '@{...}'", text);
             textual_form_error = TRUE;
         }
     }
