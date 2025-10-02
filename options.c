@@ -180,9 +180,9 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
-        "ZCODE_HEADER_FLAGS_1_CLEAR",
+        "ZCODE_HEADER_FLAGS_1_CLR",
         "\
-  ZCODE_HEADER_FLAGS_1_CLEAR gives bits to clear in the Flags 1 byte of the \n\
+  ZCODE_HEADER_FLAGS_1_CLR gives bits to clear in the Flags 1 byte of the \n\
   header (address $1).\n",
         OPTUSE_ZCODE,
         { OPTLIM_ANY },
@@ -198,7 +198,7 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
-        "ZCODE_HEADER_FLAGS_2_CLEAR",
+        "ZCODE_HEADER_FLAGS_2_CLR",
         "\
   ZCODE_HEADER_FLAGS_2 gives bits to clear in the Flags 2 word of the \n\
   header (address $10-11).\n",
