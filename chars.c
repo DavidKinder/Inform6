@@ -1285,25 +1285,25 @@ extern int32 text_to_unicode(char *text)
         return total;
     }
     
-    if ((isdigit((uchar)text[1])) || (text[1] == '@'))
-    {   ebf_error("'@' plus an accent code, '@@..', or '@{...}'", text);
+    if ((isdigit((uchar)text[1])) || (text[1] == '('))
+    {   error_named("Abbreviations can only be used in double-quoted strings; found", text);
         textual_form_error = TRUE;
         textual_form_length = 1;
         return '?';
     }
 
     if (text[1] != '{')
-    {   for (i=0; accents[i] != 0; i+=2)
+    {   for (i=0; accents[i] != 0; i+=2) {
             if ((text[1] == accents[i]) && (text[2] == accents[i+1]))
             {   textual_form_length = 3;
                 return default_zscii_to_unicode_c01[i/2];
             }
-
-        {   char uac[4];
-            uac[0]='@'; uac[1]=text[1]; uac[2]=text[2]; uac[3]=0;
-            error_named("No such accented character as", uac);
-            textual_form_error = TRUE;
         }
+
+        ebf_error("'@' plus an accent code, '@@NUM', or '@{HEX}'", text);
+        textual_form_error = TRUE;
+        textual_form_length = 1;
+        return '?';
     }
     else
     {   int32 total = 0;
@@ -1340,9 +1340,6 @@ extern int32 text_to_unicode(char *text)
         textual_form_length = i;
         return total;
     }
-
-    textual_form_length = 1;
-    return '?';
 }
 
 /* ------------------------------------------------------------------------- */
