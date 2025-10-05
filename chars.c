@@ -331,7 +331,7 @@ static void new_alphabet_raw(char *text)
         }
 
         if (unicode < 0)
-            break;
+            break;   /* parse error */
         
         zscii = unicode_to_zscii(unicode);
         if ((zscii == 5) || (zscii >= 0x100)) {
@@ -1165,6 +1165,66 @@ extern void new_zscii_character(int32 u, int plus_flag)
     else zscii_unicode_map(155 + zscii_high_water_mark++, u);
 }
 
+static void new_zscii_characters_raw(char *text)
+{
+    /* Used by the $ZCHAR_UNICODE option when adding characters to
+       the Unicode extension table. */
+
+    int count = 0; /* characters parsed, not necessarily added */
+    int plus_flag = FALSE;
+    char *cx;
+
+    for (cx = text; *cx; cx++) {
+        int unicode;
+        
+        if (*cx == ' ') {
+            continue;
+        }
+
+        if (*cx == '+' && count == 0 && !plus_flag) {
+            plus_flag = TRUE;
+            zscii_high_water_mark = 0;
+            continue;
+        }
+
+        if (*cx == '@') {
+            unicode = text_to_unicode(cx);
+            cx += (textual_form_length-1);
+            if (textual_form_error) {
+                /* Error already displayed */
+                unicode = -1;
+            }
+        }
+        else if (*(uchar *)cx >= 0x7F) {
+            error("ZALPHABET option may only include ASCII and @-escaped characters");
+            unicode = -1;
+            break;
+        }
+        else {
+            unicode = *cx;
+        }
+
+        if (unicode < 0)
+            break;   /* parse error */
+
+        count++;
+        
+        if (unicode > 0xFFFF) {
+            error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
+            continue;
+        }
+
+        if (zscii_high_water_mark == 0x61) {
+            error("No more room in the Zcharacter table");
+            break;
+        }
+        
+        zscii_unicode_map(155 + zscii_high_water_mark++, unicode);
+    }
+    
+    new_zscii_finished();
+}
+
 extern void new_zscii_finished(void)
 {   make_iso_to_alphabet_grid();
 }
@@ -1460,9 +1520,16 @@ extern void init_chars_vars(void)
 
 extern void chars_begin_pass(void)
 {
-    char *alphastr = get_current_option_string_value(OPT_ZALPHABET);
-    if (alphastr) {
-        new_alphabet_raw(alphastr);
+    char *str;
+
+    str = get_current_option_string_value(OPT_ZCHAR_UNICODE);
+    if (str) {
+        new_zscii_characters_raw(str);
+    }
+    
+    str = get_current_option_string_value(OPT_ZALPHABET);
+    if (str) {
+        new_alphabet_raw(str);
     }
 }
 
