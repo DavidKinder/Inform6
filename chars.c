@@ -1534,14 +1534,16 @@ extern void chars_begin_pass(void)
 {
     char *str;
 
-    str = get_current_option_string_value(OPT_ZCHAR_TABLE);
-    if (str) {
-        new_zscii_characters_raw(str);
-    }
+    if (!glulx_mode) {
+        str = get_current_option_string_value(OPT_ZCHAR_TABLE);
+        if (str) {
+            new_zscii_characters_raw(str);
+        }
     
-    str = get_current_option_string_value(OPT_ZALPHABET);
-    if (str) {
-        new_alphabet_raw(str);
+        str = get_current_option_string_value(OPT_ZALPHABET);
+        if (str) {
+            new_alphabet_raw(str);
+        }
     }
 }
 
