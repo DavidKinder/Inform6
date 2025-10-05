@@ -1148,9 +1148,14 @@ static void make_unicode_zscii_map(void)
 
 extern void new_zscii_character(int32 u, int plus_flag)
 {
-    /* Add a character to the ZSCII character set, so that it has a
-       byte-sized value. If plus_flag is true, we add to the existing
-       set; if false, we clear the set first. */
+    /* This is used by the ZCHARACTER directive to add characters
+       to the Unicode extension table. Characters added this way
+       have ZSCII values in the range 155-251 inclusive.
+
+       If plus_flag is true, we add to the existing set (in that range).
+       If false, we clear the set first.
+    */
+    
     if (u < 0 || u > 0xFFFF)
         error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
     if (plus_flag == FALSE)
