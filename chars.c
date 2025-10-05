@@ -1183,7 +1183,6 @@ static void new_zscii_characters_raw(char *text)
 
         if (*cx == '+' && count == 0 && !plus_flag) {
             plus_flag = TRUE;
-            zscii_high_water_mark = 0;
             continue;
         }
 
@@ -1208,6 +1207,8 @@ static void new_zscii_characters_raw(char *text)
             break;   /* parse error */
 
         count++;
+        if (!plus_flag)
+            zscii_high_water_mark = 0;
         
         if (unicode > 0xFFFF) {
             error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
