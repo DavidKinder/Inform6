@@ -1195,7 +1195,7 @@ static void new_zscii_characters_raw(char *text)
             }
         }
         else if (*(uchar *)cx >= 0x7F) {
-            error("ZALPHABET option may only include ASCII and @-escaped characters");
+            error("ZCHAR_TABLE option may only include ASCII and @-escaped characters");
             unicode = -1;
             break;
         }
