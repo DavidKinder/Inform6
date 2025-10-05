@@ -1156,8 +1156,15 @@ extern void new_zscii_character(int32 u, int plus_flag)
        If false, we clear the set first.
     */
     
-    if (u < 0 || u > 0xFFFF)
+    if (u < 0 || u > 0xFFFF) {
         error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
+        return;
+    }
+    if (u < 155) {
+        error("Zcharacter table does not need to include characters $0 through $9A");
+        return;
+    }
+    
     if (plus_flag == FALSE)
         zscii_high_water_mark = 0;
     if (zscii_high_water_mark == 0x61)
@@ -1212,6 +1219,10 @@ static void new_zscii_characters_raw(char *text)
         
         if (unicode > 0xFFFF) {
             error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
+            continue;
+        }
+        if (unicode < 155) {
+            error("Zcharacter table does not need to include characters $0 through $9A");
             continue;
         }
 
