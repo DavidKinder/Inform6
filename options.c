@@ -345,10 +345,21 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
+        "ZCHAR_UNICODE",
+        "\
+  ZCHAR_UNICODE, if set, gives characters to be placed in the Unicode \n\
+  translation table. If the first character is '+', the characters are \n\
+  added to the default set instead of replacing the default set. Spaces \n\
+  are ignored. @-escapes are allowed.\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_STR },
+        DEFAULTSTR(NULL),
+    },
+    {
         "ZALPHABET",
         "\
   ZALPHABET, if set, will provide the Z-machine alphabet table. Must be \n\
-  exactly 75 characters (ignoring spaces); @{XX} escapes are allowed.\n",
+  exactly 75 characters (ignoring spaces). @-escapes are allowed.\n",
         OPTUSE_ZCODE,
         { OPTLIM_STR },
         DEFAULTSTR(NULL),
