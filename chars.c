@@ -1167,7 +1167,7 @@ extern void new_zscii_character(int32 u, int plus_flag)
 
 static void new_zscii_characters_raw(char *text)
 {
-    /* Used by the $ZCHAR_UNICODE option when adding characters to
+    /* Used by the $ZCHAR_TABLE option when adding characters to
        the Unicode extension table. */
 
     int count = 0; /* characters parsed, not necessarily added */
@@ -1523,7 +1523,7 @@ extern void chars_begin_pass(void)
 {
     char *str;
 
-    str = get_current_option_string_value(OPT_ZCHAR_UNICODE);
+    str = get_current_option_string_value(OPT_ZCHAR_TABLE);
     if (str) {
         new_zscii_characters_raw(str);
     }

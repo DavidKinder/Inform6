@@ -345,9 +345,9 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
-        "ZCHAR_UNICODE",
+        "ZCHAR_TABLE",
         "\
-  ZCHAR_UNICODE, if set, gives characters to be placed in the Unicode \n\
+  ZCHAR_TABLE, if set, gives characters to be placed in the Unicode \n\
   translation table. If the first character is '+', the characters are \n\
   added to the default set instead of replacing the default set. Spaces \n\
   are ignored. @-escapes are allowed.\n",

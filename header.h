@@ -638,7 +638,7 @@ typedef enum optionindex {
     OPT_DICT_TRUNCATE_FLAG        = 24,
     OPT_LONG_DICT_FLAG_BUG        = 25,
     OPT_SERIAL                    = 26,
-    OPT_ZCHAR_UNICODE             = 27,
+    OPT_ZCHAR_TABLE               = 27,
     OPT_ZALPHABET                 = 28,
     OPT_OPTIONS_COUNT             = 29, /* terminator */
 } optionindex_e;
