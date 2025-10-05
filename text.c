@@ -404,7 +404,7 @@ static void write_zscii(int zsc)
     else lookup_value = -1;
 
     if (lookup_value >= 0)
-    {   alphabet_used[lookup_value] = 'Y';
+    {   alphabet_used[lookup_value] = TRUE;
         in_alphabet = lookup_value/26;
         if (in_alphabet==1) write_z_char_z(4);  /* SHIFT to A1 */
         if (in_alphabet==2) write_z_char_z(5);  /* SHIFT to A2 */
@@ -815,7 +815,7 @@ advance as part of 'Zcharacter table':", unicode);
                                 alphabet if it isn't in alphabet 0, then write
                                 the Z-char */
     
-                            alphabet_used[lookup_value] = 'Y';
+                            alphabet_used[lookup_value] = TRUE;
                             in_alphabet = lookup_value/26;
                             if (in_alphabet==1) write_z_char_z(4);  /* SHIFT to A1 */
                             if (in_alphabet==2) write_z_char_z(5);  /* SHIFT to A2 */
@@ -2009,7 +2009,7 @@ apostrophe in", dword);
             }
         }
         else
-        {   alphabet_used[k2] = 'Y';
+        {   alphabet_used[k2] = TRUE;
             if ((k2/26)!=0 && i<dictsize)
                 wd[i++]=3+(k2/26);            /* Change alphabet for symbols */
             if (i<dictsize)
@@ -2813,12 +2813,12 @@ static void show_alphabet(int i)
         
         c = alphabet[i][j];
 
-        if (alphabet_used[26*i+j] == 'N') printf("("); else printf(" ");
+        if (!alphabet_used[26*i+j]) printf("("); else printf(" ");
 
         zscii_to_text(chartext, c);
         printf("%s", chartext);
 
-        if (alphabet_used[26*i+j] == 'N') printf(")"); else printf(" ");
+        if (!alphabet_used[26*i+j]) printf(")"); else printf(" ");
     }
     printf("\n");
 }

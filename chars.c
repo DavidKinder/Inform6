@@ -96,9 +96,9 @@ uchar alphabet[3][27];                  /* The alphabet table. */
 
 int alphabet_modified;                 /* Has the default been changed?      */
 
-char alphabet_used[78];                /* Flags (holding 'N' or 'Y') for
-                                          which of the Z-alphabet letters
-                                          have actually been encrypted       */
+int alphabet_used[78];                 /* Flags for which of the Z-alphabet
+                                          letters have actually been
+                                          encrypted                          */
 
 /* ------------------------------------------------------------------------- */
 
@@ -221,8 +221,8 @@ extern void map_new_zchar(int32 unicode)
 
     for (i=2; i<26; i++)
     {   if ((i == 12) || (i == 13) || (i == 19)) continue;
-        if (alphabet_used[52+i] == 'N')
-        {   alphabet_used[52+i] = 'Y';
+        if (!alphabet_used[52+i])
+        {   alphabet_used[52+i] = TRUE;
             alphabet[2][i] = zscii;
             alphabet_modified = TRUE;
             make_iso_to_alphabet_grid();
@@ -1448,7 +1448,7 @@ extern void init_chars_vars(void)
 
     alphabet_modified = FALSE;
 
-    for (n=0; n<78; n++) alphabet_used[n] = 'N';
+    for (n=0; n<78; n++) alphabet_used[n] = FALSE;
     
     change_character_set();
 }
