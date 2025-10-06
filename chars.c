@@ -1213,9 +1213,9 @@ static void new_zscii_characters_raw(char *text)
         if (unicode < 0)
             break;   /* parse error */
 
-        count++;
-        if (!plus_flag)
+        if (!plus_flag && count == 0)
             zscii_high_water_mark = 0;
+        count++;
         
         if (unicode > 0xFFFF) {
             error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
