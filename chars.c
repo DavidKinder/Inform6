@@ -1066,14 +1066,19 @@ extern int32 zscii_to_unicode(int z)
 /*  This routine is not used for ordinary text compilation as it is too      */
 /*  slow, but it's useful for handling @ string escapes, or to avoid writing */
 /*  special code when speed is not especially required.                      */
-/*  Note that the two string escapes which can define Unicode are:           */
+/*  Note that the string escapes which can define Unicode are:               */
 /*                                                                           */
 /*      @..      where .. is an accent                                       */
-/*  and @{...}   where ... specifies a Unicode char in hexadecimal           */
+/*      @@...    where ... is decimal digits                                 */
+/*      @{...}   where ... specifies a Unicode char in hexadecimal           */
 /*               (1 to 6 digits long)                                        */
 /*                                                                           */
-/*  If either syntax is malformed, an error is generated                     */
-/*  and the Unicode (= ISO = ASCII) character value of '?' is returned       */
+/*  The global textual_form_length is set to the number of characters        */
+/*  consumed (at least 1).                                                   */
+/*                                                                           */
+/*  If the syntax is malformed, an error is generated, the global            */
+/*  textual_form_error is set, and the Unicode (= ISO = ASCII) character     */
+/*  value of '?' is returned.                                                */
 /*                                                                           */
 /*  In Unicode mode (character_set_unicode is true), this handles UTF-8      */
 /*  decoding as well as @-expansion. (So it's called when an '@' appears     */
@@ -1081,10 +1086,13 @@ extern int32 zscii_to_unicode(int z)
 /* ------------------------------------------------------------------------- */
 
 int textual_form_length;
+int textual_form_error;
 
 extern int32 text_to_unicode(char *text)
 {   int i;
 
+    textual_form_error = FALSE;
+    
     if (text[0] != '@')
     {   if (character_set_unicode)
         {   if (text[0] & 0x80) /* 8-bit */
@@ -1093,10 +1101,12 @@ extern int32 text_to_unicode(char *text)
                         textual_form_length = 4;
                         if ((text[0] & 0xf8) != 0xf0)
                         {   error("Invalid 4-byte UTF-8 string.");
+                            textual_form_error = TRUE;
                             return '?';
                         }
                         if ((text[1] & 0xc0) != 0x80 || (text[2] & 0xc0) != 0x80 || (text[3] & 0xc0) != 0x80)
                         {   error("Invalid 4-byte UTF-8 string.");
+                            textual_form_error = TRUE;
                             return '?';
                         }
                         return (text[0] & 0x07) << 18
@@ -1108,6 +1118,7 @@ extern int32 text_to_unicode(char *text)
                         textual_form_length = 3;
                         if ((text[1] & 0xc0) != 0x80 || (text[2] & 0xc0) != 0x80)
                         {   error("Invalid 3-byte UTF-8 string.");
+                            textual_form_error = TRUE;
                             return '?';
                         }
                         return (text[0] & 0x0f) << 12
@@ -1119,6 +1130,7 @@ extern int32 text_to_unicode(char *text)
                         textual_form_length = 2;
                         if ((text[1] & 0xc0) != 0x80)
                         {   error("Invalid 2-byte UTF-8 string.");
+                            textual_form_error = TRUE;
                             return '?';
                         }
                         return (text[0] & 0x1f) << 6
@@ -1126,6 +1138,7 @@ extern int32 text_to_unicode(char *text)
                         break;
                     default: /* broken */
                         error("Invalid UTF-8 string.");
+                        textual_form_error = TRUE;
                         textual_form_length = 1;
                         return '?';
                         break;
@@ -1143,23 +1156,36 @@ extern int32 text_to_unicode(char *text)
         }
     }
 
-    if ((isdigit((uchar)text[1])) || (text[1] == '@'))
-    {   ebf_error("'@' plus an accent code or '@{...}'", text);
+    if (text[1] == '@' && isdigit((uchar)text[2]))
+    {   int32 total = 0;
+        int i = 2;
+        while (isdigit((uchar)text[i])) {
+            total = 10*total + (text[i]-'0');
+            i++;
+        }
+        textual_form_length = i;
+        return total;
+    }
+    
+    if ((isdigit((uchar)text[1])) || (text[1] == '('))
+    {   error_named("Abbreviations can only be used in double-quoted strings; found", text);
+        textual_form_error = TRUE;
         textual_form_length = 1;
         return '?';
     }
 
     if (text[1] != '{')
-    {   for (i=0; accents[i] != 0; i+=2)
+    {   for (i=0; accents[i] != 0; i+=2) {
             if ((text[1] == accents[i]) && (text[2] == accents[i+1]))
             {   textual_form_length = 3;
                 return default_zscii_to_unicode_c01[i/2];
             }
-
-        {   char uac[4];
-            uac[0]='@'; uac[1]=text[1]; uac[2]=text[2]; uac[3]=0;
-            error_named("No such accented character as", uac);
         }
+
+        ebf_error("'@' plus an accent code, '@@NUM', or '@{HEX}'", text);
+        textual_form_error = TRUE;
+        textual_form_length = 1;
+        return '?';
     }
     else
     {   int32 total = 0;
@@ -1167,27 +1193,35 @@ extern int32 text_to_unicode(char *text)
         while (text[++i] != '}')
         {   if (text[i] == 0)
             {   error("'@{' without matching '}'");
-                total = '?'; break;
+                textual_form_error = TRUE;
+                total = '?';
+                break;
             }
             if (i == 8)
             {   error("At most six hexadecimal digits allowed in '@{...}'");
-                total = '?'; break;
+                textual_form_error = TRUE;
+                total = '?';
+                break;
             }
             d = character_digit_value[(uchar)text[i]];
             if (d == 127)
             {   error("'@{...}' may only contain hexadecimal digits");
-                total = '?'; break;
+                textual_form_error = TRUE;
+                total = '?';
+                break;
             }
             total = total*16 + d;
+        }
+        if (i == 2 && !textual_form_error) {
+            error("'@{...}' must contain hexadecimal digits");
+            textual_form_error = TRUE;
+            return '?';
         }
         while ((text[i] != '}') && (text[i] != 0)) i++;
         if (text[i] == '}') i++;
         textual_form_length = i;
         return total;
     }
-
-    textual_form_length = 1;
-    return '?';
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1198,6 +1232,8 @@ extern int32 text_to_unicode(char *text)
 /*  In either case, output uses the same ISO set as the source code.         */
 /* ------------------------------------------------------------------------- */
 
+/* The text argument must have room for at least seven characters plus
+   terminator. */
 extern void zscii_to_text(char *text, int zscii)
 {   int i;
     int32 unicode;

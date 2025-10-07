@@ -2371,7 +2371,7 @@ extern int   zscii_high_water_mark;
 extern char  alphabet_used[];
 extern int   iso_to_alphabet_grid[];
 extern int   zscii_to_alphabet_grid[];
-extern int   textual_form_length;
+extern int   textual_form_length, textual_form_error;
 
 extern int   iso_to_unicode(int iso);
 extern int   unicode_to_zscii(int32 u);
