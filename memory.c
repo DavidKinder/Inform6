@@ -262,6 +262,8 @@ int DICT_CHAR_SIZE; /* (glulx) 1 for one-byte chars, 4 for Unicode chars */
 int DICT_WORD_BYTES; /* DICT_WORD_SIZE*DICT_CHAR_SIZE */
 int GRAMMAR_META_FLAG; /* indicate which actions are meta */
 int ZCODE_HEADER_EXT_WORDS; /* (zcode 1.0) requested header extension size */
+int ZCODE_HEADER_FLAGS_1_SET, ZCODE_HEADER_FLAGS_1_CLR;
+int ZCODE_HEADER_FLAGS_2_SET, ZCODE_HEADER_FLAGS_2_CLR;
 int ZCODE_HEADER_FLAGS_3; /* (zcode 1.1) value to place in Flags 3 word */
 int ZCODE_FILE_END_PADDING; /* 0: no, 1: yes (default) */
 int ZCODE_LESS_DICT_DATA; /* (zcode) use 2 data bytes per dict word instead of 3 */
