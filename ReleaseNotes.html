@@ -51,6 +51,13 @@ have to set the option themselves.
 the branch).
 <li><p>If either the above Z-code optimization, or the <tt>@jump</tt> optimization in Inform 6.43, leaves the original
 return opcode unreachable, the return opcode will now be removed.
+<li><p>Settings have been added to allow the user to control what is written to the flags1 and flags2 fields of the Z-code
+header: <tt>$ZCODE_HEADER_FLAGS_1</tt>, <tt>$ZCODE_HEADER_FLAGS_1_CLR</tt>, <tt>$ZCODE_HEADER_FLAGS_2</tt> and <tt>$ZCODE_HEADER_FLAGS_2_CLR</tt>.
+Values for the flags1 settings can be 0-255, while values for the flags2 settings can be 0-65535, because flags2 is a word.
+For example, <tt>$ZCODE_HEADER_FLAGS_1=16</tt> will set bit 4 in flags1, while <tt>$ZCODE_HEADER_FLAGS_1_CLR=128</tt> will
+clear bit 7 in flags1. If you both set and clear the same bit, setting wins. These settings are provided for experimenting
+with Z-code flags and interpreter behavior. The compiler does not try to verify that you are using them correctly or in
+accordance with any specification.
 <li><p>Inform 6.43 accepted header comment lines with trailing non-numeric data, even though this was technically incorrect.
 Inform 7 10.1 unfortunately generated some header comments with trailing semicolons, like this:
 <pre>
@@ -63,6 +70,9 @@ now accepted.
 
 <h3>Bugs fixed</h3>
 <ul>
+<li><p>Character escapes of the form <tt>@@NN</tt> (e.g. <tt>@@94</tt> for a circumflex: <tt>^</tt>) are now accepted everywhere other
+forms of character escapes are accepted, such as dictionary words and character constants.
+<li><p>The character escapes <tt>@{5E}</tt> (circumflex) and <tt>@{7E}</tt> (tilde) are now correctly handled when compiling to Z-code.
 </ul>
 
 <h2>Inform 6.44</h2>

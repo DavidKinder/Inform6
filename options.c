@@ -171,12 +171,48 @@ static optiont alloptions[] = {
         DEFAULTVAL(3),
     },
     {
+        "ZCODE_HEADER_FLAGS_1",
+        "\
+  ZCODE_HEADER_FLAGS_1 gives bits to set in the Flags 1 byte of the \n\
+  header (address $1).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 255 },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_1_CLR",
+        "\
+  ZCODE_HEADER_FLAGS_1_CLR gives bits to clear in the Flags 1 byte of the \n\
+  header (address $1).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 255 },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_2",
+        "\
+  ZCODE_HEADER_FLAGS_2 gives bits to set in the Flags 2 word of the \n\
+  header (address $10-11).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 65535 },
+        DEFAULTVAL(0),
+    },
+    {
+        "ZCODE_HEADER_FLAGS_2_CLR",
+        "\
+  ZCODE_HEADER_FLAGS_2 gives bits to clear in the Flags 2 word of the \n\
+  header (address $10-11).\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_TOMAX, 65535 },
+        DEFAULTVAL(0),
+    },
+    {
         "ZCODE_HEADER_FLAGS_3",
         "\
   ZCODE_HEADER_FLAGS_3 is the value to store in the Flags 3 word of the \n\
   header extension table (Z-Spec 1.1).\n",
         OPTUSE_ZCODE,
-        { OPTLIM_ANY },
+        { OPTLIM_TOMAX, 65535 },
         DEFAULTVAL(0),
     },
     {
@@ -844,6 +880,10 @@ extern void apply_compiler_options(void)
     MAX_DYNAMIC_STRINGS = SELECTVAL(OPT_MAX_DYNAMIC_STRINGS);
     HASH_TAB_SIZE = SELECTVAL(OPT_HASH_TAB_SIZE);
     ZCODE_HEADER_EXT_WORDS = SELECTVAL(OPT_ZCODE_HEADER_EXT_WORDS);
+    ZCODE_HEADER_FLAGS_1_SET = SELECTVAL(OPT_ZCODE_HEADER_FLAGS_1);
+    ZCODE_HEADER_FLAGS_1_CLR = SELECTVAL(OPT_ZCODE_HEADER_FLAGS_1_CLR);
+    ZCODE_HEADER_FLAGS_2_SET = SELECTVAL(OPT_ZCODE_HEADER_FLAGS_2);
+    ZCODE_HEADER_FLAGS_2_CLR = SELECTVAL(OPT_ZCODE_HEADER_FLAGS_2_CLR);
     ZCODE_HEADER_FLAGS_3 = SELECTVAL(OPT_ZCODE_HEADER_FLAGS_3);
     ZCODE_FILE_END_PADDING = SELECTVAL(OPT_ZCODE_FILE_END_PADDING);
     ZCODE_LESS_DICT_DATA = SELECTVAL(OPT_ZCODE_LESS_DICT_DATA);

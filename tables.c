@@ -262,6 +262,7 @@ static void construct_storyfile_z(void)
           grammar_table_at=0, charset_at=0, headerext_at=0,
           terminating_chars_at=0, unicode_at=0, id_names_length=0,
           arrays_at, static_arrays_at=0;
+    int32 flags1, flags2;
     int32 rough_size;
     int skip_backpatching = FALSE;
     char *output_called = "story file";
@@ -842,10 +843,22 @@ or less.");
 
     /*  --------------------------- The Header ----------------------------- */
 
+    /* Calculate Flags1 and Flags2. */
+    
+    flags1 = statusline_flag*2;        /* Bit 1 of Flags 1: statusline style */
+    flags1 &= (~ZCODE_HEADER_FLAGS_1_CLR);
+    flags1 |= ZCODE_HEADER_FLAGS_1_SET;
+
+    flags2 = 0;
+    for (i=0, k=1; i<16; i++, k=k*2)            /* Flags 2 as needed for any */
+        flags2 += k*flags2_requirements[i];     /* unusual opcodes assembled */
+    flags2 &= (~ZCODE_HEADER_FLAGS_2_CLR);
+    flags2 |= ZCODE_HEADER_FLAGS_2_SET;
+    
     for (i=0; i<=0x3f; i++) p[i]=0;             /* Begin with 64 blank bytes */
 
     p[0] = version_number;                                 /* Version number */
-    p[1] = statusline_flag*2;          /* Bit 1 of Flags 1: statusline style */
+    p[1] = flags1;                                                /* Flags 1 */
     p[2] = (release_number/256);
     p[3] = (release_number%256);                                  /* Release */
     p[4] = (Write_Code_At/256);
@@ -863,9 +876,7 @@ or less.");
     p[12]=(globals_at/256); p[13]=(globals_at%256);          /* Dynamic area */
     p[14]=(grammar_table_at/256);
     p[15]=(grammar_table_at%256);                             /* Static area */
-    for (i=0, j=0, k=1;i<16;i++, k=k*2)         /* Flags 2 as needed for any */
-        j+=k*flags2_requirements[i];            /* unusual opcodes assembled */
-    p[16]=j/256; p[17]=j%256;
+    p[16]=flags2/256; p[17]=flags2%256;                           /* Flags 2 */
     write_serial_number((char *) (p+18)); /* Serial number: 6 chars of ASCII */
     p[24]=abbrevs_at/256;
     p[25]=abbrevs_at%256;                             /* Abbreviations table */
