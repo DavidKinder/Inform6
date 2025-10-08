@@ -1149,7 +1149,7 @@ static void make_unicode_zscii_map(void)
 extern void new_zscii_character(int32 u, int plus_flag)
 {
     /* This is used by the ZCHARACTER directive to add characters
-       to the Unicode extension table. Characters added this way
+       to the Unicode translation table. Characters added this way
        have ZSCII values in the range 155-251 inclusive.
 
        If plus_flag is true, we add to the existing set (in that range).
@@ -1175,7 +1175,7 @@ extern void new_zscii_character(int32 u, int plus_flag)
 static void new_zscii_characters_raw(char *text)
 {
     /* Used by the $ZCHAR_TABLE option when adding characters to
-       the Unicode extension table. */
+       the Unicode translation table. */
 
     int count = 0; /* characters parsed, not necessarily added */
     int plus_flag = FALSE;
