@@ -362,7 +362,7 @@ static void set_trace_option(char *command)
         printf("    TOKENS=2: also show token types\n");
         printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
-        printf("  UNICODE: display the Z-machine Unicode translation table\n");
+        printf("  UNICODE: display the Z-machine Unicode extension table\n");
         return;
     }
 
