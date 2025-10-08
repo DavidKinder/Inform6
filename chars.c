@@ -96,9 +96,9 @@ uchar alphabet[3][27];                  /* The alphabet table. */
 
 int alphabet_modified;                 /* Has the default been changed?      */
 
-char alphabet_used[78];                /* Flags (holding 'N' or 'Y') for
-                                          which of the Z-alphabet letters
-                                          have actually been encrypted       */
+int alphabet_used[78];                 /* Flags for which of the Z-alphabet
+                                          letters have actually been
+                                          encrypted                          */
 
 /* ------------------------------------------------------------------------- */
 
@@ -137,12 +137,12 @@ int iso_to_alphabet_grid[0x100];
                     alphabet[2][1] is ignored by the Z-machine
                                    (char 1 in A2 means new-line)
                                    but used by Inform to hold ISO circumflex
-                                   so that ^ is translated as new-line
+                                   so that ^ is translated as new-line.
                     alphabet[2][19] is used by Inform to hold ISO tilde
-                                   so that ~ is translated as ": after
-                                   compilation, when the alphabet table is
-                                   written into the Z-machine, this entry
-                                   is changed back to ".
+                                   so that ~ is translated as double-quote.
+                                   After compilation, when the alphabet table
+                                   is written into the Z-machine, this entry
+                                   is changed back to double-quote.
 
    Note that the alphabet can only hold ZSCII values between 0 and 255.
 
@@ -197,7 +197,8 @@ extern void map_new_zchar(int32 unicode)
 
     zscii = unicode_to_zscii(unicode);
 
-    /*  Out of ZSCII range?  */
+    /*  Out of ZSCII range? (The alphabet array can only contain 8-bit
+        values.) */
     if ((zscii == 5) || (zscii >= 0x100))
     {   unicode_char_error(
             "Character must first be entered into Zcharacter table:", unicode);
@@ -220,8 +221,8 @@ extern void map_new_zchar(int32 unicode)
 
     for (i=2; i<26; i++)
     {   if ((i == 12) || (i == 13) || (i == 19)) continue;
-        if (alphabet_used[52+i] == 'N')
-        {   alphabet_used[52+i] = 'Y';
+        if (!alphabet_used[52+i])
+        {   alphabet_used[52+i] = TRUE;
             alphabet[2][i] = zscii;
             alphabet_modified = TRUE;
             make_iso_to_alphabet_grid();
@@ -230,13 +231,33 @@ extern void map_new_zchar(int32 unicode)
     }
 }
 
+static void finish_new_alphabet(void);
+
 extern void new_alphabet(char *text, int which_alph)
 {
-    /*  Called three times in succession, with which_alph = 0, 1, 2  */
+    /* Used by the ZCHARACTER directive when setting the entire
+       alphabet.
+
+       Called three times in succession, with which_alph = 0, 1, 2.
+       For wa=0 or 1, this sets entries 0-25 of the alphabet table
+       (which is letters 6-31 of the Z-machine alphabet A0/A1).
+       For wa=2, this sets entries 3-25 of the table (letters 9-31 of A2).
+       The skipped three entries are reserved for ZSCII escape, newline,
+       and double-quote.
+
+       Note that when calling this, double-quote is always placed at
+       alphabet[2][2] (A2 letter 8). This does *not* match the Z-machine
+       default alphabet, in which double-quote is A2 letter 25.
+       This means that the ZCHARACTER directive can't exactly replicate
+       the default alphabet, although it can generate a permutation of it.
+
+       As described above, double-quote is stored as "~", newline as "^".
+       This matches the way Z-code text is stored during compilation.
+       Unfortunately this means that literal ~ and ^ can't be placed in
+       the alphabet table at all.
+    */
 
     int i, j, zscii; int32 unicode;
-
-    alphabet_modified = TRUE;
 
     if (which_alph == 2)
     {   i=3; alphabet[2][2] = '~';
@@ -264,17 +285,110 @@ entered into Zcharacter table", unicode);
             error("Alphabet string must give exactly 26 characters");
     }
 
+    /* We call new_alphabet(2) last, so it's time to finish up. */
     if (which_alph == 2)
-    {   int test_dups[0x100];
-        for (i=0; i<0x100; i++) test_dups[i] = 0;
-        for (i=0; i<3; i++) for (j=0; j<26; j++)
-        {   if (test_dups[alphabet[i][j]]++ == 1)
+        finish_new_alphabet();
+}
+
+static void new_alphabet_raw(char *text)
+{
+    /* Used by the $ZALPHABET option (not directive) when setting the
+       entire alphabet. The text contains all 75 characters. We will
+       ignore spaces. @-escapes have not yet been translated, so
+       we will do that.
+
+       This somewhat repeats the logic of new_alphabet(), but it's
+       simpler. Note that while we accept all @-escapes, we do *not*
+       accept UTF-8 characters. The character set is not known at option
+       time.
+    */
+    char *cx;
+    int i = 0, count = 0;
+    int which_alph = 0;
+
+    for (cx = text; *cx; cx++) {
+        int unicode, zscii;
+
+        if (*cx == ' ') {
+            continue;
+        }
+
+        if (*cx == '@') {
+            unicode = text_to_unicode(cx);
+            cx += (textual_form_length-1);
+            if (textual_form_error) {
+                /* Error already displayed */
+                unicode = -1;
+            }
+        }
+        else if (*(uchar *)cx >= 0x7F) {
+            error("ZALPHABET option may only include ASCII and @-escaped characters");
+            unicode = -1;
+            break;
+        }
+        else {
+            unicode = *cx;
+        }
+
+        if (unicode < 0)
+            break;   /* parse error */
+        
+        zscii = unicode_to_zscii(unicode);
+        if ((zscii == 5) || (zscii >= 0x100)) {
+            unicode_char_error("Character can't be used in alphabets unless \
+entered into Zcharacter table", unicode);
+            continue;
+        }
+
+        if (which_alph <= 2) {
+            alphabet[which_alph][i] = zscii;
+            i++;
+        }
+        count++;
+
+        if (i == 26) {
+            i = 0;
+            which_alph++;
+            if (which_alph == 2) {
+                alphabet[2][2] = '~';
+                i = 3;
+            }
+        }
+    }
+
+    if (count != 75) {
+        error_fmt("ZALPHABET option had %d non-space characters (should be exactly 75)", count);
+    }
+
+    finish_new_alphabet();
+}
+
+static void finish_new_alphabet(void)
+{
+    /*  We must call this after new_alphabet() or new_alphabet_raw().
+    */
+    int i, j;
+    int test_dups[0x100];
+
+    alphabet_modified = TRUE;
+
+    /* Check to see if any character appears twice. */
+    
+    for (i=0; i<0x100; i++)
+        test_dups[i] = 0;
+    test_dups[0x22] = 1; /* The alphabet table will have "~" for double-quote,
+                            so we shouldn't have a literal double-quote. */
+    
+    for (i=0; i<3; i++) {
+        for (j=0; j<26; j++) {
+            if (test_dups[alphabet[i][j]]++ == 1)
                 unicode_char_error("Character duplicated in alphabet:",
                     zscii_to_unicode(alphabet[i][j]));
         }
-
-        make_iso_to_alphabet_grid();
     }
+
+    /* Rebuild the grids. */
+    make_iso_to_alphabet_grid();
 }
 
 static void read_source_to_iso_file(uchar *uccg)
@@ -855,6 +969,7 @@ switch(iso)
 
 int zscii_defn_modified, zscii_high_water_mark;
 
+/* Unicode values of ZSCII 155...251. */
 int32 zscii_to_unicode_grid[0x61];
 
 static void zscii_unicode_map(int zscii, int32 unicode)
@@ -1033,13 +1148,93 @@ static void make_unicode_zscii_map(void)
 
 extern void new_zscii_character(int32 u, int plus_flag)
 {
-    if (u < 0 || u > 0xFFFF)
+    /* This is used by the ZCHARACTER directive to add characters
+       to the Unicode translation table. Characters added this way
+       have ZSCII values in the range 155-251 inclusive.
+
+       If plus_flag is true, we add to the existing set (in that range).
+       If false, we clear the set first.
+    */
+    
+    if (u < 0 || u > 0xFFFF) {
         error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
+        return;
+    }
+    if (u < 155) {
+        error("Zcharacter table does not need to include characters $0 through $9A");
+        return;
+    }
+    
     if (plus_flag == FALSE)
         zscii_high_water_mark = 0;
     if (zscii_high_water_mark == 0x61)
         error("No more room in the Zcharacter table");
     else zscii_unicode_map(155 + zscii_high_water_mark++, u);
+}
+
+static void new_zscii_characters_raw(char *text)
+{
+    /* Used by the $ZCHAR_TABLE option when adding characters to
+       the Unicode translation table. */
+
+    int count = 0; /* characters parsed, not necessarily added */
+    int plus_flag = FALSE;
+    char *cx;
+
+    for (cx = text; *cx; cx++) {
+        int unicode;
+        
+        if (*cx == ' ') {
+            continue;
+        }
+
+        if (*cx == '+' && count == 0 && !plus_flag) {
+            plus_flag = TRUE;
+            continue;
+        }
+
+        if (*cx == '@') {
+            unicode = text_to_unicode(cx);
+            cx += (textual_form_length-1);
+            if (textual_form_error) {
+                /* Error already displayed */
+                unicode = -1;
+            }
+        }
+        else if (*(uchar *)cx >= 0x7F) {
+            error("ZCHAR_TABLE option may only include ASCII and @-escaped characters");
+            unicode = -1;
+            break;
+        }
+        else {
+            unicode = *cx;
+        }
+
+        if (unicode < 0)
+            break;   /* parse error */
+
+        if (!plus_flag && count == 0)
+            zscii_high_water_mark = 0;
+        count++;
+        
+        if (unicode > 0xFFFF) {
+            error("Zcharacter table cannot contain Unicode characters beyond $FFFF");
+            continue;
+        }
+        if (unicode < 155) {
+            error("Zcharacter table does not need to include characters $0 through $9A");
+            continue;
+        }
+
+        if (zscii_high_water_mark == 0x61) {
+            error("No more room in the Zcharacter table");
+            break;
+        }
+        
+        zscii_unicode_map(155 + zscii_high_water_mark++, unicode);
+    }
+    
+    new_zscii_finished();
 }
 
 extern void new_zscii_finished(void)
@@ -1248,7 +1443,8 @@ extern void zscii_to_text(char *text, int zscii)
         {   text[0] = '@';
             text[1] = accents[2*i];
             text[2] = accents[2*i+1];
-            text[3] = 0; return;
+            text[3] = 0;
+            return;
         }
     sprintf(text, "@{%x}", unicode);
 }
@@ -1296,7 +1492,9 @@ extern void make_upper_case(char *str)
 /* ------------------------------------------------------------------------- */
 
 extern void init_chars_vars(void)
-{   int n;
+{   
+    int n;
+    
     for (n=0; n<128; n++) character_digit_value[n] = 127;
     character_digit_value['0'] = 0;
     character_digit_value['1'] = 1;
@@ -1327,13 +1525,26 @@ extern void init_chars_vars(void)
 
     alphabet_modified = FALSE;
 
-    for (n=0; n<78; n++) alphabet_used[n] = 'N';
-
+    for (n=0; n<78; n++) alphabet_used[n] = FALSE;
+    
     change_character_set();
 }
 
 extern void chars_begin_pass(void)
 {
+    char *str;
+
+    if (!glulx_mode) {
+        str = get_current_option_string_value(OPT_ZCHAR_TABLE);
+        if (str) {
+            new_zscii_characters_raw(str);
+        }
+    
+        str = get_current_option_string_value(OPT_ZALPHABET);
+        if (str) {
+            new_alphabet_raw(str);
+        }
+    }
 }
 
 extern void chars_allocate_arrays(void)

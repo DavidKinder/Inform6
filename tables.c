@@ -2047,6 +2047,9 @@ extern void construct_storyfile(void)
     if (list_dict_setting)
         show_dictionary(list_dict_setting);
     
+    if (list_unicode_setting)
+        show_unicode_translation_table();
+    
     if (list_verbs_setting)
         list_verb_table();
 

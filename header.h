@@ -642,7 +642,9 @@ typedef enum optionindex {
     OPT_DICT_TRUNCATE_FLAG        = 28,
     OPT_LONG_DICT_FLAG_BUG        = 29,
     OPT_SERIAL                    = 30,
-    OPT_OPTIONS_COUNT             = 31, /* terminator */
+    OPT_ZCHAR_TABLE               = 31,
+    OPT_ZALPHABET                 = 32,
+    OPT_OPTIONS_COUNT             = 33, /* terminator */
 } optionindex_e;
 
 /* ------------------------------------------------------------------------- */
@@ -2372,7 +2374,7 @@ extern uchar alphabet[3][27];
 extern int   alphabet_modified;
 extern int   zscii_defn_modified;
 extern int   zscii_high_water_mark;
-extern char  alphabet_used[];
+extern int   alphabet_used[];
 extern int   iso_to_alphabet_grid[];
 extern int   zscii_to_alphabet_grid[];
 extern int   textual_form_length, textual_form_error;
@@ -2390,6 +2392,7 @@ extern void  new_zscii_finished(void);
 extern void  map_new_zchar(int32 unicode);
 extern void  make_lower_case(char *str);
 extern void  make_upper_case(char *str);
+
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "directs"                                        */
@@ -2568,7 +2571,7 @@ extern int
     define_DEBUG_switch,    define_INFIX_switch,
     runtime_error_checking_switch,
     list_verbs_setting,     list_dict_setting,    list_objects_setting,
-    list_symbols_setting;
+    list_symbols_setting,   list_unicode_setting;
 
 extern int oddeven_packing_switch;
 
@@ -2756,6 +2759,8 @@ extern void list_compiler_options(void);
 extern void explain_compiler_option(char *str);
 extern void apply_compiler_options(void);
 extern int32 get_current_option_value(optionindex_e optnum);
+extern char *get_current_option_string_value(optionindex_e optnum);
+extern int get_current_option_precedence(optionindex_e optnum);
 extern int set_current_option_precedence(optionindex_e optnum, int32 val);
 
 /* ------------------------------------------------------------------------- */
@@ -2948,6 +2953,7 @@ extern int   dictionary_find(char *dword);
 extern void  dictionary_set_verb_number(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
 extern void  copy_sorts(uchar *d1, uchar *d2);
+extern void  show_unicode_translation_table(void);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "veneer"                                         */

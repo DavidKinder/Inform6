@@ -298,6 +298,7 @@ int character_set_setting,          /* set by -C0 through -C9 */
     files_trace_setting,            /* $!FILES */
     list_verbs_setting,             /* $!VERBS */
     list_dict_setting,              /* $!DICT */
+    list_unicode_setting,           /* $!UNICODE */
     list_objects_setting,           /* $!OBJECTS */
     list_symbols_setting,           /* $!SYMBOLS */
     store_the_text;                 /* when set, record game text to a chunk
@@ -314,6 +315,7 @@ static void reset_switch_settings(void)
     symdef_trace_setting = 0;
     list_verbs_setting = 0;
     list_dict_setting = 0;
+    list_unicode_setting = 0;
     list_objects_setting = 0;
     list_symbols_setting = 0;
 

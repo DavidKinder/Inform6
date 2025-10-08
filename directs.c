@@ -1191,15 +1191,21 @@ extern int parse_given_directive(int internal_flag)
 
         switch(token_type)
         {   case DQ_TT:
-                new_alphabet(token_text, 0);
+                flag = set_current_option_precedence(OPT_ZALPHABET, 0);
+                /* The 0 is a dummy value. We just want to know if the
+                   option has been set already. */
+                if (flag)
+                    new_alphabet(token_text, 0);
                 get_next_token();
                 if (token_type != DQ_TT)
                     return ebf_error_recover("double-quoted alphabet string");
-                new_alphabet(token_text, 1);
+                if (flag)
+                    new_alphabet(token_text, 1);
                 get_next_token();
                 if (token_type != DQ_TT)
                     return ebf_error_recover("double-quoted alphabet string");
-                new_alphabet(token_text, 2);
+                if (flag)
+                    new_alphabet(token_text, 2);
             break;
 
             case SQ_TT:
@@ -1212,6 +1218,9 @@ extern int parse_given_directive(int internal_flag)
             switch(token_value)
             {   case TABLE_DK:
                 {   int plus_flag = FALSE;
+                    flag = set_current_option_precedence(OPT_ZCHAR_TABLE, 0);
+                    /* The 0 is a dummy value. We just want to know if the
+                       option has been set already. */
                     get_next_token();
                     if ((token_type == SEP_TT) && (token_value == PLUS_SEP))
                     {   plus_flag = TRUE;
@@ -1220,11 +1229,14 @@ extern int parse_given_directive(int internal_flag)
                     while ((token_type!=SEP_TT) || (token_value!=SEMICOLON_SEP))
                     {   switch(token_type)
                         {   case NUMBER_TT:
-                                new_zscii_character(token_value, plus_flag);
-                                plus_flag = TRUE; break;
+                                if (flag)
+                                    new_zscii_character(token_value, plus_flag);
+                                plus_flag = TRUE;
+                                break;
                             case SQ_TT:
-                                new_zscii_character(text_to_unicode(token_text),
-                                    plus_flag);
+                                j = text_to_unicode(token_text);
+                                if (flag)
+                                    new_zscii_character(j, plus_flag);
                                 if (token_text[textual_form_length] != 0)
                                     return ebf_error_recover("single character value");
                                 plus_flag = TRUE;
@@ -1234,7 +1246,7 @@ extern int parse_given_directive(int internal_flag)
                         }
                         get_next_token();
                     }
-                    if (plus_flag) new_zscii_finished();
+                    if (flag && plus_flag) new_zscii_finished();
                     put_token_back();
                 }
                     break;
