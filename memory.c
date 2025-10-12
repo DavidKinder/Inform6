@@ -362,6 +362,7 @@ static void set_trace_option(char *command)
         printf("    TOKENS=2: also show token types\n");
         printf("    TOKENS=3: also show lexical context\n");
         printf("  VERBS: display the verb grammar table\n");
+        printf("  UNICODE: display the Z-machine Unicode translation table\n");
         return;
     }
 
@@ -440,6 +441,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "VERBS")==0 || strcmp(command, "VERB")==0) {
         list_verbs_setting = value;
+    }
+    else if (strcmp(command, "UNICODE")==0) {
+        list_unicode_setting = value;
     }
     else {
         printf("Unrecognized $! trace command \"%s\"\n", command);

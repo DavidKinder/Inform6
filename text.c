@@ -404,7 +404,7 @@ static void write_zscii(int zsc)
     else lookup_value = -1;
 
     if (lookup_value >= 0)
-    {   alphabet_used[lookup_value] = 'Y';
+    {   alphabet_used[lookup_value] = TRUE;
         in_alphabet = lookup_value/26;
         if (in_alphabet==1) write_z_char_z(4);  /* SHIFT to A1 */
         if (in_alphabet==2) write_z_char_z(5);  /* SHIFT to A2 */
@@ -815,7 +815,7 @@ advance as part of 'Zcharacter table':", unicode);
                                 alphabet if it isn't in alphabet 0, then write
                                 the Z-char */
     
-                            alphabet_used[lookup_value] = 'Y';
+                            alphabet_used[lookup_value] = TRUE;
                             in_alphabet = lookup_value/26;
                             if (in_alphabet==1) write_z_char_z(4);  /* SHIFT to A1 */
                             if (in_alphabet==2) write_z_char_z(5);  /* SHIFT to A2 */
@@ -2009,7 +2009,7 @@ apostrophe in", dword);
             }
         }
         else
-        {   alphabet_used[k2] = 'Y';
+        {   alphabet_used[k2] = TRUE;
             if ((k2/26)!=0 && i<dictsize)
                 wd[i++]=3+(k2/26);            /* Change alphabet for symbols */
             if (i<dictsize)
@@ -2533,8 +2533,10 @@ static void show_char(uchar c)
 }
 
 /* Display a Unicode character in user-readable form. This uses the same
-   character encoding as the source code (determined by the -C option). */
-static void show_uchar(uint32 c)
+   character encoding as the source code (determined by the -C option).
+   Returns true if it was able to print the character directly; false
+   if it used an @{XX} escape. */
+static int show_uchar(uint32 c)
 {
     char buf[16];
     int ix;
@@ -2542,7 +2544,7 @@ static void show_uchar(uint32 c)
     if (c < 0x80) {
         /* ASCII always works */
         show_char(c);
-        return;
+        return TRUE;
     }
     if (character_set_unicode) {
         /* UTF-8 the character */
@@ -2567,12 +2569,12 @@ static void show_uchar(uint32 c)
         else {
             show_char('?');
         }
-        return;
+        return TRUE;
     }
     if (character_set_setting == 1 && c < 0x100) {
         /* Fits in Latin-1 */
         show_char(c);
-        return;
+        return TRUE;
     }
     /* Supporting other character_set_setting is harder; not currently implemented. */
     
@@ -2580,6 +2582,7 @@ static void show_uchar(uint32 c)
     sprintf(buf, "@{%x}", c);
     for (ix=0; buf[ix]; ix++)
         show_char(buf[ix]);
+    return FALSE;
 }
 
 extern void word_to_ascii(uchar *p, char *results)
@@ -2802,14 +2805,20 @@ static void show_alphabet(int i)
 {   int j, c; char chartext[8];
 
     for (j=0; j<26; j++)
-    {   c = alphabet[i][j];
+    {
+        if (i==2 && j==0) {
+            printf("esc"); /* escape for a ten-bit ZSCII code */
+            continue;
+        }
+        
+        c = alphabet[i][j];
 
-        if (alphabet_used[26*i+j] == 'N') printf("("); else printf(" ");
+        if (!alphabet_used[26*i+j]) printf("("); else printf(" ");
 
         zscii_to_text(chartext, c);
         printf("%s", chartext);
 
-        if (alphabet_used[26*i+j] == 'N') printf(")"); else printf(" ");
+        if (!alphabet_used[26*i+j]) printf(")"); else printf(" ");
     }
     printf("\n");
 }
@@ -2826,8 +2835,13 @@ extern void show_dictionary(int level)
         else
             recursively_show_g(root, level);
     }
+    
     if (!glulx_mode)
     {
+        /* Also print the Z-machine alphabet. This is entries 6-31
+           of each alphabet row. (Entries 0-5 are reserved for special
+           stuff.)
+        */
         printf("\nZ-machine alphabet entries:\n");
         show_alphabet(0);
         show_alphabet(1);
@@ -2857,6 +2871,33 @@ extern void write_dictionary_to_transcript(void)
 
     my_free(&d_show_buf, "dictionary display buffer");
     d_show_len = 0; d_show_buf = NULL;
+}
+
+extern void show_unicode_translation_table(void)
+{
+    int i, j;
+    
+    if (glulx_mode) {
+        printf("Glulx does not have a Unicode translation table.\n");
+        return;
+    }
+    
+    if (!zscii_defn_modified) {
+        printf("The Unicode translation table is not used.\n");
+        return;
+    }
+
+    printf("Z-machine Unicode translation table:\n");
+
+    for (i=0; i<zscii_high_water_mark; i++) {
+        j = zscii_to_unicode(155 + i);
+        printf("  $%02x: ", 155+i);
+        /* show the hex form even if the character was printable */
+        if (show_uchar(j))
+            printf(" @{%x}", j);
+        printf("\n");
+    }
+
 }
 
 /* ========================================================================= */

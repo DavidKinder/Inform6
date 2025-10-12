@@ -380,6 +380,26 @@ static optiont alloptions[] = {
         { OPTLIM_TOMAX, 999999 },
         DEFAULTVAL(0),
     },
+    {
+        "ZCHAR_TABLE",
+        "\
+  ZCHAR_TABLE, if set, gives characters to be placed in the Unicode \n\
+  translation table. If the first character is '+', the characters are \n\
+  added to the default set instead of replacing the default set. Spaces \n\
+  are ignored. @-escapes are allowed.\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_STR },
+        DEFAULTSTR(NULL),
+    },
+    {
+        "ZALPHABET",
+        "\
+  ZALPHABET, if set, will provide the Z-machine alphabet table. Must be \n\
+  exactly 75 characters (ignoring spaces). @-escapes are allowed.\n",
+        OPTUSE_ZCODE,
+        { OPTLIM_STR },
+        DEFAULTSTR(NULL),
+    },
     
     /* obsolete options run past OPT_OPTIONS_COUNT */
     {
@@ -793,8 +813,10 @@ extern void list_compiler_options(void)
             continue;
         
         if (alloptions[ix].limit.limittype == OPTLIM_STR) {
-            /* Only display string options when non-NULL. */
-            if (alloptions[ix].val.s) 
+            /* String option could be NULL. */
+            if (!alloptions[ix].val.s) 
+                printf("|  %25s = not set |\n", alloptions[ix].name);
+            else
                 printf("|  %25s = \"%s\" |\n", alloptions[ix].name, alloptions[ix].val.s);
         }
         else {
@@ -832,8 +854,9 @@ extern void explain_compiler_option(char *str)
     if (opt->limit.limittype == OPTLIM_STR) {
         char *val = opt->val.s;
         if (val == NULL)
-            val = "(not set)";
-        printf("\n  (currently: \"%s\")\n", val);
+            printf("\n  (currently: not set)\n");
+        else
+            printf("\n  (currently: \"%s\")\n", val);
     }
     else if (opt->val.z == opt->val.g) {
         printf("\n  (currently: %d)\n", opt->val.z);
@@ -880,6 +903,7 @@ extern void apply_compiler_options(void)
     LONG_DICT_FLAG_BUG = SELECTVAL(OPT_LONG_DICT_FLAG_BUG);
 
     /* Grammar version: this will be handled later, in verbs_begin_pass(). */
+    /* Z-alphabet and Zchar-table: will be handled in chars_begin_pass(). */
 
     /* Serial number: only set it if a non-default value has been given. */
     if (alloptions[OPT_SERIAL].precedence > DEFAULT_OPTPREC) {
@@ -895,6 +919,18 @@ extern void apply_compiler_options(void)
 extern int32 get_current_option_value(optionindex_e optnum)
 {
     return SELECTVAL(optnum);
+}
+
+/* Fetch a string option value. (OPTLIM_STR only.)
+*/
+extern char *get_current_option_string_value(optionindex_e optnum)
+{
+    return alloptions[optnum].val.s;
+}
+
+extern int get_current_option_precedence(optionindex_e optnum)
+{
+    return alloptions[optnum].precedence;
 }
 
 /* Set an option late in compilation.
