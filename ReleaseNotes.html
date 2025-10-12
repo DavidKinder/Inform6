@@ -66,6 +66,25 @@ Inform 7 10.1 unfortunately generated some header comments with trailing semicol
 While Inform 6.43 accepted this, Inform 6.44 did not, due to the reworking of the options code. Since there is a strong desire
 for the output from all versions of Inform 7 to work with the latest Inform 6 compiler, such lines with a trailing semicolon are
 now accepted.
+<li><p>The Z-machine alphabet and Z-machine Unicode translation tables, which previously could only be changed with the <tt>Zcharacter</tt>
+directive, can now be set with compiler options. In header comments, these might look like:
+<pre>
+  !% $ZCHAR_TABLE="+ @@945 @{3B2} @{3b3} @{2655} @@9812"
+  !% $ZALPHABET="abcdefghijklmnopqrstuvwxyz ABCDEFGHIJKLMNOPQRSTUVWXYZ 0123456789.,!?_#@{3B2}/\-@{2655}()"
+</pre>
+These are the equivalent of the directives
+<pre>
+  Zcharacter table + '@@945' '@{3B2}' '@{3b3}' '@{2655}' '@@9812';
+  Zcharacter "abcdefghijklmnopqrstuvwxyz" "ABCDEFGHIJKLMNOPQRSTUVWXYZ" "0123456789.,!?_#@{3B2}/\-@{2655}()";
+</pre>
+These options can be used on the command line too, but note that that will require correctly escaping any shell characters.
+<p>One small (but welcome) difference is that the options are parsed before the symbol names "String", "Routine", "Class", "Object" are generated.
+<p>For the <tt>$ZCHAR_TABLE</tt> option, as with the <tt>Zcharacter table</tt> directive, the leading + means to add characters to the standard
+translation list. Without the +, it throws away the list and starts anew.
+<p>Note that the compiler only recognizes one value for each option, so multiple <tt>$ZCHAR_TABLE + </tt>options cannot be used to add characters in sequence.
+<p>In both of these options, <tt>@</tt> escapes are allowed, in all forms: <tt>@@64</tt>, <tt>@{40}</tt>, <tt>@:u</tt>. Literal Unicode characters
+are not allowed, because the compiler may not know the character encoding at the time options are parsed. Spaces are ignored in both options (and are only
+used in the examples above for clarity).
 </ul>
 
 <h3>Bugs fixed</h3>
