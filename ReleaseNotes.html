@@ -85,6 +85,22 @@ translation list. Without the +, it throws away the list and starts anew.
 <p>In both of these options, <tt>@</tt> escapes are allowed, in all forms: <tt>@@64</tt>, <tt>@{40}</tt>, <tt>@:u</tt>. Literal Unicode characters
 are not allowed, because the compiler may not know the character encoding at the time options are parsed. Spaces are ignored in both options (and are only
 used in the examples above for clarity).
+<li><p>There is now a trace option to display the Z-machine Unicode translation table: <tt>--trace unicode</tt> or <tt>$!UNICODE</tt>. For example:
+<pre>
+  !% $ZCHAR_TABLE="@@945 @{3B2} @{3b3} @{3bc} @{2655} @@9812 @{E4}"
+</pre>
+will lead to the following in the compiler output
+<pre>
+  Z-machine Unicode translation table:
+    $9b: a @{3b1}
+    $9c: ß @{3b2}
+    $9d: ? @{3b3}
+    $9e: µ @{3bc}
+    $9f: ? @{2655}
+    $a0: ? @{2654}
+    $a1: ä @{e4}
+</pre>
+Characters are only presented literally if the -Cu option is used (i.e. UTF-8 encoding), otherwise hex escapes are printed.
 </ul>
 
 <h3>Bugs fixed</h3>
