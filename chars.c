@@ -370,8 +370,17 @@ static void finish_new_alphabet(void)
     int i, j;
     int test_dups[0x100];
 
-    alphabet_modified = TRUE;
+    if (no_user_strings) {
+        error("Once strings are compiled it is too late to change the Z-code alphabet");
+        /* Veneer strings can cause problems too -- the class names
+           "Class", "Object", etc are defined before any possible directive.
+           But we have to accept that for historical reasons. (This is
+           why we prefer the $ZALPHABET compile option.)
+        */
+    }
 
+    alphabet_modified = TRUE;
+    
     /* Check to see if any character appears twice. */
     
     for (i=0; i<0x100; i++)
