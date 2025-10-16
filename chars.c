@@ -370,8 +370,12 @@ static void finish_new_alphabet(void)
     int i, j;
     int test_dups[0x100];
 
-    alphabet_modified = TRUE;
+    if (no_user_strings) {
+        error("Once strings are compiled it is too late to change the Z-code alphabet");
+    }
 
+    alphabet_modified = TRUE;
+    
     /* Check to see if any character appears twice. */
     
     for (i=0; i<0x100; i++)
