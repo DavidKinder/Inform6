@@ -47,7 +47,8 @@ int no_dynamic_strings;                /* No. of @.. string escapes used
                                           plus one)                          */
 int no_unicode_chars;                  /* Number of distinct Unicode chars
                                           used. (Beyond 0xFF.)               */
-
+int no_user_strings;                   /* Number of strings defined in user
+                                          code (not the veneer).             */
 huffentity_t *huff_entities;           /* The list of entities (characters,
                                           abbreviations, @.. escapes, and 
                                           the terminator)                    */
@@ -513,6 +514,10 @@ extern int32 translate_text(int32 p_limit, char *s_text, int strctx)
 
     zob_index=0;
 
+    if (!veneer_mode) {
+        no_user_strings++;
+    }
+    
     /*  If this is the first text translated since the abbreviations were
         declared, and if some were declared, then it's time to make the
         lookup table for abbreviations
@@ -2931,6 +2936,8 @@ extern void init_text_vars(void)
     prepared_sort = NULL;
     dict_entries=0;
 
+    no_user_strings = 0;
+    
     static_strings_area = NULL;
     abbreviations_optimal_parse_schedule = NULL;
     abbreviations_optimal_parse_scores = NULL;
@@ -2954,6 +2961,7 @@ extern void text_begin_pass(void)
     no_strings = 0;
     no_dynamic_strings = 0;
     no_unicode_chars = 0;
+    no_user_strings = 0;
 }
 
 /*  Note: for allocation and deallocation of all_the_text, see inform.c      */

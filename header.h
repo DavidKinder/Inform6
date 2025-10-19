@@ -2893,6 +2893,7 @@ extern int32 static_strings_extent;
 
 extern int32 no_strings, no_dynamic_strings;
 extern int no_unicode_chars;
+extern int no_user_strings;
 
 typedef struct unicode_usage_s unicode_usage_t;
 struct unicode_usage_s {
