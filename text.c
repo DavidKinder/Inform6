@@ -2667,9 +2667,10 @@ void print_dict_word(int node)
     printf("%s", dict_show_buf);
 }
 
-/* Called from *both* show_dictionary() and write_dictionary_to_transcript().
-   We will write our output to the dict_show_buf array, and let the caller
-   handle that.
+/* Display one node of the dictionary tree. This writes output to the
+   dict_show_buf array; the caller must print or store that. 
+   Called from *both* show_dictionary() (to print to stdout) and
+   write_dictionary_to_transcript() (to write to the transcript stream).
 */
 static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
@@ -2747,9 +2748,10 @@ static void recursively_show_z(int node, int level)
         recursively_show_z(dtree[node].branch[1], level);
 }
 
-/* Called from *both* show_dictionary() and write_dictionary_to_transcript().
-   We will write our output to the dict_show_buf array, and let the caller
-   handle that.
+/* Display one node of the dictionary tree. This writes output to the
+   dict_show_buf array; the caller must print or store that. 
+   Called from *both* show_dictionary() (to print to stdout) and
+   write_dictionary_to_transcript() (to write to the transcript stream).
 */
 static void recursively_show_g(int node, int level)
 {   int i, cprinted;
