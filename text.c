@@ -2689,7 +2689,9 @@ static void recursively_show_z(int node, int level)
         show_char(' ');
     dict_show_linelen += cprinted;
     
-    /* The level-1 info can only be printfed (###?) */
+    /* When printing to the transcript file, we'll be at level zero.
+       Level 1+ is printed to stdout, so it's safe to print and
+       reset the buffer and print more stuff to stdout. */
     if (level >= 1)
     {
         if (dict_show_len)
@@ -2773,7 +2775,9 @@ static void recursively_show_g(int node, int level)
         show_char(' ');
     dict_show_linelen += cprinted;
 
-    /* The level-1 info can only be printfed (###?) */
+    /* When printing to the transcript file, we'll be at level zero.
+       Level 1+ is printed to stdout, so it's safe to print and
+       reset the buffer and print more stuff to stdout. */
     if (level >= 1)
     {
         int flagpos, flags, verbnum;
