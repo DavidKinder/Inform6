@@ -2592,8 +2592,8 @@ static int show_uchar(uint32 c)
 
 /* Decode a compressed dict word (from within the dictionary table)
    into ASCII or the source-code charset.
-   The results argument must have room for at least 9*7 characters.
-   (See zscii_to_text().)
+   The results argument must have room for at least 9*7 characters,
+   plus a terminator. (See zscii_to_text().)
  */
 static void dictword_to_text(uchar *p, char *results)
 {   int i, shift, cc, zchar; uchar encoded_word[9];
