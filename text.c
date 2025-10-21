@@ -2729,6 +2729,7 @@ static void recursively_show_z(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
+    //###
     if (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
     {
         show_char('\n');
@@ -2869,6 +2870,8 @@ extern void show_dictionary(int level)
 
 extern void write_dictionary_to_transcript(void)
 {
+    int last, pos;
+    
     write_to_transcript_file("", STRCTX_INFO);
 
     ensure_memory_list_available(&dict_show_buf_memlist, 80);
@@ -2884,9 +2887,26 @@ extern void write_dictionary_to_transcript(void)
         else
             recursively_show_g(root, 0);
     }
+
+    /* The dictionary text has newlines. We want to break up these
+       calls by newline. */
+
+    last = 0;
     
-    if (dict_show_len != 0)
-        write_to_transcript_file(dict_show_buf, STRCTX_DICT);
+    while (dict_show_buf[last]) {
+        pos = last;
+        while (dict_show_buf[pos] && dict_show_buf[pos] != '\n') {
+            pos++;
+        }
+
+        if (dict_show_buf[pos]) {
+            dict_show_buf[pos] = 0;
+            pos++;
+        }
+        write_to_transcript_file(dict_show_buf+last, STRCTX_DICT);
+
+        last = pos;
+    }
 }
 
 extern void show_unicode_translation_table(void)
