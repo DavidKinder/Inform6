@@ -2694,6 +2694,7 @@ static void recursively_show_z(int node, int level)
     {
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
+        dict_show_buf[0] = 0;
         dict_show_len = 0;
         dict_show_linelen = 0;
         
@@ -2779,6 +2780,7 @@ static void recursively_show_g(int node, int level)
         
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
+        dict_show_buf[0] = 0;
         dict_show_len = 0;
         dict_show_linelen = 0;
         
