@@ -2510,31 +2510,17 @@ extern void dictionary_set_verb_number(int dictword, int infverb)
 /*   transcription.                                                          */
 /* ------------------------------------------------------------------------- */
 
-/* In the dictionary-showing code, if d_show_buf is NULL, the text is
-   printed directly. (The "Trace dictionary" directive does this.)
-   If d_show_buf is not NULL, we add words to it (reallocing if necessary)
-   until it's a page-width. (The -r "gametext.txt" option does this.)
-*/
-static char *d_show_buf = NULL;
-static int d_show_size; /* allocated size */
-static int d_show_len;  /* current length */
+static memory_list dict_show_buf_memlist; /* allocated to dict_show_len */
+static char *dict_show_buf;
+static int dict_show_len; /* current length */
 
-/* Print a byte to the screen or d_show_buf (see above). The caller
-   is responsible for character encoding. */
+/* Add a byte to dict_show_buf. The caller is responsible for character
+   encoding. */
 static void show_char(uchar c)
 {
-    if (d_show_buf == NULL) {
-        printf("%c", c);
-    }
-    else {
-        if (d_show_len+2 >= d_show_size) {
-            int newsize = 2 * d_show_len + 16;
-            my_realloc(&d_show_buf, d_show_size, newsize, "dictionary display buffer");
-            d_show_size = newsize;
-        }
-        d_show_buf[d_show_len++] = c;
-        d_show_buf[d_show_len] = '\0';
-    }
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+2);
+    dict_show_buf[dict_show_len++] = c;
+    dict_show_buf[dict_show_len] = 0; //###
 }
 
 /* Display a Unicode character in user-readable form. This uses the same
@@ -2641,13 +2627,14 @@ static void dictword_to_text(uchar *p, char *results)
     results[cc] = 0;
 }
 
-/* Print a dictionary word to stdout. 
-   (This assumes that d_show_buf is null.)
+/* Print a dictionary word to stdout.
  */
 void print_dict_word(int node)
 {
     uchar *p;
     int cprinted;
+
+    dict_show_len = 0;
     
     if (!glulx_mode) {
         char textual_form[64];
@@ -2673,8 +2660,16 @@ void print_dict_word(int node)
             show_uchar(ch);
         }
     }
+
+    printf("%s", dict_show_buf);
 }
 
+extern FILE *transcript_file_handle; //####
+
+/* Called from *both* show_dictionary() and write_dictionary_to_transcript().
+   We will write our output to the dict_show_buf array, and let the caller
+   handle that.
+*/
 static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
     char textual_form[64];
@@ -2692,8 +2687,8 @@ static void recursively_show_z(int node, int level)
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
 
-    /* The level-1 info can only be printfed (d_show_buf must be null). */
-    if (d_show_buf == NULL && level >= 1)
+    /* The level-1 info can only be printfed (###?) */
+    if (level >= 1)
     {
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
@@ -2732,16 +2727,20 @@ static void recursively_show_z(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    if (transcript_file_handle && dict_show_buf && (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
     {
-        write_to_transcript_file(d_show_buf, STRCTX_DICT);
-        d_show_len = 0;
+        write_to_transcript_file(dict_show_buf, STRCTX_DICT); //###
+        dict_show_len = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
         recursively_show_z(dtree[node].branch[1], level);
 }
 
+/* Called from *both* show_dictionary() and write_dictionary_to_transcript().
+   We will write our output to the dict_show_buf array, and let the caller
+   handle that.
+*/
 static void recursively_show_g(int node, int level)
 {   int i, cprinted;
     uchar *p;
@@ -2765,8 +2764,8 @@ static void recursively_show_g(int node, int level)
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
 
-    /* The level-1 info can only be printfed (d_show_buf must be null). */
-    if (d_show_buf == NULL && level >= 1)
+    /* The level-1 info can only be printfed (###?) */
+    if (level >= 1)
     {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
@@ -2801,10 +2800,10 @@ static void recursively_show_g(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    if (transcript_file_handle && dict_show_buf && (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
     {
-        write_to_transcript_file(d_show_buf, STRCTX_DICT);
-        d_show_len = 0;
+        write_to_transcript_file(dict_show_buf, STRCTX_DICT); //###
+        dict_show_len = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2839,11 +2838,13 @@ extern void show_dictionary(int level)
        Level 2: also show bytes.*/
     printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
-    {   d_show_len = 0; d_show_buf = NULL; 
+    {
+        dict_show_len = 0;
         if (!glulx_mode)    
             recursively_show_z(root, level);
         else
             recursively_show_g(root, level);
+        printf("%s", dict_show_buf);
     }
     
     if (!glulx_mode)
@@ -2861,14 +2862,13 @@ extern void show_dictionary(int level)
 
 extern void write_dictionary_to_transcript(void)
 {
-    d_show_size = 80; /* initial size */
-    d_show_buf = my_malloc(d_show_size, "dictionary display buffer");
-
     write_to_transcript_file("", STRCTX_INFO);
-    sprintf(d_show_buf, "[Dictionary contains %d entries:]", dict_entries);
-    write_to_transcript_file(d_show_buf, STRCTX_INFO);
-    
-    d_show_len = 0;
+
+    ensure_memory_list_available(&dict_show_buf_memlist, 80);
+    sprintf(dict_show_buf, "[Dictionary contains %d entries:]", dict_entries);
+    write_to_transcript_file(dict_show_buf, STRCTX_INFO);
+
+    dict_show_len = 0;
 
     if (dict_entries != 0)
     {
@@ -2877,10 +2877,9 @@ extern void write_dictionary_to_transcript(void)
         else
             recursively_show_g(root, 0);
     }
-    if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
-
-    my_free(&d_show_buf, "dictionary display buffer");
-    d_show_len = 0; d_show_buf = NULL;
+    
+    if (dict_show_len != 0)
+        write_to_transcript_file(dict_show_buf, STRCTX_DICT);
 }
 
 extern void show_unicode_translation_table(void)
@@ -2932,6 +2931,7 @@ extern void init_text_vars(void)
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
     total_zchars_trans = 0;
+    dict_show_len = 0;
 
     dictionary = NULL;
     dictionary_top = 0;
@@ -3029,9 +3029,9 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 1024, (void**)&low_strings,
         "low (abbreviation) strings");
 
-    d_show_buf = NULL;
-    d_show_size = 0;
-    d_show_len = 0;
+    initialise_memory_list(&dict_show_buf_memlist,
+        sizeof(char), 16, (void**)&dict_show_buf,
+        "dictionary display buffer");
 
     huff_entities = NULL;
     hufflist = NULL;
@@ -3078,6 +3078,7 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&all_text_memlist);
     
     deallocate_memory_list(&low_strings_memlist);
+    deallocate_memory_list(&dict_show_buf_memlist);
     deallocate_memory_list(&abbreviations_text_memlist);
     deallocate_memory_list(&abbreviations_memlist);
 
