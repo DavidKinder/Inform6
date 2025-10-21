@@ -2383,7 +2383,7 @@ extern int   iso_to_unicode(int iso);
 extern int   unicode_to_zscii(int32 u);
 extern int32 zscii_to_unicode(int z);
 extern int32 text_to_unicode(char *text);
-extern void  zscii_to_text(char *text, int zscii);
+extern int   zscii_to_text(char *text, int zscii);
 extern char *name_of_iso_set(int s);
 extern void  change_character_set(void);
 extern void  new_alphabet(char *text, int alphabet);
