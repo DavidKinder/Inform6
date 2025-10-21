@@ -2635,6 +2635,7 @@ void print_dict_word(int node)
     uchar *p;
     int cprinted;
 
+    dict_show_buf[0] = 0;
     dict_show_len = 0;
     dict_show_linelen = 0;
     
@@ -2854,6 +2855,7 @@ extern void show_dictionary(int level)
     printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
     {
+        dict_show_buf[0] = 0;
         dict_show_len = 0;
         dict_show_linelen = 0;
         if (!glulx_mode)    
@@ -2886,6 +2888,7 @@ extern void write_dictionary_to_transcript(void)
     sprintf(dict_show_buf, "[Dictionary contains %d entries:]", dict_entries);
     write_to_transcript_file(dict_show_buf, STRCTX_INFO);
 
+    dict_show_buf[0] = 0;
     dict_show_len = 0;
     dict_show_linelen = 0;
 
