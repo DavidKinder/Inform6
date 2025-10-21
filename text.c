@@ -2513,6 +2513,7 @@ extern void dictionary_set_verb_number(int dictword, int infverb)
 static memory_list dict_show_buf_memlist; /* allocated to dict_show_len */
 static char *dict_show_buf;
 static int dict_show_len; /* current length */
+static int dict_show_linelen; /* length since last newline */
 
 /* Add a byte to dict_show_buf. The caller is responsible for character
    encoding. */
@@ -2635,6 +2636,7 @@ void print_dict_word(int node)
     int cprinted;
 
     dict_show_len = 0;
+    dict_show_linelen = 0;
     
     if (!glulx_mode) {
         char textual_form[64];
@@ -2684,13 +2686,15 @@ static void recursively_show_z(int node, int level)
         show_uchar((uchar)textual_form[cprinted]);
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         show_char(' ');
-
+    dict_show_linelen += cprinted;
+    
     /* The level-1 info can only be printfed (###?) */
     if (level >= 1)
     {
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
         dict_show_len = 0;
+        dict_show_linelen = 0;
         
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
@@ -2729,10 +2733,10 @@ static void recursively_show_z(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    //###
-    if (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
+    if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
     {
         show_char('\n');
+        dict_show_linelen = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2765,6 +2769,7 @@ static void recursively_show_g(int node, int level)
     }
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
         show_char(' ');
+    dict_show_linelen += cprinted;
 
     /* The level-1 info can only be printfed (###?) */
     if (level >= 1)
@@ -2774,6 +2779,7 @@ static void recursively_show_g(int node, int level)
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
         dict_show_len = 0;
+        dict_show_linelen = 0;
         
         flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
@@ -2809,9 +2815,10 @@ static void recursively_show_g(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
+    if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
     {
         show_char('\n');
+        dict_show_linelen = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2848,6 +2855,7 @@ extern void show_dictionary(int level)
     if (dict_entries != 0)
     {
         dict_show_len = 0;
+        dict_show_linelen = 0;
         if (!glulx_mode)    
             recursively_show_z(root, level);
         else
@@ -2879,6 +2887,7 @@ extern void write_dictionary_to_transcript(void)
     write_to_transcript_file(dict_show_buf, STRCTX_INFO);
 
     dict_show_len = 0;
+    dict_show_linelen = 0;
 
     if (dict_entries != 0)
     {
@@ -2959,6 +2968,7 @@ extern void init_text_vars(void)
 
     total_zchars_trans = 0;
     dict_show_len = 0;
+    dict_show_linelen = 0;
 
     dictionary = NULL;
     dictionary_top = 0;
