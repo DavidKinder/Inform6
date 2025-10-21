@@ -2516,7 +2516,8 @@ static int dict_show_len; /* current length */
 static int dict_show_linelen; /* length since last newline */
 
 /* Add a byte to dict_show_buf. The caller is responsible for character
-   encoding. */
+   encoding.
+*/
 static void show_char(uchar c)
 {
     ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+2);
@@ -2524,10 +2525,13 @@ static void show_char(uchar c)
     dict_show_buf[dict_show_len] = 0; //###
 }
 
-/* Display a Unicode character in user-readable form. This uses the same
-   character encoding as the source code (determined by the -C option).
+/* Write a Unicode character in user-readable form. Adds text to the
+   dict_show_buf array.
+   This uses the same character encoding as the source code (determined
+   by the -C option).
    Returns true if it was able to print the character directly; false
-   if it used an @{XX} escape. */
+   if it used an @{XX} escape.
+*/
 static int show_uchar(uint32 c)
 {
     char buf[16];
