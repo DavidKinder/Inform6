@@ -2627,13 +2627,13 @@ static void dictword_to_text(uchar *p, char *results)
                 if ((zchar>=32) && (zchar<=126))
                     results[cc++] = zchar;
                 else
-                {   zscii_to_text(results+cc, zchar);
-                    cc = strlen(results);
+                {   int len = zscii_to_text(results+cc, zchar);
+                    cc += len;
                 }
             }
             else
-            {   zscii_to_text(results+cc, (alphabet[shift])[zchar-6]);
-                cc = strlen(results);
+            {   int len = zscii_to_text(results+cc, (alphabet[shift])[zchar-6]);
+                cc += len;
             }
             shift = 0;
         }

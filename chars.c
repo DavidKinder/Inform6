@@ -1434,6 +1434,7 @@ extern int32 text_to_unicode(char *text)
 /*  Used for printing out dictionary contents into the text transcript file  */
 /*  or on-screen (in response to the Trace dictionary directive).            */
 /*  In either case, output uses the same ISO set as the source code.         */
+/*  (However, it does not try to use UTF-8 when in -Cu mode.)                */
 /* ------------------------------------------------------------------------- */
 
 /* Stores 1-7 characters plus a null to terminate. The text argument must
