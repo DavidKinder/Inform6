@@ -2944,7 +2944,6 @@ extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern char *abbreviation_text(int num);
 extern void  show_dictionary(int level);
-extern void  word_to_ascii(uchar *p, char *result);
 extern void  print_dict_word(int node);
 extern void  write_dictionary_to_transcript(void);
 extern void  sort_dictionary(void);

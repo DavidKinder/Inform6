@@ -2590,7 +2590,12 @@ static int show_uchar(uint32 c)
     return FALSE;
 }
 
-extern void word_to_ascii(uchar *p, char *results)
+/* Decode a compressed dict word (from within the dictionary table)
+   into ASCII or the source-code charset.
+   The results argument must have room for at least 9*7 characters.
+   (See zscii_to_text().)
+ */
+static void dictword_to_text(uchar *p, char *results)
 {   int i, shift, cc, zchar; uchar encoded_word[9];
     encoded_word[0] = (((int) p[0])&0x7c)/4;
     encoded_word[1] = 8*(((int) p[0])&0x3) + (((int) p[1])&0xe0)/32;
@@ -2645,10 +2650,10 @@ void print_dict_word(int node)
     int cprinted;
     
     if (!glulx_mode) {
-        char textual_form[32];
+        char textual_form[64];
         p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
         
-        word_to_ascii(p, textual_form);
+        dictword_to_text(p, textual_form);
         
         for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
             show_uchar((uchar)textual_form[cprinted]);
@@ -2672,7 +2677,7 @@ void print_dict_word(int node)
 
 static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
-    char textual_form[32];
+    char textual_form[64];
     int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
@@ -2680,7 +2685,7 @@ static void recursively_show_z(int node, int level)
 
     p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
-    word_to_ascii(p, textual_form);
+    dictword_to_text(p, textual_form);
 
     for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
         show_uchar((uchar)textual_form[cprinted]);
