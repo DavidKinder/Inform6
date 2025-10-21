@@ -2664,8 +2664,6 @@ void print_dict_word(int node)
     printf("%s", dict_show_buf);
 }
 
-extern FILE *transcript_file_handle; //####
-
 /* Called from *both* show_dictionary() and write_dictionary_to_transcript().
    We will write our output to the dict_show_buf array, and let the caller
    handle that.
@@ -2690,6 +2688,10 @@ static void recursively_show_z(int node, int level)
     /* The level-1 info can only be printfed (###?) */
     if (level >= 1)
     {
+        if (dict_show_len)
+            printf("%s", dict_show_buf); /* no newline! */
+        dict_show_len = 0;
+        
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         }
@@ -2727,10 +2729,9 @@ static void recursively_show_z(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (transcript_file_handle && dict_show_buf && (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    if (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        write_to_transcript_file(dict_show_buf, STRCTX_DICT); //###
-        dict_show_len = 0;
+        show_char('\n');
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2766,9 +2767,16 @@ static void recursively_show_g(int node, int level)
 
     /* The level-1 info can only be printfed (###?) */
     if (level >= 1)
-    {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
-        int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
-        int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
+    {
+        int flagpos, flags, verbnum;
+        
+        if (dict_show_len)
+            printf("%s", dict_show_buf); /* no newline! */
+        dict_show_len = 0;
+        
+        flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+        flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
+        verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
         }
@@ -2800,10 +2808,9 @@ static void recursively_show_g(int node, int level)
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (transcript_file_handle && dict_show_buf && (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    if (dict_show_len >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        write_to_transcript_file(dict_show_buf, STRCTX_DICT); //###
-        dict_show_len = 0;
+        show_char('\n');
     }
 
     if (dtree[node].branch[1] != VACANT)
