@@ -1461,7 +1461,8 @@ extern int zscii_to_text(char *text, int zscii)
         }
     }
     if (unicode < 0 || unicode > 0xFFFF) {
-        /* should never happen */
+        /* Should never happen; Z-code Unicode characters are limited
+           to this range. */
         text[0] = '?';
         text[1] = 0;
         return 1;
