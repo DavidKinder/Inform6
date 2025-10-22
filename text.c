@@ -2787,6 +2787,7 @@ static void recursively_show_z(int node, int level)
 static void recursively_show_g(int node, int level)
 {   int i, cprinted;
     uchar *p;
+    char buf[64];
 
     if (dtree[node].branch[0] != VACANT)
         recursively_show_g(dtree[node].branch[0], level);
@@ -2808,50 +2809,47 @@ static void recursively_show_g(int node, int level)
         buf_put_byte(' ');
     dict_show_linelen += cprinted;
 
-    /* When printing to the transcript file, we'll be at level zero.
-       Level 1+ is printed to stdout, so it's safe to print and
-       reset the buffer and print more stuff to stdout. */
+    /* Level 1+ is used when printing to stdout, not when writing to the
+       transcript file. */
     if (level >= 1)
     {
-        int flagpos, flags, verbnum;
-        
-        if (dict_show_len) {
-            buf_term();
-            printf("%s", dict_show_buf); /* no newline! */
-        }
-        buf_clear();
-        
-        flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
-        flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
-        verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
+        int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+        int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
+        int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
         if (level >= 2) {
-            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) {
+                sprintf(buf, "%02x ",p[i]);
+                buf_put_bytes(buf);
+            }
         }
         if (flags & NOUN_DFLAG)
-            printf("noun ");
+            buf_put_bytes("noun ");
         else
-            printf("     ");
+            buf_put_bytes("     ");
         if (flags & PLURAL_DFLAG)
-            printf("p ");
+            buf_put_bytes("p ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (flags & SING_DFLAG)
-            printf("s ");
+            buf_put_bytes("s ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (DICT_TRUNCATE_FLAG) {
             if (flags & TRUNC_DFLAG)
-                printf("tr ");
+                buf_put_bytes("tr ");
             else
-                printf("   ");
+                buf_put_bytes("   ");
         }
         if (flags & PREP_DFLAG)
-            printf("preposition    ");
+            buf_put_bytes("preposition    ");
         if (flags & META_DFLAG)
-            printf("meta");
-        if (flags & VERB_DFLAG)
-            printf("verb:%d  ", verbnum);
-        printf("\n");
+            buf_put_bytes("meta");
+        if (flags & VERB_DFLAG) {
+            sprintf(buf, "verb:%d  ", verbnum);
+            buf_put_bytes(buf);
+        }
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
