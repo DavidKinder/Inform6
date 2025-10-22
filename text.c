@@ -2717,51 +2717,55 @@ static void recursively_show_z(int node, int level)
         buf_put_byte(' ');
     dict_show_linelen += cprinted;
     
-    /* When printing to the transcript file, we'll be at level zero.
-       Level 1+ is printed to stdout, so it's safe to print and
-       reset the buffer and print more stuff to stdout. */
+    /* Level 1+ is used when printing to stdout, not when writing to the
+       transcript file. */
     if (level >= 1)
     {
-        if (dict_show_len) {
-            buf_term();
-            printf("%s", dict_show_buf); /* no newline! */
-        }
-        buf_clear();
-        
         if (level >= 2) {
-            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) {
+                sprintf(textual_form, "%02x ",p[i]);
+                buf_put_bytes(textual_form);
+            }
         }
 
         flags = (int) p[res];
         if (flags & NOUN_DFLAG)
-            printf("noun ");
+            buf_put_bytes("noun ");
         else
-            printf("     ");
+            buf_put_bytes("     ");
         if (flags & PLURAL_DFLAG)
-            printf("p ");
+            buf_put_bytes("p ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (flags & SING_DFLAG)
-            printf("s ");
+            buf_put_bytes("s ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (DICT_TRUNCATE_FLAG) {
             if (flags & TRUNC_DFLAG)
-                printf("tr ");
+                buf_put_bytes("tr ");
             else
-                printf("   ");
+                buf_put_bytes("   ");
         }
         if (flags & PREP_DFLAG)
-        {   if (grammar_version_number == 1)
-                printf("preposition:%d  ", (int) p[res+2]);
-            else
-                printf("preposition    ");
+        {   if (grammar_version_number == 1) {
+                sprintf(textual_form, "preposition:%d  ", (int) p[res+2]);
+                buf_put_bytes(textual_form);
+            }
+            else {
+                buf_put_bytes("preposition    ");
+            }
         }
-        if (flags & META_DFLAG)
-            printf("meta");
-        if (flags & VERB_DFLAG)
-            printf("verb:%d  ", (int) p[res+1]);
-        printf("\n");
+        if (flags & META_DFLAG) {
+            buf_put_bytes("meta");
+        }
+        if (flags & VERB_DFLAG) {
+            sprintf(textual_form, "verb:%d  ", (int) p[res+1]);
+            buf_put_bytes(textual_form);
+        }
+        
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
