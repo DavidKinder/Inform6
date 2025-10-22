@@ -2506,8 +2506,12 @@ extern void dictionary_set_verb_number(int dictword, int infverb)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Tracing code for the dictionary: used by "trace" and text               */
-/*   transcription.                                                          */
+/*   Tracing code for the dictionary: used by "trace dict" and text          */
+/*   transcription (the "-r" option).                                        */
+/*                                                                           */
+/*   Since we might need to write to the transcript file rather than the     */
+/*   screen, it's easiest to print all trace text to an allocated buffer     */
+/*   (dict_show_buf). Then the caller can decide what to do with it.         */
 /* ------------------------------------------------------------------------- */
 
 static memory_list dict_show_buf_memlist; /* allocated to dict_show_len */
@@ -2606,6 +2610,7 @@ static int show_uchar(uint32 c)
 
 /* Decode a compressed dict word (from within the dictionary table)
    into ASCII or the source-code charset.
+   
    The results argument must have room for at least 9*7 characters,
    plus a terminator. (See zscii_to_text().)
  */
@@ -2655,7 +2660,8 @@ static void dictword_to_text(uchar *p, char *results)
     results[cc] = 0;
 }
 
-/* Print a dictionary word to stdout.
+/* Print a dictionary word to stdout. (Mostly used by the "--trace verbs"
+   option.)
  */
 void print_dict_word(int node)
 {
