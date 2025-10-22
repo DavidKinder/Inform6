@@ -1647,7 +1647,7 @@ extern void optimise_abbreviations(void)
     }
 
     MAX_GTABLE=opttextlen+1;
-    grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
+    grandtable=my_calloc(sizeof(int32), MAX_GTABLE, "grandtable");
 
     for (i=0, tcount=0; i<opttextlen; i++)
     {
