@@ -2701,7 +2701,7 @@ void print_dict_word(int node)
 */
 static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
-    char textual_form[64];
+    char buf[64];
     int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
@@ -2709,10 +2709,10 @@ static void recursively_show_z(int node, int level)
 
     p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
-    dictword_to_text(p, textual_form);
+    dictword_to_text(p, buf);
 
-    for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
-        show_uchar((uchar)textual_form[cprinted]);
+    for (cprinted = 0; buf[cprinted]!=0; cprinted++)
+        show_uchar((uchar)buf[cprinted]);
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
         buf_put_byte(' ');
     dict_show_linelen += cprinted;
@@ -2723,8 +2723,8 @@ static void recursively_show_z(int node, int level)
     {
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) {
-                sprintf(textual_form, "%02x ",p[i]);
-                buf_put_bytes(textual_form);
+                sprintf(buf, "%02x ",p[i]);
+                buf_put_bytes(buf);
             }
         }
 
@@ -2749,8 +2749,8 @@ static void recursively_show_z(int node, int level)
         }
         if (flags & PREP_DFLAG)
         {   if (grammar_version_number == 1) {
-                sprintf(textual_form, "preposition:%d  ", (int) p[res+2]);
-                buf_put_bytes(textual_form);
+                sprintf(buf, "preposition:%d  ", (int) p[res+2]);
+                buf_put_bytes(buf);
             }
             else {
                 buf_put_bytes("preposition    ");
@@ -2760,8 +2760,8 @@ static void recursively_show_z(int node, int level)
             buf_put_bytes("meta");
         }
         if (flags & VERB_DFLAG) {
-            sprintf(textual_form, "verb:%d  ", (int) p[res+1]);
-            buf_put_bytes(textual_form);
+            sprintf(buf, "verb:%d  ", (int) p[res+1]);
+            buf_put_bytes(buf);
         }
         
         buf_put_byte('\n');
