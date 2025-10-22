@@ -2774,8 +2774,10 @@ static void recursively_show_z(int node, int level)
         dict_show_linelen = 0;
     }
 
-    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
+    /* Show five words per line in classic TRANSCRIPT_FORMAT=0; one per line
+       in the new TRANSCRIPT_FORMAT=1. (But we don't linebreak after an
+       empty line.) */
+    if (dict_show_linelen >= 64 || (dict_show_linelen > 0 && TRANSCRIPT_FORMAT == 1))
     {
         buf_put_byte('\n');
         dict_show_linelen = 0;
@@ -2858,8 +2860,10 @@ static void recursively_show_g(int node, int level)
         dict_show_linelen = 0;
     }
 
-    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
+    /* Show five words per line in classic TRANSCRIPT_FORMAT=0; one per line
+       in the new TRANSCRIPT_FORMAT=1. (But we don't linebreak after an
+       empty line.) */
+    if (dict_show_linelen >= 64 || (dict_show_linelen > 0 && TRANSCRIPT_FORMAT == 1))
     {
         buf_put_byte('\n');
         dict_show_linelen = 0;
