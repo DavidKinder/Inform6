@@ -2515,10 +2515,18 @@ static char *dict_show_buf;
 static int dict_show_len; /* current length */
 static int dict_show_linelen; /* length since last newline */
 
+static void buf_clear()
+{
+    ensure_memory_list_available(&dict_show_buf_memlist, 1);
+    dict_show_len = 0;
+    dict_show_linelen = 0;
+    dict_show_buf[dict_show_len] = 0;
+}
+
 /* Add a byte to dict_show_buf. The caller is responsible for character
    encoding.
 */
-static void show_char(uchar c)
+static void buf_put_byte(uchar c)
 {
     ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+2);
     dict_show_buf[dict_show_len++] = c;
@@ -2539,37 +2547,37 @@ static int show_uchar(uint32 c)
     
     if (c < 0x80) {
         /* ASCII always works */
-        show_char(c);
+        buf_put_byte(c);
         return TRUE;
     }
     if (character_set_unicode) {
         /* UTF-8 the character */
         if (c < 0x80) {
-            show_char(c);
+            buf_put_byte(c);
         }
         else if (c < 0x800) {
-            show_char((0xC0 | ((c & 0x7C0) >> 6)));
-            show_char((0x80 |  (c & 0x03F)     ));
+            buf_put_byte((0xC0 | ((c & 0x7C0) >> 6)));
+            buf_put_byte((0x80 |  (c & 0x03F)     ));
         }
         else if (c < 0x10000) {
-            show_char((0xE0 | ((c & 0xF000) >> 12)));
-            show_char((0x80 | ((c & 0x0FC0) >>  6)));
-            show_char((0x80 |  (c & 0x003F)      ));
+            buf_put_byte((0xE0 | ((c & 0xF000) >> 12)));
+            buf_put_byte((0x80 | ((c & 0x0FC0) >>  6)));
+            buf_put_byte((0x80 |  (c & 0x003F)      ));
         }
         else if (c < 0x200000) {
-            show_char((0xF0 | ((c & 0x1C0000) >> 18)));
-            show_char((0x80 | ((c & 0x03F000) >> 12)));
-            show_char((0x80 | ((c & 0x000FC0) >>  6)));
-            show_char((0x80 |  (c & 0x00003F)      ));
+            buf_put_byte((0xF0 | ((c & 0x1C0000) >> 18)));
+            buf_put_byte((0x80 | ((c & 0x03F000) >> 12)));
+            buf_put_byte((0x80 | ((c & 0x000FC0) >>  6)));
+            buf_put_byte((0x80 |  (c & 0x00003F)      ));
         }
         else {
-            show_char('?');
+            buf_put_byte('?');
         }
         return TRUE;
     }
     if (character_set_setting == 1 && c < 0x100) {
         /* Fits in Latin-1 */
-        show_char(c);
+        buf_put_byte(c);
         return TRUE;
     }
     /* Supporting other character_set_setting is harder; not currently implemented. */
@@ -2577,7 +2585,7 @@ static int show_uchar(uint32 c)
     /* Use the escaped form */
     sprintf(buf, "@{%x}", c);
     for (ix=0; buf[ix]; ix++)
-        show_char(buf[ix]);
+        buf_put_byte(buf[ix]);
     return FALSE;
 }
 
@@ -2639,9 +2647,7 @@ void print_dict_word(int node)
     uchar *p;
     int cprinted;
 
-    dict_show_buf[0] = 0;
-    dict_show_len = 0;
-    dict_show_linelen = 0;
+    buf_clear();
     
     if (!glulx_mode) {
         char textual_form[64];
@@ -2691,7 +2697,7 @@ static void recursively_show_z(int node, int level)
     for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
         show_uchar((uchar)textual_form[cprinted]);
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
-        show_char(' ');
+        buf_put_byte(' ');
     dict_show_linelen += cprinted;
     
     /* When printing to the transcript file, we'll be at level zero.
@@ -2701,9 +2707,7 @@ static void recursively_show_z(int node, int level)
     {
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
-        dict_show_buf[0] = 0;
-        dict_show_len = 0;
-        dict_show_linelen = 0;
+        buf_clear();
         
         if (level >= 2) {
             for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
@@ -2744,7 +2748,7 @@ static void recursively_show_z(int node, int level)
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
     if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        show_char('\n');
+        buf_put_byte('\n');
         dict_show_linelen = 0;
     }
 
@@ -2778,7 +2782,7 @@ static void recursively_show_g(int node, int level)
         show_uchar(ch);
     }
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
-        show_char(' ');
+        buf_put_byte(' ');
     dict_show_linelen += cprinted;
 
     /* When printing to the transcript file, we'll be at level zero.
@@ -2790,9 +2794,7 @@ static void recursively_show_g(int node, int level)
         
         if (dict_show_len)
             printf("%s", dict_show_buf); /* no newline! */
-        dict_show_buf[0] = 0;
-        dict_show_len = 0;
-        dict_show_linelen = 0;
+        buf_clear();
         
         flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
@@ -2830,7 +2832,7 @@ static void recursively_show_g(int node, int level)
     /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
     if (dict_show_linelen >= 64 || TRANSCRIPT_FORMAT == 1)
     {
-        show_char('\n');
+        buf_put_byte('\n');
         dict_show_linelen = 0;
     }
 
@@ -2867,9 +2869,7 @@ extern void show_dictionary(int level)
     printf("Dictionary contains %d entries:\n",dict_entries);
     if (dict_entries != 0)
     {
-        dict_show_buf[0] = 0;
-        dict_show_len = 0;
-        dict_show_linelen = 0;
+        buf_clear();
         if (!glulx_mode)    
             recursively_show_z(root, level);
         else
@@ -2900,9 +2900,7 @@ extern void write_dictionary_to_transcript(void)
     sprintf(dict_show_buf, "[Dictionary contains %d entries:]", dict_entries);
     write_to_transcript_file(dict_show_buf, STRCTX_INFO);
 
-    dict_show_buf[0] = 0;
-    dict_show_len = 0;
-    dict_show_linelen = 0;
+    buf_clear();
 
     if (dict_entries != 0)
     {
