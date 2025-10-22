@@ -2528,9 +2528,14 @@ static void buf_clear()
 */
 static void buf_put_byte(uchar c)
 {
-    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+2);
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
     dict_show_buf[dict_show_len++] = c;
-    dict_show_buf[dict_show_len] = 0; //###
+}
+
+static void buf_term()
+{
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
+    dict_show_buf[dict_show_len] = 0;
 }
 
 /* Write a Unicode character in user-readable form. Adds text to the
@@ -2674,6 +2679,8 @@ void print_dict_word(int node)
         }
     }
 
+    buf_term();
+
     printf("%s", dict_show_buf);
 }
 
@@ -2705,8 +2712,10 @@ static void recursively_show_z(int node, int level)
        reset the buffer and print more stuff to stdout. */
     if (level >= 1)
     {
-        if (dict_show_len)
+        if (dict_show_len) {
+            buf_term();
             printf("%s", dict_show_buf); /* no newline! */
+        }
         buf_clear();
         
         if (level >= 2) {
@@ -2792,8 +2801,10 @@ static void recursively_show_g(int node, int level)
     {
         int flagpos, flags, verbnum;
         
-        if (dict_show_len)
+        if (dict_show_len) {
+            buf_term();
             printf("%s", dict_show_buf); /* no newline! */
+        }
         buf_clear();
         
         flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
@@ -2867,6 +2878,7 @@ extern void show_dictionary(int level)
     /* Level 0: show words only. Level 1: show words and flags.
        Level 2: also show bytes.*/
     printf("Dictionary contains %d entries:\n",dict_entries);
+    
     if (dict_entries != 0)
     {
         buf_clear();
@@ -2874,6 +2886,7 @@ extern void show_dictionary(int level)
             recursively_show_z(root, level);
         else
             recursively_show_g(root, level);
+        buf_term();
         printf("%s", dict_show_buf);
     }
     
@@ -2910,6 +2923,8 @@ extern void write_dictionary_to_transcript(void)
             recursively_show_g(root, 0);
     }
 
+    buf_term();
+    
     /* The dictionary text has newlines. We want to break up these
        calls by newline. */
 
