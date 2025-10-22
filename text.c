@@ -2515,6 +2515,7 @@ static char *dict_show_buf;
 static int dict_show_len; /* current length */
 static int dict_show_linelen; /* length since last newline */
 
+/* Reset dict_show_buf to empty. */
 static void buf_clear()
 {
     ensure_memory_list_available(&dict_show_buf_memlist, 1);
@@ -2524,14 +2525,25 @@ static void buf_clear()
 }
 
 /* Add a byte to dict_show_buf. The caller is responsible for character
-   encoding.
-*/
+   encoding. This does *not* null-terminate dict_show_buf. */
 static void buf_put_byte(uchar c)
 {
     ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
     dict_show_buf[dict_show_len++] = c;
 }
 
+/* Add bytes to dict_show_buf. The argument must be null-terminated, but
+   dict_show_buf will not be. */
+static void buf_put_bytes(char *str)
+{
+    int len = strlen(str);
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+len);
+    memcpy(dict_show_buf+dict_show_len, str, len);
+    dict_show_len += len;
+}
+
+/* Null-terminate dict_show_buf. Do this when you're finished calling
+   buf_put_byte()/buf_put_bytes(). */
 static void buf_term()
 {
     ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
@@ -2548,7 +2560,6 @@ static void buf_term()
 static int show_uchar(uint32 c)
 {
     char buf[16];
-    int ix;
     
     if (c < 0x80) {
         /* ASCII always works */
@@ -2589,8 +2600,7 @@ static int show_uchar(uint32 c)
     
     /* Use the escaped form */
     sprintf(buf, "@{%x}", c);
-    for (ix=0; buf[ix]; ix++)
-        buf_put_byte(buf[ix]);
+    buf_put_bytes(buf);
     return FALSE;
 }
 
