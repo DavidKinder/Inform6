@@ -1784,8 +1784,7 @@ extern void optimise_abbreviations(void)
                    (opttext+...+length) overruns the opttext array, the
                    memcmp() call will not; it will stop on the opttext null.
 
-                   Changing the call to strncmp() might be more correct, but
-                   I haven't done that yet.
+                   Changing the call to strncmp() might be more correct.
                 */
                 for (j=0; j<tlbtab[i].occurrences; j++)
                 {   if (memcmp(bestyet[maxat].text,
