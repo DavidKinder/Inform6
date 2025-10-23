@@ -1776,6 +1776,17 @@ extern void optimise_abbreviations(void)
                     if (strcmp(testtext,tlbtab[i].text)==0)
                         break;
 
+                /* The memcmp() here can trigger an array-overrun warning.
+                   (The combination of DEBUG_MEMLISTS and -fsanitize=address
+                   did it for me.) I *think* this is spurious, because
+                   bestyet[maxat].text is null-terminated (with the given
+                   length) and opttext is also null-terminated. So even if
+                   (opttext+...+length) overruns the opttext array, the
+                   memcmp() call will not; it will stop on the opttext null.
+
+                   Changing the call to strncmp() might be more correct, but
+                   I haven't done that yet.
+                */
                 for (j=0; j<tlbtab[i].occurrences; j++)
                 {   if (memcmp(bestyet[maxat].text,
                                opttext+grandtable[tlbtab[i].intab+j],
