@@ -2981,6 +2981,7 @@ extern void write_dictionary_to_transcript(void)
 extern void show_unicode_translation_table(void)
 {
     int i, j;
+    char buf[64];
     
     if (glulx_mode) {
         printf("Glulx does not have a Unicode translation table.\n");
@@ -2994,15 +2995,25 @@ extern void show_unicode_translation_table(void)
 
     printf("Z-machine Unicode translation table:\n");
 
+    buf_clear();
+    
     for (i=0; i<zscii_high_water_mark; i++) {
         j = zscii_to_unicode(155 + i);
-        printf("  $%02x: ", 155+i);
-        /* show the hex form even if the character was printable */
-        if (show_uchar(j))
-            printf(" @{%x}", j);
-        printf("\n");
+        sprintf(buf, "  $%02x: ", 155+i);
+        buf_put_bytes(buf);
+        
+        /* show_uchar() may show an escape code or the literal character.
+           If it showed the literal character, we'll add the escape code
+           for good luck. */
+        if (show_uchar(j)) {
+            sprintf(buf, " @{%x}", j);
+            buf_put_bytes(buf);
+        }
+        buf_put_byte('\n');
     }
 
+    buf_term();
+    printf("%s", dict_show_buf);
 }
 
 /* ========================================================================= */
