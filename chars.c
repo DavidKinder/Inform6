@@ -1434,28 +1434,42 @@ extern int32 text_to_unicode(char *text)
 /*  Used for printing out dictionary contents into the text transcript file  */
 /*  or on-screen (in response to the Trace dictionary directive).            */
 /*  In either case, output uses the same ISO set as the source code.         */
+/*  (However, it does not try to use UTF-8 when in -Cu mode.)                */
 /* ------------------------------------------------------------------------- */
 
-/* The text argument must have room for at least seven characters plus
-   terminator. */
-extern void zscii_to_text(char *text, int zscii)
+/* Stores 1-7 characters plus a null to terminate. The text argument must
+   therefore be at least eight bytes. Returns the number of (non-null)
+   characters stored.
+*/
+extern int zscii_to_text(char *text, int zscii)
 {   int i;
     int32 unicode;
 
     if ((zscii < 0x100) && (zscii_to_iso_grid[zscii] != 0))
-    {   text[0] = zscii_to_iso_grid[zscii]; text[1] = 0; return;
+    {   text[0] = zscii_to_iso_grid[zscii];
+        text[1] = 0;
+        return 1;
     }
 
     unicode = zscii_to_unicode(zscii);
     for (i=0;i<69;i++)
-        if (default_zscii_to_unicode_c01[i] == unicode)
+    {   if (default_zscii_to_unicode_c01[i] == unicode)
         {   text[0] = '@';
             text[1] = accents[2*i];
             text[2] = accents[2*i+1];
             text[3] = 0;
-            return;
+            return 3;
         }
+    }
+    if (unicode < 0 || unicode > 0xFFFF) {
+        /* Should never happen; Z-code Unicode characters are limited
+           to this range. */
+        text[0] = '?';
+        text[1] = 0;
+        return 1;
+    }
     sprintf(text, "@{%x}", unicode);
+    return strlen(text);
 }
 
 /* ========================================================================= */
