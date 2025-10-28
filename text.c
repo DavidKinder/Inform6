@@ -1647,7 +1647,7 @@ extern void optimise_abbreviations(void)
     }
 
     MAX_GTABLE=opttextlen+1;
-    grandtable=my_calloc(4*sizeof(int32), MAX_GTABLE/4, "grandtable");
+    grandtable=my_calloc(sizeof(int32), MAX_GTABLE, "grandtable");
 
     for (i=0, tcount=0; i<opttextlen; i++)
     {
@@ -1776,6 +1776,16 @@ extern void optimise_abbreviations(void)
                     if (strcmp(testtext,tlbtab[i].text)==0)
                         break;
 
+                /* The memcmp() here can trigger an array-overrun warning.
+                   (The combination of DEBUG_MEMLISTS and -fsanitize=address
+                   did it for me.) I *think* this is spurious, because
+                   bestyet[maxat].text is null-terminated (with the given
+                   length) and opttext is also null-terminated. So even if
+                   (opttext+...+length) overruns the opttext array, the
+                   memcmp() call will not; it will stop on the opttext null.
+
+                   Changing the call to strncmp() might be more correct.
+                */
                 for (j=0; j<tlbtab[i].occurrences; j++)
                 {   if (memcmp(bestyet[maxat].text,
                                opttext+grandtable[tlbtab[i].intab+j],
@@ -2506,91 +2516,115 @@ extern void dictionary_set_verb_number(int dictword, int infverb)
 }
 
 /* ------------------------------------------------------------------------- */
-/*   Tracing code for the dictionary: used by "trace" and text               */
-/*   transcription.                                                          */
+/*   Tracing code for the dictionary: used by "trace dict" and text          */
+/*   transcription (the "-r" option).                                        */
+/*                                                                           */
+/*   Since we might need to write to the transcript file rather than the     */
+/*   screen, it's easiest to print all trace text to an allocated buffer     */
+/*   (dict_show_buf). Then the caller can decide what to do with it.         */
 /* ------------------------------------------------------------------------- */
 
-/* In the dictionary-showing code, if d_show_buf is NULL, the text is
-   printed directly. (The "Trace dictionary" directive does this.)
-   If d_show_buf is not NULL, we add words to it (reallocing if necessary)
-   until it's a page-width. (The -r "gametext.txt" option does this.)
-*/
-static char *d_show_buf = NULL;
-static int d_show_size; /* allocated size */
-static int d_show_len;  /* current length */
+static memory_list dict_show_buf_memlist; /* allocated to dict_show_len */
+static char *dict_show_buf;
+static int dict_show_len; /* current length */
+static int dict_show_linelen; /* length since last newline */
 
-/* Print a byte to the screen or d_show_buf (see above). The caller
-   is responsible for character encoding. */
-static void show_char(uchar c)
+/* Reset dict_show_buf to empty. */
+static void buf_clear()
 {
-    if (d_show_buf == NULL) {
-        printf("%c", c);
-    }
-    else {
-        if (d_show_len+2 >= d_show_size) {
-            int newsize = 2 * d_show_len + 16;
-            my_realloc(&d_show_buf, d_show_size, newsize, "dictionary display buffer");
-            d_show_size = newsize;
-        }
-        d_show_buf[d_show_len++] = c;
-        d_show_buf[d_show_len] = '\0';
-    }
+    ensure_memory_list_available(&dict_show_buf_memlist, 1);
+    dict_show_len = 0;
+    dict_show_linelen = 0;
+    dict_show_buf[dict_show_len] = 0;
 }
 
-/* Display a Unicode character in user-readable form. This uses the same
-   character encoding as the source code (determined by the -C option).
+/* Add a byte to dict_show_buf. The caller is responsible for character
+   encoding. This does *not* null-terminate dict_show_buf. */
+static void buf_put_byte(uchar c)
+{
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
+    dict_show_buf[dict_show_len++] = c;
+}
+
+/* Add bytes to dict_show_buf. The argument must be null-terminated, but
+   dict_show_buf will not be. */
+static void buf_put_bytes(char *str)
+{
+    int len = strlen(str);
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+len);
+    memcpy(dict_show_buf+dict_show_len, str, len);
+    dict_show_len += len;
+}
+
+/* Null-terminate dict_show_buf. Do this when you're finished calling
+   buf_put_byte()/buf_put_bytes(). */
+static void buf_term()
+{
+    ensure_memory_list_available(&dict_show_buf_memlist, dict_show_len+1);
+    dict_show_buf[dict_show_len] = 0;
+}
+
+/* Write a Unicode character in user-readable form. Adds text to the
+   dict_show_buf array.
+   This uses the same character encoding as the source code (determined
+   by the -C option).
    Returns true if it was able to print the character directly; false
-   if it used an @{XX} escape. */
+   if it used an @{XX} escape.
+*/
 static int show_uchar(uint32 c)
 {
     char buf[16];
-    int ix;
     
     if (c < 0x80) {
         /* ASCII always works */
-        show_char(c);
+        buf_put_byte(c);
         return TRUE;
     }
     if (character_set_unicode) {
         /* UTF-8 the character */
         if (c < 0x80) {
-            show_char(c);
+            buf_put_byte(c);
         }
         else if (c < 0x800) {
-            show_char((0xC0 | ((c & 0x7C0) >> 6)));
-            show_char((0x80 |  (c & 0x03F)     ));
+            buf_put_byte((0xC0 | ((c & 0x7C0) >> 6)));
+            buf_put_byte((0x80 |  (c & 0x03F)     ));
         }
         else if (c < 0x10000) {
-            show_char((0xE0 | ((c & 0xF000) >> 12)));
-            show_char((0x80 | ((c & 0x0FC0) >>  6)));
-            show_char((0x80 |  (c & 0x003F)      ));
+            buf_put_byte((0xE0 | ((c & 0xF000) >> 12)));
+            buf_put_byte((0x80 | ((c & 0x0FC0) >>  6)));
+            buf_put_byte((0x80 |  (c & 0x003F)      ));
         }
         else if (c < 0x200000) {
-            show_char((0xF0 | ((c & 0x1C0000) >> 18)));
-            show_char((0x80 | ((c & 0x03F000) >> 12)));
-            show_char((0x80 | ((c & 0x000FC0) >>  6)));
-            show_char((0x80 |  (c & 0x00003F)      ));
+            buf_put_byte((0xF0 | ((c & 0x1C0000) >> 18)));
+            buf_put_byte((0x80 | ((c & 0x03F000) >> 12)));
+            buf_put_byte((0x80 | ((c & 0x000FC0) >>  6)));
+            buf_put_byte((0x80 |  (c & 0x00003F)      ));
         }
         else {
-            show_char('?');
+            buf_put_byte('?');
         }
         return TRUE;
     }
     if (character_set_setting == 1 && c < 0x100) {
         /* Fits in Latin-1 */
-        show_char(c);
+        buf_put_byte(c);
         return TRUE;
     }
     /* Supporting other character_set_setting is harder; not currently implemented. */
     
     /* Use the escaped form */
     sprintf(buf, "@{%x}", c);
-    for (ix=0; buf[ix]; ix++)
-        show_char(buf[ix]);
+    buf_put_bytes(buf);
     return FALSE;
 }
 
-extern void word_to_ascii(uchar *p, char *results)
+/* Decode a compressed dict word (from within the dictionary table)
+   into ASCII or the source-code charset.
+   
+   The results argument must have room for at least 9*7 characters,
+   plus a terminator. (See zscii_to_text().)
+ */
+static void dictword_to_text(uchar *p, char *results)
 {   int i, shift, cc, zchar; uchar encoded_word[9];
     encoded_word[0] = (((int) p[0])&0x7c)/4;
     encoded_word[1] = 8*(((int) p[0])&0x3) + (((int) p[1])&0xe0)/32;
@@ -2622,13 +2656,13 @@ extern void word_to_ascii(uchar *p, char *results)
                 if ((zchar>=32) && (zchar<=126))
                     results[cc++] = zchar;
                 else
-                {   zscii_to_text(results+cc, zchar);
-                    cc = strlen(results);
+                {   int len = zscii_to_text(results+cc, zchar);
+                    cc += len;
                 }
             }
             else
-            {   zscii_to_text(results+cc, (alphabet[shift])[zchar-6]);
-                cc = strlen(results);
+            {   int len = zscii_to_text(results+cc, (alphabet[shift])[zchar-6]);
+                cc += len;
             }
             shift = 0;
         }
@@ -2636,19 +2670,21 @@ extern void word_to_ascii(uchar *p, char *results)
     results[cc] = 0;
 }
 
-/* Print a dictionary word to stdout. 
-   (This assumes that d_show_buf is null.)
+/* Print a dictionary word to stdout. (Mostly used by the "--trace verbs"
+   option.)
  */
 void print_dict_word(int node)
 {
     uchar *p;
     int cprinted;
+
+    buf_clear();
     
     if (!glulx_mode) {
-        char textual_form[32];
+        char textual_form[64];
         p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
         
-        word_to_ascii(p, textual_form);
+        dictword_to_text(p, textual_form);
         
         for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
             show_uchar((uchar)textual_form[cprinted]);
@@ -2668,11 +2704,20 @@ void print_dict_word(int node)
             show_uchar(ch);
         }
     }
+
+    buf_term();
+
+    printf("%s", dict_show_buf);
 }
 
+/* Display one node of the dictionary tree. This writes output to the
+   dict_show_buf array; the caller must print or store that. 
+   Called from *both* show_dictionary() (to print to stdout) and
+   write_dictionary_to_transcript() (to write to the transcript stream).
+*/
 static void recursively_show_z(int node, int level)
 {   int i, cprinted, flags; uchar *p;
-    char textual_form[32];
+    char buf[64];
     int res = (version_number == 3)?4:6; /* byte length of encoded text */
 
     if (dtree[node].branch[0] != VACANT)
@@ -2680,66 +2725,87 @@ static void recursively_show_z(int node, int level)
 
     p = (uchar *)dictionary + 7 + DICT_ENTRY_BYTE_LENGTH*node;
 
-    word_to_ascii(p, textual_form);
+    dictword_to_text(p, buf);
 
-    for (cprinted = 0; textual_form[cprinted]!=0; cprinted++)
-        show_uchar((uchar)textual_form[cprinted]);
+    for (cprinted = 0; buf[cprinted]!=0; cprinted++)
+        show_uchar((uchar)buf[cprinted]);
     for (; cprinted < 4 + ((version_number==3)?6:9); cprinted++)
-        show_char(' ');
-
-    /* The level-1 info can only be printfed (d_show_buf must be null). */
-    if (d_show_buf == NULL && level >= 1)
+        buf_put_byte(' ');
+    dict_show_linelen += cprinted;
+    
+    /* Level 1+ is used when printing to stdout, not when writing to the
+       transcript file. */
+    if (level >= 1)
     {
         if (level >= 2) {
-            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) {
+                sprintf(buf, "%02x ",p[i]);
+                buf_put_bytes(buf);
+            }
         }
 
         flags = (int) p[res];
         if (flags & NOUN_DFLAG)
-            printf("noun ");
+            buf_put_bytes("noun ");
         else
-            printf("     ");
+            buf_put_bytes("     ");
         if (flags & PLURAL_DFLAG)
-            printf("p ");
+            buf_put_bytes("p ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (flags & SING_DFLAG)
-            printf("s ");
+            buf_put_bytes("s ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (DICT_TRUNCATE_FLAG) {
             if (flags & TRUNC_DFLAG)
-                printf("tr ");
+                buf_put_bytes("tr ");
             else
-                printf("   ");
+                buf_put_bytes("   ");
         }
         if (flags & PREP_DFLAG)
-        {   if (grammar_version_number == 1)
-                printf("preposition:%d  ", (int) p[res+2]);
-            else
-                printf("preposition    ");
+        {   if (grammar_version_number == 1) {
+                sprintf(buf, "preposition:%d  ", (int) p[res+2]);
+                buf_put_bytes(buf);
+            }
+            else {
+                buf_put_bytes("preposition    ");
+            }
         }
-        if (flags & META_DFLAG)
-            printf("meta");
-        if (flags & VERB_DFLAG)
-            printf("verb:%d  ", (int) p[res+1]);
-        printf("\n");
+        if (flags & META_DFLAG) {
+            buf_put_bytes("meta");
+        }
+        if (flags & VERB_DFLAG) {
+            sprintf(buf, "verb:%d  ", (int) p[res+1]);
+            buf_put_bytes(buf);
+        }
+        
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
-    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    /* Show five words per line in classic TRANSCRIPT_FORMAT=0; one per line
+       in the new TRANSCRIPT_FORMAT=1. (But we don't linebreak after an
+       empty line.) */
+    if (dict_show_linelen >= 64 || (dict_show_linelen > 0 && TRANSCRIPT_FORMAT == 1))
     {
-        write_to_transcript_file(d_show_buf, STRCTX_DICT);
-        d_show_len = 0;
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
         recursively_show_z(dtree[node].branch[1], level);
 }
 
+/* Display one node of the dictionary tree. This writes output to the
+   dict_show_buf array; the caller must print or store that. 
+   Called from *both* show_dictionary() (to print to stdout) and
+   write_dictionary_to_transcript() (to write to the transcript stream).
+*/
 static void recursively_show_g(int node, int level)
 {   int i, cprinted;
     uchar *p;
+    char buf[64];
 
     if (dtree[node].branch[0] != VACANT)
         recursively_show_g(dtree[node].branch[0], level);
@@ -2758,48 +2824,59 @@ static void recursively_show_g(int node, int level)
         show_uchar(ch);
     }
     for (; cprinted<DICT_WORD_SIZE+4; cprinted++)
-        show_char(' ');
+        buf_put_byte(' ');
+    dict_show_linelen += cprinted;
 
-    /* The level-1 info can only be printfed (d_show_buf must be null). */
-    if (d_show_buf == NULL && level >= 1)
-    {   int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
+    /* Level 1+ is used when printing to stdout, not when writing to the
+       transcript file. */
+    if (level >= 1)
+    {
+        int flagpos = (DICT_CHAR_SIZE == 1) ? (DICT_WORD_SIZE+1) : (DICT_WORD_BYTES+4);
         int flags = (p[flagpos+0] << 8) | (p[flagpos+1]);
         int verbnum = (p[flagpos+2] << 8) | (p[flagpos+3]);
         if (level >= 2) {
-            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) printf("%02x ",p[i]);
+            for (i=0; i<DICT_ENTRY_BYTE_LENGTH; i++) {
+                sprintf(buf, "%02x ",p[i]);
+                buf_put_bytes(buf);
+            }
         }
         if (flags & NOUN_DFLAG)
-            printf("noun ");
+            buf_put_bytes("noun ");
         else
-            printf("     ");
+            buf_put_bytes("     ");
         if (flags & PLURAL_DFLAG)
-            printf("p ");
+            buf_put_bytes("p ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (flags & SING_DFLAG)
-            printf("s ");
+            buf_put_bytes("s ");
         else
-            printf("  ");
+            buf_put_bytes("  ");
         if (DICT_TRUNCATE_FLAG) {
             if (flags & TRUNC_DFLAG)
-                printf("tr ");
+                buf_put_bytes("tr ");
             else
-                printf("   ");
+                buf_put_bytes("   ");
         }
         if (flags & PREP_DFLAG)
-            printf("preposition    ");
+            buf_put_bytes("preposition    ");
         if (flags & META_DFLAG)
-            printf("meta");
-        if (flags & VERB_DFLAG)
-            printf("verb:%d  ", verbnum);
-        printf("\n");
+            buf_put_bytes("meta");
+        if (flags & VERB_DFLAG) {
+            sprintf(buf, "verb:%d  ", verbnum);
+            buf_put_bytes(buf);
+        }
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
-    /* Show five words per line in classic TRANSCRIPT_FORMAT; one per line in the new format. */
-    if (d_show_buf && (d_show_len >= 64 || TRANSCRIPT_FORMAT == 1))
+    /* Show five words per line in classic TRANSCRIPT_FORMAT=0; one per line
+       in the new TRANSCRIPT_FORMAT=1. (But we don't linebreak after an
+       empty line.) */
+    if (dict_show_linelen >= 64 || (dict_show_linelen > 0 && TRANSCRIPT_FORMAT == 1))
     {
-        write_to_transcript_file(d_show_buf, STRCTX_DICT);
-        d_show_len = 0;
+        buf_put_byte('\n');
+        dict_show_linelen = 0;
     }
 
     if (dtree[node].branch[1] != VACANT)
@@ -2833,12 +2910,16 @@ extern void show_dictionary(int level)
     /* Level 0: show words only. Level 1: show words and flags.
        Level 2: also show bytes.*/
     printf("Dictionary contains %d entries:\n",dict_entries);
+    
     if (dict_entries != 0)
-    {   d_show_len = 0; d_show_buf = NULL; 
+    {
+        buf_clear();
         if (!glulx_mode)    
             recursively_show_z(root, level);
         else
             recursively_show_g(root, level);
+        buf_term();
+        printf("%s", dict_show_buf);
     }
     
     if (!glulx_mode)
@@ -2856,14 +2937,15 @@ extern void show_dictionary(int level)
 
 extern void write_dictionary_to_transcript(void)
 {
-    d_show_size = 80; /* initial size */
-    d_show_buf = my_malloc(d_show_size, "dictionary display buffer");
-
-    write_to_transcript_file("", STRCTX_INFO);
-    sprintf(d_show_buf, "[Dictionary contains %d entries:]", dict_entries);
-    write_to_transcript_file(d_show_buf, STRCTX_INFO);
+    int last, pos;
     
-    d_show_len = 0;
+    write_to_transcript_file("", STRCTX_INFO);
+
+    ensure_memory_list_available(&dict_show_buf_memlist, 80);
+    sprintf(dict_show_buf, "[Dictionary contains %d entries:]", dict_entries);
+    write_to_transcript_file(dict_show_buf, STRCTX_INFO);
+
+    buf_clear();
 
     if (dict_entries != 0)
     {
@@ -2872,15 +2954,34 @@ extern void write_dictionary_to_transcript(void)
         else
             recursively_show_g(root, 0);
     }
-    if (d_show_len != 0) write_to_transcript_file(d_show_buf, STRCTX_DICT);
 
-    my_free(&d_show_buf, "dictionary display buffer");
-    d_show_len = 0; d_show_buf = NULL;
+    buf_term();
+    
+    /* The dictionary text has newlines. We want to break up these
+       calls by newline. */
+
+    last = 0;
+    
+    while (dict_show_buf[last]) {
+        pos = last;
+        while (dict_show_buf[pos] && dict_show_buf[pos] != '\n') {
+            pos++;
+        }
+
+        if (dict_show_buf[pos]) {
+            dict_show_buf[pos] = 0;
+            pos++;
+        }
+        write_to_transcript_file(dict_show_buf+last, STRCTX_DICT);
+
+        last = pos;
+    }
 }
 
 extern void show_unicode_translation_table(void)
 {
     int i, j;
+    char buf[64];
     
     if (glulx_mode) {
         printf("Glulx does not have a Unicode translation table.\n");
@@ -2894,15 +2995,25 @@ extern void show_unicode_translation_table(void)
 
     printf("Z-machine Unicode translation table:\n");
 
+    buf_clear();
+    
     for (i=0; i<zscii_high_water_mark; i++) {
         j = zscii_to_unicode(155 + i);
-        printf("  $%02x: ", 155+i);
-        /* show the hex form even if the character was printable */
-        if (show_uchar(j))
-            printf(" @{%x}", j);
-        printf("\n");
+        sprintf(buf, "  $%02x: ", 155+i);
+        buf_put_bytes(buf);
+        
+        /* show_uchar() may show an escape code or the literal character.
+           If it showed the literal character, we'll add the escape code
+           for good luck. */
+        if (show_uchar(j)) {
+            sprintf(buf, " @{%x}", j);
+            buf_put_bytes(buf);
+        }
+        buf_put_byte('\n');
     }
 
+    buf_term();
+    printf("%s", dict_show_buf);
 }
 
 /* ========================================================================= */
@@ -2927,6 +3038,8 @@ extern void init_text_vars(void)
     for (j=0; j<256; j++) abbrevs_lookup[j] = -1;
 
     total_zchars_trans = 0;
+    dict_show_len = 0;
+    dict_show_linelen = 0;
 
     dictionary = NULL;
     dictionary_top = 0;
@@ -3024,9 +3137,9 @@ extern void text_allocate_arrays(void)
         sizeof(uchar), 1024, (void**)&low_strings,
         "low (abbreviation) strings");
 
-    d_show_buf = NULL;
-    d_show_size = 0;
-    d_show_len = 0;
+    initialise_memory_list(&dict_show_buf_memlist,
+        sizeof(char), 16, (void**)&dict_show_buf,
+        "dictionary display buffer");
 
     huff_entities = NULL;
     hufflist = NULL;
@@ -3073,6 +3186,7 @@ extern void text_free_arrays(void)
     deallocate_memory_list(&all_text_memlist);
     
     deallocate_memory_list(&low_strings_memlist);
+    deallocate_memory_list(&dict_show_buf_memlist);
     deallocate_memory_list(&abbreviations_text_memlist);
     deallocate_memory_list(&abbreviations_memlist);
 
