@@ -600,7 +600,7 @@ static opcodez opcodes_table_z[] =
 /* 26 */ {(uchar *) "storeb",          3, 0, -1, 0x22,      0,      0, 0, VAR },
 /* 27 */ {(uchar *) "put_prop",        3, 0, -1, 0x23,      0,      0, 0, VAR },
             /* This is the version of "read" called "sread" internally: */
-/* 28 */ {(uchar *) "read",            3, 0, -1, 0x24,      0,      0, 0, VAR },
+/* 28 */ {(uchar *) "read",            3, 4, -1, 0x24,      0,      0, 0, VAR },
 /* 29 */ {(uchar *) "print_char",      3, 0, -1, 0x25,      0,      0, 0, VAR },
 /* 30 */ {(uchar *) "print_num",       3, 0, -1, 0x26,      0,      0, 0, VAR },
 /* 31 */ {(uchar *) "random",          3, 0, -1, 0x27,     St,      0, 0, VAR },
@@ -646,7 +646,7 @@ static opcodez opcodes_table_z[] =
 /* 68 */ {(uchar *) "call_2s",         4, 0, -1, 0x19,     St,   CALL, 0, TWO },
 /* 69 */ {(uchar *) "call_vs",         4, 0, -1, 0x20,     St,   CALL, 0, VAR },
             /* This is the version of "read" called "aread" internally: */
-/* 70 */ {(uchar *) "read",            4, 0, -1, 0x24,     St,      0, 0, VAR },
+/* 70 */ {(uchar *) "read",            5, 0, -1, 0x24,     St,      0, 0, VAR },
 /* 71 */ {(uchar *) "call_vs2",        4, 0, -1, 0x2C,     St,   CALL, 0,
                                                                      VAR_LONG },
 /* 72 */ {(uchar *) "erase_window",    4, 0, -1, 0x2D,      0,      0, 0, VAR },
