@@ -1071,9 +1071,8 @@ static void rennab(float time_taken)
         {   printf("%d error%s", no_errors,(no_errors==1)?"":"s");
             if (t > 0) printf(" and ");
         }
-        if (no_warnings > 0) {
+        if (no_warnings > 0)
             printf("%d warning%s", t, (t==1)?"":"s");
-        }
         if (no_suppressed_warnings > 0)
         {   if (no_warnings > 0)
                 printf(" (%d suppressed)", no_suppressed_warnings);
