@@ -1107,6 +1107,7 @@ static int execute_icl_header(char *file1);
 
 static int compile(int number_of_files_specified, char *file1, char *file2)
 {
+    int status;
     TIMEVALUE time_start, time_end;
     float duration;
 
@@ -1175,7 +1176,13 @@ disabling -X switch\n");
     }
 
     in_compilation = FALSE;
-    return (no_errors==0)?0:1;
+
+    status = 0;
+    if (no_errors)
+        status = 1;
+    if (no_warnings && errorwarnings_switch)
+        status = 1;
+    return status;
 }
 
 /* ------------------------------------------------------------------------- */
