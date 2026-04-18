@@ -268,6 +268,7 @@ int concise_switch,                 /* -c */
     optimise_switch,                /* -u */
     version_set_switch,             /* -v */
     nowarnings_switch,              /* -w */
+    errorwarnings_switch,           /* -w2 */
     hash_switch,                    /* -x */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
@@ -339,6 +340,7 @@ static void reset_switch_settings(void)
     optabbrevs_trace_setting = 0;
     version_set_switch = FALSE;
     nowarnings_switch = FALSE;
+    errorwarnings_switch = FALSE;
     hash_switch = FALSE;
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
@@ -1412,7 +1414,22 @@ extern void switches(char *p, int cmode)
                   if ((version_number < 5) && (r_e_c_s_set == FALSE))
                       runtime_error_checking_switch = FALSE;
                   break;
-        case 'w': nowarnings_switch = state; break;
+        case 'w': if (p[i+1] == '2') {
+                      s=2;
+                      if (state) {
+                          nowarnings_switch = FALSE;
+                          errorwarnings_switch = TRUE;
+                      }
+                      else {
+                          /* nowarnings_switch does not change */
+                          errorwarnings_switch = FALSE;
+                      }
+                  }
+                  else {
+                      nowarnings_switch = state;
+                      errorwarnings_switch = FALSE;
+                  }
+                  break;
         case 'x': hash_switch = state; break;
         case 'z': memory_map_setting = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
