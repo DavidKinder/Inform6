@@ -1293,6 +1293,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   v7  compile to version-7 (expanded \"Advanced\") story file\n\
   v8  compile to version-8 (expanded \"Advanced\") story file\n\
   w   disable warning messages\n\
+  w2  treat warning messages as errors\n\
   x   print # for every 100 lines compiled\n\
   z   print memory map of the virtual machine\n\n");
 
