@@ -1183,7 +1183,7 @@ disabling -X switch\n");
     status = 0;
     if (no_errors)
         status = 1;
-    if (no_warnings && errorwarnings_switch)
+    if ((no_warnings+no_suppressed_warnings) && errorwarnings_switch)
         status = 1;
     return status;
 }
@@ -1427,18 +1427,10 @@ extern void switches(char *p, int cmode)
                   break;
         case 'w': if (p[i+1] == '2') {
                       s=2;
-                      if (state) {
-                          nowarnings_switch = FALSE;
-                          errorwarnings_switch = TRUE;
-                      }
-                      else {
-                          /* nowarnings_switch does not change */
-                          errorwarnings_switch = FALSE;
-                      }
+                      errorwarnings_switch = state;
                   }
                   else {
                       nowarnings_switch = state;
-                      errorwarnings_switch = FALSE;
                   }
                   break;
         case 'x': hash_switch = state; break;
