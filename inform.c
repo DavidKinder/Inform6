@@ -1073,8 +1073,6 @@ static void rennab(float time_taken)
         }
         if (no_warnings > 0) {
             printf("%d warning%s", t, (t==1)?"":"s");
-            if (errorwarnings_switch)
-                printf(" (treated as error%s)", (t==1)?"":"s");
         }
         if (no_suppressed_warnings > 0)
         {   if (no_warnings > 0)
@@ -1083,6 +1081,8 @@ static void rennab(float time_taken)
             printf("%d suppressed warning%s", no_suppressed_warnings,
                 (no_suppressed_warnings==1)?"":"s");
         }
+        if (t && errorwarnings_switch)
+            printf(" (treated as error%s)", (t==1)?"":"s");
         if (output_has_occurred == FALSE) printf(" (no output)");
         printf("\n");
     }
