@@ -268,6 +268,7 @@ int concise_switch,                 /* -c */
     optimise_switch,                /* -u */
     version_set_switch,             /* -v */
     nowarnings_switch,              /* -w */
+    errorwarnings_switch,           /* -w2 */
     hash_switch,                    /* -x */
     memory_map_setting,             /* $!MAP, -z */
     oddeven_packing_switch,         /* -B */
@@ -339,6 +340,7 @@ static void reset_switch_settings(void)
     optabbrevs_trace_setting = 0;
     version_set_switch = FALSE;
     nowarnings_switch = FALSE;
+    errorwarnings_switch = FALSE;
     hash_switch = FALSE;
     memory_map_setting = 0;
     oddeven_packing_switch = FALSE;
@@ -1078,6 +1080,8 @@ static void rennab(float time_taken)
             printf("%d suppressed warning%s", no_suppressed_warnings,
                 (no_suppressed_warnings==1)?"":"s");
         }
+        if (t && errorwarnings_switch)
+            printf(" (treated as error%s)", (t==1)?"":"s");
         if (output_has_occurred == FALSE) printf(" (no output)");
         printf("\n");
     }
@@ -1105,6 +1109,7 @@ static int execute_icl_header(char *file1);
 
 static int compile(int number_of_files_specified, char *file1, char *file2)
 {
+    int status;
     TIMEVALUE time_start, time_end;
     float duration;
 
@@ -1173,7 +1178,13 @@ disabling -X switch\n");
     }
 
     in_compilation = FALSE;
-    return (no_errors==0)?0:1;
+
+    status = 0;
+    if (no_errors)
+        status = 1;
+    if ((no_warnings+no_suppressed_warnings) && errorwarnings_switch)
+        status = 1;
+    return status;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -1291,6 +1302,7 @@ One or more words can be supplied as \"commands\". These may be:\n\n\
   v7  compile to version-7 (expanded \"Advanced\") story file\n\
   v8  compile to version-8 (expanded \"Advanced\") story file\n\
   w   disable warning messages\n\
+  w2  treat warning messages as errors\n\
   x   print # for every 100 lines compiled\n\
   z   print memory map of the virtual machine\n\n");
 
@@ -1412,7 +1424,14 @@ extern void switches(char *p, int cmode)
                   if ((version_number < 5) && (r_e_c_s_set == FALSE))
                       runtime_error_checking_switch = FALSE;
                   break;
-        case 'w': nowarnings_switch = state; break;
+        case 'w': if (p[i+1] == '2') {
+                      s=2;
+                      errorwarnings_switch = state;
+                  }
+                  else {
+                      nowarnings_switch = state;
+                  }
+                  break;
         case 'x': hash_switch = state; break;
         case 'z': memory_map_setting = (state ? 1 : 0); break;
         case 'B': oddeven_packing_switch = state; break;
