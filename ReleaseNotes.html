@@ -101,6 +101,8 @@ will lead to the following in the compiler output
     $a1: ä @{e4}
 </pre>
 Characters are only presented literally if the -Cu option is used (i.e. UTF-8 encoding), otherwise hex escapes are printed.
+<li><p>If is now possible to report warnings as errors, with a new <tt>-w2</tt> command line switch. With this set, both errors and warnings cause the
+compiler to return a non-zero error status.
 </ul>
 
 <h3>Bugs fixed</h3>
@@ -111,6 +113,8 @@ forms of character escapes are accepted, such as dictionary words and character 
 <li><p>Using the form of the <tt>Zcharacter</tt> directive that replaces the entire Z-Machine alphabet after strings have been compiled
 in user code now produces an error message.
 <li><p>Using the <tt>@sread</tt> assembly opcode directly now generates the correct Z-code.
+<li><p>The <tt>Default</tt> directive now creates a <tt>&lt;constant&gt;</tt> entry in the gameinfo.dbg file, if there is no pre-existing
+contstant of that name.
 </ul>
 
 <h2>Inform 6.44</h2>
