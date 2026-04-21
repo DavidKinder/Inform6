@@ -346,12 +346,17 @@ static void output_compression(int entnum, uint32 *size, int *count)
     case 3:
         cx = abbreviation_text(ent->u.val);
         while (*cx) {
-            sf_put(*cx);
+            if (*cx == '^')
+                sf_put(0x0A);
+            else if (*cx == '~')
+                sf_put('"');
+            else
+                sf_put(*cx);
             cx++;
-            (*size) += 1;  
+            (*size) += 1;
         }
         sf_put('\0');
-        (*size) += 1;  
+        (*size) += 1;
         break;
     case 4:
         val = unicode_usage_entries[ent->u.val].ch;
