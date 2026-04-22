@@ -5,10 +5,10 @@ jobs:
   build:
     runs-on: windows-latest
     steps:
-    - uses: actions/checkout@v5
-    - uses: microsoft/setup-msbuild@v2
+    - uses: actions/checkout@v6
+    - uses: microsoft/setup-msbuild@v3
     - run: msbuild visual_studio\inform6.vcxproj /property:Configuration=Release /property:Platform=x86
-    - uses: actions/upload-artifact@v4
+    - uses: actions/upload-artifact@v7
       with:
         name: inform6_win32
         path: visual_studio/Release/inform6.exe
