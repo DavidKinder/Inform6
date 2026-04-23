@@ -1196,6 +1196,11 @@ extern int parse_given_directive(int internal_flag)
             panic_mode_error_recovery(); return FALSE;
         }
 
+        if (version_number < 5) {
+            error("The Zcharacter directive requires Z-machine version 5 or later.");
+            panic_mode_error_recovery(); return FALSE;
+        }
+
         directive_keywords.enabled = TRUE;
         get_next_token();
         directive_keywords.enabled = FALSE;
