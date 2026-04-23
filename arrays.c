@@ -68,6 +68,9 @@ static int array_entry_size,           /* 1 for byte array, 2 for word array */
 static memory_list current_array_name; /* The name of the global or array
                                           currently being compiled.          */
 
+static memory_list embedded_function_name; /* Temporary storage for inline
+                                          routine names                      */
+
 /* In Z-code, the built-in globals may be numbered differently depending
    on the version and the ZCODE_COMPACT_GLOBALS option. Here we store
    the Z-code global index for each variable.
@@ -638,6 +641,15 @@ extern void make_array()
     switch(data_type)
     {
         case NULLS_AI:
+            printf("DEBUG: data_type is NULLS_AI\n");
+
+            get_next_token();
+            if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
+            {   put_token_back();
+                data_type = DATA_AI;
+                goto CalculatedArraySize;
+            }
+            put_token_back();
 
             AO = parse_expression(CONSTANT_CONTEXT);
 
@@ -682,15 +694,14 @@ extern void make_array()
                     break;
 
                 if ((token_type == SEP_TT)
-                    && ((token_value == OPEN_SQUARE_SEP)
-                        || (token_value == CLOSE_SQUARE_SEP)))
+                    && ((token_value == CLOSE_SQUARE_SEP)))
                 {   discard_token_location(beginning_debug_location);
                     error("Missing ';' to end the initial array values "
-                          "before \"[\" or \"]\"");
+                          "before \"]\"");
                 }
                 put_token_back();
-
                 AO = parse_expression(ARRAY_CONTEXT);
+
                 if (AO.marker == ERROR_MV)
                     break;
 
@@ -777,15 +788,30 @@ advance as part of 'Zcharacter table':", unicode);
                 if ((token_type == SEP_TT) && (token_value == CLOSE_SQUARE_SEP))
                     break;
                 if ((token_type == SEP_TT) && (token_value == OPEN_SQUARE_SEP))
-                {   /*  Minimal error recovery: we assume that a ] has
-                        been missed, and the programmer is now starting
-                        a new routine                                        */
+                {
+                    char *global_name = (char *)current_array_name.data;
+                    ensure_memory_list_available(&embedded_function_name, strlen(global_name)+16);
+                    sprintf(embedded_function_name.data, "%s_R%d", global_name, i);
 
-                    ebf_curtoken_error("']'");
-                    put_token_back(); break;
+                    /* parse_routine() releases lexer text! */
+                    AO.value = parse_routine(NULL, TRUE, embedded_function_name.data, FALSE, -1);
+                    AO.type = LONG_CONSTANT_OT;
+                    AO.marker = IROUTINE_MV;
+
+                    directives.enabled = FALSE;
+                    segment_markers.enabled = TRUE;
+
+                    statements.enabled = FALSE;
+                    misc_keywords.enabled = FALSE;
+                    local_variables.enabled = FALSE;
+                    system_functions.enabled = FALSE;
+                    conditions.enabled = FALSE;
                 }
-                put_token_back();
-                AO = parse_expression(ARRAY_CONTEXT);
+                else
+                {   put_token_back();
+                    AO = parse_expression(ARRAY_CONTEXT);
+                }
+
                 if (AO.marker == ERROR_MV)
                     break;
                 array_entry(i, is_static, AO);
@@ -990,6 +1016,10 @@ extern void arrays_allocate_arrays(void)
     initialise_memory_list(&current_array_name,
         sizeof(char), 32, NULL,
         "array name currently being defined");
+
+    initialise_memory_list(&embedded_function_name,
+        sizeof(char), 64, NULL,
+        "temporary storage for inline routine name");
 }
 
 extern void arrays_free_arrays(void)
@@ -999,6 +1029,7 @@ extern void arrays_free_arrays(void)
     deallocate_memory_list(&arrays_memlist);
     deallocate_memory_list(&global_initial_value_memlist);
     deallocate_memory_list(&current_array_name);
+    deallocate_memory_list(&embedded_function_name);
 }
 
 /* ========================================================================= */
