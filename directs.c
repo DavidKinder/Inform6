@@ -1184,6 +1184,7 @@ extern int parse_given_directive(int internal_flag)
     /* --------------------------------------------------------------------- */
     /*   Zcharacter table <num> ...                                          */
     /*   Zcharacter table + <num> ...                                        */
+    /*   Zcharacter terminating <num> ...                                    */
     /*   Zcharacter <string> <string> <string>                               */
     /*   Zcharacter <char>                                                   */
     /* --------------------------------------------------------------------- */
