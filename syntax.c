@@ -617,7 +617,7 @@ extern int32 parse_routine(char *source, int embedded_flag, char *name,
 
 /* Parse one block of code (a statement or brace-delimited stanza).
    This is used by the IF, DO, FOR, OBJECTLOOP, SWITCH, and WHILE
-   statements.
+   statements, as well as nested brace blocks.
    (Note that this is *not* called by the top-level parse_routine() 
    handler.)
    The break_label and continue_label arguments are the labels in

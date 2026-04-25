@@ -815,6 +815,13 @@ static void parse_statement_z(int break_label, int continue_label)
 
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) return;
 
+    if ((token_type == SEP_TT) && (token_value == OPEN_BRACE_SEP))
+    {
+        put_token_back();
+        parse_code_block(break_label, continue_label, 0);
+        return;
+    }
+    
     if (token_type == DQ_TT)
     {   parse_print_z(TRUE); return;
     }
@@ -1786,6 +1793,13 @@ static void parse_statement_g(int break_label, int continue_label)
     }
 
     if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) return;
+
+    if ((token_type == SEP_TT) && (token_value == OPEN_BRACE_SEP))
+    {
+        put_token_back();
+        parse_code_block(break_label, continue_label, 0);
+        return;
+    }
 
     if (token_type == DQ_TT)
     {   parse_print_g(TRUE); return;
