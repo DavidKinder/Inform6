@@ -1557,7 +1557,7 @@ extern void chars_begin_pass(void)
 {
     char *str;
 
-    if (!glulx_mode) {
+    if (!glulx_mode && version_number >= 5) {
         str = get_current_option_string_value(OPT_ZCHAR_TABLE);
         if (str) {
             new_zscii_characters_raw(str);

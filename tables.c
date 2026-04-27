@@ -353,7 +353,10 @@ static void construct_storyfile_z(void)
     /*  -------------------- Z-character set table ------------------------- */
 
     if (alphabet_modified)
-    {   charset_at = mark;
+    {
+        if (version_number < 5)
+            error("The alphabet table may only be modified in Z-machine version 5 and later.");
+        charset_at = mark;
         for (i=0;i<3;i++) for (j=0;j<26;j++)
         {   if (alphabet[i][j] == '~') p[mark++] = '\"';
             else p[mark++] = alphabet[i][j];
@@ -364,7 +367,10 @@ static void construct_storyfile_z(void)
 
     unicode_at = 0;
     if (zscii_defn_modified)
-    {   unicode_at = mark;
+    {
+        if (version_number < 5)
+            error("The Unicode table may only be used in Z-machine version 5 and later.");
+        unicode_at = mark;
         p[mark++] = zscii_high_water_mark;
         for (i=0;i<zscii_high_water_mark;i++)
         {   j = zscii_to_unicode(155 + i);

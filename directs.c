@@ -1184,6 +1184,7 @@ extern int parse_given_directive(int internal_flag)
     /* --------------------------------------------------------------------- */
     /*   Zcharacter table <num> ...                                          */
     /*   Zcharacter table + <num> ...                                        */
+    /*   Zcharacter terminating <num> ...                                    */
     /*   Zcharacter <string> <string> <string>                               */
     /*   Zcharacter <char>                                                   */
     /* --------------------------------------------------------------------- */
@@ -1192,6 +1193,11 @@ extern int parse_given_directive(int internal_flag)
 
         if (glulx_mode) {
             error("The Zcharacter directive has no meaning in Glulx.");
+            panic_mode_error_recovery(); return FALSE;
+        }
+
+        if (version_number < 5) {
+            error("The Zcharacter directive requires Z-machine version 5 or later.");
             panic_mode_error_recovery(); return FALSE;
         }
 
