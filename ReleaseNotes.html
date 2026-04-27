@@ -103,6 +103,15 @@ will lead to the following in the compiler output
 Characters are only presented literally if the -Cu option is used (i.e. UTF-8 encoding), otherwise hex escapes are printed.
 <li><p>If is now possible to report warnings as errors, with a new <tt>-w2</tt> command line switch. With this set, both errors and warnings cause the
 compiler to return a non-zero error status.
+<li><p>Braced code blocks are now valid. For example, this function is now valid code:
+<pre>
+  [ test;
+    print "Something^";
+    {
+     print "Something else^";
+    }
+  ];
+</pre>
 </ul>
 
 <h3>Bugs fixed</h3>
@@ -117,6 +126,8 @@ in user code now produces an error message.
 contstant of that name.
 <li><p>The escape characters <tt>^</tt> (indicating a newline) and <tt>~</tt> (indicating a double quote) are now handled correctly in
 abbreviations when compiling to Glulx.
+<li><p>The Unicode and alphabet tables cannot be set for Z-code versions 3 and 4, as these features are not supported in those versions
+of the Z-Machine. Any use of the <tt>Zcharacter</tt> directive for Z-code version 3 or 4 now causes an error.
 </ul>
 
 <h2>Inform 6.44</h2>
