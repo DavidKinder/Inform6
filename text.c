@@ -87,6 +87,26 @@ static int unicode_usage_hash[UNICODE_HASH_BUCKETS];
 static int unicode_entity_index(int32 unicode);
 
 /* ------------------------------------------------------------------------- */
+/*   String coalescing storage                                               */
+/* ------------------------------------------------------------------------- */
+
+typedef struct coalesce_entry_struct {
+    int32 value;  /* -1 if not yet set */
+    int32 offset; /* string data offset in coalesce_text */
+    int32 next;   /* next in hash chain or -1 */
+} coalesce_entry_t;
+
+static int32 coalesce_totaltext;
+static char *coalesce_text; /* Allocated to coalesce_totaltext */
+static memory_list coalesce_text_memlist;
+
+static int32 coalesce_entry_count;
+static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count */
+static memory_list coalesce_entries_memlist;
+
+static coalesce_entry_t *find_coalesce_entry(char *);
+
+/* ------------------------------------------------------------------------- */
 /*   Abbreviation arrays                                                     */
 /* ------------------------------------------------------------------------- */
 
@@ -269,6 +289,8 @@ extern char *abbreviation_text(int num)
 
 /* ------------------------------------------------------------------------- */
 /*   The front end routine for text translation.                             */
+/*   compile_string() returns a STRING_MV marker value which will later be   */
+/*   backpatched to a string address.                                        */
 /*   strctx indicates the purpose of the string. This is mostly used for     */
 /*   informational output (gametext.txt), but we treat some string contexts  */
 /*   specially during compilation.                                           */
@@ -289,7 +311,9 @@ extern char *abbreviation_text(int num)
 extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
     uchar *c;
-    int in_low_memory;
+    int in_low_memory, coalescable;
+    coalesce_entry_t *coalesce_entry;
+    int32 res;
 
     if (execution_never_reaches_here) {
         /* No need to put strings into gametext.txt or the static/low
@@ -300,6 +324,8 @@ extern int32 compile_string(char *b, int strctx)
             return 0;
         }
     }
+
+    coalescable = (strctx == STRCTX_GAME || strctx == STRCTX_SYMBOL || strctx == STRCTX_INFIX || (glulx_mode && strctx == STRCTX_OBJNAME));
     
     /* In Z-code, abbreviations go in the low memory pool (0x100). So
        do strings explicitly defined with the Lowstring directive.
@@ -322,6 +348,13 @@ extern int32 compile_string(char *b, int strctx)
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
+
+    coalesce_entry = NULL;
+    if (COALESCE_STRINGS && coalescable) {
+        coalesce_entry = find_coalesce_entry(b);
+        if (coalesce_entry->value != -1) 
+            return coalesce_entry->value;
+    }
 
     i = translate_text(-1, b, strctx);
     if (i < 0) {
@@ -354,13 +387,19 @@ extern int32 compile_string(char *b, int strctx)
         static_strings_area[static_strings_extent] = *c;
 
     if (!glulx_mode) {
-        return(j/scale_factor);
+        res = (j/scale_factor);
     }
     else {
         /* The marker value is a one-based string number. (We reserve zero
            to mean "not a string at all". */
-        return (++no_strings);
+        res = (++no_strings);
     }
+
+    if (COALESCE_STRINGS && coalesce_entry) {
+        coalesce_entry->value = res;
+    }
+
+    return res;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -3014,6 +3053,15 @@ extern void show_unicode_translation_table(void)
 
     buf_term();
     printf("%s", dict_show_buf);
+}
+
+/* ------------------------------------------------------------------------- */
+/*   String coalescing storage                                               */
+/* ------------------------------------------------------------------------- */
+
+static coalesce_entry_t *find_coalesce_entry(char *str)
+{
+    return NULL;
 }
 
 /* ========================================================================= */
