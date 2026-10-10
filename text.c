@@ -91,7 +91,7 @@ static int unicode_entity_index(int32 unicode);
 /* ------------------------------------------------------------------------- */
 
 typedef struct coalesce_entry_struct {
-    int32 value;  /* -1 if not yet set */
+    int32 value;  /* STRING_MV marker value; -1 if not yet set */
     int32 offset; /* string data offset in coalesce_text */
     int32 next;   /* next in hash chain or -1 */
 } coalesce_entry_t;
@@ -107,7 +107,7 @@ static memory_list coalesce_entries_memlist;
 #define COALESCE_HASH_BUCKETS (1117)
 static uint32 *coalesce_hash_table;
 
-static coalesce_entry_t *find_coalesce_entry(char *);
+static int32 find_coalesce_entry(char *);
 
 /* ------------------------------------------------------------------------- */
 /*   Abbreviation arrays                                                     */
@@ -315,7 +315,7 @@ extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
     uchar *c;
     int in_low_memory, coalescable;
-    coalesce_entry_t *coalesce_entry;
+    int32 coal_ix;
     int32 res;
 
     if (execution_never_reaches_here) {
@@ -352,11 +352,12 @@ extern int32 compile_string(char *b, int strctx)
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
 
-    coalesce_entry = NULL;
+    coal_ix = -1;
     if (COALESCE_STRINGS && coalescable) {
-        coalesce_entry = find_coalesce_entry(b);
-        if (coalesce_entry->value != -1) 
-            return coalesce_entry->value;
+        coal_ix = find_coalesce_entry(b);
+        res = coalesce_entries[coal_ix].value;
+        if (res != -1) 
+            return res;
     }
 
     i = translate_text(-1, b, strctx);
@@ -398,8 +399,8 @@ extern int32 compile_string(char *b, int strctx)
         res = (++no_strings);
     }
 
-    if (COALESCE_STRINGS && coalesce_entry) {
-        coalesce_entry->value = res;
+    if (COALESCE_STRINGS && coal_ix >= 0) {
+        coalesce_entries[coal_ix].value = res;
     }
 
     return res;
@@ -3074,17 +3075,40 @@ static uint32 coalesce_hash_string(char *str)
     return res % COALESCE_HASH_BUCKETS;
 }
 
-static coalesce_entry_t *find_coalesce_entry(char *str)
+static int32 find_coalesce_entry(char *str)
 {
+    uint32 hash = coalesce_hash_string(str);
+    int32 ix, offset;
     coalesce_entry_t *entry;
-    ensure_memory_list_available(&coalesce_entries_memlist, coalesce_entry_count+1);
-    entry = &coalesce_entries[coalesce_entry_count++];
 
-    entry->value = -1;
-    entry->next = -1;
-    entry->offset = 0;
+    for (ix=coalesce_hash_table[hash]; ix >= 0; ix=coalesce_entries[ix].next) {
+        entry = &coalesce_entries[ix];
+        if (!strcmp(str, coalesce_text+entry->offset)) {
+            if (entry->value >= 0) {
+                return entry->value;
+            }
+            else {
+                compiler_error("Unfilled entry in coalesce_entries");
+            }
+        }
+    }
+
+    offset = coalesce_totaltext;
+    coalesce_totaltext += (strlen(str)+1);
+    ensure_memory_list_available(&coalesce_text_memlist, coalesce_totaltext);
+    strcpy(coalesce_text+offset, str);
+
+    ix = coalesce_entry_count++;
+    ensure_memory_list_available(&coalesce_entries_memlist, coalesce_entry_count);
+    entry = &coalesce_entries[ix];
+
+    entry->value = -1; /* will be filled in soon */
+    entry->offset = offset;
+    entry->next = coalesce_hash_table[hash];
+
+    coalesce_hash_table[hash] = ix;
     
-    return entry;
+    return ix;
 }
 
 /* ========================================================================= */
