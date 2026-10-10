@@ -3061,7 +3061,15 @@ extern void show_unicode_translation_table(void)
 
 static coalesce_entry_t *find_coalesce_entry(char *str)
 {
-    return NULL;
+    coalesce_entry_t *entry;
+    ensure_memory_list_available(&coalesce_entries_memlist, coalesce_entry_count+1);
+    entry = &coalesce_entries[coalesce_entry_count++];
+
+    entry->value = -1;
+    entry->next = -1;
+    entry->offset = 0;
+    
+    return entry;
 }
 
 /* ========================================================================= */
@@ -3103,6 +3111,11 @@ extern void init_text_vars(void)
     abbreviations_optimal_parse_schedule = NULL;
     abbreviations_optimal_parse_scores = NULL;
 
+    coalesce_totaltext = 0;
+    coalesce_text = NULL;
+    coalesce_entry_count = 0;
+    coalesce_entries = NULL;
+    
     compressed_offsets = NULL;
     huff_entities = NULL;
     hufflist = NULL;
@@ -3189,6 +3202,16 @@ extern void text_allocate_arrays(void)
         sizeof(char), 16, (void**)&dict_show_buf,
         "dictionary display buffer");
 
+    if (COALESCE_STRINGS) {
+        initialise_memory_list(&coalesce_text_memlist,
+            sizeof(char), 1024, (void**)&coalesce_text,
+            "string coalescing text storage");
+        
+        initialise_memory_list(&coalesce_entries_memlist,
+            sizeof(coalesce_entry_t), 128, (void**)&coalesce_entries,
+            "string coalescing hash entries");
+    }
+    
     huff_entities = NULL;
     hufflist = NULL;
     unicode_usage_entries = NULL;
@@ -3248,6 +3271,11 @@ extern void text_free_arrays(void)
 
     deallocate_memory_list(&dictionary_memlist);
 
+    if (COALESCE_STRINGS) {
+        deallocate_memory_list(&coalesce_text_memlist);
+        deallocate_memory_list(&coalesce_entries_memlist);
+    }
+    
     deallocate_memory_list(&compressed_offsets_memlist);
     my_free(&hufflist, "huffman node list");
     my_free(&huff_entities, "huffman entities");
