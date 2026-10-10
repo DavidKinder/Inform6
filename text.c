@@ -3085,7 +3085,7 @@ static int32 find_coalesce_entry(char *str)
         entry = &coalesce_entries[ix];
         if (!strcmp(str, coalesce_text+entry->offset)) {
             if (entry->value >= 0) {
-                return entry->value;
+                return ix;
             }
             else {
                 compiler_error("Unfilled entry in coalesce_entries");
