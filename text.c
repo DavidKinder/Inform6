@@ -104,6 +104,9 @@ static int32 coalesce_entry_count;
 static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count */
 static memory_list coalesce_entries_memlist;
 
+#define COALESCE_HASH_SIZE (1117)
+static uint32 *coalesce_hash_table;
+
 static coalesce_entry_t *find_coalesce_entry(char *);
 
 /* ------------------------------------------------------------------------- */
@@ -3059,6 +3062,18 @@ extern void show_unicode_translation_table(void)
 /*   String coalescing storage                                               */
 /* ------------------------------------------------------------------------- */
 
+static uint32 coalesce_hash_string(char *str)
+{
+    uint32 res = 0;
+    int ix;
+    
+    for (ix=0; str[ix]; ix++) {
+        res += ((uchar)str[ix]) << (ix & 3);
+    }
+
+    return res % COALESCE_HASH_SIZE;
+}
+
 static coalesce_entry_t *find_coalesce_entry(char *str)
 {
     coalesce_entry_t *entry;
@@ -3115,6 +3130,7 @@ extern void init_text_vars(void)
     coalesce_text = NULL;
     coalesce_entry_count = 0;
     coalesce_entries = NULL;
+    coalesce_hash_table = NULL;
     
     compressed_offsets = NULL;
     huff_entities = NULL;
@@ -3210,6 +3226,8 @@ extern void text_allocate_arrays(void)
         initialise_memory_list(&coalesce_entries_memlist,
             sizeof(coalesce_entry_t), 128, (void**)&coalesce_entries,
             "string coalescing hash entries");
+
+        coalesce_hash_table = my_calloc(sizeof(uint32), COALESCE_HASH_SIZE, "string coalescing hash table");
     }
     
     huff_entities = NULL;
@@ -3274,6 +3292,7 @@ extern void text_free_arrays(void)
     if (COALESCE_STRINGS) {
         deallocate_memory_list(&coalesce_text_memlist);
         deallocate_memory_list(&coalesce_entries_memlist);
+        my_free(&coalesce_hash_table, "string coalescing hash table");
     }
     
     deallocate_memory_list(&compressed_offsets_memlist);
