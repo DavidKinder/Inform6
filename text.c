@@ -104,7 +104,7 @@ static int32 coalesce_entry_count;
 static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count */
 static memory_list coalesce_entries_memlist;
 
-#define COALESCE_HASH_SIZE (1117)
+#define COALESCE_HASH_BUCKETS (1117)
 static uint32 *coalesce_hash_table;
 
 static coalesce_entry_t *find_coalesce_entry(char *);
@@ -3071,7 +3071,7 @@ static uint32 coalesce_hash_string(char *str)
         res += ((uchar)str[ix]) << (ix & 3);
     }
 
-    return res % COALESCE_HASH_SIZE;
+    return res % COALESCE_HASH_BUCKETS;
 }
 
 static coalesce_entry_t *find_coalesce_entry(char *str)
@@ -3227,7 +3227,9 @@ extern void text_allocate_arrays(void)
             sizeof(coalesce_entry_t), 128, (void**)&coalesce_entries,
             "string coalescing hash entries");
 
-        coalesce_hash_table = my_calloc(sizeof(uint32), COALESCE_HASH_SIZE, "string coalescing hash table");
+        coalesce_hash_table = my_calloc(sizeof(uint32), COALESCE_HASH_BUCKETS, "string coalescing hash table");
+        for (ix=0; ix<COALESCE_HASH_BUCKETS; ix++)
+            coalesce_hash_table[ix] = -1;
     }
     
     huff_entities = NULL;
