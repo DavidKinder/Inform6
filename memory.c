@@ -281,6 +281,7 @@ int DICT_IMPLICIT_SINGULAR; /* 0: no, 1: yes */
 int DICT_TRUNCATE_FLAG; /* 0: no, 1: yes */
 int LONG_DICT_FLAG_BUG; /* 0: no bug, 1: bug (default for historic reasons) */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
+int COALESCE_STRINGS; /* 0: no, 1: yes */
 
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
