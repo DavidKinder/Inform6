@@ -106,7 +106,7 @@ static int32 coalesce_entry_count;
 static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count */
 static memory_list coalesce_entries_memlist;
 
-#define COALESCE_HASH_BUCKETS (1117)
+#define COALESCE_HASH_BUCKETS (2039)
 static int32 *coalesce_hash_table;
 
 static int32 find_coalesce_entry(char *);
@@ -3073,7 +3073,7 @@ static uint32 coalesce_hash_string(char *str)
     int ix;
     
     for (ix=0; str[ix]; ix++) {
-        res += ((uchar)str[ix]) << (ix & 3);
+        res += ((uchar)str[ix]) << (ix & 7);
     }
 
     return res % COALESCE_HASH_BUCKETS;
