@@ -337,6 +337,7 @@ static void set_trace_option(char *command)
         printf("    ASM=4: more verbose branch info\n");
         printf("  BPATCH: show backpatch results\n");
         printf("    BPATCH=2: also show markers added\n");
+        printf("  COALESCE: show string coalescing stats\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
         printf("  EXPR: show expression trees\n");
@@ -397,6 +398,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "BPATCH")==0 || strcmp(command, "BACKPATCH")==0) {
         bpatch_trace_setting = value;
+    }
+    else if (strcmp(command, "COALESCE")==0) {
+        coalesce_trace_setting = value;
     }
     else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
         list_dict_setting = value;
