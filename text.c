@@ -96,6 +96,8 @@ typedef struct coalesce_entry_struct {
     int32 next;   /* next in hash chain or -1 */
 } coalesce_entry_t;
 
+static int32 coalesce_eligible_count;
+
 static int32 coalesce_totaltext;
 static char *coalesce_text; /* Allocated to coalesce_totaltext */
 static memory_list coalesce_text_memlist;
@@ -105,7 +107,7 @@ static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count 
 static memory_list coalesce_entries_memlist;
 
 #define COALESCE_HASH_BUCKETS (1117)
-static uint32 *coalesce_hash_table;
+static int32 *coalesce_hash_table;
 
 static int32 find_coalesce_entry(char *);
 
@@ -354,6 +356,8 @@ extern int32 compile_string(char *b, int strctx)
 
     coal_ix = -1;
     if (COALESCE_STRINGS && coalescable) {
+        coalesce_eligible_count++;
+        
         coal_ix = find_coalesce_entry(b);
         res = coalesce_entries[coal_ix].value;
         if (res != -1) 
@@ -3111,6 +3115,41 @@ static int32 find_coalesce_entry(char *str)
     return ix;
 }
 
+extern void show_coalesce_stats(void)
+{
+    int hash;
+    int used_count = 0;
+    int maxlen = 0;
+    
+    if (!COALESCE_STRINGS) {
+        printf("String coalescing not used.\n");
+        return;
+    }
+
+    if (!coalesce_eligible_count) {
+        printf("No coalescable strings found.\n");
+        return;
+    }
+
+    for (hash=0; hash<COALESCE_HASH_BUCKETS; hash++) {
+        if (coalesce_hash_table[hash] >= 0) {
+            int32 ix;
+            int32 len = 0;
+            used_count++;
+            for (ix=coalesce_hash_table[hash]; ix >= 0; ix=coalesce_entries[ix].next) {
+                len++;
+            }
+            if (len > maxlen)
+                maxlen = len;
+        }
+    }
+
+    printf("%d coalescable strings reduced to %d (rate %.3f)\n", coalesce_eligible_count, coalesce_entry_count, ((double)coalesce_entry_count / (double)coalesce_eligible_count));
+
+    printf("%d hash buckets; %d unused\n", COALESCE_HASH_BUCKETS, COALESCE_HASH_BUCKETS-used_count);
+    printf("average chain length %.2f (%.2f counting unused); max length %d\n", ((double)coalesce_entry_count / (double)used_count), ((double)coalesce_entry_count / (double)COALESCE_HASH_BUCKETS), maxlen);
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -3153,6 +3192,7 @@ extern void init_text_vars(void)
     coalesce_totaltext = 0;
     coalesce_text = NULL;
     coalesce_entry_count = 0;
+    coalesce_eligible_count = 0;
     coalesce_entries = NULL;
     coalesce_hash_table = NULL;
     
@@ -3251,7 +3291,7 @@ extern void text_allocate_arrays(void)
             sizeof(coalesce_entry_t), 128, (void**)&coalesce_entries,
             "string coalescing hash entries");
 
-        coalesce_hash_table = my_calloc(sizeof(uint32), COALESCE_HASH_BUCKETS, "string coalescing hash table");
+        coalesce_hash_table = my_calloc(sizeof(int32), COALESCE_HASH_BUCKETS, "string coalescing hash table");
         for (ix=0; ix<COALESCE_HASH_BUCKETS; ix++)
             coalesce_hash_table[ix] = -1;
     }
