@@ -3120,7 +3120,7 @@ static int32 find_coalesce_entry(char *str)
     return ix;
 }
 
-extern void show_coalesce_stats(void)
+extern void show_coalesce_stats(int level)
 {
     int32 ix;
     int hash;
@@ -3139,9 +3139,14 @@ extern void show_coalesce_stats(void)
         return;
     }
 
+    if (level >= 2)
+        printf("Coalesced duplicates (with count):\n");
+    
     for (ix=0; ix<coalesce_entry_count; ix++) {
         coalesce_entry_t *entry = &coalesce_entries[ix];
         if (entry->count > 1) {
+            if (level >= 2)
+                printf("(%d) \"%s\"\n", entry->count, coalesce_text+entry->offset);
             strings_saved += 1;
             chars_saved += (entry->count-1) * strlen(coalesce_text+entry->offset);
         }

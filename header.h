@@ -2956,7 +2956,7 @@ extern void  dictionary_set_verb_number(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
 extern void  copy_sorts(uchar *d1, uchar *d2);
 extern void  show_unicode_translation_table(void);
-extern void  show_coalesce_stats(void);
+extern void  show_coalesce_stats(int level);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "veneer"                                         */

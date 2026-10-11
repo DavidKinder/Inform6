@@ -2048,7 +2048,7 @@ extern void construct_storyfile(void)
         display_frequencies();
 
     if (coalesce_trace_setting)
-        show_coalesce_stats();
+        show_coalesce_stats(coalesce_trace_setting);
 
     if (list_symbols_setting)
         list_symbols(list_symbols_setting);

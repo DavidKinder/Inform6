@@ -338,6 +338,7 @@ static void set_trace_option(char *command)
         printf("  BPATCH: show backpatch results\n");
         printf("    BPATCH=2: also show markers added\n");
         printf("  COALESCE: show string coalescing stats\n");
+        printf("    COALESCE=2: show which strings were coalesced\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
         printf("  EXPR: show expression trees\n");
