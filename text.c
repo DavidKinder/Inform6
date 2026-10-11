@@ -93,6 +93,7 @@ static int unicode_entity_index(int32 unicode);
 typedef struct coalesce_entry_struct {
     int32 value;  /* STRING_MV marker value; -1 if not yet set */
     int32 offset; /* string data offset in coalesce_text */
+    int32 count;  /* how many times entry was used */
     int32 next;   /* next in hash chain or -1 */
 } coalesce_entry_t;
 
@@ -360,8 +361,10 @@ extern int32 compile_string(char *b, int strctx)
         
         coal_ix = find_coalesce_entry(b);
         res = coalesce_entries[coal_ix].value;
-        if (res != -1) 
+        if (res != -1) {
+            coalesce_entries[coal_ix].count++;
             return res;
+        }
     }
 
     i = translate_text(-1, b, strctx);
@@ -405,6 +408,7 @@ extern int32 compile_string(char *b, int strctx)
 
     if (COALESCE_STRINGS && coal_ix >= 0) {
         coalesce_entries[coal_ix].value = res;
+        coalesce_entries[coal_ix].count++;
     }
 
     return res;
@@ -3108,6 +3112,7 @@ static int32 find_coalesce_entry(char *str)
 
     entry->value = -1; /* will be filled in soon */
     entry->offset = offset;
+    entry->count = 0;
     entry->next = coalesce_hash_table[hash];
 
     coalesce_hash_table[hash] = ix;
