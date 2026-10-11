@@ -3122,9 +3122,12 @@ static int32 find_coalesce_entry(char *str)
 
 extern void show_coalesce_stats(void)
 {
+    int32 ix;
     int hash;
     int used_count = 0;
     int maxlen = 0;
+    int chars_saved = 0;
+    int strings_saved = 0;
     
     if (!COALESCE_STRINGS) {
         printf("String coalescing not used.\n");
@@ -3136,9 +3139,16 @@ extern void show_coalesce_stats(void)
         return;
     }
 
+    for (ix=0; ix<coalesce_entry_count; ix++) {
+        coalesce_entry_t *entry = &coalesce_entries[ix];
+        if (entry->count > 1) {
+            strings_saved += 1;
+            chars_saved += (entry->count-1) * strlen(coalesce_text+entry->offset);
+        }
+    }
+
     for (hash=0; hash<COALESCE_HASH_BUCKETS; hash++) {
         if (coalesce_hash_table[hash] >= 0) {
-            int32 ix;
             int32 len = 0;
             used_count++;
             for (ix=coalesce_hash_table[hash]; ix >= 0; ix=coalesce_entries[ix].next) {
@@ -3152,6 +3162,7 @@ extern void show_coalesce_stats(void)
     printf("%d coalescable strings reduced to %d (rate %.3f)\n", coalesce_eligible_count, coalesce_entry_count, ((double)coalesce_entry_count / (double)coalesce_eligible_count));
 
     printf("%d hash buckets; %d unused\n", COALESCE_HASH_BUCKETS, COALESCE_HASH_BUCKETS-used_count);
+    printf("%d chars saved in %d strings (pre-compression)\n", chars_saved, strings_saved);
     printf("average chain length %.2f (%.2f counting unused); max length %d\n", ((double)coalesce_entry_count / (double)used_count), ((double)coalesce_entry_count / (double)COALESCE_HASH_BUCKETS), maxlen);
 }
 
