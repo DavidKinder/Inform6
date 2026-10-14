@@ -1059,6 +1059,9 @@ extern int32 translate_one_char(char *s_text)
 {
     uchar *text_in = (uchar *) s_text;
 
+    if (!text_in[0])
+        return 0;
+
     /* The string "^" is always a newline. */
     if (text_in[0] == '^' && text_in[1] == 0)
         return 10;
@@ -1066,6 +1069,26 @@ extern int32 translate_one_char(char *s_text)
     /* The string "~" is always a double-quote. */
     if (text_in[0] == '~' && text_in[1] == 0)
         return '"';
+
+    /* "@DIGIT" or "@(" is an abbrevation, which we do not handle here. */
+    if (text_in[0] == '@' && (isdigit(text_in[1]) || text_in[1] == '('))
+        return 0;
+
+    if (character_set_unicode) {
+        if (text_in[0] & 0x80) {
+            int32 unicode = text_to_unicode((char *) text_in);
+            if (text_in[textual_form_length] == 0)
+                return unicode;
+        }
+        else {
+            if (text_in[1] == 0) 
+                return text_in[0];
+        }
+    }
+    else {
+        if (text_in[1] == 0) 
+            return iso_to_unicode_grid[text_in[0]];
+    }
     
     return 0;
 }
