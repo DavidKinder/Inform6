@@ -2940,6 +2940,7 @@ extern void  ao_free_arrays(void);
 extern void  extract_all_text(void);
 extern int32 compile_string(char *b, int strctx);
 extern int32 translate_text(int32 p_limit, char *s_text, int strctx);
+extern int32 translate_one_char(char *s_text);
 extern void  optimise_abbreviations(void);
 extern void  make_abbreviation(char *text);
 extern char *abbreviation_text(int num);

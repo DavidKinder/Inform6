@@ -273,18 +273,6 @@ extern char *abbreviation_text(int num)
 /*   informational output (gametext.txt), but we treat some string contexts  */
 /*   specially during compilation.                                           */
 /* ------------------------------------------------------------------------- */
-
-/* TODO: When called from a print statement (parse_print()), it would be
-   nice to detect if the generated string is exactly one character. In that
-   case, we could return the character value and a flag to indicate the
-   caller could use @print_char/@streamchar/@new_line/@streamunichar
-   instead of printing a compiled string.
-
-   We'd need a new STRCTX value or two to distinguish direct-printed strings
-   from referenceable strings.
-
-   Currently, parse_print() checks for the "^" case manually, which is a
-   bit icky. */   
    
 extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
@@ -1057,6 +1045,25 @@ string; substituting '?'.");
         return -1;
     else
         return text_out_pos;
+}
+
+/* Translate a one-character string, using the same rules as translate_text().
+   If the string is exactly one character, this returns its value, usable
+   by @print_char/@new_line or @streamchar/@streamunichar.
+   Otherwise, this returns zero.
+
+   This handles @@decimal, @{hex}, and @accentcode escapes, as well as
+   the standard "^" and "~" markup.
+*/
+extern int32 translate_one_char(char *s_text)
+{
+    uchar *text_in = (uchar *) s_text;
+
+    /* The string "^" is always a simple newline. */
+    if (text_in[0] == '^' && text_in[1] == 0)
+        return 10;
+    
+    return 0;
 }
 
 static int unicode_entity_index(int32 unicode)
