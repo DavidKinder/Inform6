@@ -303,6 +303,7 @@ static void parse_print_z(int finally_return)
                   break;
               }
               else if (charval) {
+                  INITAOT(&AO, CONSTANT_OT);
                   set_constant_otv(&AO, charval);
                   assemblez_1(print_char_zc, AO);
                   break;
@@ -545,6 +546,7 @@ static void parse_print_g(int finally_return)
                   break;
               }
               else if (charval) {
+                  INITAOT(&AO, CONSTANT_OT);
                   set_constant_otv(&AO, charval);
                   if (charval >= 0 && charval < 0x100)
                       assembleg_1(streamchar_gc, AO);
