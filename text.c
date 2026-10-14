@@ -1059,9 +1059,13 @@ extern int32 translate_one_char(char *s_text)
 {
     uchar *text_in = (uchar *) s_text;
 
-    /* The string "^" is always a simple newline. */
+    /* The string "^" is always a newline. */
     if (text_in[0] == '^' && text_in[1] == 0)
         return 10;
+    
+    /* The string "~" is always a double-quote. */
+    if (text_in[0] == '~' && text_in[1] == 0)
+        return '"';
     
     return 0;
 }
