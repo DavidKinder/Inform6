@@ -303,7 +303,9 @@ static void parse_print_z(int finally_return)
                   break;
               }
               else if (charval) {
-                  // ###
+                  set_constant_otv(&AO, charval);
+                  assemblez_1(print_char_zc, AO);
+                  break;
               }
               if ((int)strlen(token_text) > ZCODE_MAX_INLINE_STRING)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
@@ -543,7 +545,12 @@ static void parse_print_g(int finally_return)
                   break;
               }
               else if (charval) {
-                  //###
+                  set_constant_otv(&AO, charval);
+                  if (charval >= 0 && charval < 0x100)
+                      assembleg_1(streamchar_gc, AO);
+                  else
+                      assembleg_1(streamunichar_gc, AO);
+                  break;
               }
               /* We can't compile a string into the instruction,
                  so this always goes into the string area. */
