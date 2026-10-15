@@ -302,7 +302,10 @@ static void parse_print_z(int finally_return)
                   assemblez_0(new_line_zc);
                   break;
               }
-              else if (charval) {
+              else if (charval && !finally_return) {
+                  /* A single character can be handled as @print_char.
+                     Although it's not worth it if this will be a
+                     @print_ret. */
                   INITAOT(&AO, CONSTANT_OT);
                   set_constant_otv(&AO, charval);
                   assemblez_1(print_char_zc, AO);
