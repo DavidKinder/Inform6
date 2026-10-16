@@ -1070,10 +1070,18 @@ extern int32 translate_one_char(char *s_text)
     if (text_in[0] == '~' && text_in[1] == 0)
         return '"';
 
-    /* "@DIGIT" or "@(" is an abbrevation, which we do not handle here. */
-    if (text_in[0] == '@' && (isdigit(text_in[1]) || text_in[1] == '('))
-        return 0;
+    if (text_in[0] == '@') {
+        /* "@DIGIT" or "@(" is an abbrevation, which we do not handle here. */
+        if (isdigit(text_in[1]) || text_in[1] == '(')
+            return 0;
 
+        int32 unicode = text_to_unicode((char *) text_in);
+        if (text_in[textual_form_length] == 0)
+            return unicode;
+
+        return 0;
+    }
+    
     if (character_set_unicode) {
         if (text_in[0] & 0x80) {
             int32 unicode = text_to_unicode((char *) text_in);
