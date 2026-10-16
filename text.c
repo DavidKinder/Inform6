@@ -1048,8 +1048,7 @@ string; substituting '?'.");
 }
 
 /* Translate a one-character string, using the same rules as translate_text().
-   If the string is exactly one character, this returns its value, usable
-   by @print_char/@new_line or @streamchar/@streamunichar.
+   If the string is exactly one character, this returns its Unicode value.
    Otherwise, this returns zero.
 
    This handles @@decimal, @{hex}, and @accentcode escapes, as well as
