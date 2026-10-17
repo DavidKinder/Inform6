@@ -1052,7 +1052,7 @@ string; substituting '?'.");
    Otherwise, this returns zero.
 
    This handles @@decimal, @{hex}, and @accentcode escapes, as well as
-   the standard "^" and "~" markup.
+   the standard "^" and "~" escapes.
 */
 extern int32 translate_one_char(char *s_text)
 {
