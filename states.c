@@ -269,6 +269,7 @@ extern int parse_label(void)
 
 static void parse_print_z(int finally_return)
 {   int count = 0; assembly_operand AO;
+    int32 charval;
 
     /*  print <printlist> -------------------------------------------------- */
     /*  print_ret <printlist> ---------------------------------------------- */
@@ -296,10 +297,33 @@ static void parse_print_z(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
-              if (token_text[0] == '^' && token_text[1] == '\0') {
-                  /* The string "^" is always a simple newline. */
+              charval = translate_one_char(token_text);
+              if (charval == 10) {
                   assemblez_0(new_line_zc);
                   break;
+              }
+              else if (charval) {
+                  /* A single character can be handled as @print_char,
+                     if it's in the zscii table. But if this is going to
+                     be @print_ret, the optimization isn't worth it. */
+                  charval = unicode_to_zscii(charval);
+                  if (charval != 5) {
+                      int flag = TRUE;
+                      if (finally_return) {
+                          get_next_token();
+                          if ((token_type == SEP_TT)
+                              && (token_value == SEMICOLON_SEP)) {
+                              flag = FALSE;
+                          }
+                          put_token_back();
+                      }
+                      if (flag) {
+                          INITAOT(&AO, CONSTANT_OT);
+                          set_constant_otv(&AO, charval);
+                          assemblez_1(print_char_zc, AO);
+                          break;
+                      }
+                  }
               }
               if ((int)strlen(token_text) > ZCODE_MAX_INLINE_STRING)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
@@ -504,7 +528,7 @@ static void parse_print_z(int finally_return)
 
 static void parse_print_g(int finally_return)
 {   int count = 0; assembly_operand AO, AO2;
-
+    int32 charval;
     /*  print <printlist> -------------------------------------------------- */
     /*  print_ret <printlist> ---------------------------------------------- */
     /*  <literal-string> --------------------------------------------------- */
@@ -532,10 +556,19 @@ static void parse_print_g(int finally_return)
         if ((token_type == SEP_TT) && (token_value == SEMICOLON_SEP)) break;
         switch(token_type)
         {   case DQ_TT:
-              if (token_text[0] == '^' && token_text[1] == '\0') {
-                  /* The string "^" is always a simple newline. */
+              charval = translate_one_char(token_text);
+              if (charval == 10) {
                   INITAOTV(&AO, BYTECONSTANT_OT, 0x0A);
                   assembleg_1(streamchar_gc, AO);
+                  break;
+              }
+              else if (charval) {
+                  INITAOT(&AO, CONSTANT_OT);
+                  set_constant_otv(&AO, charval);
+                  if (charval >= 0 && charval < 0x100)
+                      assembleg_1(streamchar_gc, AO);
+                  else
+                      assembleg_1(streamunichar_gc, AO);
                   break;
               }
               /* We can't compile a string into the instruction,
