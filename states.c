@@ -302,16 +302,27 @@ static void parse_print_z(int finally_return)
                   assemblez_0(new_line_zc);
                   break;
               }
-              else if (charval && !finally_return) {
+              else if (charval) {
                   /* A single character can be handled as @print_char,
                      if it's in the zscii table. But if this is going to
                      be @print_ret, the optimization isn't worth it. */
-                  charval = unicode_to_zscii(charval);
-                  if (charval != 5) {
-                      INITAOT(&AO, CONSTANT_OT);
-                      set_constant_otv(&AO, charval);
-                      assemblez_1(print_char_zc, AO);
-                      break;
+                  int flag = TRUE;
+                  if (finally_return) {
+                      get_next_token();
+                      if ((token_type == SEP_TT)
+                          && (token_value == SEMICOLON_SEP)) {
+                          flag = FALSE;
+                      }
+                      put_token_back();
+                  }
+                  if (flag) {
+                      charval = unicode_to_zscii(charval);
+                      if (charval != 5) {
+                          INITAOT(&AO, CONSTANT_OT);
+                          set_constant_otv(&AO, charval);
+                          assemblez_1(print_char_zc, AO);
+                          break;
+                      }
                   }
               }
               if ((int)strlen(token_text) > ZCODE_MAX_INLINE_STRING)
