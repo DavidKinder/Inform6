@@ -51,6 +51,7 @@ have to set the option themselves.
 the branch).
 <li><p>If either the above Z-code optimization, or the <tt>@jump</tt> optimization in Inform 6.43, leaves the original
 return opcode unreachable, the return opcode will now be removed.
+<li><p>Where possible, the printing of a single character string is optimized to a single <tt>@print_char</tt> opcode.
 <li><p>Settings have been added to allow the user to control what is written to the flags1 and flags2 fields of the Z-code
 header: <tt>$ZCODE_HEADER_FLAGS_1</tt>, <tt>$ZCODE_HEADER_FLAGS_1_CLR</tt>, <tt>$ZCODE_HEADER_FLAGS_2</tt> and <tt>$ZCODE_HEADER_FLAGS_2_CLR</tt>.
 Values for the flags1 settings can be 0-255, while values for the flags2 settings can be 0-65535, because flags2 is a word.
