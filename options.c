@@ -304,6 +304,16 @@ static optiont alloptions[] = {
         DEFAULTVAL(0),
     },
     {
+        "COALESCE_STRINGS",
+        "\
+  COALESCE_STRINGS, if set to 1, will combine identical strings to the \n\
+  same storage. This may affect the behavior of Inform code that compares \n\
+  string values.\n",
+        OPTUSE_ALL,
+        { OPTLIM_TOMAX, 1 },
+        DEFAULTVAL(0),
+    },
+    {
         "WARN_UNUSED_ROUTINES",
         "\
   WARN_UNUSED_ROUTINES, if set to 2, will display a warning for each \n\
@@ -894,6 +904,7 @@ extern void apply_compiler_options(void)
     GLULX_OBJECT_EXT_BYTES = SELECTVAL(OPT_GLULX_OBJECT_EXT_BYTES);
     MAX_STACK_SIZE = SELECTVAL(OPT_MAX_STACK_SIZE);
     TRANSCRIPT_FORMAT = SELECTVAL(OPT_TRANSCRIPT_FORMAT);
+    COALESCE_STRINGS = SELECTVAL(OPT_COALESCE_STRINGS);
     WARN_UNUSED_ROUTINES = SELECTVAL(OPT_WARN_UNUSED_ROUTINES);
     OMIT_UNUSED_ROUTINES = SELECTVAL(OPT_OMIT_UNUSED_ROUTINES);
     STRIP_UNREACHABLE_LABELS = SELECTVAL(OPT_STRIP_UNREACHABLE_LABELS);

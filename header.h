@@ -634,17 +634,18 @@ typedef enum optionindex {
     OPT_GLULX_OBJECT_EXT_BYTES    = 20,
     OPT_MAX_STACK_SIZE            = 21,
     OPT_TRANSCRIPT_FORMAT         = 22,
-    OPT_WARN_UNUSED_ROUTINES      = 23,
-    OPT_OMIT_UNUSED_ROUTINES      = 24,
-    OPT_STRIP_UNREACHABLE_LABELS  = 25,
-    OPT_OMIT_SYMBOL_TABLE         = 26,
-    OPT_DICT_IMPLICIT_SINGULAR    = 27,
-    OPT_DICT_TRUNCATE_FLAG        = 28,
-    OPT_LONG_DICT_FLAG_BUG        = 29,
-    OPT_SERIAL                    = 30,
-    OPT_ZCHAR_TABLE               = 31,
-    OPT_ZALPHABET                 = 32,
-    OPT_OPTIONS_COUNT             = 33, /* terminator */
+    OPT_COALESCE_STRINGS          = 23,
+    OPT_WARN_UNUSED_ROUTINES      = 24,
+    OPT_OMIT_UNUSED_ROUTINES      = 25,
+    OPT_STRIP_UNREACHABLE_LABELS  = 26,
+    OPT_OMIT_SYMBOL_TABLE         = 27,
+    OPT_DICT_IMPLICIT_SINGULAR    = 28,
+    OPT_DICT_TRUNCATE_FLAG        = 29,
+    OPT_LONG_DICT_FLAG_BUG        = 30,
+    OPT_SERIAL                    = 31,
+    OPT_ZCHAR_TABLE               = 32,
+    OPT_ZALPHABET                 = 33,
+    OPT_OPTIONS_COUNT             = 34, /* terminator */
 } optionindex_e;
 
 /* ------------------------------------------------------------------------- */
@@ -2580,7 +2581,7 @@ extern int32 requested_glulx_version, final_glulx_version;
 
 extern int error_format,    store_the_text,       asm_trace_setting,
     expr_trace_setting,     tokens_trace_setting,
-    bpatch_trace_setting,   symdef_trace_setting,
+    bpatch_trace_setting,   symdef_trace_setting, coalesce_trace_setting,
     double_space_setting,   trace_fns_setting,    character_set_setting,
     character_set_unicode;
 
@@ -2690,6 +2691,7 @@ extern int DICT_IMPLICIT_SINGULAR;
 extern int DICT_TRUNCATE_FLAG;
 extern int LONG_DICT_FLAG_BUG;
 extern int TRANSCRIPT_FORMAT;
+extern int COALESCE_STRINGS;
 
 /* These macros define offsets that depend on the value of NUM_ATTR_BYTES.
    (Meaningful only for Glulx.) */
@@ -2955,6 +2957,7 @@ extern void  dictionary_set_verb_number(int dictword, int to);
 extern int   compare_sorts(uchar *d1, uchar *d2);
 extern void  copy_sorts(uchar *d1, uchar *d2);
 extern void  show_unicode_translation_table(void);
+extern void  show_coalesce_stats(int level);
 
 /* ------------------------------------------------------------------------- */
 /*   Extern definitions for "veneer"                                         */

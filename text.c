@@ -87,6 +87,32 @@ static int unicode_usage_hash[UNICODE_HASH_BUCKETS];
 static int unicode_entity_index(int32 unicode);
 
 /* ------------------------------------------------------------------------- */
+/*   String coalescing storage                                               */
+/* ------------------------------------------------------------------------- */
+
+typedef struct coalesce_entry_struct {
+    int32 value;  /* STRING_MV marker value; -1 if not yet set */
+    int32 offset; /* string data offset in coalesce_text */
+    int32 count;  /* how many times entry was used */
+    int32 next;   /* next in hash chain or -1 */
+} coalesce_entry_t;
+
+static int32 coalesce_eligible_count;
+
+static int32 coalesce_totaltext;
+static char *coalesce_text; /* Allocated to coalesce_totaltext */
+static memory_list coalesce_text_memlist;
+
+static int32 coalesce_entry_count;
+static coalesce_entry_t *coalesce_entries; /* Allocated to coalesce_entry_count */
+static memory_list coalesce_entries_memlist;
+
+#define COALESCE_HASH_BUCKETS (2039)
+static int32 *coalesce_hash_table;
+
+static int32 find_coalesce_entry(char *);
+
+/* ------------------------------------------------------------------------- */
 /*   Abbreviation arrays                                                     */
 /* ------------------------------------------------------------------------- */
 
@@ -269,6 +295,8 @@ extern char *abbreviation_text(int num)
 
 /* ------------------------------------------------------------------------- */
 /*   The front end routine for text translation.                             */
+/*   compile_string() returns a STRING_MV marker value which will later be   */
+/*   backpatched to a string address.                                        */
 /*   strctx indicates the purpose of the string. This is mostly used for     */
 /*   informational output (gametext.txt), but we treat some string contexts  */
 /*   specially during compilation.                                           */
@@ -277,7 +305,9 @@ extern char *abbreviation_text(int num)
 extern int32 compile_string(char *b, int strctx)
 {   int32 i, j, k;
     uchar *c;
-    int in_low_memory;
+    int in_low_memory, coalescable;
+    int32 coal_ix;
+    int32 res;
 
     if (execution_never_reaches_here) {
         /* No need to put strings into gametext.txt or the static/low
@@ -288,6 +318,8 @@ extern int32 compile_string(char *b, int strctx)
             return 0;
         }
     }
+
+    coalescable = (strctx == STRCTX_GAME || strctx == STRCTX_SYMBOL || strctx == STRCTX_INFIX || (glulx_mode && strctx == STRCTX_OBJNAME));
     
     /* In Z-code, abbreviations go in the low memory pool (0x100). So
        do strings explicitly defined with the Lowstring directive.
@@ -310,6 +342,18 @@ extern int32 compile_string(char *b, int strctx)
 
     if (glulx_mode && done_compression)
         compiler_error("Tried to add a string after compression was done.");
+
+    coal_ix = -1;
+    if (COALESCE_STRINGS && coalescable) {
+        coalesce_eligible_count++;
+        
+        coal_ix = find_coalesce_entry(b);
+        res = coalesce_entries[coal_ix].value;
+        if (res != -1) {
+            coalesce_entries[coal_ix].count++;
+            return res;
+        }
+    }
 
     i = translate_text(-1, b, strctx);
     if (i < 0) {
@@ -342,13 +386,20 @@ extern int32 compile_string(char *b, int strctx)
         static_strings_area[static_strings_extent] = *c;
 
     if (!glulx_mode) {
-        return(j/scale_factor);
+        res = (j/scale_factor);
     }
     else {
         /* The marker value is a one-based string number. (We reserve zero
            to mean "not a string at all". */
-        return (++no_strings);
+        res = (++no_strings);
     }
+
+    if (COALESCE_STRINGS && coal_ix >= 0) {
+        coalesce_entries[coal_ix].value = res;
+        coalesce_entries[coal_ix].count++;
+    }
+
+    return res;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -3057,6 +3108,110 @@ extern void show_unicode_translation_table(void)
     printf("%s", dict_show_buf);
 }
 
+/* ------------------------------------------------------------------------- */
+/*   String coalescing storage                                               */
+/* ------------------------------------------------------------------------- */
+
+static uint32 coalesce_hash_string(char *str)
+{
+    uint32 res = 0;
+    int ix;
+    
+    for (ix=0; str[ix]; ix++) {
+        res += ((uchar)str[ix]) << (ix & 7);
+    }
+
+    return res % COALESCE_HASH_BUCKETS;
+}
+
+static int32 find_coalesce_entry(char *str)
+{
+    uint32 hash = coalesce_hash_string(str);
+    int32 ix, offset;
+    coalesce_entry_t *entry;
+
+    for (ix=coalesce_hash_table[hash]; ix >= 0; ix=coalesce_entries[ix].next) {
+        entry = &coalesce_entries[ix];
+        if (!strcmp(str, coalesce_text+entry->offset)) {
+            if (entry->value >= 0) {
+                return ix;
+            }
+            else {
+                compiler_error("Unfilled entry in coalesce_entries");
+            }
+        }
+    }
+
+    offset = coalesce_totaltext;
+    coalesce_totaltext += (strlen(str)+1);
+    ensure_memory_list_available(&coalesce_text_memlist, coalesce_totaltext);
+    strcpy(coalesce_text+offset, str);
+
+    ix = coalesce_entry_count++;
+    ensure_memory_list_available(&coalesce_entries_memlist, coalesce_entry_count);
+    entry = &coalesce_entries[ix];
+
+    entry->value = -1; /* will be filled in soon */
+    entry->offset = offset;
+    entry->count = 0;
+    entry->next = coalesce_hash_table[hash];
+
+    coalesce_hash_table[hash] = ix;
+    
+    return ix;
+}
+
+extern void show_coalesce_stats(int level)
+{
+    int32 ix;
+    int hash;
+    int used_count = 0;
+    int maxlen = 0;
+    int chars_saved = 0;
+    int strings_saved = 0;
+    
+    if (!COALESCE_STRINGS) {
+        printf("String coalescing not used.\n");
+        return;
+    }
+
+    if (!coalesce_eligible_count) {
+        printf("No coalescable strings found.\n");
+        return;
+    }
+
+    if (level >= 2)
+        printf("Coalesced duplicates (with count):\n");
+    
+    for (ix=0; ix<coalesce_entry_count; ix++) {
+        coalesce_entry_t *entry = &coalesce_entries[ix];
+        if (entry->count > 1) {
+            if (level >= 2)
+                printf("(%d) \"%s\"\n", entry->count, coalesce_text+entry->offset);
+            strings_saved += 1;
+            chars_saved += (entry->count-1) * strlen(coalesce_text+entry->offset);
+        }
+    }
+
+    for (hash=0; hash<COALESCE_HASH_BUCKETS; hash++) {
+        if (coalesce_hash_table[hash] >= 0) {
+            int32 len = 0;
+            used_count++;
+            for (ix=coalesce_hash_table[hash]; ix >= 0; ix=coalesce_entries[ix].next) {
+                len++;
+            }
+            if (len > maxlen)
+                maxlen = len;
+        }
+    }
+
+    printf("%d coalescable strings reduced to %d (rate %.3f)\n", coalesce_eligible_count, coalesce_entry_count, ((double)coalesce_entry_count / (double)coalesce_eligible_count));
+
+    printf("%d hash buckets; %d unused\n", COALESCE_HASH_BUCKETS, COALESCE_HASH_BUCKETS-used_count);
+    printf("%d chars saved in %d strings (pre-compression)\n", chars_saved, strings_saved);
+    printf("average chain length %.2f (%.2f counting unused); max length %d\n", ((double)coalesce_entry_count / (double)used_count), ((double)coalesce_entry_count / (double)COALESCE_HASH_BUCKETS), maxlen);
+}
+
 /* ========================================================================= */
 /*   Data structure management routines                                      */
 /* ------------------------------------------------------------------------- */
@@ -3096,6 +3251,13 @@ extern void init_text_vars(void)
     abbreviations_optimal_parse_schedule = NULL;
     abbreviations_optimal_parse_scores = NULL;
 
+    coalesce_totaltext = 0;
+    coalesce_text = NULL;
+    coalesce_entry_count = 0;
+    coalesce_eligible_count = 0;
+    coalesce_entries = NULL;
+    coalesce_hash_table = NULL;
+    
     compressed_offsets = NULL;
     huff_entities = NULL;
     hufflist = NULL;
@@ -3182,6 +3344,20 @@ extern void text_allocate_arrays(void)
         sizeof(char), 16, (void**)&dict_show_buf,
         "dictionary display buffer");
 
+    if (COALESCE_STRINGS) {
+        initialise_memory_list(&coalesce_text_memlist,
+            sizeof(char), 1024, (void**)&coalesce_text,
+            "string coalescing text storage");
+        
+        initialise_memory_list(&coalesce_entries_memlist,
+            sizeof(coalesce_entry_t), 128, (void**)&coalesce_entries,
+            "string coalescing hash entries");
+
+        coalesce_hash_table = my_calloc(sizeof(int32), COALESCE_HASH_BUCKETS, "string coalescing hash table");
+        for (ix=0; ix<COALESCE_HASH_BUCKETS; ix++)
+            coalesce_hash_table[ix] = -1;
+    }
+    
     huff_entities = NULL;
     hufflist = NULL;
     unicode_usage_entries = NULL;
@@ -3241,6 +3417,12 @@ extern void text_free_arrays(void)
 
     deallocate_memory_list(&dictionary_memlist);
 
+    if (COALESCE_STRINGS) {
+        deallocate_memory_list(&coalesce_text_memlist);
+        deallocate_memory_list(&coalesce_entries_memlist);
+        my_free(&coalesce_hash_table, "string coalescing hash table");
+    }
+    
     deallocate_memory_list(&compressed_offsets_memlist);
     my_free(&hufflist, "huffman node list");
     my_free(&huff_entities, "huffman entities");
