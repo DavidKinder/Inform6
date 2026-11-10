@@ -46,7 +46,7 @@ int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 /*   These three variables are set to the current token on a call to         */
 /*   get_next_token(). They are not changed by a call to put_token_back();   */
 /*   if you need the current text after putting a token back, call           */
-/*   get_current_token_text().
+/*   get_current_token_text().                                               */
 /*   (It would be tidier to use a token_data structure, rather than having   */
 /*   get_next_token() unpack three values. But this is the way it is.)       */
 /* ------------------------------------------------------------------------- */
@@ -1774,8 +1774,9 @@ assumption inside Inform");
    variable triple is left unset. It must be, because we don't know what
    context will be used for the next get_next_token().
 
-   However, we may need to know the current token_text (taking
-   put_token_back() into account). The context doesn't matter for this.
+   However, we may need to know the current token text (taking
+   put_token_back() into account). The context doesn't matter for that.
+   If no tokens have been put back, this returns token_text itself.
 
    Do not call this after release_token_texts().
  */
