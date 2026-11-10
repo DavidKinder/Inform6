@@ -2651,6 +2651,7 @@ extern void export_brief_location(brief_location loc, ErrorPosition *errpos);
 extern brief_location blank_brief_location;
 
 extern void put_token_back(void);
+extern char *get_current_token_text(void);
 extern void get_next_token(void);
 extern void release_token_texts(void);
 extern void restart_lexer(char *lexical_source, char *name);
