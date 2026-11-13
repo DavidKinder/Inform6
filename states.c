@@ -328,7 +328,10 @@ static void parse_print_z(int finally_return)
               if ((int)strlen(token_text) > ZCODE_MAX_INLINE_STRING)
               {   INITAOT(&AO, LONG_CONSTANT_OT);
                   AO.marker = STRING_MV;
-                  AO.value  = compile_string(token_text, STRCTX_GAME);
+                  /* If we just put back a token (the SEMICOLON case just
+                     above), then token_text is incorrect. Use the correct
+                     current token value. */
+                  AO.value  = compile_string(get_current_token_text(), STRCTX_GAME);
                   assemblez_1(print_paddr_zc, AO);
                   if (finally_return)
                   {   get_next_token();

@@ -44,7 +44,9 @@ int32 last_mapped_line;  /* Last syntax line reported to debugging file      */
 /*     type NUMBER_TT, value 483, text "$1e3"                                */
 /* ------------------------------------------------------------------------- */
 /*   These three variables are set to the current token on a call to         */
-/*   get_next_token() (but are not changed by a call to put_token_back()).   */
+/*   get_next_token(). They are not changed by a call to put_token_back();   */
+/*   if you need the current text after putting a token back, call           */
+/*   get_current_token_text().                                               */
 /*   (It would be tidier to use a token_data structure, rather than having   */
 /*   get_next_token() unpack three values. But this is the way it is.)       */
 /* ------------------------------------------------------------------------- */
@@ -1680,6 +1682,9 @@ static int get_next_char_from_string(void)
 /*                                       and move the read position forward  */
 /*                                       by one                              */
 /*                                                                           */
+/*       get_current_token_text()    return token_text, or what token_text   */
+/*                                       would be if put_token_back() set it */
+/*                                                                           */
 /*       release_token_texts()       discard all the tokens that have been   */
 /*                                       read in, except for put-back ones   */
 /*                                                                           */
@@ -1763,6 +1768,28 @@ assumption inside Inform");
         tokens_put_back--;
         return;
     }
+}
+
+/* An unfortunate quirk of the API is that after put_token_back(), the
+   variable triple is left unset. It must be, because we don't know what
+   context will be used for the next get_next_token().
+
+   However, we may need to know the current token text (taking
+   put_token_back() into account). The context doesn't matter for that.
+   If no tokens have been put back, this returns token_text itself.
+
+   Do not call this after release_token_texts().
+ */
+extern char *get_current_token_text(void)
+{   int pos;
+
+    if (tokens_put_back == 0)
+        return token_text;
+
+    pos = circle_position - tokens_put_back;
+    if (pos<0) pos += CIRCLE_SIZE;
+    
+    return circle[pos].text;
 }
 
 /* The get_next_token() code reads characters into the current lextext,
