@@ -281,6 +281,7 @@ int DICT_IMPLICIT_SINGULAR; /* 0: no, 1: yes */
 int DICT_TRUNCATE_FLAG; /* 0: no, 1: yes */
 int LONG_DICT_FLAG_BUG; /* 0: no bug, 1: bug (default for historic reasons) */
 int TRANSCRIPT_FORMAT; /* 0: classic, 1: prefixed */
+int COALESCE_STRINGS; /* 0: no, 1: yes */
 
 /* ------------------------------------------------------------------------- */
 /*   Memory control from the command line                                    */
@@ -336,6 +337,8 @@ static void set_trace_option(char *command)
         printf("    ASM=4: more verbose branch info\n");
         printf("  BPATCH: show backpatch results\n");
         printf("    BPATCH=2: also show markers added\n");
+        printf("  COALESCE: show string coalescing stats\n");
+        printf("    COALESCE=2: show which strings were coalesced\n");
         printf("  DICT: display the dictionary table\n");
         printf("    DICT=2: also the byte encoding of entries\n");
         printf("  EXPR: show expression trees\n");
@@ -396,6 +399,9 @@ static void set_trace_option(char *command)
     }
     else if (strcmp(command, "BPATCH")==0 || strcmp(command, "BACKPATCH")==0) {
         bpatch_trace_setting = value;
+    }
+    else if (strcmp(command, "COALESCE")==0) {
+        coalesce_trace_setting = value;
     }
     else if (strcmp(command, "DICTIONARY")==0 || strcmp(command, "DICT")==0) {
         list_dict_setting = value;
