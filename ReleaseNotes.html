@@ -86,6 +86,13 @@ translation list. Without the +, it throws away the list and starts anew.
 <p>In both of these options, <tt>@</tt> escapes are allowed, in all forms: <tt>@@64</tt>, <tt>@{40}</tt>, <tt>@:u</tt>. Literal Unicode characters
 are not allowed, because the compiler may not know the character encoding at the time options are parsed. Spaces are ignored in both options (and are only
 used in the examples above for clarity).
+<li><p>A new option <tt>$COALESCE_STRINGS=1</tt> causes Inform to coalesce identical compiled strings, so that such strings are unified to the same
+(packed) address.
+<p>Abbreviation strings and low strings are not eligible for coalescing. In Z-code, object hardware names and inline opcode texts are also not eligible,
+because they have no packed address.
+<p>This option inevitably slows compilation and uses more memory. Statistics on this can be shown with the option <tt>--trace COALESCE</tt>.
+<p>Note that this option can change the behavior of an Inform program which relies on the direct (address) comparison of strings. The <tt>list_together</tt>
+property of the Standard Library (and PunyInform) does this. As a result, this option contradicts the parenthetical in §27 of the DM4.
 <li><p>There is now a trace option to display the Z-machine Unicode translation table: <tt>--trace unicode</tt> or <tt>$!UNICODE</tt>. For example:
 <pre>
   !% $ZCHAR_TABLE="@@945 @{3B2} @{3b3} @{3bc} @{2655} @@9812 @{E4}"
